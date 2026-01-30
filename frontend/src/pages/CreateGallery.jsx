@@ -37,7 +37,8 @@ const CreateGallery = () => {
         event_date: formData.event_date || null,
         share_link_expiration_days: parseInt(formData.share_link_expiration_days),
         guest_upload_enabled_days: parseInt(formData.guest_upload_enabled_days),
-        download_all_password: formData.download_all_password || null
+        download_all_password: formData.download_all_password || null,
+        theme: formData.theme
       };
 
       const response = await axios.post(`${API}/galleries`, payload, {
