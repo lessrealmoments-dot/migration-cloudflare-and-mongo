@@ -336,6 +336,30 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
         update_data["description"] = updates.description
     if updates.password is not None:
         update_data["password"] = hash_password(updates.password)
+    if updates.event_title is not None:
+        update_data["event_title"] = updates.event_title
+    if updates.event_date is not None:
+        update_data["event_date"] = updates.event_date
+        if updates.guest_upload_enabled_days:
+            try:
+                event_dt = datetime.fromisoformat(updates.event_date.replace('Z', '+00:00'))
+                update_data["guest_upload_expiration_date"] = (event_dt + timedelta(days=updates.guest_upload_enabled_days)).isoformat()
+            except:
+                pass
+    if updates.share_link_expiration_days is not None:
+        update_data["share_link_expiration_days"] = updates.share_link_expiration_days
+        created_at = datetime.fromisoformat(gallery["created_at"])
+        update_data["share_link_expiration_date"] = (created_at + timedelta(days=updates.share_link_expiration_days)).isoformat()
+    if updates.guest_upload_enabled_days is not None:
+        update_data["guest_upload_enabled_days"] = updates.guest_upload_enabled_days
+        if gallery.get("event_date"):
+            try:
+                event_dt = datetime.fromisoformat(gallery["event_date"].replace('Z', '+00:00'))
+                update_data["guest_upload_expiration_date"] = (event_dt + timedelta(days=updates.guest_upload_enabled_days)).isoformat()
+            except:
+                pass
+    if updates.download_all_password is not None:
+        update_data["download_all_password"] = hash_password(updates.download_all_password)
     
     if update_data:
         await db.galleries.update_one({"id": gallery_id}, {"$set": update_data})
@@ -350,6 +374,13 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
         description=updated_gallery.get("description"),
         has_password=updated_gallery.get("password") is not None,
         share_link=updated_gallery["share_link"],
+        cover_photo_url=updated_gallery.get("cover_photo_url"),
+        event_title=updated_gallery.get("event_title"),
+        event_date=updated_gallery.get("event_date"),
+        share_link_expiration_date=updated_gallery.get("share_link_expiration_date"),
+        guest_upload_expiration_date=updated_gallery.get("guest_upload_expiration_date"),
+        guest_upload_enabled=True,
+        has_download_all_password=updated_gallery.get("download_all_password") is not None,
         created_at=updated_gallery["created_at"],
         photo_count=photo_count
     )
