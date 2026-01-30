@@ -63,6 +63,7 @@ class GalleryCreate(BaseModel):
     share_link_expiration_days: int = 30
     guest_upload_enabled_days: int = 3
     download_all_password: Optional[str] = None
+    theme: str = "classic"
 
 class Gallery(BaseModel):
     model_config = ConfigDict(extra="ignore")
