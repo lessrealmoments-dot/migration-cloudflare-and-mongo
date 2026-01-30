@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
+import { themes } from '@/themes';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -17,7 +18,8 @@ const CreateGallery = () => {
     event_date: '',
     share_link_expiration_days: 30,
     guest_upload_enabled_days: 3,
-    download_all_password: ''
+    download_all_password: '',
+    theme: 'classic'
   });
   const [loading, setLoading] = useState(false);
 
