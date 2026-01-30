@@ -313,9 +313,13 @@ const PublicGallery = () => {
               <Upload className="w-6 h-6 text-zinc-600" strokeWidth={1.5} />
               <div className="text-left">
                 <h3 className="text-xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
-                  Upload Your Photos
+                  {gallery?.guest_upload_enabled ? 'Upload Your Photos' : 'Upload Window Closed'}
                 </h3>
-                <p className="text-sm text-zinc-500">Share your memories with the photographer</p>
+                <p className="text-sm text-zinc-500">
+                  {gallery?.guest_upload_enabled 
+                    ? 'Share your memories with the photographer'
+                    : 'Guest uploads are no longer accepted for this gallery'}
+                </p>
               </div>
             </div>
             {guestUploadExpanded ? (
