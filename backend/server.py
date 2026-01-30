@@ -612,18 +612,22 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
     
     if gallery.get("share_link_expiration_date"):
         try:
-            expiration_dt = datetime.fromisoformat(gallery["share_link_expiration_date"])
+            expiration_dt = datetime.fromisoformat(gallery["share_link_expiration_date"].replace('Z', '+00:00'))
+            if expiration_dt.tzinfo is None:
+                expiration_dt = expiration_dt.replace(tzinfo=timezone.utc)
             if datetime.now(timezone.utc) > expiration_dt:
                 raise HTTPException(status_code=403, detail="Gallery has expired")
-        except ValueError:
+        except (ValueError, AttributeError):
             pass
     
     if gallery.get("guest_upload_expiration_date"):
         try:
-            upload_expiration_dt = datetime.fromisoformat(gallery["guest_upload_expiration_date"])
+            upload_expiration_dt = datetime.fromisoformat(gallery["guest_upload_expiration_date"].replace('Z', '+00:00'))
+            if upload_expiration_dt.tzinfo is None:
+                upload_expiration_dt = upload_expiration_dt.replace(tzinfo=timezone.utc)
             if datetime.now(timezone.utc) > upload_expiration_dt:
                 raise HTTPException(status_code=403, detail="Upload window has closed")
-        except ValueError:
+        except (ValueError, AttributeError):
             pass
     
     if gallery.get("password"):
