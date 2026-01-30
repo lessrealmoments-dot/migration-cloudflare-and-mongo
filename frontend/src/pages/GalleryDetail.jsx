@@ -533,6 +533,104 @@ const GalleryDetail = () => {
           />
         </div>
       )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-sm max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
+                Edit Gallery Details
+              </h3>
+              <button onClick={() => setShowEditModal(false)}>
+                <X className="w-6 h-6" strokeWidth={1.5} />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateGallery} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">Gallery Title *</label>
+                <input
+                  type="text"
+                  value={editFormData.title}
+                  onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                  className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Event Title</label>
+                <input
+                  type="text"
+                  value={editFormData.event_title}
+                  onChange={(e) => setEditFormData({ ...editFormData, event_title: e.target.value })}
+                  className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Event Date</label>
+                <input
+                  type="date"
+                  value={editFormData.event_date}
+                  onChange={(e) => setEditFormData({ ...editFormData, event_date: e.target.value })}
+                  className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Description</label>
+                <textarea
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  className="flex min-h-[100px] w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm resize-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Share Link Expiration</label>
+                  <select
+                    value={editFormData.share_link_expiration_days}
+                    onChange={(e) => setEditFormData({ ...editFormData, share_link_expiration_days: e.target.value })}
+                    className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
+                  >
+                    <option value="30">30 days</option>
+                    <option value="60">60 days</option>
+                    <option value="90">90 days</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Guest Upload Window</label>
+                  <select
+                    value={editFormData.guest_upload_enabled_days}
+                    onChange={(e) => setEditFormData({ ...editFormData, guest_upload_enabled_days: e.target.value })}
+                    className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
+                  >
+                    <option value="1">1 day</option>
+                    <option value="2">2 days</option>
+                    <option value="3">3 days</option>
+                    <option value="4">4 days</option>
+                    <option value="5">5 days</option>
+                    <option value="6">6 days</option>
+                    <option value="7">7 days</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="border border-input h-10 px-6 rounded-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 rounded-sm font-medium"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
