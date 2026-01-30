@@ -259,23 +259,40 @@ const GalleryDetail = () => {
 
         <div className="mb-12">
           <div className="flex items-start justify-between mb-6">
-            <div>
+            <div className="flex-1">
               <h2
                 className="text-4xl md:text-5xl font-normal tracking-tight mb-4"
                 style={{ fontFamily: 'Playfair Display, serif' }}
               >
                 {gallery.title}
               </h2>
+              {gallery.event_title && (
+                <p className="text-lg font-light text-zinc-700 mb-2">Event: {gallery.event_title}</p>
+              )}
+              {gallery.event_date && (
+                <p className="text-sm text-zinc-500 mb-2">
+                  Date: {new Date(gallery.event_date).toLocaleDateString()}
+                </p>
+              )}
               {gallery.description && (
                 <p className="text-base font-light text-zinc-600">{gallery.description}</p>
               )}
             </div>
-            {gallery.has_password && (
-              <div className="flex items-center gap-2 text-sm text-zinc-500">
-                <Lock className="w-4 h-4" strokeWidth={1.5} />
-                Protected
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              <button
+                data-testid="edit-gallery-button"
+                onClick={handleEditGallery}
+                className="border border-input hover:bg-zinc-50 h-10 px-6 rounded-sm font-medium transition-all duration-300"
+              >
+                Edit Details
+              </button>
+              {gallery.has_password && (
+                <div className="flex items-center gap-2 text-sm text-zinc-500">
+                  <Lock className="w-4 h-4" strokeWidth={1.5} />
+                  Protected
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-3">
