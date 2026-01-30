@@ -437,6 +437,7 @@ async def get_public_gallery(share_link: str):
     
     photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
     photo_count = await db.photos.count_documents({"gallery_id": gallery["id"]})
+    sections = gallery.get("sections", [])
     
     return PublicGallery(
         id=gallery["id"],
@@ -444,6 +445,8 @@ async def get_public_gallery(share_link: str):
         description=gallery.get("description"),
         photographer_name=photographer["name"] if photographer else "Unknown",
         has_password=gallery.get("password") is not None,
+        cover_photo_url=gallery.get("cover_photo_url"),
+        sections=[Section(**s) for s in sections],
         photo_count=photo_count
     )
 
