@@ -1,0 +1,88 @@
+{
+  "timestamp": "2026-01-30T17:10:13.613446",
+  "total_tests": 16,
+  "passed_tests": 16,
+  "success_rate": "100.0%",
+  "test_details": [
+    {
+      "test": "User Registration",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "User Login",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Get Current User",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Create Gallery (Public)",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Create Gallery (Protected)",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Get User Galleries",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Upload Photo (Photographer)",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Get Gallery Photos",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Public Gallery Access",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Public Gallery Photos",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Guest Photo Upload",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Protected Gallery Password (Correct)",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Protected Gallery Password (Wrong)",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Guest Upload (Protected)",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Photo File Serving",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test": "Delete Photo",
+      "success": true,
+      "details": ""
+    }
+  ]
+}
