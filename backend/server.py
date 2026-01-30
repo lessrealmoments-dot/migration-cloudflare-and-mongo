@@ -509,6 +509,7 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
         "filename": filename,
         "url": f"/api/photos/serve/{filename}",
         "uploaded_by": "guest",
+        "section_id": None,
         "uploaded_at": datetime.now(timezone.utc).isoformat()
     }
     
