@@ -20,6 +20,7 @@ const PublicGallery = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const [guestUploadExpanded, setGuestUploadExpanded] = useState(false);
   const [showDownloadAllModal, setShowDownloadAllModal] = useState(false);
   const [downloadAllPassword, setDownloadAllPassword] = useState('');
