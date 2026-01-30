@@ -483,7 +483,8 @@ const PublicGallery = () => {
                   <PublicPhotoItem
                     key={photo.id}
                     photo={photo}
-                    onView={setSelectedPhoto}
+                    photoIndex={photos.findIndex(p => p.id === photo.id)}
+                    onView={setLightboxIndex}
                     onDownload={handleDownload}
                     isGuest
                   />
