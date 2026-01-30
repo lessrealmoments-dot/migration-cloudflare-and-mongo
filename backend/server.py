@@ -25,7 +25,8 @@ db = client[os.environ['DB_NAME']]
 UPLOAD_DIR = ROOT_DIR / 'uploads'
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+# JWT configuration - will fail if not set (secure by default)
+SECRET_KEY = os.environ['JWT_SECRET_KEY']
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 
