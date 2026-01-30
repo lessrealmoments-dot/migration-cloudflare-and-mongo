@@ -645,6 +645,27 @@ const GalleryDetail = () => {
                   </select>
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-4">Gallery Theme</label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {Object.entries(themes).map(([key, theme]) => (
+                    <div
+                      key={key}
+                      onClick={() => setEditFormData({ ...editFormData, theme: key })}
+                      className={`cursor-pointer border-2 rounded-sm p-2 transition-all duration-300 ${
+                        editFormData.theme === key ? 'border-primary bg-zinc-50' : 'border-zinc-200'
+                      }`}
+                    >
+                      <img 
+                        src={theme.preview} 
+                        alt={theme.name}
+                        className="w-full h-16 object-cover rounded-sm mb-1"
+                      />
+                      <h4 className="font-medium text-xs">{theme.name}</h4>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <div className="flex gap-3 justify-end">
                 <button
                   type="button"
