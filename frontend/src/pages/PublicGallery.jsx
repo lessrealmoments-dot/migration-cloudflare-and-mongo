@@ -212,23 +212,29 @@ const PublicGallery = () => {
   }
 
   if (passwordRequired && !authenticated) {
+    const themeStyles = getThemeStyles(gallery?.theme || 'classic');
+    const currentTheme = themes[gallery?.theme || 'classic'];
+    
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
+      <div 
+        className="themed-gallery min-h-screen flex items-center justify-center p-6"
+        style={themeStyles}
+      >
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center border border-zinc-200 rounded-sm">
+            <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center border rounded-sm" style={{ borderColor: currentTheme.colors.accent }}>
               <Lock className="w-8 h-8" strokeWidth={1.5} />
             </div>
             <h1
               className="text-4xl md:text-5xl font-normal tracking-tight mb-4"
-              style={{ fontFamily: 'Playfair Display, serif' }}
+              style={{ fontFamily: currentTheme.fonts.heading }}
             >
               {gallery?.title}
             </h1>
-            <p className="text-base font-light text-zinc-600 mb-2">
+            <p className="text-base font-light mb-2" style={{ color: currentTheme.colors.textLight }}>
               by {gallery?.photographer_name}
             </p>
-            <p className="text-sm text-zinc-500">This gallery is password protected</p>
+            <p className="text-sm" style={{ color: currentTheme.colors.textLight }}>This gallery is password protected</p>
           </div>
 
           <form onSubmit={handlePasswordSubmit} className="space-y-6" data-testid="password-form">
