@@ -484,6 +484,56 @@ const PublicGallery = () => {
         </div>
       )}
 
+      {showDownloadAllModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-sm max-w-md w-full p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
+                Download All Photos
+              </h3>
+              <button onClick={() => setShowDownloadAllModal(false)}>
+                <X className="w-6 h-6" strokeWidth={1.5} />
+              </button>
+            </div>
+            <form onSubmit={handleDownloadAll} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">Enter Download Password</label>
+                <input
+                  data-testid="download-all-password-input"
+                  type="password"
+                  value={downloadAllPassword}
+                  onChange={(e) => setDownloadAllPassword(e.target.value)}
+                  className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
+                  placeholder="Download password"
+                  required
+                  autoFocus
+                />
+                <p className="text-xs text-zinc-500 mt-2">
+                  This password was provided by the photographer
+                </p>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowDownloadAllModal(false)}
+                  className="border border-input h-10 px-6 rounded-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  data-testid="download-all-submit-button"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 rounded-sm font-medium flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" strokeWidth={1.5} />
+                  Download
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <footer className="border-t border-zinc-200 py-8 mt-12">
         <div className="max-w-screen-2xl mx-auto px-6 md:px-12 text-center text-sm text-zinc-500">
           <p>© 2024 PhotoShare. Built for photographers.</p>
