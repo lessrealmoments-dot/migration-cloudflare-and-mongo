@@ -12,7 +12,12 @@ const CreateGallery = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    password: ''
+    password: '',
+    event_title: '',
+    event_date: '',
+    share_link_expiration_days: 30,
+    guest_upload_enabled_days: 3,
+    download_all_password: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +30,12 @@ const CreateGallery = () => {
       const payload = {
         title: formData.title,
         description: formData.description || null,
-        password: formData.password || null
+        password: formData.password || null,
+        event_title: formData.event_title || null,
+        event_date: formData.event_date || null,
+        share_link_expiration_days: parseInt(formData.share_link_expiration_days),
+        guest_upload_enabled_days: parseInt(formData.guest_upload_enabled_days),
+        download_all_password: formData.download_all_password || null
       };
 
       const response = await axios.post(`${API}/galleries`, payload, {
@@ -84,9 +94,38 @@ const CreateGallery = () => {
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200 focus:border-primary"
-              placeholder="e.g., Wedding - Sarah & John"
+              placeholder="e.g., Sarah & John Wedding Gallery"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Event Title</label>
+            <input
+              data-testid="event-title-input"
+              type="text"
+              value={formData.event_title}
+              onChange={(e) => setFormData({ ...formData, event_title: e.target.value })}
+              className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200 focus:border-primary"
+              placeholder="e.g., Sarah & John's Wedding"
+            />
+            <p className="text-xs text-zinc-500 mt-2">
+              The event name that will be displayed to guests
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Event Date</label>
+            <input
+              data-testid="event-date-input"
+              type="date"
+              value={formData.event_date}
+              onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
+              className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200 focus:border-primary"
+            />
+            <p className="text-xs text-zinc-500 mt-2">
+              Guest upload window will be calculated from this date
+            </p>
           </div>
 
           <div>
@@ -100,8 +139,48 @@ const CreateGallery = () => {
             />
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">Share Link Expiration</label>
+              <select
+                data-testid="share-link-expiration-select"
+                value={formData.share_link_expiration_days}
+                onChange={(e) => setFormData({ ...formData, share_link_expiration_days: e.target.value })}
+                className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200 focus:border-primary"
+              >
+                <option value="30">30 days</option>
+                <option value="60">60 days</option>
+                <option value="90">90 days</option>
+              </select>
+              <p className="text-xs text-zinc-500 mt-2">
+                Gallery access will expire after this period
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Guest Upload Window</label>
+              <select
+                data-testid="guest-upload-window-select"
+                value={formData.guest_upload_enabled_days}
+                onChange={(e) => setFormData({ ...formData, guest_upload_enabled_days: e.target.value })}
+                className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200 focus:border-primary"
+              >
+                <option value="1">1 day after event</option>
+                <option value="2">2 days after event</option>
+                <option value="3">3 days after event</option>
+                <option value="4">4 days after event</option>
+                <option value="5">5 days after event</option>
+                <option value="6">6 days after event</option>
+                <option value="7">7 days after event</option>
+              </select>
+              <p className="text-xs text-zinc-500 mt-2">
+                How long guests can upload photos after the event
+              </p>
+            </div>
+          </div>
+
           <div>
-            <label className="block text-sm font-medium mb-2">Password Protection (Optional)</label>
+            <label className="block text-sm font-medium mb-2">Gallery Password (Optional)</label>
             <input
               data-testid="gallery-password-input"
               type="password"
@@ -112,6 +191,21 @@ const CreateGallery = () => {
             />
             <p className="text-xs text-zinc-500 mt-2">
               If set, guests will need this password to view and upload photos
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Download All Password (Optional)</label>
+            <input
+              data-testid="download-all-password-input"
+              type="password"
+              value={formData.download_all_password}
+              onChange={(e) => setFormData({ ...formData, download_all_password: e.target.value })}
+              className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200 focus:border-primary"
+              placeholder="Password for bulk download"
+            />
+            <p className="text-xs text-zinc-500 mt-2">
+              Separate password for the celebrant to download all photos at once
             </p>
           </div>
 
