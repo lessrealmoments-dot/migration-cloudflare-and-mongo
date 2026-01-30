@@ -532,14 +532,19 @@ const GalleryDetail = () => {
                 {sections.length > 0 ? 'Unsorted' : 'All Photos'} ({getPhotosWithoutSection().length})
               </h4>
               <div className="masonry-grid">
-                {getPhotosWithoutSection().map((photo) => (
-                  <PhotoItem
-                    key={photo.id}
-                    photo={photo}
-                    onDelete={handleDelete}
-                    onView={setSelectedPhoto}
-                  />
-                ))}
+                {getPhotosWithoutSection().map((photo) => {
+                  const photographerPhotos = photos.filter(p => p.uploaded_by === 'photographer');
+                  const photoIndex = photographerPhotos.findIndex(p => p.id === photo.id);
+                  return (
+                    <PhotoItem
+                      key={photo.id}
+                      photo={photo}
+                      photoIndex={photoIndex}
+                      onDelete={handleDelete}
+                      onView={setLightboxIndex}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
