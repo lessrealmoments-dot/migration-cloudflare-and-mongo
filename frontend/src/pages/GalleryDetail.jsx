@@ -19,6 +19,7 @@ const GalleryDetail = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const [newSectionName, setNewSectionName] = useState('');
   const [showSectionForm, setShowSectionForm] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
