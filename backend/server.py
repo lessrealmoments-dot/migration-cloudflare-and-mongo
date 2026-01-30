@@ -58,6 +58,11 @@ class GalleryCreate(BaseModel):
     title: str
     description: Optional[str] = None
     password: Optional[str] = None
+    event_title: Optional[str] = None
+    event_date: Optional[str] = None
+    share_link_expiration_days: int = 30
+    guest_upload_enabled_days: int = 3
+    download_all_password: Optional[str] = None
 
 class Gallery(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -68,6 +73,12 @@ class Gallery(BaseModel):
     has_password: bool
     share_link: str
     cover_photo_url: Optional[str] = None
+    event_title: Optional[str] = None
+    event_date: Optional[str] = None
+    share_link_expiration_date: Optional[str] = None
+    guest_upload_expiration_date: Optional[str] = None
+    guest_upload_enabled: bool = True
+    has_download_all_password: bool = False
     created_at: str
     photo_count: int = 0
 
@@ -75,6 +86,11 @@ class GalleryUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     password: Optional[str] = None
+    event_title: Optional[str] = None
+    event_date: Optional[str] = None
+    share_link_expiration_days: Optional[int] = None
+    guest_upload_enabled_days: Optional[int] = None
+    download_all_password: Optional[str] = None
 
 class Section(BaseModel):
     id: str
