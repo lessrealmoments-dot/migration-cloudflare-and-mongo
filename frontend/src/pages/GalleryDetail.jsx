@@ -237,7 +237,8 @@ const GalleryDetail = () => {
         event_date: editFormData.event_date || null,
         description: editFormData.description || null,
         share_link_expiration_days: parseInt(editFormData.share_link_expiration_days),
-        guest_upload_enabled_days: parseInt(editFormData.guest_upload_enabled_days)
+        guest_upload_enabled_days: parseInt(editFormData.guest_upload_enabled_days),
+        theme: editFormData.theme
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
