@@ -221,7 +221,8 @@ const GalleryDetail = () => {
       event_date: gallery.event_date || '',
       description: gallery.description || '',
       share_link_expiration_days: 30,
-      guest_upload_enabled_days: 3
+      guest_upload_enabled_days: 3,
+      theme: gallery.theme || 'classic'
     });
     setShowEditModal(true);
   };
