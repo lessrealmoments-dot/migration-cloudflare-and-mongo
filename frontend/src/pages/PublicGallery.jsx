@@ -284,15 +284,15 @@ const PublicGallery = () => {
               >
                 {gallery?.title}
               </h1>
-              <p className="text-sm text-zinc-500">by {gallery?.photographer_name}</p>
+              <p className="text-sm" style={{ color: currentTheme.colors.textLight }}>by {gallery?.photographer_name}</p>
             </div>
-            <Camera className="w-6 h-6 text-zinc-400" strokeWidth={1.5} />
+            <Camera className="w-6 h-6" strokeWidth={1.5} style={{ color: currentTheme.colors.accent }} />
           </div>
         </div>
       </nav>
 
       {gallery?.cover_photo_url && (
-        <div className="w-full h-64 md:h-96 overflow-hidden border-b border-zinc-200">
+        <div className="w-full h-64 md:h-96 overflow-hidden" style={{ borderBottom: `1px solid ${currentTheme.colors.accent}` }}>
           <img
             src={`${BACKEND_URL}${gallery.cover_photo_url}`}
             alt="Cover"
