@@ -212,6 +212,33 @@ const CreateGallery = () => {
             </p>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium mb-4">Gallery Theme</label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {Object.entries(themes).map(([key, theme]) => (
+                <div
+                  key={key}
+                  data-testid={`theme-${key}`}
+                  onClick={() => setFormData({ ...formData, theme: key })}
+                  className={`cursor-pointer border-2 rounded-sm p-3 transition-all duration-300 hover:shadow-md ${
+                    formData.theme === key ? 'border-primary bg-zinc-50' : 'border-zinc-200'
+                  }`}
+                >
+                  <img 
+                    src={theme.preview} 
+                    alt={theme.name}
+                    className="w-full h-24 object-cover rounded-sm mb-2"
+                  />
+                  <h4 className="font-medium text-sm mb-1">{theme.name}</h4>
+                  <p className="text-xs text-zinc-500">{theme.description}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-zinc-500 mt-2">
+              Choose a theme that matches your event style
+            </p>
+          </div>
+
           <div className="flex gap-4">
             <button
               data-testid="create-gallery-submit-button"
