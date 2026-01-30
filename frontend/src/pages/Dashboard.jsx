@@ -117,27 +117,42 @@ const Dashboard = ({ user, setUser }) => {
                 key={gallery.id}
                 data-testid={`gallery-card-${gallery.id}`}
                 onClick={() => navigate(`/gallery/${gallery.id}`)}
-                className="rounded-sm border border-zinc-200 bg-white text-card-foreground shadow-sm p-6 cursor-pointer hover:shadow-md transition-all duration-300"
+                className="rounded-sm border border-zinc-200 bg-white text-card-foreground shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300"
               >
-                <div className="flex justify-between items-start mb-4">
-                  <h3
-                    className="text-2xl md:text-3xl font-normal"
-                    style={{ fontFamily: 'Playfair Display, serif' }}
-                  >
-                    {gallery.title}
-                  </h3>
-                  {gallery.has_password && (
-                    <Lock className="w-5 h-5 text-zinc-400" strokeWidth={1.5} />
-                  )}
-                </div>
-                {gallery.description && (
-                  <p className="text-sm text-zinc-600 mb-4 line-clamp-2">{gallery.description}</p>
+                {gallery.cover_photo_url ? (
+                  <div className="w-full h-48 overflow-hidden">
+                    <img
+                      src={`${process.env.REACT_APP_BACKEND_URL}${gallery.cover_photo_url}`}
+                      alt={gallery.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-48 bg-zinc-100 flex items-center justify-center">
+                    <ImageIcon className="w-16 h-16 text-zinc-300" strokeWidth={1.5} />
+                  </div>
                 )}
-                <div className="flex justify-between items-center text-sm text-zinc-500">
-                  <span>{gallery.photo_count} photos</span>
-                  <span className="text-xs uppercase tracking-wider">
-                    {new Date(gallery.created_at).toLocaleDateString()}
-                  </span>
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3
+                      className="text-2xl md:text-3xl font-normal"
+                      style={{ fontFamily: 'Playfair Display, serif' }}
+                    >
+                      {gallery.title}
+                    </h3>
+                    {gallery.has_password && (
+                      <Lock className="w-5 h-5 text-zinc-400" strokeWidth={1.5} />
+                    )}
+                  </div>
+                  {gallery.description && (
+                    <p className="text-sm text-zinc-600 mb-4 line-clamp-2">{gallery.description}</p>
+                  )}
+                  <div className="flex justify-between items-center text-sm text-zinc-500">
+                    <span>{gallery.photo_count} photos</span>
+                    <span className="text-xs uppercase tracking-wider">
+                      {new Date(gallery.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
