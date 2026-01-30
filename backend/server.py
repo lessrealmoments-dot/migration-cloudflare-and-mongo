@@ -214,11 +214,22 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
 
 @api_router.get("/galleries", response_model=List[Gallery])
 async def get_galleries(current_user: dict = Depends(get_current_user)):
-    galleries = await db.galleries.find({"photographer_id": current_user["id"]}, {"_id": 0}).to_list(1000)
+    pipeline = [
+        {"$match": {"photographer_id": current_user["id"]}},
+        {"$lookup": {
+            "from": "photos",
+            "localField": "id",
+            "foreignField": "gallery_id",
+            "as": "photos"
+        }},
+        {"$addFields": {"photo_count": {"$size": "$photos"}}},
+        {"$project": {"_id": 0, "photos": 0}}
+    ]
+    
+    galleries = await db.galleries.aggregate(pipeline).to_list(1000)
     
     result = []
     for g in galleries:
-        photo_count = await db.photos.count_documents({"gallery_id": g["id"]})
         result.append(Gallery(
             id=g["id"],
             photographer_id=g["photographer_id"],
@@ -228,7 +239,7 @@ async def get_galleries(current_user: dict = Depends(get_current_user)):
             share_link=g["share_link"],
             cover_photo_url=g.get("cover_photo_url"),
             created_at=g["created_at"],
-            photo_count=photo_count
+            photo_count=g.get("photo_count", 0)
         ))
     
     return result
