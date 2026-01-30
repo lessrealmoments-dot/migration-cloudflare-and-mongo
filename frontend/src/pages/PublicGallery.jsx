@@ -134,6 +134,31 @@ const PublicGallery = () => {
     }
   };
 
+  const handleDownloadAll = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(
+        `${API}/public/gallery/${shareLink}/download-all`,
+        { password: downloadAllPassword },
+        { responseType: 'blob' }
+      );
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${gallery.title}_all_photos.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast.success('All photos downloaded!');
+      setShowDownloadAllModal(false);
+      setDownloadAllPassword('');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Invalid password or download failed');
+    }
+  };
+
   const getPhotosBySection = (sectionId) => {
     return photos.filter(p => p.section_id === sectionId && p.uploaded_by === 'photographer');
   };
