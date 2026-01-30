@@ -297,17 +297,18 @@ const PublicGallery = () => {
         )}
 
         {!gallery?.is_expired && (
-          <div className="mb-12">
-            <button
-              data-testid="guest-upload-toggle"
-              onClick={() => setGuestUploadExpanded(!guestUploadExpanded)}
-              disabled={!gallery?.guest_upload_enabled}
-              className={`w-full border border-zinc-200 rounded-sm p-6 transition-all duration-300 flex items-center justify-between ${
-                gallery?.guest_upload_enabled
-                  ? 'bg-zinc-50 hover:bg-zinc-100 cursor-pointer'
-                  : 'bg-zinc-100 cursor-not-allowed opacity-60'
-              }`}
-            >
+          <>
+            <div className="mb-12">
+              <button
+                data-testid="guest-upload-toggle"
+                onClick={() => setGuestUploadExpanded(!guestUploadExpanded)}
+                disabled={!gallery?.guest_upload_enabled}
+                className={`w-full border border-zinc-200 rounded-sm p-6 transition-all duration-300 flex items-center justify-between ${
+                  gallery?.guest_upload_enabled
+                    ? 'bg-zinc-50 hover:bg-zinc-100 cursor-pointer'
+                    : 'bg-zinc-100 cursor-not-allowed opacity-60'
+                }`}
+              >
           >
             <div className="flex items-center gap-3">
               <Upload className="w-6 h-6 text-zinc-600" strokeWidth={1.5} />
