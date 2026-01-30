@@ -136,22 +136,36 @@ const PublicGallery = () => {
 
   const handleDownloadAll = async (e) => {
     e.preventDefault();
+    
     try {
       const response = await axios.post(
         `${API}/public/gallery/${shareLink}/download-all`,
         { password: downloadAllPassword },
-        { responseType: 'blob' }
+        { 
+          responseType: 'blob',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
       
-      // Create blob with proper type
+      // Create blob and download
       const blob = new Blob([response.data], { type: 'application/zip' });
       const url = window.URL.createObjectURL(blob);
-      
-      // Create temporary link and trigger download
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${gallery.title.replace(/[^a-z0-9]/gi, '_')}_all_photos.zip`;
-      link.style.display = 'none';
+      
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `${gallery?.title || 'gallery'}_photos.zip`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+      
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       
@@ -168,6 +182,8 @@ const PublicGallery = () => {
       console.error('Download all error:', error);
       if (error.response?.status === 401) {
         toast.error('Invalid download password');
+      } else if (error.response?.status === 403) {
+        toast.error('Download all is not enabled for this gallery');
       } else {
         toast.error('Download failed. Please try again.');
       }
