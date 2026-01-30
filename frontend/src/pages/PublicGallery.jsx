@@ -156,19 +156,34 @@ const PublicGallery = () => {
         { responseType: 'blob' }
       );
       
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Create blob with proper type
+      const blob = new Blob([response.data], { type: 'application/zip' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create temporary link and trigger download
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${gallery.title}_all_photos.zip`);
+      link.download = `${gallery.title.replace(/[^a-z0-9]/gi, '_')}_all_photos.zip`;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
       
       toast.success('All photos downloaded!');
       setShowDownloadAllModal(false);
       setDownloadAllPassword('');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Invalid password or download failed');
+      console.error('Download all error:', error);
+      if (error.response?.status === 401) {
+        toast.error('Invalid download password');
+      } else {
+        toast.error('Download failed. Please try again.');
+      }
     }
   };
 
