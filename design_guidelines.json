@@ -1,0 +1,126 @@
+{
+  "identity": {
+    "name": "E1",
+    "role": "Anti-AI Designer",
+    "mission": "Create a photography platform that feels like a high-end art gallery, not a SaaS tool.",
+    "principles": [
+      "Content is King: The UI must recede. Photos are the heroes.",
+      "White Space is Luxury: Use 3x more padding than standard.",
+      "Typography as Art: Headings are graphical elements.",
+      "Interaction over Decoration: Micro-interactions define quality."
+    ]
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Playfair Display, serif",
+      "body": "Manrope, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-5xl md:text-7xl font-medium tracking-tight leading-tight",
+      "h2": "text-4xl md:text-5xl font-normal tracking-tight",
+      "h3": "text-2xl md:text-3xl font-normal",
+      "body_lg": "text-lg md:text-xl font-light leading-relaxed",
+      "body_base": "text-base font-light leading-relaxed",
+      "caption": "text-xs uppercase tracking-[0.2em] font-medium text-muted-foreground"
+    },
+    "weights": {
+      "heading": "font-medium",
+      "body": "font-light"
+    }
+  },
+  "colors": {
+    "theme": "light",
+    "palette": {
+      "background": "#ffffff",
+      "foreground": "#18181b",
+      "primary": "#18181b",
+      "primary_foreground": "#ffffff",
+      "secondary": "#f4f4f5",
+      "secondary_foreground": "#18181b",
+      "muted": "#f4f4f5",
+      "muted_foreground": "#71717a",
+      "accent": "#f4f4f5",
+      "accent_foreground": "#18181b",
+      "border": "#e4e4e7",
+      "input": "#e4e4e7",
+      "ring": "#18181b"
+    },
+    "usage": {
+      "dashboard_bg": "bg-zinc-50/50",
+      "card_bg": "bg-white",
+      "gallery_bg": "bg-white",
+      "sidebar_bg": "bg-white border-r border-zinc-100"
+    }
+  },
+  "visual_enhancers": {
+    "radius": "rounded-sm",
+    "shadows": {
+      "card": "shadow-sm",
+      "hover": "shadow-md",
+      "dropdown": "shadow-lg border border-zinc-100"
+    },
+    "borders": "border border-zinc-200",
+    "glass": "backdrop-blur-md bg-white/80 border-b border-white/20"
+  },
+  "layout_strategies": {
+    "marketing": {
+      "grid": "grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12",
+      "container": "max-w-screen-2xl mx-auto px-6 md:px-12",
+      "spacing": "py-24 md:py-32"
+    },
+    "dashboard": {
+      "structure": "flex h-screen overflow-hidden bg-zinc-50/30",
+      "sidebar": "w-64 hidden md:flex flex-col border-r border-zinc-200 bg-white",
+      "main": "flex-1 overflow-y-auto p-8 md:p-12"
+    },
+    "gallery": {
+      "grid": "columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4",
+      "item": "break-inside-avoid mb-4"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300",
+      "ghost": "hover:bg-zinc-100 text-foreground h-10 px-6 rounded-sm font-medium transition-all duration-300",
+      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-8 rounded-sm transition-all duration-300"
+    },
+    "inputs": {
+      "default": "flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 focus:border-primary"
+    },
+    "cards": {
+      "default": "rounded-sm border border-zinc-200 bg-white text-card-foreground shadow-sm p-6"
+    }
+  },
+  "image_urls": {
+    "hero": [
+      "https://images.unsplash.com/photo-1730476513367-16fe58a8a653?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1729948552636-fe6f7cc88f4a?crop=entropy&cs=srgb&fm=jpg&q=85"
+    ],
+    "gallery_samples": [
+      "https://images.unsplash.com/photo-1700639491303-a177c4402501?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1715331211281-bad87c23d24b?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1571273033940-89c3e9bb18b0?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1677853220358-a888c4365661?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1610380123149-fba11fb20792?crop=entropy&cs=srgb&fm=jpg&q=85"
+    ]
+  },
+  "instructions_to_main_agent": {
+    "general": "You are building a high-end photography platform. The aesthetic must be 'Invisible UI' - the interface should disappear to let the photos shine. Use lots of white space. Do not use gradients. Do not use rounded corners larger than 4px (sm).",
+    "marketing_page": "Use the 'Tetris' grid for the hero section. Mix large serif headings with small, wide-tracked sans-serif labels. Use the wedding portrait images for the hero.",
+    "dashboard": "Keep it extremely clean. White background, thin grey borders. No heavy shadows. Use the 'High Density Grid' for the gallery list.",
+    "gallery_view": "This is the most important page. It must look like a museum wall. Use a masonry layout. Allow the user to toggle between 'Grid' and 'Filmstrip' views if possible.",
+    "guest_upload": "Make this experience seamless. A large, elegant drop zone. Minimal form fields.",
+    "animations": "Use 'framer-motion' for page transitions. Images should fade in slowly (duration: 0.8s) when they load. Hover effects on images should be subtle (slight scale up 1.02, slight brightness increase)."
+  },
+  "universal_guidelines": [
+    "Do not use 'Inter' for headings. Use 'Playfair Display'.",
+    "Do not use generic blue for primary actions. Use Black (#18181b).",
+    "Ensure all interactive elements have `data-testid`.",
+    "Use `sonner` for toasts.",
+    "Use `lucide-react` for icons (stroke width 1.5px for elegance).",
+    "Never use pure black (#000000) for text, use #18181b.",
+    "Never use pure white (#ffffff) for dashboard background, use #f9fafb (zinc-50)."
+  ]
+}
