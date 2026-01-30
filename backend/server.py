@@ -119,6 +119,11 @@ class PublicGallery(BaseModel):
     has_password: bool
     cover_photo_url: Optional[str] = None
     sections: List[Section] = []
+    event_title: Optional[str] = None
+    event_date: Optional[str] = None
+    is_expired: bool = False
+    guest_upload_enabled: bool = True
+    has_download_all_password: bool = False
     photo_count: int = 0
 
 def hash_password(password: str) -> str:
