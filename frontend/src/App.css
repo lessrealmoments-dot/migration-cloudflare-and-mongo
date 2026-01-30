@@ -67,3 +67,49 @@ button {
 .masonry-item:hover img {
   transform: scale(1.02);
 }
+
+.themed-gallery {
+  background: var(--theme-background);
+  color: var(--theme-text);
+  min-height: 100vh;
+}
+
+.themed-gallery h1, 
+.themed-gallery h2, 
+.themed-gallery h3, 
+.themed-gallery h4, 
+.themed-gallery h5, 
+.themed-gallery h6 {
+  font-family: var(--theme-font-heading);
+  color: var(--theme-text);
+}
+
+.themed-gallery p, 
+.themed-gallery span,
+.themed-gallery button,
+.themed-gallery input,
+.themed-gallery textarea {
+  font-family: var(--theme-font-body);
+}
+
+.themed-gallery .theme-primary-bg {
+  background-color: var(--theme-primary);
+  color: var(--theme-background);
+}
+
+.themed-gallery .theme-accent {
+  color: var(--theme-accent);
+}
+
+.themed-gallery .theme-border {
+  border-color: var(--theme-accent);
+}
+
+.themed-gallery button.bg-primary {
+  background-color: var(--theme-primary);
+  color: var(--theme-background);
+}
+
+.themed-gallery button.bg-primary:hover {
+  opacity: 0.9;
+}
