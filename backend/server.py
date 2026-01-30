@@ -536,6 +536,24 @@ async def get_public_gallery(share_link: str):
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
+    is_expired = False
+    if gallery.get("share_link_expiration_date"):
+        try:
+            expiration_dt = datetime.fromisoformat(gallery["share_link_expiration_date"])
+            if datetime.now(timezone.utc) > expiration_dt:
+                is_expired = True
+        except:
+            pass
+    
+    guest_upload_enabled = True
+    if gallery.get("guest_upload_expiration_date"):
+        try:
+            upload_expiration_dt = datetime.fromisoformat(gallery["guest_upload_expiration_date"])
+            if datetime.now(timezone.utc) > upload_expiration_dt:
+                guest_upload_enabled = False
+        except:
+            pass
+    
     photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
     photo_count = await db.photos.count_documents({"gallery_id": gallery["id"]})
     sections = gallery.get("sections", [])
@@ -548,6 +566,11 @@ async def get_public_gallery(share_link: str):
         has_password=gallery.get("password") is not None,
         cover_photo_url=gallery.get("cover_photo_url"),
         sections=[Section(**s) for s in sections],
+        event_title=gallery.get("event_title"),
+        event_date=gallery.get("event_date"),
+        is_expired=is_expired,
+        guest_upload_enabled=guest_upload_enabled,
+        has_download_all_password=gallery.get("download_all_password") is not None,
         photo_count=photo_count
     )
 
