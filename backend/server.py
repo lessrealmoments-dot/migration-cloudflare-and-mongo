@@ -193,6 +193,8 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         "description": gallery_data.description,
         "password": hash_password(gallery_data.password) if gallery_data.password else None,
         "share_link": share_link,
+        "cover_photo_url": None,
+        "sections": [],
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -205,6 +207,7 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         description=gallery_data.description,
         has_password=gallery_data.password is not None,
         share_link=share_link,
+        cover_photo_url=None,
         created_at=gallery_doc["created_at"],
         photo_count=0
     )
