@@ -67,6 +67,7 @@ class Gallery(BaseModel):
     description: Optional[str] = None
     has_password: bool
     share_link: str
+    cover_photo_url: Optional[str] = None
     created_at: str
     photo_count: int = 0
 
@@ -75,6 +76,11 @@ class GalleryUpdate(BaseModel):
     description: Optional[str] = None
     password: Optional[str] = None
 
+class Section(BaseModel):
+    id: str
+    name: str
+    order: int
+
 class Photo(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
@@ -82,6 +88,7 @@ class Photo(BaseModel):
     filename: str
     url: str
     uploaded_by: str
+    section_id: Optional[str] = None
     uploaded_at: str
 
 class PasswordVerify(BaseModel):
