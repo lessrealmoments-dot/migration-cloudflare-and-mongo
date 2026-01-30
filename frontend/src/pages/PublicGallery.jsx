@@ -265,14 +265,21 @@ const PublicGallery = () => {
     );
   }
 
+  const themeStyles = getThemeStyles(gallery?.theme || 'classic');
+  const currentTheme = themes[gallery?.theme || 'classic'];
+
   return (
-    <div className="min-h-screen bg-white">
-      <nav className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-40">
+    <div className="themed-gallery min-h-screen" style={themeStyles}>
+      <nav className="border-b backdrop-blur-md sticky top-0 z-40" style={{ 
+        borderColor: currentTheme.colors.accent,
+        backgroundColor: `${currentTheme.colors.background}cc`
+      }}>
         <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-6">
           <div className="flex justify-between items-center">
             <div>
               <h1
                 className="text-2xl font-medium"
+                style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
                 style={{ fontFamily: 'Playfair Display, serif' }}
               >
                 {gallery?.title}
