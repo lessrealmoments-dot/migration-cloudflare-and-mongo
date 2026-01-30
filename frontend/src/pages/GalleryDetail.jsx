@@ -547,26 +547,15 @@ const GalleryDetail = () => {
         </div>
       </div>
 
-      {selectedPhoto && (
-        <div
-          data-testid="photo-lightbox"
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <button
-            data-testid="close-lightbox-button"
-            className="absolute top-6 right-6 text-white hover:text-zinc-300 transition-colors"
-            onClick={() => setSelectedPhoto(null)}
-          >
-            <X className="w-8 h-8" strokeWidth={1.5} />
-          </button>
-          <img
-            src={`${BACKEND_URL}${selectedPhoto.url}`}
-            alt="Full size"
-            className="max-w-full max-h-full object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
+      {/* Premium Lightbox */}
+      {lightboxIndex !== null && (
+        <PremiumLightbox
+          photos={photos.filter(p => p.uploaded_by === 'photographer')}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onDownload={null}
+          backendUrl={BACKEND_URL}
+        />
       )}
 
       {showEditModal && (
