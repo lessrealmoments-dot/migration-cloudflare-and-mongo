@@ -240,6 +240,7 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         "guest_upload_expiration_date": guest_upload_expiration_date,
         "guest_upload_enabled_days": gallery_data.guest_upload_enabled_days,
         "download_all_password": hash_password(gallery_data.download_all_password) if gallery_data.download_all_password else None,
+        "theme": gallery_data.theme,
         "created_at": created_at.isoformat()
     }
     
