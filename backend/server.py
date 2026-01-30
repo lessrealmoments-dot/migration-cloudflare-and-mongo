@@ -80,6 +80,7 @@ class Gallery(BaseModel):
     guest_upload_expiration_date: Optional[str] = None
     guest_upload_enabled: bool = True
     has_download_all_password: bool = False
+    theme: str = "classic"
     created_at: str
     photo_count: int = 0
 
@@ -92,6 +93,7 @@ class GalleryUpdate(BaseModel):
     share_link_expiration_days: Optional[int] = None
     guest_upload_enabled_days: Optional[int] = None
     download_all_password: Optional[str] = None
+    theme: Optional[str] = None
 
 class Section(BaseModel):
     id: str
