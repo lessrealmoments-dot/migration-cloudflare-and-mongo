@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
 import { Lock, Upload, Download, X, Camera, ChevronDown, ChevronUp } from 'lucide-react';
 import { getThemeStyles, themes } from '@/themes';
+import PremiumLightbox from '@/components/PremiumLightbox';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
