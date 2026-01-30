@@ -127,6 +127,7 @@ class PublicGallery(BaseModel):
     is_expired: bool = False
     guest_upload_enabled: bool = True
     has_download_all_password: bool = False
+    theme: str = "classic"
     photo_count: int = 0
 
 def hash_password(password: str) -> str:
