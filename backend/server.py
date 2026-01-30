@@ -206,6 +206,19 @@ async def get_me(current_user: dict = Depends(get_current_user)):
 async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depends(get_current_user)):
     gallery_id = str(uuid.uuid4())
     share_link = str(uuid.uuid4())[:8]
+    created_at = datetime.now(timezone.utc)
+    
+    share_link_expiration_date = None
+    if gallery_data.share_link_expiration_days > 0:
+        share_link_expiration_date = (created_at + timedelta(days=gallery_data.share_link_expiration_days)).isoformat()
+    
+    guest_upload_expiration_date = None
+    if gallery_data.event_date and gallery_data.guest_upload_enabled_days > 0:
+        try:
+            event_dt = datetime.fromisoformat(gallery_data.event_date.replace('Z', '+00:00'))
+            guest_upload_expiration_date = (event_dt + timedelta(days=gallery_data.guest_upload_enabled_days)).isoformat()
+        except:
+            pass
     
     gallery_doc = {
         "id": gallery_id,
@@ -216,7 +229,14 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         "share_link": share_link,
         "cover_photo_url": None,
         "sections": [],
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "event_title": gallery_data.event_title,
+        "event_date": gallery_data.event_date,
+        "share_link_expiration_date": share_link_expiration_date,
+        "share_link_expiration_days": gallery_data.share_link_expiration_days,
+        "guest_upload_expiration_date": guest_upload_expiration_date,
+        "guest_upload_enabled_days": gallery_data.guest_upload_enabled_days,
+        "download_all_password": hash_password(gallery_data.download_all_password) if gallery_data.download_all_password else None,
+        "created_at": created_at.isoformat()
     }
     
     await db.galleries.insert_one(gallery_doc)
@@ -229,6 +249,12 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         has_password=gallery_data.password is not None,
         share_link=share_link,
         cover_photo_url=None,
+        event_title=gallery_data.event_title,
+        event_date=gallery_data.event_date,
+        share_link_expiration_date=share_link_expiration_date,
+        guest_upload_expiration_date=guest_upload_expiration_date,
+        guest_upload_enabled=True,
+        has_download_all_password=gallery_data.download_all_password is not None,
         created_at=gallery_doc["created_at"],
         photo_count=0
     )
