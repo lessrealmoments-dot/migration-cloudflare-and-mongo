@@ -19,6 +19,8 @@ const PublicGallery = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [guestUploadExpanded, setGuestUploadExpanded] = useState(false);
+  const [showDownloadAllModal, setShowDownloadAllModal] = useState(false);
+  const [downloadAllPassword, setDownloadAllPassword] = useState('');
 
   useEffect(() => {
     fetchGalleryInfo();
