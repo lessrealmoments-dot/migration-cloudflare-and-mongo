@@ -539,7 +539,9 @@ async def get_public_gallery(share_link: str):
     is_expired = False
     if gallery.get("share_link_expiration_date"):
         try:
-            expiration_dt = datetime.fromisoformat(gallery["share_link_expiration_date"])
+            expiration_dt = datetime.fromisoformat(gallery["share_link_expiration_date"].replace('Z', '+00:00'))
+            if expiration_dt.tzinfo is None:
+                expiration_dt = expiration_dt.replace(tzinfo=timezone.utc)
             if datetime.now(timezone.utc) > expiration_dt:
                 is_expired = True
         except:
@@ -548,7 +550,9 @@ async def get_public_gallery(share_link: str):
     guest_upload_enabled = True
     if gallery.get("guest_upload_expiration_date"):
         try:
-            upload_expiration_dt = datetime.fromisoformat(gallery["guest_upload_expiration_date"])
+            upload_expiration_dt = datetime.fromisoformat(gallery["guest_upload_expiration_date"].replace('Z', '+00:00'))
+            if upload_expiration_dt.tzinfo is None:
+                upload_expiration_dt = upload_expiration_dt.replace(tzinfo=timezone.utc)
             if datetime.now(timezone.utc) > upload_expiration_dt:
                 guest_upload_enabled = False
         except:
