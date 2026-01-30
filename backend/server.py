@@ -301,8 +301,78 @@ async def delete_gallery(gallery_id: str, current_user: dict = Depends(get_curre
     
     return {"message": "Gallery deleted"}
 
+@api_router.post("/galleries/{gallery_id}/cover-photo")
+async def upload_cover_photo(gallery_id: str, file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    if not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Only image files are allowed")
+    
+    if gallery.get("cover_photo_url"):
+        old_filename = gallery["cover_photo_url"].split('/')[-1]
+        old_file_path = UPLOAD_DIR / old_filename
+        if old_file_path.exists():
+            old_file_path.unlink()
+    
+    photo_id = str(uuid.uuid4())
+    file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    filename = f"cover_{photo_id}.{file_ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    cover_url = f"/api/photos/serve/{filename}"
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"cover_photo_url": cover_url}})
+    
+    return {"cover_photo_url": cover_url}
+
+@api_router.post("/galleries/{gallery_id}/sections", response_model=Section)
+async def create_section(gallery_id: str, name: str = Form(...), current_user: dict = Depends(get_current_user)):
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    section_id = str(uuid.uuid4())
+    sections = gallery.get("sections", [])
+    new_section = {
+        "id": section_id,
+        "name": name,
+        "order": len(sections)
+    }
+    sections.append(new_section)
+    
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    return Section(**new_section)
+
+@api_router.get("/galleries/{gallery_id}/sections", response_model=List[Section])
+async def get_sections(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    sections = gallery.get("sections", [])
+    return [Section(**s) for s in sections]
+
+@api_router.delete("/galleries/{gallery_id}/sections/{section_id}")
+async def delete_section(gallery_id: str, section_id: str, current_user: dict = Depends(get_current_user)):
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    sections = gallery.get("sections", [])
+    sections = [s for s in sections if s["id"] != section_id]
+    
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    await db.photos.update_many({"gallery_id": gallery_id, "section_id": section_id}, {"$set": {"section_id": None}})
+    
+    return {"message": "Section deleted"}
+
 @api_router.post("/galleries/{gallery_id}/photos", response_model=Photo)
-async def upload_photo(gallery_id: str, file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id: Optional[str] = Form(None), current_user: dict = Depends(get_current_user)):
     gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
@@ -324,6 +394,7 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), current_us
         "filename": filename,
         "url": f"/api/photos/serve/{filename}",
         "uploaded_by": "photographer",
+        "section_id": section_id,
         "uploaded_at": datetime.now(timezone.utc).isoformat()
     }
     
