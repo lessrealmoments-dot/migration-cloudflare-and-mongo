@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { Lock, Upload, Download, X, Camera } from 'lucide-react';
+import { Lock, Upload, Download, X, Camera, ChevronDown, ChevronUp } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -18,6 +18,7 @@ const PublicGallery = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [guestUploadExpanded, setGuestUploadExpanded] = useState(false);
 
   useEffect(() => {
     fetchGalleryInfo();
@@ -131,6 +132,18 @@ const PublicGallery = () => {
     }
   };
 
+  const getPhotosBySection = (sectionId) => {
+    return photos.filter(p => p.section_id === sectionId && p.uploaded_by === 'photographer');
+  };
+
+  const getPhotosWithoutSection = () => {
+    return photos.filter(p => !p.section_id && p.uploaded_by === 'photographer');
+  };
+
+  const getGuestPhotos = () => {
+    return photos.filter(p => p.uploaded_by === 'guest');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -206,6 +219,16 @@ const PublicGallery = () => {
         </div>
       </nav>
 
+      {gallery?.cover_photo_url && (
+        <div className="w-full h-64 md:h-96 overflow-hidden border-b border-zinc-200">
+          <img
+            src={`${BACKEND_URL}${gallery.cover_photo_url}`}
+            alt="Cover"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
       <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-12">
         {gallery?.description && (
           <div className="mb-12 text-center max-w-2xl mx-auto">
@@ -214,77 +237,144 @@ const PublicGallery = () => {
         )}
 
         <div className="mb-12">
-          <h3
-            className="text-2xl md:text-3xl font-normal mb-6 text-center"
-            style={{ fontFamily: 'Playfair Display, serif' }}
+          <button
+            data-testid="guest-upload-toggle"
+            onClick={() => setGuestUploadExpanded(!guestUploadExpanded)}
+            className="w-full bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-sm p-6 transition-all duration-300 flex items-center justify-between"
           >
-            Upload Your Photos
-          </h3>
-          <div
-            {...getRootProps()}
-            data-testid="guest-upload-dropzone"
-            className={`border-2 border-dashed rounded-sm p-12 text-center cursor-pointer transition-all duration-300 max-w-3xl mx-auto ${
-              isDragActive
-                ? 'border-primary bg-zinc-50'
-                : 'border-zinc-300 hover:border-zinc-400 hover:bg-zinc-50/50'
-            }`}
-          >
-            <input {...getInputProps()} />
-            <Upload className="w-12 h-12 mx-auto mb-4 text-zinc-400" strokeWidth={1.5} />
-            {uploading ? (
-              <p className="text-base font-light text-zinc-600">Uploading photos...</p>
-            ) : isDragActive ? (
-              <p className="text-base font-light text-zinc-600">Drop photos here...</p>
-            ) : (
-              <>
-                <p className="text-base font-light text-zinc-600 mb-2">
-                  Drag & drop your photos here, or click to select
-                </p>
+            <div className="flex items-center gap-3">
+              <Upload className="w-6 h-6 text-zinc-600" strokeWidth={1.5} />
+              <div className="text-left">
+                <h3 className="text-xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  Upload Your Photos
+                </h3>
                 <p className="text-sm text-zinc-500">Share your memories with the photographer</p>
-              </>
+              </div>
+            </div>
+            {guestUploadExpanded ? (
+              <ChevronUp className="w-6 h-6 text-zinc-600" strokeWidth={1.5} />
+            ) : (
+              <ChevronDown className="w-6 h-6 text-zinc-600" strokeWidth={1.5} />
             )}
-          </div>
+          </button>
+
+          {guestUploadExpanded && (
+            <div className="mt-6">
+              <div
+                {...getRootProps()}
+                data-testid="guest-upload-dropzone"
+                className={`border-2 border-dashed rounded-sm p-12 text-center cursor-pointer transition-all duration-300 ${
+                  isDragActive
+                    ? 'border-primary bg-zinc-50'
+                    : 'border-zinc-300 hover:border-zinc-400 hover:bg-zinc-50/50'
+                }`}
+              >
+                <input {...getInputProps()} />
+                <Upload className="w-12 h-12 mx-auto mb-4 text-zinc-400" strokeWidth={1.5} />
+                {uploading ? (
+                  <p className="text-base font-light text-zinc-600">Uploading photos...</p>
+                ) : isDragActive ? (
+                  <p className="text-base font-light text-zinc-600">Drop photos here...</p>
+                ) : (
+                  <>
+                    <p className="text-base font-light text-zinc-600 mb-2">
+                      Drag & drop your photos here, or click to select
+                    </p>
+                    <p className="text-sm text-zinc-500">Support for multiple images</p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
           <h3
-            className="text-2xl md:text-3xl font-normal mb-6 text-center"
+            className="text-3xl md:text-4xl font-normal mb-8 text-center"
             style={{ fontFamily: 'Playfair Display, serif' }}
           >
-            Gallery ({photos.length} {photos.length === 1 ? 'photo' : 'photos'})
+            Gallery
           </h3>
-          {photos.length === 0 ? (
-            <div className="text-center py-20 border border-zinc-200 rounded-sm">
-              <p className="text-zinc-500">No photos yet. Be the first to upload!</p>
-            </div>
-          ) : (
-            <div className="masonry-grid">
-              {photos.map((photo) => (
-                <div
-                  key={photo.id}
-                  data-testid={`public-photo-item-${photo.id}`}
-                  className="masonry-item group relative"
-                  onClick={() => setSelectedPhoto(photo)}
-                >
-                  <img
-                    src={`${BACKEND_URL}${photo.url}`}
-                    alt="Gallery photo"
-                    className="w-full h-auto cursor-pointer rounded-sm"
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center rounded-sm">
-                    <button
-                      data-testid={`download-photo-${photo.id}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(photo);
-                      }}
-                      className="bg-white text-zinc-900 hover:bg-zinc-100 h-10 w-10 rounded-sm flex items-center justify-center transition-all duration-300"
-                    >
-                      <Download className="w-5 h-5" strokeWidth={1.5} />
-                    </button>
+
+          {gallery?.sections && gallery.sections.length > 0 ? (
+            gallery.sections.map((section) => {
+              const sectionPhotos = getPhotosBySection(section.id);
+              if (sectionPhotos.length === 0) return null;
+              
+              return (
+                <div key={section.id} className="mb-16">
+                  <h4
+                    className="text-2xl md:text-3xl font-normal mb-6 text-center"
+                    style={{ fontFamily: 'Playfair Display, serif' }}
+                  >
+                    {section.name}
+                  </h4>
+                  <div className="masonry-grid">
+                    {sectionPhotos.map((photo) => (
+                      <PublicPhotoItem
+                        key={photo.id}
+                        photo={photo}
+                        onView={setSelectedPhoto}
+                        onDownload={handleDownload}
+                      />
+                    ))}
                   </div>
                 </div>
-              ))}
+              );
+            })
+          ) : null}
+
+          {getPhotosWithoutSection().length > 0 && (
+            <div className="mb-16">
+              {gallery?.sections && gallery.sections.length > 0 && (
+                <h4
+                  className="text-2xl md:text-3xl font-normal mb-6 text-center"
+                  style={{ fontFamily: 'Playfair Display, serif' }}
+                >
+                  More Photos
+                </h4>
+              )}
+              <div className="masonry-grid">
+                {getPhotosWithoutSection().map((photo) => (
+                  <PublicPhotoItem
+                    key={photo.id}
+                    photo={photo}
+                    onView={setSelectedPhoto}
+                    onDownload={handleDownload}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {getGuestPhotos().length > 0 && (
+            <div className="mb-16 mt-20 pt-12 border-t-2 border-zinc-200">
+              <h4
+                className="text-2xl md:text-3xl font-normal mb-6 text-center"
+                style={{ fontFamily: 'Playfair Display, serif' }}
+              >
+                Guest Uploads ({getGuestPhotos().length})
+              </h4>
+              <p className="text-center text-sm text-zinc-500 mb-8">
+                Photos shared by guests
+              </p>
+              <div className="masonry-grid">
+                {getGuestPhotos().map((photo) => (
+                  <PublicPhotoItem
+                    key={photo.id}
+                    photo={photo}
+                    onView={setSelectedPhoto}
+                    onDownload={handleDownload}
+                    isGuest
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {photos.length === 0 && (
+            <div className="text-center py-20 border border-zinc-200 rounded-sm">
+              <p className="text-zinc-500">No photos yet. Be the first to upload!</p>
             </div>
           )}
         </div>
@@ -325,11 +415,42 @@ const PublicGallery = () => {
 
       <footer className="border-t border-zinc-200 py-8 mt-12">
         <div className="max-w-screen-2xl mx-auto px-6 md:px-12 text-center text-sm text-zinc-500">
-          <p>Powered by PhotoShare</p>
+          <p>© 2024 PhotoShare. Built for photographers.</p>
         </div>
       </footer>
     </div>
   );
 };
+
+const PublicPhotoItem = ({ photo, onView, onDownload, isGuest }) => (
+  <div
+    data-testid={`public-photo-item-${photo.id}`}
+    className="masonry-item group relative"
+    onClick={() => onView(photo)}
+  >
+    <img
+      src={`${BACKEND_URL}${photo.url}`}
+      alt="Gallery photo"
+      className="w-full h-auto cursor-pointer rounded-sm"
+    />
+    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center rounded-sm">
+      <button
+        data-testid={`download-photo-${photo.id}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDownload(photo);
+        }}
+        className="bg-white text-zinc-900 hover:bg-zinc-100 h-10 w-10 rounded-sm flex items-center justify-center transition-all duration-300"
+      >
+        <Download className="w-5 h-5" strokeWidth={1.5} />
+      </button>
+    </div>
+    {isGuest && (
+      <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-sm text-xs font-medium">
+        Guest
+      </div>
+    )}
+  </div>
+);
 
 export default PublicGallery;
