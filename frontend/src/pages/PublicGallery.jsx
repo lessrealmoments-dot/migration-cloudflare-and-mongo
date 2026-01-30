@@ -428,11 +428,12 @@ const PublicGallery = () => {
                     {section.name}
                   </h4>
                   <div className="masonry-grid">
-                    {sectionPhotos.map((photo) => (
+                    {sectionPhotos.map((photo, idx) => (
                       <PublicPhotoItem
                         key={photo.id}
                         photo={photo}
-                        onView={setSelectedPhoto}
+                        photoIndex={photos.findIndex(p => p.id === photo.id)}
+                        onView={setLightboxIndex}
                         onDownload={handleDownload}
                       />
                     ))}
