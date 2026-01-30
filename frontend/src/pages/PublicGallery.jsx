@@ -309,7 +309,6 @@ const PublicGallery = () => {
                     : 'bg-zinc-100 cursor-not-allowed opacity-60'
                 }`}
               >
-          >
             <div className="flex items-center gap-3">
               <Upload className="w-6 h-6 text-zinc-600" strokeWidth={1.5} />
               <div className="text-left">
