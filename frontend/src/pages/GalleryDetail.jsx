@@ -175,8 +175,38 @@ const GalleryDetail = () => {
 
   const copyShareLink = () => {
     const shareUrl = `${window.location.origin}/g/${gallery.share_link}`;
-    navigator.clipboard.writeText(shareUrl);
-    toast.success('Share link copied to clipboard!');
+    
+    // Try modern clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl)
+        .then(() => toast.success('Share link copied to clipboard!'))
+        .catch(() => {
+          // Fallback to old method
+          fallbackCopyTextToClipboard(shareUrl);
+        });
+    } else {
+      // Fallback for older browsers
+      fallbackCopyTextToClipboard(shareUrl);
+    }
+  };
+
+  const fallbackCopyTextToClipboard = (text) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      toast.success('Share link copied to clipboard!');
+    } catch (err) {
+      toast.error('Failed to copy link. Please copy manually: ' + text);
+    }
+    
+    document.body.removeChild(textArea);
   };
 
   const openShareLink = () => {
