@@ -113,3 +113,13 @@ button {
 .themed-gallery button.bg-primary:hover {
   opacity: 0.9;
 }
+
+/* Hide scrollbar for thumbnail filmstrip */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
