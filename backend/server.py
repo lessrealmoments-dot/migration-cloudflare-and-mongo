@@ -586,6 +586,7 @@ async def get_public_gallery(share_link: str):
         is_expired=is_expired,
         guest_upload_enabled=guest_upload_enabled,
         has_download_all_password=gallery.get("download_all_password") is not None,
+        theme=gallery.get("theme", "classic"),
         photo_count=photo_count
     )
 
