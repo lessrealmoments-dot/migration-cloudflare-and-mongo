@@ -121,15 +121,28 @@ const PublicGallery = () => {
       const response = await axios.get(`${BACKEND_URL}${photo.url}`, {
         responseType: 'blob'
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      
+      // Create blob URL
+      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'image/jpeg' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create temporary link and trigger download
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', photo.filename);
+      link.download = photo.filename || 'photo.jpg';
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
       toast.success('Photo downloaded!');
     } catch (error) {
+      console.error('Download error:', error);
       toast.error('Failed to download photo');
     }
   };
