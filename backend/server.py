@@ -277,10 +277,11 @@ async def get_galleries(current_user: dict = Depends(get_current_user)):
             "as": "photos"
         }},
         {"$addFields": {"photo_count": {"$size": "$photos"}}},
-        {"$project": {"_id": 0, "photos": 0}}
+        {"$project": {"_id": 0, "photos": 0}},
+        {"$limit": 500}
     ]
     
-    galleries = await db.galleries.aggregate(pipeline).to_list(1000)
+    galleries = await db.galleries.aggregate(pipeline).to_list(None)
     
     result = []
     for g in galleries:
