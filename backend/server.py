@@ -691,14 +691,15 @@ async def download_all_photos(share_link: str, password_data: PasswordVerify):
     if not verify_password(password_data.password, gallery["download_all_password"]):
         raise HTTPException(status_code=401, detail="Invalid download password")
     
-    photos = await db.photos.find({"gallery_id": gallery["id"]}, {"_id": 0}).to_list(10000)
-    
+    # Use async iteration for memory efficiency with large galleries
     import zipfile
     import io
     
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for photo in photos:
+        # Stream photos in batches to avoid memory issues
+        cursor = db.photos.find({"gallery_id": gallery["id"]}, {"_id": 0}).limit(1000)
+        async for photo in cursor:
             file_path = UPLOAD_DIR / photo["filename"]
             if file_path.exists():
                 zip_file.write(file_path, photo["filename"])
