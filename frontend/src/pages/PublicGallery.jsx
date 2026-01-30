@@ -257,17 +257,57 @@ const PublicGallery = () => {
       )}
 
       <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-12">
-        {gallery?.description && (
+        {gallery?.event_title && (
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-normal mb-2" style={{ fontFamily: 'Playfair Display, serif' }}>
+              {gallery.event_title}
+            </h2>
+            {gallery.event_date && (
+              <p className="text-zinc-500">
+                {new Date(gallery.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            )}
+          </div>
+        )}
+
+        {gallery?.is_expired && (
+          <div className="mb-8 p-6 bg-red-50 border border-red-200 rounded-sm text-center">
+            <p className="text-red-700 font-medium">This gallery has expired and is no longer accessible.</p>
+            <p className="text-sm text-red-600 mt-2">Please contact the photographer for access.</p>
+          </div>
+        )}
+
+        {!gallery?.is_expired && gallery?.description && (
           <div className="mb-12 text-center max-w-2xl mx-auto">
             <p className="text-base font-light text-zinc-600">{gallery.description}</p>
           </div>
         )}
 
-        <div className="mb-12">
-          <button
-            data-testid="guest-upload-toggle"
-            onClick={() => setGuestUploadExpanded(!guestUploadExpanded)}
-            className="w-full bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-sm p-6 transition-all duration-300 flex items-center justify-between"
+        {!gallery?.is_expired && gallery?.has_download_all_password && (
+          <div className="mb-8 text-center">
+            <button
+              data-testid="download-all-button"
+              onClick={() => setShowDownloadAllModal(true)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-8 rounded-sm font-medium tracking-wide transition-all duration-300 inline-flex items-center gap-2"
+            >
+              <Download className="w-5 h-5" strokeWidth={1.5} />
+              Download All Photos
+            </button>
+          </div>
+        )}
+
+        {!gallery?.is_expired && (
+          <div className="mb-12">
+            <button
+              data-testid="guest-upload-toggle"
+              onClick={() => setGuestUploadExpanded(!guestUploadExpanded)}
+              disabled={!gallery?.guest_upload_enabled}
+              className={`w-full border border-zinc-200 rounded-sm p-6 transition-all duration-300 flex items-center justify-between ${
+                gallery?.guest_upload_enabled
+                  ? 'bg-zinc-50 hover:bg-zinc-100 cursor-pointer'
+                  : 'bg-zinc-100 cursor-not-allowed opacity-60'
+              }`}
+            >
           >
             <div className="flex items-center gap-3">
               <Upload className="w-6 h-6 text-zinc-600" strokeWidth={1.5} />
