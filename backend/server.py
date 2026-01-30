@@ -701,17 +701,20 @@ async def download_all_photos(share_link: str, password_data: PasswordVerify):
 from fastapi.responses import FileResponse
 
 @api_router.get("/photos/serve/{filename}")
-async def serve_photo(filename: str):
+async def serve_photo(filename: str, download: bool = False):
     file_path = UPLOAD_DIR / filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Photo not found")
     
-    # Return file with proper headers for download
+    # Determine content disposition based on download parameter
+    disposition = "attachment" if download else "inline"
+    
+    # Return file with proper headers
     return FileResponse(
         file_path,
         media_type="image/jpeg",
         headers={
-            "Content-Disposition": f"inline; filename={filename}",
+            "Content-Disposition": f"{disposition}; filename={filename}",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Expose-Headers": "Content-Disposition"
         }
