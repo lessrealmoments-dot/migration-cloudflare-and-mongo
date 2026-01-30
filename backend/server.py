@@ -368,6 +368,8 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
                 pass
     if updates.download_all_password is not None:
         update_data["download_all_password"] = hash_password(updates.download_all_password)
+    if updates.theme is not None:
+        update_data["theme"] = updates.theme
     
     if update_data:
         await db.galleries.update_one({"id": gallery_id}, {"$set": update_data})
