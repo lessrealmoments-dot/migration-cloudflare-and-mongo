@@ -449,6 +449,8 @@ const PublicGallery = () => {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {selectedPhoto && (
