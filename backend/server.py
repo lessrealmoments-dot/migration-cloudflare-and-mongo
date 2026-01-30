@@ -326,6 +326,7 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         guest_upload_expiration_date=gallery.get("guest_upload_expiration_date"),
         guest_upload_enabled=True,
         has_download_all_password=gallery.get("download_all_password") is not None,
+        theme=gallery.get("theme", "classic"),
         created_at=gallery["created_at"],
         photo_count=photo_count
     )
