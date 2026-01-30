@@ -101,6 +101,8 @@ class PublicGallery(BaseModel):
     description: Optional[str] = None
     photographer_name: str
     has_password: bool
+    cover_photo_url: Optional[str] = None
+    sections: List[Section] = []
     photo_count: int = 0
 
 def hash_password(password: str) -> str:
