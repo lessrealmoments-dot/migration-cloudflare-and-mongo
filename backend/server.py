@@ -1,72 +1,442 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from typing import List, Optional
 import uuid
-from datetime import datetime, timezone
-
+from datetime import datetime, timezone, timedelta
+import bcrypt
+from jose import JWTError, jwt
+import base64
+import shutil
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
+UPLOAD_DIR = ROOT_DIR / 'uploads'
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+ALGORITHM = 'HS256'
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+
 app = FastAPI()
-
-# Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+security = HTTPBearer()
 
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class User(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    email: str
+    name: str
+    created_at: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: User
+
+class GalleryCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    password: Optional[str] = None
+
+class Gallery(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    photographer_id: str
+    title: str
+    description: Optional[str] = None
+    has_password: bool
+    share_link: str
+    created_at: str
+    photo_count: int = 0
+
+class GalleryUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    password: Optional[str] = None
+
+class Photo(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    gallery_id: str
+    filename: str
+    url: str
+    uploaded_by: str
+    uploaded_at: str
+
+class PasswordVerify(BaseModel):
+    password: str
+
+class PublicGallery(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    title: str
+    description: Optional[str] = None
+    photographer_name: str
+    has_password: bool
+    photo_count: int = 0
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+
+def create_access_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    try:
+        token = credentials.credentials
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication")
+        
+        user = await db.users.find_one({"id": user_id}, {"_id": 0})
+        if user is None:
+            raise HTTPException(status_code=401, detail="User not found")
+        return user
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid authentication")
+
+@api_router.post("/auth/register", response_model=Token)
+async def register(user_data: UserRegister):
+    existing = await db.users.find_one({"email": user_data.email}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
+    user_id = str(uuid.uuid4())
+    hashed_pw = hash_password(user_data.password)
     
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
+    user_doc = {
+        "id": user_id,
+        "email": user_data.email,
+        "password": hashed_pw,
+        "name": user_data.name,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
     
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+    await db.users.insert_one(user_doc)
+    
+    access_token = create_access_token({"sub": user_id})
+    user = User(
+        id=user_id,
+        email=user_data.email,
+        name=user_data.name,
+        created_at=user_doc["created_at"]
+    )
+    
+    return Token(access_token=access_token, token_type="bearer", user=user)
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+@api_router.post("/auth/login", response_model=Token)
+async def login(credentials: UserLogin):
+    user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+    if not user or not verify_password(credentials.password, user["password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
+    access_token = create_access_token({"sub": user["id"]})
+    user_obj = User(
+        id=user["id"],
+        email=user["email"],
+        name=user["name"],
+        created_at=user["created_at"]
+    )
     
-    return status_checks
+    return Token(access_token=access_token, token_type="bearer", user=user_obj)
 
-# Include the router in the main app
+@api_router.get("/auth/me", response_model=User)
+async def get_me(current_user: dict = Depends(get_current_user)):
+    return User(**current_user)
+
+@api_router.post("/galleries", response_model=Gallery)
+async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depends(get_current_user)):
+    gallery_id = str(uuid.uuid4())
+    share_link = str(uuid.uuid4())[:8]
+    
+    gallery_doc = {
+        "id": gallery_id,
+        "photographer_id": current_user["id"],
+        "title": gallery_data.title,
+        "description": gallery_data.description,
+        "password": hash_password(gallery_data.password) if gallery_data.password else None,
+        "share_link": share_link,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.galleries.insert_one(gallery_doc)
+    
+    return Gallery(
+        id=gallery_id,
+        photographer_id=current_user["id"],
+        title=gallery_data.title,
+        description=gallery_data.description,
+        has_password=gallery_data.password is not None,
+        share_link=share_link,
+        created_at=gallery_doc["created_at"],
+        photo_count=0
+    )
+
+@api_router.get("/galleries", response_model=List[Gallery])
+async def get_galleries(current_user: dict = Depends(get_current_user)):
+    galleries = await db.galleries.find({"photographer_id": current_user["id"]}, {"_id": 0}).to_list(1000)
+    
+    result = []
+    for g in galleries:
+        photo_count = await db.photos.count_documents({"gallery_id": g["id"]})
+        result.append(Gallery(
+            id=g["id"],
+            photographer_id=g["photographer_id"],
+            title=g["title"],
+            description=g.get("description"),
+            has_password=g.get("password") is not None,
+            share_link=g["share_link"],
+            created_at=g["created_at"],
+            photo_count=photo_count
+        ))
+    
+    return result
+
+@api_router.get("/galleries/{gallery_id}", response_model=Gallery)
+async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    photo_count = await db.photos.count_documents({"gallery_id": gallery_id})
+    
+    return Gallery(
+        id=gallery["id"],
+        photographer_id=gallery["photographer_id"],
+        title=gallery["title"],
+        description=gallery.get("description"),
+        has_password=gallery.get("password") is not None,
+        share_link=gallery["share_link"],
+        created_at=gallery["created_at"],
+        photo_count=photo_count
+    )
+
+@api_router.put("/galleries/{gallery_id}", response_model=Gallery)
+async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: dict = Depends(get_current_user)):
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    update_data = {}
+    if updates.title is not None:
+        update_data["title"] = updates.title
+    if updates.description is not None:
+        update_data["description"] = updates.description
+    if updates.password is not None:
+        update_data["password"] = hash_password(updates.password)
+    
+    if update_data:
+        await db.galleries.update_one({"id": gallery_id}, {"$set": update_data})
+    
+    updated_gallery = await db.galleries.find_one({"id": gallery_id}, {"_id": 0})
+    photo_count = await db.photos.count_documents({"gallery_id": gallery_id})
+    
+    return Gallery(
+        id=updated_gallery["id"],
+        photographer_id=updated_gallery["photographer_id"],
+        title=updated_gallery["title"],
+        description=updated_gallery.get("description"),
+        has_password=updated_gallery.get("password") is not None,
+        share_link=updated_gallery["share_link"],
+        created_at=updated_gallery["created_at"],
+        photo_count=photo_count
+    )
+
+@api_router.delete("/galleries/{gallery_id}")
+async def delete_gallery(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(1000)
+    for photo in photos:
+        file_path = UPLOAD_DIR / photo["filename"]
+        if file_path.exists():
+            file_path.unlink()
+    
+    await db.photos.delete_many({"gallery_id": gallery_id})
+    await db.galleries.delete_one({"id": gallery_id})
+    
+    return {"message": "Gallery deleted"}
+
+@api_router.post("/galleries/{gallery_id}/photos", response_model=Photo)
+async def upload_photo(gallery_id: str, file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    if not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Only image files are allowed")
+    
+    photo_id = str(uuid.uuid4())
+    file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    filename = f"{photo_id}.{file_ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    photo_doc = {
+        "id": photo_id,
+        "gallery_id": gallery_id,
+        "filename": filename,
+        "url": f"/api/photos/serve/{filename}",
+        "uploaded_by": "photographer",
+        "uploaded_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.photos.insert_one(photo_doc)
+    
+    return Photo(**{k: v for k, v in photo_doc.items() if k != '_id'})
+
+@api_router.get("/galleries/{gallery_id}/photos", response_model=List[Photo])
+async def get_gallery_photos(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(1000)
+    return [Photo(**p) for p in photos]
+
+@api_router.delete("/photos/{photo_id}")
+async def delete_photo(photo_id: str, current_user: dict = Depends(get_current_user)):
+    photo = await db.photos.find_one({"id": photo_id}, {"_id": 0})
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    gallery = await db.galleries.find_one({"id": photo["gallery_id"], "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    file_path = UPLOAD_DIR / photo["filename"]
+    if file_path.exists():
+        file_path.unlink()
+    
+    await db.photos.delete_one({"id": photo_id})
+    
+    return {"message": "Photo deleted"}
+
+@api_router.get("/public/gallery/{share_link}", response_model=PublicGallery)
+async def get_public_gallery(share_link: str):
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
+    photo_count = await db.photos.count_documents({"gallery_id": gallery["id"]})
+    
+    return PublicGallery(
+        id=gallery["id"],
+        title=gallery["title"],
+        description=gallery.get("description"),
+        photographer_name=photographer["name"] if photographer else "Unknown",
+        has_password=gallery.get("password") is not None,
+        photo_count=photo_count
+    )
+
+@api_router.post("/public/gallery/{share_link}/verify-password")
+async def verify_gallery_password(share_link: str, password_data: PasswordVerify):
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    if not gallery.get("password"):
+        return {"valid": True}
+    
+    if verify_password(password_data.password, gallery["password"]):
+        token = create_access_token({"gallery_id": gallery["id"], "type": "guest"})
+        return {"valid": True, "token": token}
+    else:
+        raise HTTPException(status_code=401, detail="Invalid password")
+
+@api_router.get("/public/gallery/{share_link}/photos", response_model=List[Photo])
+async def get_public_gallery_photos(share_link: str, password: Optional[str] = None):
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    if gallery.get("password") and not password:
+        raise HTTPException(status_code=401, detail="Password required")
+    
+    if gallery.get("password") and not verify_password(password, gallery["password"]):
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    photos = await db.photos.find({"gallery_id": gallery["id"]}, {"_id": 0}).sort("uploaded_at", -1).to_list(1000)
+    return [Photo(**p) for p in photos]
+
+@api_router.post("/public/gallery/{share_link}/upload", response_model=Photo)
+async def upload_photo_guest(share_link: str, file: UploadFile = File(...), password: Optional[str] = Form(None)):
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    if gallery.get("password"):
+        if not password:
+            raise HTTPException(status_code=401, detail="Password required")
+        if not verify_password(password, gallery["password"]):
+            raise HTTPException(status_code=401, detail="Invalid password")
+    
+    if not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Only image files are allowed")
+    
+    photo_id = str(uuid.uuid4())
+    file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    filename = f"{photo_id}.{file_ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    photo_doc = {
+        "id": photo_id,
+        "gallery_id": gallery["id"],
+        "filename": filename,
+        "url": f"/api/photos/serve/{filename}",
+        "uploaded_by": "guest",
+        "uploaded_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.photos.insert_one(photo_doc)
+    
+    return Photo(**{k: v for k, v in photo_doc.items() if k != '_id'})
+
+from fastapi.responses import FileResponse
+
+@api_router.get("/photos/serve/{filename}")
+async def serve_photo(filename: str):
+    file_path = UPLOAD_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Photo not found")
+    return FileResponse(file_path)
+
 app.include_router(api_router)
 
 app.add_middleware(
@@ -77,7 +447,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
