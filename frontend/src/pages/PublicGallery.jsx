@@ -118,29 +118,18 @@ const PublicGallery = () => {
 
   const handleDownload = async (photo) => {
     try {
-      const response = await axios.get(`${BACKEND_URL}${photo.url}`, {
-        responseType: 'blob'
-      });
-      
-      // Create blob URL
-      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'image/jpeg' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create temporary link and trigger download
+      // Direct download using a temporary link pointing to the backend URL
+      const downloadUrl = `${BACKEND_URL}${photo.url}`;
       const link = document.createElement('a');
-      link.href = url;
+      link.href = downloadUrl;
       link.download = photo.filename || 'photo.jpg';
-      link.style.display = 'none';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       
-      // Cleanup
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }, 100);
-      
-      toast.success('Photo downloaded!');
+      toast.success('Photo download started!');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download photo');
