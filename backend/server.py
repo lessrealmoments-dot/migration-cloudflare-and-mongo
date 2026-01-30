@@ -389,6 +389,7 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
         guest_upload_expiration_date=updated_gallery.get("guest_upload_expiration_date"),
         guest_upload_enabled=True,
         has_download_all_password=updated_gallery.get("download_all_password") is not None,
+        theme=updated_gallery.get("theme", "classic"),
         created_at=updated_gallery["created_at"],
         photo_count=photo_count
     )
