@@ -507,14 +507,19 @@ const GalleryDetail = () => {
                     {section.name} ({sectionPhotos.length})
                   </h4>
                   <div className="masonry-grid">
-                    {sectionPhotos.map((photo) => (
-                      <PhotoItem
-                        key={photo.id}
-                        photo={photo}
-                        onDelete={handleDelete}
-                        onView={setSelectedPhoto}
-                      />
-                    ))}
+                    {sectionPhotos.map((photo) => {
+                      const photographerPhotos = photos.filter(p => p.uploaded_by === 'photographer');
+                      const photoIndex = photographerPhotos.findIndex(p => p.id === photo.id);
+                      return (
+                        <PhotoItem
+                          key={photo.id}
+                          photo={photo}
+                          photoIndex={photoIndex}
+                          onDelete={handleDelete}
+                          onView={setLightboxIndex}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               );
