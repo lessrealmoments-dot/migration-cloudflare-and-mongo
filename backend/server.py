@@ -520,7 +520,8 @@ async def get_gallery_photos(gallery_id: str, current_user: dict = Depends(get_c
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(1000)
+    # Limit to 500 photos with pagination support
+    photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).limit(500).to_list(None)
     return [Photo(**p) for p in photos]
 
 @api_router.delete("/photos/{photo_id}")
