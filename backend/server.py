@@ -697,7 +697,17 @@ async def serve_photo(filename: str):
     file_path = UPLOAD_DIR / filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Photo not found")
-    return FileResponse(file_path)
+    
+    # Return file with proper headers for download
+    return FileResponse(
+        file_path,
+        media_type="image/jpeg",
+        headers={
+            "Content-Disposition": f"inline; filename={filename}",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
+    )
 
 app.include_router(api_router)
 
