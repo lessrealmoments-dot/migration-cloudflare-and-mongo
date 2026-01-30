@@ -285,6 +285,12 @@ async def get_galleries(current_user: dict = Depends(get_current_user)):
             has_password=g.get("password") is not None,
             share_link=g["share_link"],
             cover_photo_url=g.get("cover_photo_url"),
+            event_title=g.get("event_title"),
+            event_date=g.get("event_date"),
+            share_link_expiration_date=g.get("share_link_expiration_date"),
+            guest_upload_expiration_date=g.get("guest_upload_expiration_date"),
+            guest_upload_enabled=True,
+            has_download_all_password=g.get("download_all_password") is not None,
             created_at=g["created_at"],
             photo_count=g.get("photo_count", 0)
         ))
@@ -307,6 +313,12 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         has_password=gallery.get("password") is not None,
         share_link=gallery["share_link"],
         cover_photo_url=gallery.get("cover_photo_url"),
+        event_title=gallery.get("event_title"),
+        event_date=gallery.get("event_date"),
+        share_link_expiration_date=gallery.get("share_link_expiration_date"),
+        guest_upload_expiration_date=gallery.get("guest_upload_expiration_date"),
+        guest_upload_enabled=True,
+        has_download_all_password=gallery.get("download_all_password") is not None,
         created_at=gallery["created_at"],
         photo_count=photo_count
     )
