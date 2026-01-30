@@ -610,6 +610,22 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
+    if gallery.get("share_link_expiration_date"):
+        try:
+            expiration_dt = datetime.fromisoformat(gallery["share_link_expiration_date"])
+            if datetime.now(timezone.utc) > expiration_dt:
+                raise HTTPException(status_code=403, detail="Gallery has expired")
+        except ValueError:
+            pass
+    
+    if gallery.get("guest_upload_expiration_date"):
+        try:
+            upload_expiration_dt = datetime.fromisoformat(gallery["guest_upload_expiration_date"])
+            if datetime.now(timezone.utc) > upload_expiration_dt:
+                raise HTTPException(status_code=403, detail="Upload window has closed")
+        except ValueError:
+            pass
+    
     if gallery.get("password"):
         if not password:
             raise HTTPException(status_code=401, detail="Password required")
@@ -640,6 +656,39 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
     await db.photos.insert_one(photo_doc)
     
     return Photo(**{k: v for k, v in photo_doc.items() if k != '_id'})
+
+@api_router.post("/public/gallery/{share_link}/download-all")
+async def download_all_photos(share_link: str, password_data: PasswordVerify):
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    if not gallery.get("download_all_password"):
+        raise HTTPException(status_code=403, detail="Download all is not enabled for this gallery")
+    
+    if not verify_password(password_data.password, gallery["download_all_password"]):
+        raise HTTPException(status_code=401, detail="Invalid download password")
+    
+    photos = await db.photos.find({"gallery_id": gallery["id"]}, {"_id": 0}).to_list(10000)
+    
+    import zipfile
+    import io
+    
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for photo in photos:
+            file_path = UPLOAD_DIR / photo["filename"]
+            if file_path.exists():
+                zip_file.write(file_path, photo["filename"])
+    
+    zip_buffer.seek(0)
+    
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(
+        iter([zip_buffer.getvalue()]),
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename={gallery['title']}_photos.zip"}
+    )
 
 from fastapi.responses import FileResponse
 
