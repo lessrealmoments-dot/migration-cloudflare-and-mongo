@@ -680,11 +680,11 @@ const GalleryDetail = () => {
   );
 };
 
-const PhotoItem = ({ photo, onDelete, onView }) => (
+const PhotoItem = ({ photo, photoIndex, onDelete, onView }) => (
   <div
     data-testid={`photo-item-${photo.id}`}
     className="masonry-item group relative"
-    onClick={() => onView(photo)}
+    onClick={() => onView(photoIndex)}
   >
     <img
       src={`${BACKEND_URL}${photo.url}`}
