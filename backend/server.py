@@ -695,7 +695,11 @@ async def download_all_photos(share_link: str, password_data: PasswordVerify):
     return StreamingResponse(
         iter([zip_buffer.getvalue()]),
         media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename={gallery['title']}_photos.zip"}
+        headers={
+            "Content-Disposition": f"attachment; filename={gallery['title'].replace(' ', '_')}_photos.zip",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
     )
 
 from fastapi.responses import FileResponse
