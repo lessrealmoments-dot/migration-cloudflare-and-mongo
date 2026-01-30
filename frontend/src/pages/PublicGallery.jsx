@@ -118,13 +118,11 @@ const PublicGallery = () => {
 
   const handleDownload = async (photo) => {
     try {
-      // Direct download using a temporary link pointing to the backend URL
-      const downloadUrl = `${BACKEND_URL}${photo.url}`;
+      // Use backend URL with download parameter
+      const downloadUrl = `${BACKEND_URL}${photo.url}?download=true`;
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = photo.filename || 'photo.jpg';
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
