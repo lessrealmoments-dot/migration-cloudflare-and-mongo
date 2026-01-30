@@ -583,8 +583,19 @@ const PublicGallery = () => {
         </div>
       )}
 
-      <footer className="border-t border-zinc-200 py-8 mt-12">
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 text-center text-sm text-zinc-500">
+      {/* Premium Lightbox */}
+      {lightboxIndex !== null && (
+        <PremiumLightbox
+          photos={photos}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onDownload={handleDownload}
+          backendUrl={BACKEND_URL}
+        />
+      )}
+
+      <footer className="border-t py-8 mt-12" style={{ borderColor: currentTheme.colors.accent }}>
+        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 text-center text-sm" style={{ color: currentTheme.colors.textLight }}>
           <p>© 2024 PhotoShare. Built for photographers.</p>
         </div>
       </footer>
@@ -592,11 +603,11 @@ const PublicGallery = () => {
   );
 };
 
-const PublicPhotoItem = ({ photo, onView, onDownload, isGuest }) => (
+const PublicPhotoItem = ({ photo, photoIndex, onView, onDownload, isGuest }) => (
   <div
     data-testid={`public-photo-item-${photo.id}`}
     className="masonry-item group relative"
-    onClick={() => onView(photo)}
+    onClick={() => onView(photoIndex)}
   >
     <img
       src={`${BACKEND_URL}${photo.url}`}
