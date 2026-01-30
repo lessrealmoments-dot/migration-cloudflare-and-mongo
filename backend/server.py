@@ -226,6 +226,7 @@ async def get_galleries(current_user: dict = Depends(get_current_user)):
             description=g.get("description"),
             has_password=g.get("password") is not None,
             share_link=g["share_link"],
+            cover_photo_url=g.get("cover_photo_url"),
             created_at=g["created_at"],
             photo_count=photo_count
         ))
@@ -247,6 +248,7 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         description=gallery.get("description"),
         has_password=gallery.get("password") is not None,
         share_link=gallery["share_link"],
+        cover_photo_url=gallery.get("cover_photo_url"),
         created_at=gallery["created_at"],
         photo_count=photo_count
     )
