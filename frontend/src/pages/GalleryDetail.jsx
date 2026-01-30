@@ -183,6 +183,40 @@ const GalleryDetail = () => {
     window.open(`/g/${gallery.share_link}`, '_blank');
   };
 
+  const handleEditGallery = () => {
+    setEditFormData({
+      title: gallery.title,
+      event_title: gallery.event_title || '',
+      event_date: gallery.event_date || '',
+      description: gallery.description || '',
+      share_link_expiration_days: 30,
+      guest_upload_enabled_days: 3
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateGallery = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/galleries/${id}`, {
+        title: editFormData.title,
+        event_title: editFormData.event_title || null,
+        event_date: editFormData.event_date || null,
+        description: editFormData.description || null,
+        share_link_expiration_days: parseInt(editFormData.share_link_expiration_days),
+        guest_upload_enabled_days: parseInt(editFormData.guest_upload_enabled_days)
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Gallery updated successfully!');
+      setShowEditModal(false);
+      fetchGalleryData();
+    } catch (error) {
+      toast.error('Failed to update gallery');
+    }
+  };
+
   const getPhotosBySection = (sectionId) => {
     return photos.filter(p => p.section_id === sectionId);
   };
