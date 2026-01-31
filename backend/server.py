@@ -728,6 +728,22 @@ async def update_gallery_limit(user_id: str, data: UpdateGalleryLimit, admin: di
     
     return {"message": f"Gallery limit updated to {data.max_galleries}"}
 
+@api_router.put("/admin/photographers/{user_id}/storage-quota")
+async def update_storage_quota(user_id: str, data: UpdateStorageQuota, admin: dict = Depends(get_admin_user)):
+    """Update storage quota for a photographer"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"storage_quota": data.storage_quota}}
+    )
+    
+    # Convert bytes to human readable
+    quota_mb = data.storage_quota / (1024 * 1024)
+    return {"message": f"Storage quota updated to {quota_mb:.0f} MB"}
+
 @api_router.get("/admin/landing-config", response_model=LandingPageConfig)
 async def get_landing_config(admin: dict = Depends(get_admin_user)):
     """Get landing page configuration"""
