@@ -212,6 +212,8 @@ async def sync_gallery_to_drive(user_id: str, gallery_id: str):
         }, {"_id": 0})
         
         folder_name = f"PhotoShare - {gallery['title']}"
+        # Escape special characters for Drive API query
+        escaped_folder_name = folder_name.replace("\\", "\\\\").replace("'", "\\'")
         
         if not backup:
             backup = {
@@ -231,9 +233,9 @@ async def sync_gallery_to_drive(user_id: str, gallery_id: str):
         folder_id = backup.get("folder_id")
         if not folder_id:
             try:
-                # Search for existing folder first
+                # Search for existing folder first (use escaped name for query)
                 results = drive_service.files().list(
-                    q=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+                    q=f"name='{escaped_folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false",
                     spaces='drive',
                     fields='files(id, name)'
                 ).execute()
