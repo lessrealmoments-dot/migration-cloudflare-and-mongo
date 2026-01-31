@@ -1505,9 +1505,6 @@ async def download_all_photos(share_link: str, password_data: PasswordVerify):
     if not verify_password(password_data.password, gallery["download_all_password"]):
         raise HTTPException(status_code=401, detail="Invalid download password")
     
-    # Use async iteration for memory efficiency with large galleries
-    import zipfile
-    
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         # Stream photos in batches to avoid memory issues
@@ -1519,12 +1516,136 @@ async def download_all_photos(share_link: str, password_data: PasswordVerify):
     
     zip_buffer.seek(0)
     
-    from fastapi.responses import StreamingResponse
     return StreamingResponse(
         iter([zip_buffer.getvalue()]),
         media_type="application/zip",
         headers={
             "Content-Disposition": f"attachment; filename={gallery['title'].replace(' ', '_')}_photos.zip",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
+    )
+
+# ============ PHOTOGRAPHER DOWNLOAD (NO PASSWORD) ============
+
+# Max size per zip chunk (200MB)
+MAX_ZIP_CHUNK_SIZE = 200 * 1024 * 1024
+
+@api_router.get("/galleries/{gallery_id}/download-info")
+async def get_download_info(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """Get info about the download chunks for a gallery"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Get all photos and calculate total size
+    photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(None)
+    
+    chunks = []
+    current_chunk = []
+    current_chunk_size = 0
+    chunk_number = 1
+    
+    for photo in photos:
+        file_path = UPLOAD_DIR / photo["filename"]
+        if file_path.exists():
+            file_size = file_path.stat().st_size
+            
+            # If adding this file exceeds chunk size, start a new chunk
+            if current_chunk_size + file_size > MAX_ZIP_CHUNK_SIZE and current_chunk:
+                chunks.append({
+                    "chunk_number": chunk_number,
+                    "photo_count": len(current_chunk),
+                    "size_bytes": current_chunk_size
+                })
+                chunk_number += 1
+                current_chunk = []
+                current_chunk_size = 0
+            
+            current_chunk.append(photo)
+            current_chunk_size += file_size
+    
+    # Add the last chunk if it has photos
+    if current_chunk:
+        chunks.append({
+            "chunk_number": chunk_number,
+            "photo_count": len(current_chunk),
+            "size_bytes": current_chunk_size
+        })
+    
+    total_size = sum(c["size_bytes"] for c in chunks)
+    
+    return {
+        "gallery_id": gallery_id,
+        "gallery_title": gallery["title"],
+        "total_photos": len(photos),
+        "total_size_bytes": total_size,
+        "chunk_count": len(chunks),
+        "chunks": chunks
+    }
+
+@api_router.get("/galleries/{gallery_id}/download/{chunk_number}")
+async def download_gallery_chunk(gallery_id: str, chunk_number: int, current_user: dict = Depends(get_current_user)):
+    """Download a specific chunk of photos as a zip file"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Get all photos
+    photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(None)
+    
+    # Organize into chunks
+    chunks = []
+    current_chunk = []
+    current_chunk_size = 0
+    
+    for photo in photos:
+        file_path = UPLOAD_DIR / photo["filename"]
+        if file_path.exists():
+            file_size = file_path.stat().st_size
+            
+            if current_chunk_size + file_size > MAX_ZIP_CHUNK_SIZE and current_chunk:
+                chunks.append(current_chunk)
+                current_chunk = []
+                current_chunk_size = 0
+            
+            current_chunk.append(photo)
+            current_chunk_size += file_size
+    
+    if current_chunk:
+        chunks.append(current_chunk)
+    
+    # Validate chunk number
+    if chunk_number < 1 or chunk_number > len(chunks):
+        raise HTTPException(status_code=404, detail=f"Chunk {chunk_number} not found. Gallery has {len(chunks)} chunks.")
+    
+    # Get the requested chunk (1-indexed)
+    chunk_photos = chunks[chunk_number - 1]
+    
+    # Create zip file
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for photo in chunk_photos:
+            file_path = UPLOAD_DIR / photo["filename"]
+            if file_path.exists():
+                # Use original filename if available, otherwise use stored filename
+                archive_name = photo.get("original_filename", photo["filename"])
+                zip_file.write(file_path, archive_name)
+    
+    zip_buffer.seek(0)
+    
+    # Create filename with chunk info
+    safe_title = gallery['title'].replace(' ', '_').replace('/', '-')
+    if len(chunks) > 1:
+        filename = f"{safe_title}_part{chunk_number}_of_{len(chunks)}.zip"
+    else:
+        filename = f"{safe_title}_photos.zip"
+    
+    return StreamingResponse(
+        iter([zip_buffer.getvalue()]),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Expose-Headers": "Content-Disposition"
         }
