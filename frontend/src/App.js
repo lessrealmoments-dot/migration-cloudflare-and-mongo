@@ -7,6 +7,8 @@ import Dashboard from '@/pages/Dashboard';
 import CreateGallery from '@/pages/CreateGallery';
 import GalleryDetail from '@/pages/GalleryDetail';
 import PublicGallery from '@/pages/PublicGallery';
+import AdminLogin from '@/pages/AdminLogin';
+import AdminDashboard from '@/pages/AdminDashboard';
 import '@/App.css';
 
 function App() {
@@ -28,6 +30,11 @@ function App() {
     return user ? children : <Navigate to="/auth" replace />;
   };
 
+  const AdminProtectedRoute = ({ children }) => {
+    const adminToken = localStorage.getItem('adminToken');
+    return adminToken ? children : <Navigate to="/admin" replace />;
+  };
+
   if (loading) {
     return null;
   }
@@ -42,6 +49,9 @@ function App() {
           <Route path="/gallery/create" element={<ProtectedRoute><CreateGallery /></ProtectedRoute>} />
           <Route path="/gallery/:id" element={<ProtectedRoute><GalleryDetail /></ProtectedRoute>} />
           <Route path="/g/:shareLink" element={<PublicGallery />} />
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors />
