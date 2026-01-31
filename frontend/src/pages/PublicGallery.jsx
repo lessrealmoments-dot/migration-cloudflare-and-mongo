@@ -730,13 +730,15 @@ const PublicGallery = () => {
   );
 };
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
 const PublicPhotoItem = ({ photo, photoIndex, onView, onDownload, isGuest }) => (
   <div
     data-testid={`public-photo-item-${photo.id}`}
     className="masonry-item group relative cursor-pointer"
     onClick={() => onView(photoIndex)}
   >
-    <img
+    <OptimizedImage
       src={`${BACKEND_URL}${photo.url}`}
       alt="Gallery photo"
       className="w-full h-auto rounded-sm"
