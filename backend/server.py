@@ -1014,6 +1014,7 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
     photo_count = await db.photos.count_documents({"gallery_id": gallery_id})
     auto_delete_date = gallery.get("auto_delete_date")
     days_until_deletion = calculate_days_until_deletion(auto_delete_date)
+    edit_info = get_edit_lock_info(gallery["created_at"])
     
     return Gallery(
         id=gallery["id"],
@@ -1033,7 +1034,9 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         created_at=gallery["created_at"],
         photo_count=photo_count,
         auto_delete_date=auto_delete_date,
-        days_until_deletion=days_until_deletion
+        days_until_deletion=days_until_deletion,
+        is_edit_locked=edit_info["is_locked"],
+        days_until_edit_lock=edit_info["days_until_lock"]
     )
 
 @api_router.put("/galleries/{gallery_id}", response_model=Gallery)
