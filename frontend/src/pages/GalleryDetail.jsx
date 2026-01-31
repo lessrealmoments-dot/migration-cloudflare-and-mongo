@@ -1293,9 +1293,115 @@ const GalleryDetail = () => {
         </div>
 
         <div>
-          <h3 className="text-2xl font-normal mb-6" style={{ fontFamily: 'Playfair Display, serif' }}>
-            Photographer Photos ({photos.filter(p => p.uploaded_by === 'photographer').length})
-          </h3>
+          {/* Photo Management Toolbar */}
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
+              Photographer Photos ({photos.filter(p => p.uploaded_by === 'photographer').length})
+            </h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setSelectMode(!selectMode); if (selectMode) clearSelection(); }}
+                data-testid="toggle-select-mode"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectMode ? 'bg-primary text-white' : 'bg-zinc-100 hover:bg-zinc-200'
+                }`}
+              >
+                <CheckSquare className="w-4 h-4 inline mr-2" />
+                {selectMode ? 'Cancel' : 'Select'}
+              </button>
+              <button
+                onClick={() => setReorderMode(!reorderMode)}
+                data-testid="toggle-reorder-mode"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  reorderMode ? 'bg-primary text-white' : 'bg-zinc-100 hover:bg-zinc-200'
+                }`}
+              >
+                <GripVertical className="w-4 h-4 inline mr-2" />
+                {reorderMode ? 'Done' : 'Reorder'}
+              </button>
+            </div>
+          </div>
+
+          {/* Bulk Action Bar */}
+          {selectMode && selectedPhotos.size > 0 && (
+            <div className="bg-zinc-900 text-white p-4 rounded-lg mb-6 flex items-center justify-between">
+              <span className="font-medium">{selectedPhotos.size} photo(s) selected</span>
+              <div className="flex items-center gap-2">
+                <button onClick={selectAllPhotos} className="px-3 py-1 bg-zinc-700 hover:bg-zinc-600 rounded text-sm">
+                  Select All
+                </button>
+                <button 
+                  onClick={() => handleBulkAction('highlight')} 
+                  className="px-3 py-1 bg-yellow-600 hover:bg-yellow-500 rounded text-sm flex items-center gap-1"
+                >
+                  <Star className="w-4 h-4" /> Highlight
+                </button>
+                <button 
+                  onClick={() => handleBulkAction('hide')} 
+                  className="px-3 py-1 bg-zinc-600 hover:bg-zinc-500 rounded text-sm flex items-center gap-1"
+                >
+                  <EyeOff className="w-4 h-4" /> Hide
+                </button>
+                <button 
+                  onClick={() => handleBulkAction('unhide')} 
+                  className="px-3 py-1 bg-zinc-600 hover:bg-zinc-500 rounded text-sm flex items-center gap-1"
+                >
+                  <Eye className="w-4 h-4" /> Show
+                </button>
+                {sections.length > 0 && (
+                  <button 
+                    onClick={() => setShowBulkActionModal(true)} 
+                    className="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded text-sm flex items-center gap-1"
+                  >
+                    <FolderInput className="w-4 h-4" /> Move
+                  </button>
+                )}
+                <button 
+                  onClick={() => handleBulkAction('delete')} 
+                  className="px-3 py-1 bg-red-600 hover:bg-red-500 rounded text-sm flex items-center gap-1"
+                >
+                  <Trash2 className="w-4 h-4" /> Delete
+                </button>
+                <button onClick={clearSelection} className="px-3 py-1 bg-zinc-700 hover:bg-zinc-600 rounded text-sm">
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Move to Section Modal */}
+          {showBulkActionModal && (
+            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-lg max-w-md w-full p-6">
+                <h3 className="text-xl font-medium mb-4">Move to Section</h3>
+                <div className="space-y-2">
+                  {sections.map(section => (
+                    <button
+                      key={section.id}
+                      onClick={() => handleBulkAction('move_section', section.id)}
+                      disabled={bulkActionLoading}
+                      className="w-full p-3 text-left border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
+                    >
+                      {section.name}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => handleBulkAction('move_section', null)}
+                    disabled={bulkActionLoading}
+                    className="w-full p-3 text-left border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors text-zinc-500"
+                  >
+                    Remove from section (Unsorted)
+                  </button>
+                </div>
+                <button
+                  onClick={() => setShowBulkActionModal(false)}
+                  className="mt-4 w-full p-3 border border-zinc-300 rounded-lg hover:bg-zinc-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {sections.length > 0 ? (
             sections.map((section) => {
@@ -1317,6 +1423,13 @@ const GalleryDetail = () => {
                           photoIndex={photoIndex}
                           onDelete={handleDelete}
                           onView={setLightboxIndex}
+                          selectMode={selectMode}
+                          selected={selectedPhotos.has(photo.id)}
+                          onToggleSelect={togglePhotoSelection}
+                          reorderMode={reorderMode}
+                          onDragStart={handleDragStart}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop}
                         />
                       );
                     })}
@@ -1341,6 +1454,13 @@ const GalleryDetail = () => {
                       photoIndex={photoIndex}
                       onDelete={handleDelete}
                       onView={setLightboxIndex}
+                      selectMode={selectMode}
+                      selected={selectedPhotos.has(photo.id)}
+                      onToggleSelect={togglePhotoSelection}
+                      reorderMode={reorderMode}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
                     />
                   );
                 })}
