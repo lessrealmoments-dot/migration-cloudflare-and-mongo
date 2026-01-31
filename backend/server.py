@@ -522,6 +522,9 @@ class Photo(BaseModel):
     order: int = 0
     is_highlight: bool = False
     is_hidden: bool = False
+    is_flagged: bool = False
+    flagged_at: Optional[str] = None
+    flagged_reason: Optional[str] = None
 
 class PasswordVerify(BaseModel):
     password: str
@@ -534,6 +537,13 @@ class BulkPhotoAction(BaseModel):
 
 class PhotoReorder(BaseModel):
     photo_orders: List[dict]  # [{"id": "...", "order": 0}, ...]
+
+class BulkFlagAction(BaseModel):
+    photo_ids: List[str]
+    reason: Optional[str] = None
+
+class BulkUnflagAction(BaseModel):
+    photo_ids: List[str]
 
 class PublicGallery(BaseModel):
     model_config = ConfigDict(extra="ignore")
