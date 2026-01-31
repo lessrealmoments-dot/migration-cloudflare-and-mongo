@@ -362,6 +362,10 @@ class Token(BaseModel):
 class ForgotPassword(BaseModel):
     email: EmailStr
 
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
 # Admin models
 class AdminLogin(BaseModel):
     username: str
