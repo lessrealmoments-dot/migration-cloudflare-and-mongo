@@ -719,6 +719,7 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
         "id": photo_id,
         "gallery_id": gallery["id"],
         "filename": filename,
+        "original_filename": file.filename,  # Store original filename for duplicate detection
         "url": f"/api/photos/serve/{filename}",
         "uploaded_by": "guest",
         "section_id": None,
