@@ -57,6 +57,7 @@ const AdminDashboard = () => {
     }
     fetchPhotographers();
     fetchLandingConfig();
+    fetchAnalytics();
   }, [navigate]);
 
   const getAuthHeader = () => ({
@@ -84,6 +85,15 @@ const AdminDashboard = () => {
       setLandingConfig(response.data);
     } catch (error) {
       console.error('Failed to load landing config');
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/analytics`, getAuthHeader());
+      setAnalytics(response.data);
+    } catch (error) {
+      console.error('Failed to load analytics');
     }
   };
 
