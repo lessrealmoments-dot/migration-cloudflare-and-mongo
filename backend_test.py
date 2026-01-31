@@ -9,7 +9,7 @@ from io import BytesIO
 from PIL import Image
 
 class PhotoShareAPITester:
-    def __init__(self, base_url="https://gallery-event-hub.preview.emergentagent.com"):
+    def __init__(self, base_url="https://gallery-feature-qa.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
