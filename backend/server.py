@@ -807,6 +807,7 @@ async def get_all_photographers(admin: dict = Depends(get_admin_user)):
             active_galleries=user.get("active_galleries", 0),
             storage_quota=user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
             storage_used=user.get("storage_used", 0),
+            status=user.get("status", "active"),
             created_at=user["created_at"]
         ))
     
