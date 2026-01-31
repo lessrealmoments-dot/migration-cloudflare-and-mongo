@@ -1900,29 +1900,77 @@ const GalleryDetail = () => {
   );
 };
 
-const PhotoItem = ({ photo, photoIndex, onDelete, onView }) => (
+const PhotoItem = ({ photo, photoIndex, onDelete, onView, selectMode, selected, onToggleSelect, reorderMode, onDragStart, onDragOver, onDrop }) => (
   <div
     data-testid={`photo-item-${photo.id}`}
-    className="masonry-item group relative"
-    onClick={() => onView(photoIndex)}
+    className={`masonry-item group relative ${reorderMode ? 'cursor-move' : ''} ${selected ? 'ring-4 ring-primary' : ''}`}
+    onClick={() => {
+      if (selectMode) {
+        onToggleSelect(photo.id);
+      } else if (!reorderMode) {
+        onView(photoIndex);
+      }
+    }}
+    draggable={reorderMode}
+    onDragStart={reorderMode ? (e) => onDragStart(e, photo) : undefined}
+    onDragOver={reorderMode ? onDragOver : undefined}
+    onDrop={reorderMode ? (e) => onDrop(e, photo) : undefined}
   >
     <OptimizedImage
       src={`${BACKEND_URL}${photo.url}`}
       alt="Gallery photo"
       className="w-full h-auto cursor-pointer rounded-sm"
     />
-    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4 rounded-sm">
-      <button
-        data-testid={`delete-photo-${photo.id}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(photo.id);
-        }}
-        className="bg-white text-red-600 hover:bg-red-50 h-10 w-10 rounded-sm flex items-center justify-center transition-all duration-300"
-      >
-        <Trash2 className="w-5 h-5" strokeWidth={1.5} />
-      </button>
-    </div>
+    
+    {/* Highlight/Hidden badges */}
+    {(photo.is_highlight || photo.is_hidden) && (
+      <div className="absolute top-2 left-2 flex gap-1">
+        {photo.is_highlight && (
+          <span className="bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+            <Star className="w-3 h-3" /> Highlight
+          </span>
+        )}
+        {photo.is_hidden && (
+          <span className="bg-zinc-700 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+            <EyeOff className="w-3 h-3" /> Hidden
+          </span>
+        )}
+      </div>
+    )}
+    
+    {/* Select mode checkbox */}
+    {selectMode && (
+      <div className="absolute top-2 right-2 z-10">
+        <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
+          selected ? 'bg-primary border-primary text-white' : 'bg-white border-zinc-300'
+        }`}>
+          {selected && <Check className="w-4 h-4" />}
+        </div>
+      </div>
+    )}
+    
+    {/* Reorder mode drag handle */}
+    {reorderMode && (
+      <div className="absolute top-2 right-2 z-10 bg-white/90 p-1 rounded">
+        <GripVertical className="w-5 h-5 text-zinc-500" />
+      </div>
+    )}
+    
+    {/* Hover overlay */}
+    {!selectMode && !reorderMode && (
+      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4 rounded-sm">
+        <button
+          data-testid={`delete-photo-${photo.id}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(photo.id);
+          }}
+          className="bg-white text-red-600 hover:bg-red-50 h-10 w-10 rounded-sm flex items-center justify-center transition-all duration-300"
+        >
+          <Trash2 className="w-5 h-5" strokeWidth={1.5} />
+        </button>
+      </div>
+    )}
   </div>
 );
 
