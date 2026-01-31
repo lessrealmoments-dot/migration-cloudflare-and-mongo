@@ -15,6 +15,10 @@ from jose import JWTError, jwt
 import base64
 import shutil
 import httpx
+import secrets
+import string
+import asyncio
+import resend
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -30,6 +34,19 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 SECRET_KEY = os.environ['JWT_SECRET_KEY']
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+
+# Admin credentials
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
+
+# Email configuration
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
+
+# Default gallery limits
+DEFAULT_MAX_GALLERIES = 1  # 1 free trial gallery
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
