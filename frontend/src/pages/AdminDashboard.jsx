@@ -399,12 +399,13 @@ const AdminDashboard = () => {
                           {p.status || 'active'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-center text-zinc-300">
+                      <td className="px-6 py-4 text-sm text-center">
                         <button
                           onClick={() => { setSelectedPhotographer(p); fetchPhotographerGalleries(p.id); }}
-                          className="hover:text-primary transition-colors"
+                          className="px-3 py-1 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-zinc-200 hover:text-white transition-colors"
+                          data-testid={`view-galleries-${p.id}`}
                         >
-                          {p.active_galleries}/{p.galleries_created_total}
+                          {p.active_galleries}/{p.galleries_created_total} galleries
                         </button>
                       </td>
                       <td className="px-6 py-4 text-center">
