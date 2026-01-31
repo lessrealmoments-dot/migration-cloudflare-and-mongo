@@ -180,6 +180,39 @@ const GalleryDetail = () => {
     }
   };
 
+  // Delete gallery with double confirmation
+  const handleDeleteGalleryStep1 = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteGalleryStep2 = () => {
+    setShowDeleteModal(false);
+    setShowDeleteConfirmModal(true);
+    setDeleteConfirmText('');
+  };
+
+  const handleDeleteGalleryFinal = async () => {
+    if (deleteConfirmText !== gallery?.title) {
+      toast.error('Gallery name does not match');
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/galleries/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Gallery deleted permanently');
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error('Failed to delete gallery');
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirmModal(false);
+    }
+  };
+
   const copyShareLink = () => {
     const shareUrl = `${window.location.origin}/g/${gallery.share_link}`;
     
