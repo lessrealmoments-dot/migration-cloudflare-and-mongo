@@ -332,33 +332,81 @@ const AdminDashboard = () => {
         {activeTab === 'photographers' && (
           <div className="bg-zinc-800 rounded-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-zinc-700">
-              <h2 className="text-lg font-medium text-white">Manage Photographers</h2>
-              <p className="text-sm text-zinc-500 mt-1">
-                Adjust gallery limits and storage quotas. Total Created counts all galleries ever made (prevents recycling).
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-medium text-white">Manage Photographers</h2>
+                  <p className="text-sm text-zinc-500 mt-1">
+                    Adjust gallery limits, storage quotas, and manage accounts.
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by name or email..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="bg-zinc-700 text-white pl-10 pr-4 py-2 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  {/* Sort */}
+                  <select
+                    value={`${sortBy}-${sortOrder}`}
+                    onChange={(e) => {
+                      const [field, order] = e.target.value.split('-');
+                      setSortBy(field);
+                      setSortOrder(order);
+                    }}
+                    className="bg-zinc-700 text-white px-3 py-2 rounded-lg text-sm"
+                  >
+                    <option value="created_at-desc">Newest First</option>
+                    <option value="created_at-asc">Oldest First</option>
+                    <option value="storage_used-desc">Most Storage</option>
+                    <option value="name-asc">Name A-Z</option>
+                  </select>
+                </div>
+              </div>
             </div>
             
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-zinc-700/50">
                   <tr>
-                    <th className="text-left px-6 py-3 text-sm font-medium text-zinc-400">Email</th>
-                    <th className="text-left px-6 py-3 text-sm font-medium text-zinc-400">Name</th>
-                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Active</th>
-                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Max Galleries</th>
+                    <th className="text-left px-6 py-3 text-sm font-medium text-zinc-400">User</th>
+                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Status</th>
+                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Galleries</th>
+                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Max</th>
                     <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Storage</th>
                     <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-700">
-                  {photographers.map((p) => (
-                    <tr key={p.id} className="hover:bg-zinc-700/30">
-                      <td className="px-6 py-4 text-sm text-zinc-300">{p.email}</td>
-                      <td className="px-6 py-4 text-sm text-white">
-                        {p.name}
-                        {p.business_name && <span className="text-zinc-400 ml-1">({p.business_name})</span>}
+                  {filteredPhotographers.map((p) => (
+                    <tr key={p.id} className={`hover:bg-zinc-700/30 ${p.status === 'suspended' ? 'opacity-60' : ''}`}>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-white font-medium">{p.name}</div>
+                        <div className="text-xs text-zinc-400">{p.email}</div>
+                        {p.business_name && <div className="text-xs text-zinc-500">{p.business_name}</div>}
                       </td>
-                      <td className="px-6 py-4 text-sm text-center text-zinc-300">{p.active_galleries}/{p.galleries_created_total}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          p.status === 'suspended' 
+                            ? 'bg-red-900/50 text-red-300' 
+                            : 'bg-green-900/50 text-green-300'
+                        }`}>
+                          {p.status || 'active'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-center text-zinc-300">
+                        <button
+                          onClick={() => { setSelectedPhotographer(p); fetchPhotographerGalleries(p.id); }}
+                          className="hover:text-primary transition-colors"
+                        >
+                          {p.active_galleries}/{p.galleries_created_total}
+                        </button>
+                      </td>
                       <td className="px-6 py-4 text-center">
                         {editingLimit === p.id ? (
                           <div className="flex items-center justify-center gap-2">
@@ -380,7 +428,7 @@ const AdminDashboard = () => {
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                             p.galleries_created_total >= p.max_galleries
                               ? 'bg-red-900/50 text-red-300'
-                              : 'bg-green-900/50 text-green-300'
+                              : 'bg-zinc-700 text-zinc-300'
                           }`}>
                             {p.max_galleries}
                           </span>
@@ -407,61 +455,53 @@ const AdminDashboard = () => {
                       <td className="px-6 py-4 text-center">
                         {editingLimit === p.id ? (
                           <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => handleUpdateLimit(p.id)}
-                              className="p-2 bg-green-600 rounded text-white hover:bg-green-500"
-                              title="Save gallery limit"
-                            >
+                            <button onClick={() => handleUpdateLimit(p.id)} className="p-2 bg-green-600 rounded text-white hover:bg-green-500" title="Save">
                               <Save className="w-4 h-4" />
                             </button>
-                            <button
-                              onClick={() => setEditingLimit(null)}
-                              className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
-                              title="Cancel"
-                            >
+                            <button onClick={() => setEditingLimit(null)} className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500" title="Cancel">
                               <X className="w-4 h-4" />
                             </button>
                           </div>
                         ) : editingStorage === p.id ? (
                           <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => handleUpdateStorageQuota(p.id)}
-                              className="p-2 bg-green-600 rounded text-white hover:bg-green-500"
-                              title="Save storage quota"
-                            >
+                            <button onClick={() => handleUpdateStorageQuota(p.id)} className="p-2 bg-green-600 rounded text-white hover:bg-green-500" title="Save">
                               <Save className="w-4 h-4" />
                             </button>
-                            <button
-                              onClick={() => setEditingStorage(null)}
-                              className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
-                              title="Cancel"
-                            >
+                            <button onClick={() => setEditingStorage(null)} className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500" title="Cancel">
                               <X className="w-4 h-4" />
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center justify-center gap-1">
                             <button
-                              onClick={() => {
-                                setEditingLimit(p.id);
-                                setNewLimit(p.max_galleries);
-                              }}
+                              onClick={() => { setEditingLimit(p.id); setNewLimit(p.max_galleries); }}
                               className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
                               title="Edit gallery limit"
-                              data-testid={`edit-limit-${p.id}`}
                             >
                               <FolderOpen className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => {
-                                setEditingStorage(p.id);
-                                setNewStorageQuota(p.storage_quota || 500 * 1024 * 1024);
-                              }}
+                              onClick={() => { setEditingStorage(p.id); setNewStorageQuota(p.storage_quota || 500 * 1024 * 1024); }}
                               className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
                               title="Edit storage quota"
-                              data-testid={`edit-storage-${p.id}`}
                             >
                               <HardDrive className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleSuspendUser(p.id, p.status)}
+                              className={`p-2 rounded text-white hover:opacity-80 ${
+                                p.status === 'suspended' ? 'bg-green-600' : 'bg-yellow-600'
+                              }`}
+                              title={p.status === 'suspended' ? 'Activate' : 'Suspend'}
+                            >
+                              {p.status === 'suspended' ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                            </button>
+                            <button
+                              onClick={() => setShowDeleteConfirm(p.id)}
+                              className="p-2 bg-red-600 rounded text-white hover:bg-red-500"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         )}
@@ -471,11 +511,78 @@ const AdminDashboard = () => {
                 </tbody>
               </table>
               
-              {photographers.length === 0 && (
+              {filteredPhotographers.length === 0 && (
                 <div className="text-center py-12 text-zinc-500">
-                  No photographers registered yet
+                  {searchQuery ? 'No photographers match your search' : 'No photographers registered yet'}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="bg-zinc-800 rounded-lg max-w-md w-full p-6">
+              <h3 className="text-xl font-medium text-white mb-4">Delete Photographer?</h3>
+              <p className="text-zinc-400 mb-6">
+                This will permanently delete the photographer account and all their galleries and photos. This cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="px-4 py-2 bg-zinc-700 text-white rounded-lg hover:bg-zinc-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeletePhotographer(showDeleteConfirm)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Photographer Galleries Modal */}
+        {showGalleriesModal && selectedPhotographer && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="bg-zinc-800 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
+              <div className="p-6 border-b border-zinc-700 flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-medium text-white">{selectedPhotographer.name}'s Galleries</h3>
+                  <p className="text-sm text-zinc-400">{photographerGalleries.length} galleries</p>
+                </div>
+                <button onClick={() => setShowGalleriesModal(false)} className="p-2 hover:bg-zinc-700 rounded">
+                  <X className="w-5 h-5 text-zinc-400" />
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto max-h-[60vh]">
+                {photographerGalleries.length === 0 ? (
+                  <p className="text-zinc-500 text-center py-8">No galleries created</p>
+                ) : (
+                  <div className="space-y-3">
+                    {photographerGalleries.map(g => (
+                      <div key={g.id} className="bg-zinc-700/50 rounded-lg p-4 flex items-center justify-between">
+                        <div>
+                          <h4 className="text-white font-medium">{g.title}</h4>
+                          <p className="text-sm text-zinc-400">{g.photo_count} photos • {g.theme}</p>
+                        </div>
+                        <a
+                          href={`${BACKEND_URL}/g/${g.share_link}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
