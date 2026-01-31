@@ -379,10 +379,15 @@ class PhotographerAdmin(BaseModel):
     max_galleries: int
     galleries_created_total: int
     active_galleries: int = 0
+    storage_quota: int = DEFAULT_STORAGE_QUOTA
+    storage_used: int = 0
     created_at: str
 
 class UpdateGalleryLimit(BaseModel):
     max_galleries: int
+
+class UpdateStorageQuota(BaseModel):
+    storage_quota: int  # in bytes
 
 class LandingPageConfig(BaseModel):
     hero_title: str = "Share Your Photography, Beautifully"
