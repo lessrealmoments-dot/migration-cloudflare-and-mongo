@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X } from 'lucide-react';
+import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Upload, Loader2 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -21,6 +22,9 @@ const AdminDashboard = () => {
     hero_image_2: ''
   });
   const [savingConfig, setSavingConfig] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(null); // 'hero_image_1' or 'hero_image_2'
+  const fileInput1Ref = useRef(null);
+  const fileInput2Ref = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
