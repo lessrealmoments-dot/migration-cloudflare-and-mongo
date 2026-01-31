@@ -918,7 +918,9 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         created_at=gallery_doc["created_at"],
         photo_count=0,
         auto_delete_date=gallery_doc["auto_delete_date"],
-        days_until_deletion=days_until_deletion
+        days_until_deletion=days_until_deletion,
+        is_edit_locked=False,
+        days_until_edit_lock=GALLERY_EDIT_LOCK_DAYS
     )
 
 def calculate_days_until_deletion(auto_delete_date: str) -> int:
