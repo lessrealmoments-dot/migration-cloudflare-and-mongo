@@ -28,6 +28,7 @@ from google.auth.transport.requests import Request as GoogleRequest
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import io
+import aiofiles
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
