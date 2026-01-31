@@ -1042,6 +1042,19 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
+    # Check if gallery is edit-locked (7 days after creation)
+    edit_lock_info = get_edit_lock_info(gallery["created_at"])
+    locked_fields = ["title", "description", "event_title", "event_date", "theme"]
+    
+    if edit_lock_info["is_locked"]:
+        # Check if any locked fields are being updated
+        for field in locked_fields:
+            if getattr(updates, field, None) is not None:
+                raise HTTPException(
+                    status_code=403, 
+                    detail=f"Gallery editing is locked. You can no longer change {field} after 7 days from creation."
+                )
+    
     update_data = {}
     if updates.title is not None:
         update_data["title"] = updates.title
