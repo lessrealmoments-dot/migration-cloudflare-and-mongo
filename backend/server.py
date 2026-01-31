@@ -330,9 +330,45 @@ async def sync_gallery_to_drive(user_id: str, gallery_id: str):
     except Exception as e:
         logger.error(f"Error syncing gallery {gallery_id}: {e}")
 
+async def create_database_indexes():
+    """Create database indexes for optimized query performance under high concurrency"""
+    logger.info("Creating database indexes for high concurrency optimization...")
+    
+    try:
+        # Users collection indexes
+        await db.users.create_index("id", unique=True)
+        await db.users.create_index("email", unique=True)
+        
+        # Galleries collection indexes
+        await db.galleries.create_index("id", unique=True)
+        await db.galleries.create_index("share_link", unique=True)
+        await db.galleries.create_index("photographer_id")
+        await db.galleries.create_index("auto_delete_date")  # For auto-delete queries
+        await db.galleries.create_index([("photographer_id", 1), ("created_at", -1)])  # Compound index
+        
+        # Photos collection indexes - CRITICAL for high concurrency
+        await db.photos.create_index("id", unique=True)
+        await db.photos.create_index("gallery_id")
+        await db.photos.create_index("filename")
+        await db.photos.create_index([("gallery_id", 1), ("uploaded_at", -1)])  # For sorted photo queries
+        await db.photos.create_index([("gallery_id", 1), ("original_filename", 1)])  # For duplicate detection
+        
+        # Drive credentials and backups
+        await db.drive_credentials.create_index("user_id", unique=True)
+        await db.drive_backups.create_index([("gallery_id", 1), ("user_id", 1)])
+        
+        # Site config
+        await db.site_config.create_index("type", unique=True)
+        
+        logger.info("Database indexes created successfully")
+    except Exception as e:
+        logger.error(f"Error creating indexes (may already exist): {e}")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown"""
+    # Create database indexes for optimized performance
+    await create_database_indexes()
     # Start background sync task
     asyncio.create_task(auto_sync_drive_task())
     # Start auto-delete task
