@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Plus, LogOut, Image as ImageIcon, Lock, User, X, Save, BarChart3, HardDrive, Clock, Eye } from 'lucide-react';
+import { Plus, LogOut, Image as ImageIcon, Lock, User, X, Save, BarChart3, HardDrive, Clock, Eye, Key } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -27,7 +27,13 @@ const Dashboard = ({ user, setUser }) => {
     name: user?.name || '',
     business_name: user?.business_name || ''
   });
+  const [passwordData, setPasswordData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
   const [savingProfile, setSavingProfile] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     fetchGalleries();
