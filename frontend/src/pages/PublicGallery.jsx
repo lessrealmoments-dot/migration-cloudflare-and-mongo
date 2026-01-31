@@ -736,9 +736,7 @@ const PublicGallery = () => {
                   )}
                 </div>
               );
-            })()}
-              </div>
-            </div>
+            })()
           )}
 
           {photos.length === 0 && (
