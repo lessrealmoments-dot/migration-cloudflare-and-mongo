@@ -621,6 +621,26 @@ async def update_profile(profile: UserProfile, current_user: dict = Depends(get_
         created_at=updated_user["created_at"]
     )
 
+@api_router.put("/auth/change-password")
+async def change_password(data: ChangePassword, current_user: dict = Depends(get_current_user)):
+    """Change user password"""
+    # Verify current password
+    if not verify_password(data.current_password, current_user["password"]):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    # Validate new password length
+    if len(data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+    
+    # Hash and save new password
+    hashed_pw = hash_password(data.new_password)
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"password": hashed_pw}}
+    )
+    
+    return {"message": "Password updated successfully"}
+
 @api_router.post("/auth/forgot-password")
 async def forgot_password(data: ForgotPassword):
     """Send new password to user's email"""
