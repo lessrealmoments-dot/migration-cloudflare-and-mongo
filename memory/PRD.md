@@ -16,10 +16,23 @@ Build a website similar to Pic-time.com - a professional photo gallery platform 
 - [x] Access controls (expiring links, upload timeframes)
 - [x] Password-protected bulk downloads
 - [x] Premium lightbox for photo viewing
+- [x] **Upload progress animation** (Jan 2026)
+- [x] **Duplicate file prevention** (Jan 2026)
 
 ---
 
-## What's Been Implemented (December 2025)
+## What's Been Implemented (January 2026)
+
+### Latest Updates (Jan 31, 2026)
+- **Upload Progress Animation**: Visual feedback during guest photo uploads with:
+  - Spinner animation while uploading
+  - Individual file progress bars
+  - Success/error status icons for each file
+  - Disabled dropzone during upload to prevent duplicate clicks
+- **Duplicate Prevention**: Checks filename against existing photos before upload
+  - Shows warning toast for duplicate files
+  - Skips already-uploaded files automatically
+  - Prevents server from being loaded with duplicates
 
 ### Backend (FastAPI + MongoDB)
 - JWT-based authentication system
@@ -39,7 +52,7 @@ Build a website similar to Pic-time.com - a professional photo gallery platform 
 - Gallery detail view with management controls
 - Public gallery view for guests
 - Premium lightbox with thumbnail navigation
-- Guest photo upload via dropzone
+- Guest photo upload via dropzone with progress tracking
 - Theme selection in gallery creation
 - Copy share link functionality
 
@@ -50,6 +63,8 @@ Build a website similar to Pic-time.com - a professional photo gallery platform 
 | Create/Edit/Delete Galleries | ✅ Complete |
 | Photo Upload (Photographer) | ✅ Complete |
 | Photo Upload (Guest) | ✅ Complete |
+| Upload Progress Animation | ✅ Complete |
+| Duplicate File Prevention | ✅ Complete |
 | Shareable Links | ✅ Complete |
 | Link Expiration | ✅ Complete |
 | Guest Upload Timeframe | ✅ Complete |
