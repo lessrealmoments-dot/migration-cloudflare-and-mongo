@@ -593,12 +593,12 @@ const GalleryDetail = () => {
                       {backingUp ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
-                          Backing up...
+                          Syncing...
                         </>
                       ) : (
                         <>
                           <Upload className="w-4 h-4" strokeWidth={1.5} />
-                          Backup to Drive
+                          Sync Now
                         </>
                       )}
                     </button>
@@ -609,6 +609,30 @@ const GalleryDetail = () => {
                       Disconnect
                     </button>
                   </div>
+                </div>
+                
+                {/* Auto-sync toggle */}
+                <div className="flex items-center justify-between border-t border-zinc-200 pt-4">
+                  <div className="flex items-center gap-3">
+                    <RefreshCw className={`w-5 h-5 ${googleDriveStatus.auto_sync ? 'text-green-600' : 'text-zinc-400'}`} strokeWidth={1.5} />
+                    <div>
+                      <p className="text-sm font-medium text-zinc-700">Auto-sync every 5 minutes</p>
+                      <p className="text-xs text-zinc-500">Automatically backup new photos to Google Drive</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleToggleAutoSync}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      googleDriveStatus.auto_sync ? 'bg-green-600' : 'bg-zinc-300'
+                    }`}
+                    data-testid="auto-sync-toggle"
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        googleDriveStatus.auto_sync ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
                 </div>
                 
                 {backupStatus && backupStatus.status !== 'not_started' && (
