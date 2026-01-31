@@ -40,6 +40,14 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Upload animations and progress indicators
 - [x] Full-screen lightbox viewer
 - [x] Guest photo moderation by photographer
+- [x] **Photo Reordering** - Drag & drop to rearrange photo sequence (NEW)
+- [x] **Multi-Select Actions** (NEW):
+  - Select/Select All photos
+  - Bulk Delete
+  - Bulk Move to Section
+  - Mark as Highlight (appears first)
+  - Hide from Guests
+  - Show Hidden Photos
 
 ### User Features
 - [x] Photographer registration/login (JWT)
