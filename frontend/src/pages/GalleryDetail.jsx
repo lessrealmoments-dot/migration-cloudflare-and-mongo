@@ -169,7 +169,7 @@ const GalleryDetail = () => {
   const fetchGalleryData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const [galleryRes, photosRes, sectionsRes] = await Promise.all([
+      const [galleryRes, photosRes, sectionsRes, positionRes] = await Promise.all([
         axios.get(`${API}/galleries/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -178,11 +178,15 @@ const GalleryDetail = () => {
         }),
         axios.get(`${API}/galleries/${id}/sections`, {
           headers: { Authorization: `Bearer ${token}` }
-        })
+        }),
+        axios.get(`${API}/galleries/${id}/cover-photo-position`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: { scale: 1, positionX: 50, positionY: 50 } }))
       ]);
       setGallery(galleryRes.data);
       setPhotos(photosRes.data);
       setSections(sectionsRes.data);
+      setCoverPhotoPosition(positionRes.data);
     } catch (error) {
       toast.error('Failed to load gallery');
       navigate('/dashboard');
@@ -205,9 +209,24 @@ const GalleryDetail = () => {
       });
       
       setGallery({ ...gallery, cover_photo_url: response.data.cover_photo_url });
+      setCoverPhotoPosition({ scale: 1, positionX: 50, positionY: 50 });
       toast.success('Cover photo updated!');
     } catch (error) {
       toast.error('Failed to upload cover photo');
+    }
+  };
+
+  const handleSaveCoverPosition = async (position) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/galleries/${id}/cover-photo-position`, position, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCoverPhotoPosition(position);
+      setShowCoverEditor(false);
+      toast.success('Cover photo position saved!');
+    } catch (error) {
+      toast.error('Failed to save cover photo position');
     }
   };
 
