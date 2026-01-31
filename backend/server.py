@@ -1206,8 +1206,17 @@ async def delete_photo(photo_id: str, current_user: dict = Depends(get_current_u
         raise HTTPException(status_code=403, detail="Not authorized")
     
     file_path = UPLOAD_DIR / photo["filename"]
+    file_size = 0
     if file_path.exists():
+        file_size = file_path.stat().st_size
         file_path.unlink()
+    
+    # Update storage used
+    if file_size > 0:
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$inc": {"storage_used": -file_size}}
+        )
     
     await db.photos.delete_one({"id": photo_id})
     
