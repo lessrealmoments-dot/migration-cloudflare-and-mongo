@@ -55,7 +55,6 @@ const CreateGallery = () => {
       } else {
         toast.error(error.response?.data?.detail || 'Failed to create gallery');
       }
-      toast.error(error.response?.data?.detail || 'Failed to create gallery');
     } finally {
       setLoading(false);
     }
