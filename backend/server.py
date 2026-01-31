@@ -931,6 +931,33 @@ def calculate_days_until_deletion(auto_delete_date: str) -> int:
     except:
         return None
 
+def is_gallery_edit_locked(created_at: str) -> bool:
+    """Check if gallery is locked for editing (7 days after creation)"""
+    try:
+        created_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+        if created_dt.tzinfo is None:
+            created_dt = created_dt.replace(tzinfo=timezone.utc)
+        days_since_creation = (datetime.now(timezone.utc) - created_dt).days
+        return days_since_creation >= GALLERY_EDIT_LOCK_DAYS
+    except:
+        return False
+
+def get_edit_lock_info(created_at: str) -> dict:
+    """Get edit lock status and days remaining"""
+    try:
+        created_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+        if created_dt.tzinfo is None:
+            created_dt = created_dt.replace(tzinfo=timezone.utc)
+        days_since_creation = (datetime.now(timezone.utc) - created_dt).days
+        is_locked = days_since_creation >= GALLERY_EDIT_LOCK_DAYS
+        days_until_lock = max(0, GALLERY_EDIT_LOCK_DAYS - days_since_creation)
+        return {
+            "is_locked": is_locked,
+            "days_until_lock": days_until_lock if not is_locked else 0
+        }
+    except:
+        return {"is_locked": False, "days_until_lock": GALLERY_EDIT_LOCK_DAYS}
+
 @api_router.get("/galleries", response_model=List[Gallery])
 async def get_galleries(current_user: dict = Depends(get_current_user)):
     pipeline = [
