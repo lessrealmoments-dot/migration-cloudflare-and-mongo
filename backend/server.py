@@ -204,6 +204,11 @@ def create_access_token(data: dict) -> str:
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+def generate_random_password(length: int = 12) -> str:
+    """Generate a random password"""
+    alphabet = string.ascii_letters + string.digits + "!@#$%"
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     try:
         token = credentials.credentials
@@ -216,6 +221,17 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         if user is None:
             raise HTTPException(status_code=401, detail="User not found")
         return user
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid authentication")
+
+async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """Verify admin token"""
+    try:
+        token = credentials.credentials
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("is_admin") != True:
+            raise HTTPException(status_code=403, detail="Admin access required")
+        return {"is_admin": True}
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication")
 
@@ -233,6 +249,9 @@ async def register(user_data: UserRegister):
         "email": user_data.email,
         "password": hashed_pw,
         "name": user_data.name,
+        "business_name": user_data.business_name,
+        "max_galleries": DEFAULT_MAX_GALLERIES,
+        "galleries_created_total": 0,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -243,6 +262,9 @@ async def register(user_data: UserRegister):
         id=user_id,
         email=user_data.email,
         name=user_data.name,
+        business_name=user_data.business_name,
+        max_galleries=DEFAULT_MAX_GALLERIES,
+        galleries_created_total=0,
         created_at=user_doc["created_at"]
     )
     
