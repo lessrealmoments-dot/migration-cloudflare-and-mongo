@@ -641,6 +641,10 @@ async def login(credentials: UserLogin):
     if not user or not verify_password(credentials.password, user["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    # Check if user is suspended
+    if user.get("status") == "suspended":
+        raise HTTPException(status_code=403, detail="Your account has been suspended. Please contact support.")
+    
     access_token = create_access_token({"sub": user["id"]})
     user_obj = User(
         id=user["id"],
