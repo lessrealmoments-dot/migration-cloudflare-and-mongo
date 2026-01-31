@@ -58,12 +58,18 @@ const GalleryDetail = () => {
     }
   };
 
-  const handleLinkGoogleDrive = () => {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    const redirectUrl = window.location.origin + `/gallery/${id}`;
-    // Store that we're linking Google Drive
-    localStorage.setItem('pendingGoogleDriveLink', id);
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  const handleLinkGoogleDrive = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/oauth/drive/authorize?gallery_id=${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Redirect to Google OAuth
+      window.location.href = response.data.authorization_url;
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to start Google Drive authorization';
+      toast.error(message);
+    }
   };
 
   const handleDisconnectGoogleDrive = async () => {
