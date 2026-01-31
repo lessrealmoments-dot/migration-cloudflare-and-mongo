@@ -811,17 +811,59 @@ const GalleryDetail = () => {
             className={`border-2 border-dashed rounded-sm p-12 text-center cursor-pointer transition-all duration-300 ${
               isDragActive
                 ? 'border-primary bg-zinc-50'
+                : uploading
+                ? 'border-zinc-300 bg-zinc-50 cursor-not-allowed'
                 : 'border-zinc-300 hover:border-zinc-400 hover:bg-zinc-50/50'
             }`}
           >
-            <input {...getInputProps()} />
-            <Upload className="w-12 h-12 mx-auto mb-4 text-zinc-400" strokeWidth={1.5} />
-            {uploading ? (
-              <p className="text-base font-light text-zinc-600">Uploading photos...</p>
+            <input {...getInputProps()} disabled={uploading} />
+            
+            {uploading && uploadProgress.length > 0 ? (
+              <div className="space-y-4">
+                <Loader2 className="w-12 h-12 mx-auto text-zinc-600 animate-spin" strokeWidth={1.5} />
+                <p className="text-base font-medium text-zinc-700">Uploading {uploadProgress.length} photo(s)...</p>
+                <div className="max-w-md mx-auto space-y-2">
+                  {uploadProgress.map((file, index) => (
+                    <div key={index} className="flex items-center gap-3 text-left bg-white rounded-md p-2 shadow-sm border border-zinc-200">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-zinc-700 truncate">{file.name}</p>
+                        <div className="w-full bg-zinc-200 rounded-full h-1.5 mt-1">
+                          <div 
+                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                              file.status === 'error' ? 'bg-red-500' : 
+                              file.status === 'success' ? 'bg-green-500' : 'bg-zinc-600'
+                            }`}
+                            style={{ width: `${file.progress}%` }}
+                          />
+                        </div>
+                        {file.status === 'error' && file.errorMsg && (
+                          <p className="text-xs text-red-500 mt-1">{file.errorMsg}</p>
+                        )}
+                      </div>
+                      <div className="flex-shrink-0">
+                        {file.status === 'uploading' && (
+                          <Loader2 className="w-4 h-4 text-zinc-500 animate-spin" />
+                        )}
+                        {file.status === 'success' && (
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        )}
+                        {file.status === 'error' && (
+                          <AlertCircle className="w-4 h-4 text-red-500" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">Please wait until all uploads complete</p>
+              </div>
             ) : isDragActive ? (
-              <p className="text-base font-light text-zinc-600">Drop photos here...</p>
+              <>
+                <Upload className="w-12 h-12 mx-auto mb-4 text-zinc-400" strokeWidth={1.5} />
+                <p className="text-base font-light text-zinc-600">Drop photos here...</p>
+              </>
             ) : (
               <>
+                <Upload className="w-12 h-12 mx-auto mb-4 text-zinc-400" strokeWidth={1.5} />
                 <p className="text-base font-light text-zinc-600 mb-2">
                   Drag & drop photos here, or click to select
                 </p>
