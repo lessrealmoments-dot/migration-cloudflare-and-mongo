@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Plus, LogOut, Image as ImageIcon, Lock } from 'lucide-react';
+import { Plus, LogOut, Image as ImageIcon, Lock, User, X, Save } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -11,10 +11,25 @@ const Dashboard = ({ user, setUser }) => {
   const navigate = useNavigate();
   const [galleries, setGalleries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: user?.name || '',
+    business_name: user?.business_name || ''
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
     fetchGalleries();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || '',
+        business_name: user.business_name || ''
+      });
+    }
+  }, [user]);
 
   const fetchGalleries = async () => {
     try {
@@ -36,6 +51,28 @@ const Dashboard = ({ user, setUser }) => {
     setUser(null);
     navigate('/');
     toast.success('Logged out successfully');
+  };
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(`${API}/auth/profile`, profileData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Update local user data
+      const updatedUser = { ...user, ...response.data };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      toast.success('Profile updated successfully');
+      setShowProfileModal(false);
+    } catch (error) {
+      toast.error('Failed to update profile');
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   return (
