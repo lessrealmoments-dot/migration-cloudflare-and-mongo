@@ -9,6 +9,7 @@ import GalleryDetail from '@/pages/GalleryDetail';
 import PublicGallery from '@/pages/PublicGallery';
 import AdminLogin from '@/pages/AdminLogin';
 import AdminDashboard from '@/pages/AdminDashboard';
+import AdminGalleryReview from '@/pages/AdminGalleryReview';
 import '@/App.css';
 
 function App() {
