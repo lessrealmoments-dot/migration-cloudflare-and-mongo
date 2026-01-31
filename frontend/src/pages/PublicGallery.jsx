@@ -3,13 +3,14 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { Lock, Upload, Download, X, Camera, ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Lock, Upload, Download, X, Camera, ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle, Star } from 'lucide-react';
 import { getThemeStyles, themes } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 import OptimizedImage from '@/components/OptimizedImage';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const PREVIEW_COUNT = 8;
 
 const PublicGallery = () => {
   const { shareLink } = useParams();
@@ -26,6 +27,17 @@ const PublicGallery = () => {
   const [guestUploadExpanded, setGuestUploadExpanded] = useState(false);
   const [showDownloadAllModal, setShowDownloadAllModal] = useState(false);
   const [downloadAllPassword, setDownloadAllPassword] = useState('');
+  const [expandedSections, setExpandedSections] = useState({});
+
+  // Toggle section expand/collapse
+  const toggleSectionExpand = (sectionId) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  const isSectionExpanded = (sectionId) => expandedSections[sectionId] ?? false;
 
   useEffect(() => {
     fetchGalleryInfo();
