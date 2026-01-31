@@ -68,6 +68,8 @@ const AdminDashboard = () => {
     fetchPhotographers();
     fetchLandingConfig();
     fetchAnalytics();
+    fetchActivityLogs();
+    fetchAdminSettings();
   }, [navigate]);
 
   const getAuthHeader = () => ({
@@ -106,6 +108,82 @@ const AdminDashboard = () => {
       console.error('Failed to load analytics');
     }
   };
+
+  const fetchActivityLogs = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/activity-logs?limit=20`, getAuthHeader());
+      setActivityLogs(response.data);
+    } catch (error) {
+      console.error('Failed to load activity logs');
+    }
+  };
+
+  const fetchAdminSettings = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/settings`, getAuthHeader());
+      setAdminSettings(response.data);
+    } catch (error) {
+      console.error('Failed to load admin settings');
+    }
+  };
+
+  const fetchPhotographerGalleries = async (userId) => {
+    try {
+      const response = await axios.get(`${API}/admin/photographers/${userId}/galleries`, getAuthHeader());
+      setPhotographerGalleries(response.data);
+      setShowGalleriesModal(true);
+    } catch (error) {
+      toast.error('Failed to load galleries');
+    }
+  };
+
+  const handleSuspendUser = async (userId, currentStatus) => {
+    const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+    try {
+      await axios.put(
+        `${API}/admin/photographers/${userId}/status`,
+        { status: newStatus },
+        getAuthHeader()
+      );
+      toast.success(`User ${newStatus === 'suspended' ? 'suspended' : 'activated'}`);
+      fetchPhotographers();
+      fetchActivityLogs();
+    } catch (error) {
+      toast.error('Failed to update user status');
+    }
+  };
+
+  const handleDeletePhotographer = async (userId) => {
+    try {
+      await axios.delete(`${API}/admin/photographers/${userId}`, getAuthHeader());
+      toast.success('Photographer deleted');
+      setShowDeleteConfirm(null);
+      fetchPhotographers();
+      fetchActivityLogs();
+    } catch (error) {
+      toast.error('Failed to delete photographer');
+    }
+  };
+
+  // Filter and sort photographers
+  const filteredPhotographers = photographers
+    .filter(p => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return p.name.toLowerCase().includes(query) || 
+             p.email.toLowerCase().includes(query) ||
+             (p.business_name && p.business_name.toLowerCase().includes(query));
+    })
+    .sort((a, b) => {
+      let aVal = a[sortBy];
+      let bVal = b[sortBy];
+      if (sortBy === 'storage_used' || sortBy === 'storage_quota') {
+        aVal = aVal || 0;
+        bVal = bVal || 0;
+      }
+      if (sortOrder === 'asc') return aVal > bVal ? 1 : -1;
+      return aVal < bVal ? 1 : -1;
+    });
 
   const handleUpdateLimit = async (userId) => {
     try {
