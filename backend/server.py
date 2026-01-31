@@ -625,11 +625,58 @@ async def get_public_gallery_photos(share_link: str, password: Optional[str] = N
     photos = await db.photos.find({"gallery_id": gallery["id"]}, {"_id": 0}).sort("uploaded_at", -1).limit(500).to_list(None)
     return [Photo(**p) for p in photos]
 
+class DuplicateCheckRequest(BaseModel):
+    filenames: List[str]
+
+class DuplicateCheckResponse(BaseModel):
+    duplicates: List[str]
+    new_files: List[str]
+
+@api_router.post("/public/gallery/{share_link}/check-duplicates", response_model=DuplicateCheckResponse)
+async def check_duplicate_files(share_link: str, request: DuplicateCheckRequest):
+    """Check which filenames already exist in the gallery"""
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Get all original filenames in this gallery
+    existing_photos = await db.photos.find(
+        {"gallery_id": gallery["id"]}, 
+        {"_id": 0, "original_filename": 1}
+    ).to_list(None)
+    
+    existing_filenames = set(
+        p.get("original_filename", "").lower() 
+        for p in existing_photos 
+        if p.get("original_filename")
+    )
+    
+    duplicates = []
+    new_files = []
+    
+    for filename in request.filenames:
+        if filename.lower() in existing_filenames:
+            duplicates.append(filename)
+        else:
+            new_files.append(filename)
+    
+    return DuplicateCheckResponse(duplicates=duplicates, new_files=new_files)
+
 @api_router.post("/public/gallery/{share_link}/upload", response_model=Photo)
 async def upload_photo_guest(share_link: str, file: UploadFile = File(...), password: Optional[str] = Form(None)):
     gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Check for duplicate filename
+    original_filename = file.filename
+    existing = await db.photos.find_one({
+        "gallery_id": gallery["id"],
+        "original_filename": {"$regex": f"^{original_filename}$", "$options": "i"}
+    }, {"_id": 0})
+    
+    if existing:
+        raise HTTPException(status_code=409, detail=f"File '{original_filename}' has already been uploaded")
     
     if gallery.get("share_link_expiration_date"):
         try:
