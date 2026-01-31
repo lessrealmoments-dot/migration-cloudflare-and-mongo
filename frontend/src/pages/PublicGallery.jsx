@@ -325,6 +325,20 @@ const PublicGallery = () => {
     return photos.filter(p => p.uploaded_by === 'guest');
   };
 
+  // Get highlighted photos (shown in grid)
+  const getHighlightPhotos = () => {
+    return photos.filter(p => p.is_highlight && p.uploaded_by === 'photographer');
+  };
+
+  // Get regular photos (shown in masonry)
+  const getRegularPhotosBySection = (sectionId) => {
+    return photos.filter(p => p.section_id === sectionId && p.uploaded_by === 'photographer' && !p.is_highlight);
+  };
+
+  const getRegularPhotosWithoutSection = () => {
+    return photos.filter(p => !p.section_id && p.uploaded_by === 'photographer' && !p.is_highlight);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
