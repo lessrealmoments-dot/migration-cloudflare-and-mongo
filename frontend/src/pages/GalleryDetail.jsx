@@ -1328,6 +1328,114 @@ const GalleryDetail = () => {
           </div>
         </div>
       )}
+
+      {/* Download Modal */}
+      {showDownloadModal && downloadInfo && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-sm p-8 max-w-lg w-full" data-testid="download-modal">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
+                Download Photos
+              </h3>
+              <button
+                onClick={() => setShowDownloadModal(false)}
+                className="p-2 hover:bg-zinc-100 rounded-sm transition-colors"
+              >
+                <X className="w-5 h-5" strokeWidth={1.5} />
+              </button>
+            </div>
+
+            {/* Summary */}
+            <div className="bg-zinc-50 rounded-sm p-4 mb-6">
+              <div className="flex items-center gap-3 mb-2">
+                <Package className="w-5 h-5 text-zinc-600" strokeWidth={1.5} />
+                <span className="font-medium">{downloadInfo.gallery_title}</span>
+              </div>
+              <div className="text-sm text-zinc-600 space-y-1">
+                <p>{downloadInfo.total_photos} photos • {formatBytes(downloadInfo.total_size_bytes)} total</p>
+                {downloadInfo.chunk_count > 1 && (
+                  <p className="text-amber-600">Split into {downloadInfo.chunk_count} zip files (max 200MB each)</p>
+                )}
+              </div>
+            </div>
+
+            {/* Chunk List */}
+            <div className="space-y-3 mb-6 max-h-60 overflow-y-auto">
+              {downloadInfo.chunks.map((chunk) => (
+                <div 
+                  key={chunk.chunk_number} 
+                  className={`flex items-center justify-between p-4 rounded-sm border transition-all ${
+                    downloadedChunks[chunk.chunk_number] 
+                      ? 'border-green-300 bg-green-50' 
+                      : 'border-zinc-200 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {downloadingChunks[chunk.chunk_number] ? (
+                      <Loader2 className="w-5 h-5 text-zinc-600 animate-spin" strokeWidth={1.5} />
+                    ) : downloadedChunks[chunk.chunk_number] ? (
+                      <CheckCircle className="w-5 h-5 text-green-600" strokeWidth={1.5} />
+                    ) : (
+                      <Package className="w-5 h-5 text-zinc-400" strokeWidth={1.5} />
+                    )}
+                    <div>
+                      <p className="font-medium text-sm">
+                        {downloadInfo.chunk_count > 1 
+                          ? `Part ${chunk.chunk_number} of ${downloadInfo.chunk_count}`
+                          : `${downloadInfo.gallery_title}.zip`
+                        }
+                      </p>
+                      <p className="text-xs text-zinc-500">
+                        {chunk.photo_count} photos • {formatBytes(chunk.size_bytes)}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => downloadChunk(chunk.chunk_number)}
+                    disabled={downloadingChunks[chunk.chunk_number] || downloadedChunks[chunk.chunk_number]}
+                    className={`h-9 px-4 rounded-sm text-sm font-medium transition-all flex items-center gap-2 ${
+                      downloadedChunks[chunk.chunk_number]
+                        ? 'bg-green-100 text-green-700 cursor-default'
+                        : downloadingChunks[chunk.chunk_number]
+                        ? 'bg-zinc-100 text-zinc-500 cursor-wait'
+                        : 'bg-zinc-900 text-white hover:bg-zinc-800'
+                    }`}
+                  >
+                    {downloadingChunks[chunk.chunk_number] ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Preparing...
+                      </>
+                    ) : downloadedChunks[chunk.chunk_number] ? (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        Downloaded
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4" />
+                        Download
+                      </>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Download All Button */}
+            {downloadInfo.chunk_count > 1 && (
+              <button
+                onClick={downloadAllChunks}
+                disabled={Object.keys(downloadingChunks).some(k => downloadingChunks[k])}
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-11 rounded-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Download className="w-4 h-4" strokeWidth={1.5} />
+                Download All Parts
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
