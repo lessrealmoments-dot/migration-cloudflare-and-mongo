@@ -321,6 +321,13 @@ const Dashboard = ({ user, setUser }) => {
                         : `${gallery.days_until_deletion} days remaining`}
                     </div>
                   )}
+                  {/* Edit lock indicator */}
+                  {gallery.is_edit_locked && (
+                    <div className="flex items-center gap-1 text-xs text-amber-600">
+                      <Lock className="w-3 h-3" strokeWidth={1.5} />
+                      Editing locked
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
