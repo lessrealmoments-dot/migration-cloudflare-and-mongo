@@ -105,6 +105,38 @@ const Dashboard = ({ user, setUser }) => {
     }
   };
 
+  const handleChangePassword = async () => {
+    // Validate passwords match
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    
+    // Validate password length
+    if (passwordData.new_password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    
+    setChangingPassword(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/auth/change-password`, {
+        current_password: passwordData.current_password,
+        new_password: passwordData.new_password
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Password changed successfully');
+      setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to change password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-50/30">
       <nav className="border-b border-zinc-200 bg-white">
