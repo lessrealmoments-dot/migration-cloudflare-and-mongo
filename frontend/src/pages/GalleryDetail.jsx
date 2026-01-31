@@ -867,7 +867,7 @@ const GalleryDetail = () => {
       {/* Premium Lightbox */}
       {lightboxIndex !== null && (
         <PremiumLightbox
-          photos={photos.filter(p => p.uploaded_by === 'photographer')}
+          photos={photos}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onDownload={null}
