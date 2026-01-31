@@ -1752,6 +1752,10 @@ async def download_gallery_chunk(gallery_id: str, chunk_number: int, current_use
     )
 
 from fastapi.responses import FileResponse
+import mimetypes
+
+# Initialize mimetypes
+mimetypes.init()
 
 @api_router.get("/photos/serve/{filename}")
 async def serve_photo(filename: str, download: bool = False):
@@ -1759,17 +1763,35 @@ async def serve_photo(filename: str, download: bool = False):
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Photo not found")
     
+    # Get correct media type based on file extension
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
+    media_types = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'heic': 'image/heic',
+        'heif': 'image/heif'
+    }
+    media_type = media_types.get(ext, 'image/jpeg')
+    
+    # Get file size for Content-Length header
+    file_size = file_path.stat().st_size
+    
     # Determine content disposition based on download parameter
     disposition = "attachment" if download else "inline"
     
-    # Return file with proper headers
+    # Return file with proper caching and headers
     return FileResponse(
         file_path,
-        media_type="image/jpeg",
+        media_type=media_type,
         headers={
             "Content-Disposition": f"{disposition}; filename={filename}",
+            "Content-Length": str(file_size),
+            "Cache-Control": "public, max-age=31536000, immutable",  # Cache for 1 year (images don't change)
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Expose-Headers": "Content-Disposition"
+            "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
         }
     )
 
