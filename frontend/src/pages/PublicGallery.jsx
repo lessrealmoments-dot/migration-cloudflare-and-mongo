@@ -597,9 +597,35 @@ const PublicGallery = () => {
             Gallery
           </h3>
 
+          {/* Highlights Section - Grid Layout */}
+          {getHighlightPhotos().length > 0 && (
+            <div className="mb-16">
+              <h4
+                className="text-2xl md:text-3xl font-normal mb-6 text-center flex items-center justify-center gap-2"
+                style={{ fontFamily: 'Playfair Display, serif' }}
+              >
+                <Star className="w-6 h-6 text-yellow-500" />
+                Highlights
+                <span className="text-zinc-400 text-lg">({getHighlightPhotos().length})</span>
+              </h4>
+              <div className="highlight-grid">
+                {getHighlightPhotos().map((photo) => (
+                  <HighlightPhotoItem
+                    key={photo.id}
+                    photo={photo}
+                    photoIndex={photos.findIndex(p => p.id === photo.id)}
+                    onView={setLightboxIndex}
+                    onDownload={handleDownload}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sections - Masonry Layout */}
           {gallery?.sections && gallery.sections.length > 0 ? (
             gallery.sections.map((section) => {
-              const sectionPhotos = getPhotosBySection(section.id);
+              const sectionPhotos = getRegularPhotosBySection(section.id);
               if (sectionPhotos.length === 0) return null;
               const isExpanded = isSectionExpanded(section.id);
               const displayPhotos = isExpanded ? sectionPhotos : sectionPhotos.slice(0, PREVIEW_COUNT);
@@ -647,7 +673,7 @@ const PublicGallery = () => {
             })
           ) : null}
 
-          {getPhotosWithoutSection().length > 0 && (
+          {getRegularPhotosWithoutSection().length > 0 && (
             (() => {
               const unsortedPhotos = getPhotosWithoutSection();
               const sectionId = 'unsorted';
