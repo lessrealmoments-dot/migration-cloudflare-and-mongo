@@ -402,10 +402,11 @@ const PublicGallery = () => {
 
       {gallery?.cover_photo_url && (
         <div className="w-full h-64 md:h-96 overflow-hidden" style={{ borderBottom: `1px solid ${currentTheme.colors.accent}` }}>
-          <img
+          <OptimizedImage
             src={`${BACKEND_URL}${gallery.cover_photo_url}`}
             alt="Cover"
             className="w-full h-full object-cover"
+            showLoader={true}
           />
         </div>
       )}
