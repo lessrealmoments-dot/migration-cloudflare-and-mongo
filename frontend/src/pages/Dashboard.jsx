@@ -31,6 +31,7 @@ const Dashboard = ({ user, setUser }) => {
 
   useEffect(() => {
     fetchGalleries();
+    fetchAnalytics();
   }, []);
 
   useEffect(() => {
@@ -53,6 +54,18 @@ const Dashboard = ({ user, setUser }) => {
       toast.error('Failed to load galleries');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/analytics/photographer`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAnalytics(response.data);
+    } catch (error) {
+      console.error('Failed to load analytics');
     }
   };
 
