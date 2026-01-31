@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Request, Response
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Request, Response, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -19,6 +19,11 @@ import secrets
 import string
 import asyncio
 import resend
+from contextlib import asynccontextmanager
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -48,7 +53,216 @@ if RESEND_API_KEY:
 # Default gallery limits
 DEFAULT_MAX_GALLERIES = 1  # 1 free trial gallery
 
-app = FastAPI()
+# Google Drive sync interval (in seconds)
+DRIVE_SYNC_INTERVAL = 5 * 60  # 5 minutes
+
+# Background task control
+sync_task_running = False
+
+async def auto_sync_drive_task():
+    """Background task that auto-syncs galleries to Google Drive every 5 minutes"""
+    global sync_task_running
+    sync_task_running = True
+    logger.info("Google Drive auto-sync task started")
+    
+    while sync_task_running:
+        try:
+            # Find all users with Google Drive connected and auto_sync enabled
+            users_with_drive = await db.users.find({
+                "google_connected": True,
+                "drive_auto_sync": True
+            }, {"_id": 0}).to_list(None)
+            
+            for user in users_with_drive:
+                # Find galleries that need syncing (modified since last sync)
+                galleries = await db.galleries.find({
+                    "photographer_id": user["id"]
+                }, {"_id": 0}).to_list(None)
+                
+                for gallery in galleries:
+                    await sync_gallery_to_drive(user["id"], gallery["id"])
+            
+            logger.info(f"Auto-sync completed for {len(users_with_drive)} users")
+        except Exception as e:
+            logger.error(f"Auto-sync error: {e}")
+        
+        # Wait for next sync interval
+        await asyncio.sleep(DRIVE_SYNC_INTERVAL)
+
+async def sync_gallery_to_drive(user_id: str, gallery_id: str):
+    """Sync a single gallery to Google Drive"""
+    try:
+        user = await db.users.find_one({"id": user_id}, {"_id": 0})
+        if not user or not user.get("google_connected"):
+            return
+        
+        gallery = await db.galleries.find_one({"id": gallery_id}, {"_id": 0})
+        if not gallery:
+            return
+        
+        # Get photos that haven't been synced yet
+        photos = await db.photos.find({
+            "gallery_id": gallery_id,
+            "drive_synced": {"$ne": True}
+        }, {"_id": 0}).to_list(None)
+        
+        if not photos:
+            return
+        
+        # Get or create backup record
+        backup = await db.drive_backups.find_one({
+            "gallery_id": gallery_id,
+            "user_id": user_id
+        }, {"_id": 0})
+        
+        if not backup:
+            backup = {
+                "id": str(uuid.uuid4()),
+                "gallery_id": gallery_id,
+                "user_id": user_id,
+                "status": "in_progress",
+                "folder_name": f"PhotoShare - {gallery['title']}",
+                "photos_backed_up": 0,
+                "total_photos": len(photos),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "last_updated": datetime.now(timezone.utc).isoformat()
+            }
+            await db.drive_backups.insert_one(backup)
+        
+        # Upload photos using Google Drive API
+        access_token = user.get("google_access_token")
+        if not access_token:
+            logger.warning(f"No access token for user {user_id}")
+            return
+        
+        # Create folder if not exists
+        folder_id = backup.get("folder_id")
+        if not folder_id:
+            folder_id = await create_drive_folder(access_token, backup["folder_name"])
+            if folder_id:
+                await db.drive_backups.update_one(
+                    {"id": backup["id"]},
+                    {"$set": {"folder_id": folder_id, "folder_url": f"https://drive.google.com/drive/folders/{folder_id}"}}
+                )
+        
+        if not folder_id:
+            logger.error(f"Failed to create Drive folder for gallery {gallery_id}")
+            return
+        
+        # Upload each photo
+        synced_count = 0
+        for photo in photos:
+            file_path = UPLOAD_DIR / photo["filename"]
+            if file_path.exists():
+                success = await upload_to_drive(access_token, folder_id, file_path, photo.get("original_filename", photo["filename"]))
+                if success:
+                    await db.photos.update_one(
+                        {"id": photo["id"]},
+                        {"$set": {"drive_synced": True, "drive_synced_at": datetime.now(timezone.utc).isoformat()}}
+                    )
+                    synced_count += 1
+        
+        # Update backup status
+        total_synced = backup.get("photos_backed_up", 0) + synced_count
+        total_photos = await db.photos.count_documents({"gallery_id": gallery_id})
+        
+        await db.drive_backups.update_one(
+            {"id": backup["id"]},
+            {"$set": {
+                "status": "completed" if total_synced >= total_photos else "in_progress",
+                "photos_backed_up": total_synced,
+                "total_photos": total_photos,
+                "last_updated": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        logger.info(f"Synced {synced_count} photos for gallery {gallery_id}")
+        
+    except Exception as e:
+        logger.error(f"Error syncing gallery {gallery_id}: {e}")
+
+async def create_drive_folder(access_token: str, folder_name: str) -> Optional[str]:
+    """Create a folder in Google Drive"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://www.googleapis.com/drive/v3/files",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "name": folder_name,
+                    "mimeType": "application/vnd.google-apps.folder"
+                }
+            )
+            if response.status_code == 200:
+                return response.json().get("id")
+            else:
+                logger.error(f"Failed to create folder: {response.text}")
+                return None
+    except Exception as e:
+        logger.error(f"Error creating Drive folder: {e}")
+        return None
+
+async def upload_to_drive(access_token: str, folder_id: str, file_path: Path, filename: str) -> bool:
+    """Upload a file to Google Drive folder"""
+    try:
+        # Read file content
+        with open(file_path, 'rb') as f:
+            file_content = f.read()
+        
+        # Determine mime type
+        ext = file_path.suffix.lower()
+        mime_types = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif',
+            '.webp': 'image/webp'
+        }
+        mime_type = mime_types.get(ext, 'application/octet-stream')
+        
+        # Use multipart upload
+        metadata = {
+            "name": filename,
+            "parents": [folder_id]
+        }
+        
+        async with httpx.AsyncClient() as client:
+            # Simple upload for files under 5MB
+            if len(file_content) < 5 * 1024 * 1024:
+                response = await client.post(
+                    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+                    headers={
+                        "Authorization": f"Bearer {access_token}",
+                    },
+                    files={
+                        "metadata": ("metadata", str(metadata).replace("'", '"'), "application/json"),
+                        "file": (filename, file_content, mime_type)
+                    },
+                    timeout=60.0
+                )
+                return response.status_code in [200, 201]
+            else:
+                # For larger files, use resumable upload (simplified)
+                return False
+                
+    except Exception as e:
+        logger.error(f"Error uploading to Drive: {e}")
+        return False
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup/shutdown"""
+    # Start background sync task
+    asyncio.create_task(auto_sync_drive_task())
+    yield
+    # Stop background task
+    global sync_task_running
+    sync_task_running = False
+
+app = FastAPI(lifespan=lifespan)
 api_router = APIRouter(prefix="/api")
 security = HTTPBearer()
 
