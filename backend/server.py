@@ -281,6 +281,9 @@ async def login(credentials: UserLogin):
         id=user["id"],
         email=user["email"],
         name=user["name"],
+        business_name=user.get("business_name"),
+        max_galleries=user.get("max_galleries", DEFAULT_MAX_GALLERIES),
+        galleries_created_total=user.get("galleries_created_total", 0),
         created_at=user["created_at"]
     )
     
@@ -288,10 +291,174 @@ async def login(credentials: UserLogin):
 
 @api_router.get("/auth/me", response_model=User)
 async def get_me(current_user: dict = Depends(get_current_user)):
-    return User(**current_user)
+    return User(
+        id=current_user["id"],
+        email=current_user["email"],
+        name=current_user["name"],
+        business_name=current_user.get("business_name"),
+        max_galleries=current_user.get("max_galleries", DEFAULT_MAX_GALLERIES),
+        galleries_created_total=current_user.get("galleries_created_total", 0),
+        created_at=current_user["created_at"]
+    )
+
+@api_router.put("/auth/profile", response_model=User)
+async def update_profile(profile: UserProfile, current_user: dict = Depends(get_current_user)):
+    """Update photographer profile (name, business name)"""
+    update_data = {}
+    if profile.name is not None:
+        update_data["name"] = profile.name
+    if profile.business_name is not None:
+        update_data["business_name"] = profile.business_name
+    
+    if update_data:
+        await db.users.update_one({"id": current_user["id"]}, {"$set": update_data})
+    
+    updated_user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    return User(
+        id=updated_user["id"],
+        email=updated_user["email"],
+        name=updated_user["name"],
+        business_name=updated_user.get("business_name"),
+        max_galleries=updated_user.get("max_galleries", DEFAULT_MAX_GALLERIES),
+        galleries_created_total=updated_user.get("galleries_created_total", 0),
+        created_at=updated_user["created_at"]
+    )
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPassword):
+    """Send new password to user's email"""
+    user = await db.users.find_one({"email": data.email}, {"_id": 0})
+    if not user:
+        # Don't reveal if email exists
+        return {"message": "If this email is registered, a new password has been sent."}
+    
+    # Generate new password
+    new_password = generate_random_password()
+    hashed_pw = hash_password(new_password)
+    
+    # Update password in database
+    await db.users.update_one({"id": user["id"]}, {"$set": {"password": hashed_pw}})
+    
+    # Send email with new password
+    if RESEND_API_KEY:
+        try:
+            params = {
+                "from": SENDER_EMAIL,
+                "to": [data.email],
+                "subject": "PhotoShare - Your New Password",
+                "html": f"""
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #333;">Password Reset</h2>
+                    <p>Hello {user['name']},</p>
+                    <p>Your password has been reset. Here is your new password:</p>
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <code style="font-size: 18px; color: #333;">{new_password}</code>
+                    </div>
+                    <p>Please login and change your password immediately for security.</p>
+                    <p style="color: #666; font-size: 12px;">If you didn't request this, please contact support.</p>
+                </div>
+                """
+            }
+            await asyncio.to_thread(resend.Emails.send, params)
+        except Exception as e:
+            logging.error(f"Failed to send email: {e}")
+            raise HTTPException(status_code=500, detail="Failed to send email. Please try again later.")
+    else:
+        # For testing without email configured
+        logging.info(f"New password for {data.email}: {new_password}")
+    
+    return {"message": "If this email is registered, a new password has been sent."}
+
+# ============ ADMIN ENDPOINTS ============
+
+@api_router.post("/admin/login", response_model=AdminToken)
+async def admin_login(credentials: AdminLogin):
+    """Admin login with fixed credentials"""
+    if credentials.username != ADMIN_USERNAME or credentials.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid admin credentials")
+    
+    access_token = create_access_token({"sub": "admin", "is_admin": True})
+    return AdminToken(access_token=access_token, token_type="bearer", is_admin=True)
+
+@api_router.get("/admin/photographers", response_model=List[PhotographerAdmin])
+async def get_all_photographers(admin: dict = Depends(get_admin_user)):
+    """Get all photographers with their gallery limits"""
+    users = await db.users.find({}, {"_id": 0, "password": 0}).to_list(None)
+    
+    result = []
+    for user in users:
+        # Count active galleries
+        active_galleries = await db.galleries.count_documents({"photographer_id": user["id"]})
+        
+        result.append(PhotographerAdmin(
+            id=user["id"],
+            email=user["email"],
+            name=user["name"],
+            business_name=user.get("business_name"),
+            max_galleries=user.get("max_galleries", DEFAULT_MAX_GALLERIES),
+            galleries_created_total=user.get("galleries_created_total", 0),
+            active_galleries=active_galleries,
+            created_at=user["created_at"]
+        ))
+    
+    return result
+
+@api_router.put("/admin/photographers/{user_id}/gallery-limit")
+async def update_gallery_limit(user_id: str, data: UpdateGalleryLimit, admin: dict = Depends(get_admin_user)):
+    """Update max galleries for a photographer"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"max_galleries": data.max_galleries}}
+    )
+    
+    return {"message": f"Gallery limit updated to {data.max_galleries}"}
+
+@api_router.get("/admin/landing-config", response_model=LandingPageConfig)
+async def get_landing_config(admin: dict = Depends(get_admin_user)):
+    """Get landing page configuration"""
+    config = await db.site_config.find_one({"type": "landing"}, {"_id": 0})
+    if not config:
+        return LandingPageConfig()
+    return LandingPageConfig(**config)
+
+@api_router.put("/admin/landing-config", response_model=LandingPageConfig)
+async def update_landing_config(config: LandingPageConfig, admin: dict = Depends(get_admin_user)):
+    """Update landing page configuration"""
+    config_doc = config.model_dump()
+    config_doc["type"] = "landing"
+    
+    await db.site_config.update_one(
+        {"type": "landing"},
+        {"$set": config_doc},
+        upsert=True
+    )
+    
+    return config
+
+@api_router.get("/public/landing-config", response_model=LandingPageConfig)
+async def get_public_landing_config():
+    """Get landing page config for public display"""
+    config = await db.site_config.find_one({"type": "landing"}, {"_id": 0})
+    if not config:
+        return LandingPageConfig()
+    return LandingPageConfig(**config)
 
 @api_router.post("/galleries", response_model=Gallery)
 async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depends(get_current_user)):
+    # Check gallery limit (count total created, not just active)
+    galleries_created_total = current_user.get("galleries_created_total", 0)
+    max_galleries = current_user.get("max_galleries", DEFAULT_MAX_GALLERIES)
+    
+    if galleries_created_total >= max_galleries:
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Gallery limit reached ({max_galleries}). Please contact administrator to add more galleries."
+        )
+    
     gallery_id = str(uuid.uuid4())
     share_link = str(uuid.uuid4())[:8]
     created_at = datetime.now(timezone.utc)
