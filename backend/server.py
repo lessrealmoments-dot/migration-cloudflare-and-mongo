@@ -1219,9 +1219,45 @@ async def upload_cover_photo(gallery_id: str, file: UploadFile = File(...), curr
         shutil.copyfileobj(file.file, f)
     
     cover_url = f"/api/photos/serve/{filename}"
-    await db.galleries.update_one({"id": gallery_id}, {"$set": {"cover_photo_url": cover_url}})
+    # Reset position when uploading new cover photo
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {
+        "cover_photo_url": cover_url,
+        "cover_photo_position": {"scale": 1, "positionX": 50, "positionY": 50}
+    }})
     
     return {"cover_photo_url": cover_url}
+
+class CoverPhotoPosition(BaseModel):
+    scale: float = 1.0
+    positionX: float = 50.0
+    positionY: float = 50.0
+
+@api_router.put("/galleries/{gallery_id}/cover-photo-position")
+async def update_cover_photo_position(gallery_id: str, position: CoverPhotoPosition, current_user: dict = Depends(get_current_user)):
+    """Save cover photo position settings (zoom, pan)"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    if not gallery.get("cover_photo_url"):
+        raise HTTPException(status_code=400, detail="No cover photo to position")
+    
+    await db.galleries.update_one(
+        {"id": gallery_id},
+        {"$set": {"cover_photo_position": position.model_dump()}}
+    )
+    
+    return {"message": "Cover photo position updated", "position": position.model_dump()}
+
+@api_router.get("/galleries/{gallery_id}/cover-photo-position")
+async def get_cover_photo_position(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """Get cover photo position settings"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    position = gallery.get("cover_photo_position", {"scale": 1, "positionX": 50, "positionY": 50})
+    return position
 
 @api_router.post("/galleries/{gallery_id}/sections", response_model=Section)
 async def create_section(gallery_id: str, name: str = Form(...), current_user: dict = Depends(get_current_user)):
