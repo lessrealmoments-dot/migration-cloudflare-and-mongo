@@ -995,6 +995,136 @@ async def update_admin_settings(data: dict, admin: dict = Depends(get_admin_user
     
     return {"message": "Settings updated", "settings": update_data}
 
+# ============================================
+# Admin Gallery Review Endpoints
+# ============================================
+
+@api_router.get("/admin/galleries/{gallery_id}")
+async def admin_get_gallery(gallery_id: str, admin: dict = Depends(get_admin_user)):
+    """Get gallery details for admin review"""
+    gallery = await db.galleries.find_one({"id": gallery_id}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
+    photo_count = await db.photos.count_documents({"gallery_id": gallery_id})
+    flagged_count = await db.photos.count_documents({"gallery_id": gallery_id, "is_flagged": True})
+    
+    return {
+        **gallery,
+        "photographer_name": photographer.get("name") if photographer else "Unknown",
+        "photographer_email": photographer.get("email") if photographer else "Unknown",
+        "photo_count": photo_count,
+        "flagged_count": flagged_count
+    }
+
+@api_router.get("/admin/galleries/{gallery_id}/photos")
+async def admin_get_gallery_photos(gallery_id: str, include_flagged: bool = True, admin: dict = Depends(get_admin_user)):
+    """Get all photos in a gallery for admin review (including flagged)"""
+    gallery = await db.galleries.find_one({"id": gallery_id}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    query = {"gallery_id": gallery_id}
+    if not include_flagged:
+        query["is_flagged"] = {"$ne": True}
+    
+    photos = await db.photos.find(query, {"_id": 0}).sort([
+        ("is_flagged", -1),  # Flagged photos first for review
+        ("is_highlight", -1),
+        ("order", 1),
+        ("uploaded_at", -1)
+    ]).to_list(None)
+    
+    return photos
+
+@api_router.post("/admin/photos/bulk-flag")
+async def admin_bulk_flag_photos(data: BulkFlagAction, admin: dict = Depends(get_admin_user)):
+    """Flag multiple photos (with confirmation from frontend)"""
+    if not data.photo_ids:
+        raise HTTPException(status_code=400, detail="No photos selected")
+    
+    flagged_at = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.photos.update_many(
+        {"id": {"$in": data.photo_ids}},
+        {"$set": {
+            "is_flagged": True,
+            "flagged_at": flagged_at,
+            "flagged_reason": data.reason or "Flagged by admin"
+        }}
+    )
+    
+    # Log the action
+    await db.activity_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "action": "photos_flagged",
+        "target_type": "photos",
+        "target_ids": data.photo_ids,
+        "count": result.modified_count,
+        "reason": data.reason,
+        "admin_user": "admin",
+        "timestamp": flagged_at
+    })
+    
+    return {
+        "message": f"Flagged {result.modified_count} photos",
+        "flagged_count": result.modified_count
+    }
+
+@api_router.post("/admin/photos/bulk-unflag")
+async def admin_bulk_unflag_photos(data: BulkUnflagAction, admin: dict = Depends(get_admin_user)):
+    """Restore/unflag multiple photos"""
+    if not data.photo_ids:
+        raise HTTPException(status_code=400, detail="No photos selected")
+    
+    result = await db.photos.update_many(
+        {"id": {"$in": data.photo_ids}},
+        {"$set": {
+            "is_flagged": False,
+            "flagged_at": None,
+            "flagged_reason": None
+        }}
+    )
+    
+    # Log the action
+    await db.activity_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "action": "photos_unflagged",
+        "target_type": "photos",
+        "target_ids": data.photo_ids,
+        "count": result.modified_count,
+        "admin_user": "admin",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "message": f"Restored {result.modified_count} photos",
+        "unflagged_count": result.modified_count
+    }
+
+@api_router.get("/admin/flagged-photos")
+async def admin_get_all_flagged_photos(limit: int = 100, admin: dict = Depends(get_admin_user)):
+    """Get all flagged photos across all galleries"""
+    photos = await db.photos.find(
+        {"is_flagged": True}, 
+        {"_id": 0}
+    ).sort("flagged_at", -1).limit(limit).to_list(None)
+    
+    # Enrich with gallery info
+    result = []
+    for photo in photos:
+        gallery = await db.galleries.find_one({"id": photo["gallery_id"]}, {"_id": 0, "title": 1, "photographer_id": 1})
+        if gallery:
+            photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0, "name": 1})
+            result.append({
+                **photo,
+                "gallery_title": gallery.get("title"),
+                "photographer_name": photographer.get("name") if photographer else "Unknown"
+            })
+    
+    return result
+
 @api_router.get("/admin/landing-config", response_model=LandingPageConfig)
 async def get_landing_config(admin: dict = Depends(get_admin_user)):
     """Get landing page configuration"""
