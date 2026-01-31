@@ -497,6 +497,12 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     
     await db.galleries.insert_one(gallery_doc)
     
+    # Increment total galleries created (this prevents recycling)
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"galleries_created_total": 1}}
+    )
+    
     return Gallery(
         id=gallery_id,
         photographer_id=current_user["id"],
