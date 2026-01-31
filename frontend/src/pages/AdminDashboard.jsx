@@ -112,6 +112,21 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleUpdateStorageQuota = async (userId) => {
+    try {
+      await axios.put(
+        `${API}/admin/photographers/${userId}/storage-quota`,
+        { storage_quota: newStorageQuota },
+        getAuthHeader()
+      );
+      toast.success('Storage quota updated');
+      setEditingStorage(null);
+      fetchPhotographers();
+    } catch (error) {
+      toast.error('Failed to update storage quota');
+    }
+  };
+
   const handleSaveLandingConfig = async () => {
     setSavingConfig(true);
     try {
