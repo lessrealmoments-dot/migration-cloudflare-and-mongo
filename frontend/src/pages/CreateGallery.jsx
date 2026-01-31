@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { themes } from '@/themes';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -22,6 +22,7 @@ const CreateGallery = () => {
     theme: 'classic'
   });
   const [loading, setLoading] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,6 +49,12 @@ const CreateGallery = () => {
       toast.success('Gallery created successfully!');
       navigate(`/gallery/${response.data.id}`);
     } catch (error) {
+      if (error.response?.status === 403) {
+        setLimitReached(true);
+        toast.error('Gallery limit reached. Please contact administrator.');
+      } else {
+        toast.error(error.response?.data?.detail || 'Failed to create gallery');
+      }
       toast.error(error.response?.data?.detail || 'Failed to create gallery');
     } finally {
       setLoading(false);
