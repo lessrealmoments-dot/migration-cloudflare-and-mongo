@@ -367,7 +367,7 @@ const GalleryDetail = () => {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <button
               data-testid="copy-share-link-button"
               onClick={copyShareLink}
@@ -383,6 +383,14 @@ const GalleryDetail = () => {
             >
               <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
               View Public Gallery
+            </button>
+            <button
+              data-testid="delete-gallery-button"
+              onClick={handleDeleteGalleryStep1}
+              className="border border-red-300 bg-white hover:bg-red-50 text-red-600 h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2 ml-auto"
+            >
+              <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+              Delete Gallery
             </button>
           </div>
         </div>
