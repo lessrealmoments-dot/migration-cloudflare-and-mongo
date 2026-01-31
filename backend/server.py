@@ -344,6 +344,8 @@ class User(BaseModel):
     business_name: Optional[str] = None
     max_galleries: int = DEFAULT_MAX_GALLERIES
     galleries_created_total: int = 0  # Track total ever created (including deleted)
+    storage_quota: int = DEFAULT_STORAGE_QUOTA  # Storage quota in bytes
+    storage_used: int = 0  # Storage used in bytes
     created_at: str
 
 class UserProfile(BaseModel):
