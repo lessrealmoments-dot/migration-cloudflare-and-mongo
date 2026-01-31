@@ -1141,13 +1141,33 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
     if not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400, detail="Only image files are allowed")
     
+    # Check storage quota
+    storage_used = current_user.get("storage_used", 0)
+    storage_quota = current_user.get("storage_quota", DEFAULT_STORAGE_QUOTA)
+    
+    # Read file to get size
+    file_content = await file.read()
+    file_size = len(file_content)
+    
+    if storage_used + file_size > storage_quota:
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Storage quota exceeded. Used: {storage_used/(1024*1024):.1f}MB / {storage_quota/(1024*1024):.0f}MB"
+        )
+    
     photo_id = str(uuid.uuid4())
     file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
     filename = f"{photo_id}.{file_ext}"
     file_path = UPLOAD_DIR / filename
     
     with open(file_path, 'wb') as f:
-        shutil.copyfileobj(file.file, f)
+        f.write(file_content)
+    
+    # Update storage used
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"storage_used": file_size}}
+    )
     
     photo_doc = {
         "id": photo_id,
@@ -1157,6 +1177,7 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
         "url": f"/api/photos/serve/{filename}",
         "uploaded_by": "photographer",
         "section_id": section_id,
+        "file_size": file_size,
         "uploaded_at": datetime.now(timezone.utc).isoformat()
     }
     
