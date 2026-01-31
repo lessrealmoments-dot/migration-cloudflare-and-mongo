@@ -217,6 +217,17 @@ const AdminDashboard = () => {
             Photographers
           </button>
           <button
+            onClick={() => setActiveTab('analytics')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-sm transition-colors ${
+              activeTab === 'analytics'
+                ? 'bg-white text-zinc-900'
+                : 'bg-zinc-800 text-zinc-400 hover:text-white'
+            }`}
+          >
+            <BarChart3 className="w-5 h-5" strokeWidth={1.5} />
+            Analytics
+          </button>
+          <button
             onClick={() => setActiveTab('landing')}
             className={`flex items-center gap-2 px-4 py-2 rounded-sm transition-colors ${
               activeTab === 'landing'
