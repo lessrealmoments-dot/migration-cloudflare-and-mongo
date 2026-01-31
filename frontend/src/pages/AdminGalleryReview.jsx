@@ -296,6 +296,7 @@ const AdminGalleryReview = () => {
                 onToggleSelect={togglePhotoSelection}
                 onView={() => setLightboxPhoto(photo)}
                 onUnflag={() => unflagPhotos([photo.id])}
+                onSingleFlag={handleSingleFlag}
               />
             ))}
           </div>
