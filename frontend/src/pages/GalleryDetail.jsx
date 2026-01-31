@@ -1545,10 +1545,6 @@ const GalleryDetail = () => {
                   </>
                 );
               })()}
-                    />
-                  );
-                })}
-              </div>
             </div>
           )}
 
