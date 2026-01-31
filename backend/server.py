@@ -1632,8 +1632,11 @@ async def get_public_gallery_photos(share_link: str, password: Optional[str] = N
     if gallery.get("password") and not verify_password(password, gallery["password"]):
         raise HTTPException(status_code=401, detail="Invalid password")
     
-    # Limit to 500 photos for public viewing
-    photos = await db.photos.find({"gallery_id": gallery["id"]}, {"_id": 0}).sort("uploaded_at", -1).limit(500).to_list(None)
+    # Get photos excluding hidden ones, sorted by highlights first, then order
+    photos = await db.photos.find(
+        {"gallery_id": gallery["id"], "is_hidden": {"$ne": True}}, 
+        {"_id": 0}
+    ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).limit(500).to_list(None)
     return [Photo(**p) for p in photos]
 
 class DuplicateCheckRequest(BaseModel):
