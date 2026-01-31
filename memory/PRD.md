@@ -71,6 +71,16 @@ Build a website similar to Pic-time.com where photographers can create photo gal
   - View photographer's galleries
   - Activity logs tracking
   - Admin settings management
+- [x] **Admin Gallery Review System** (NEW):
+  - Access photographer galleries in controlled admin view
+  - View and flag photos only (no edit/download)
+  - Bulk photo selection
+  - Flag preview with confirmation before finalizing
+  - Deselect photos in preview before confirming
+  - Flagged photos auto-hidden from public gallery
+  - Visual indicators for flagged photos (red overlay)
+  - Filter by All/Flagged/Unflagged
+  - Undo/restore flagged photos
 
 ### Auto-Delete System
 - [x] Galleries auto-delete after 6 months (180 days)
