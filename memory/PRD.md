@@ -16,7 +16,7 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Create galleries with titles, descriptions, passwords
 - [x] Set cover photos for galleries
 - [x] **Cover Photo Editor** - zoom/pan/crop functionality with touch support
-- [x] **QR Code Generator** - downloadable PNG for easy sharing (NEW)
+- [x] **QR Code Generator** - downloadable PNG for easy sharing
 - [x] Create and manage sections within galleries
 - [x] Editable event title and event date
 - [x] 15 gallery themes (elegant + fun)
@@ -26,7 +26,7 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Delete gallery with double-confirmation
 - [x] Upload progress UI for photographers
 
-### High Concurrency Optimization (NEW - Jan 31, 2026)
+### High Concurrency Optimization
 - [x] **Database Indexes** - Optimized indexes on users, galleries, photos collections
 - [x] **MongoDB Connection Pooling** - maxPoolSize: 100, minPoolSize: 10
 - [x] **Async File I/O** - Non-blocking file writes with aiofiles
@@ -40,8 +40,8 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Upload animations and progress indicators
 - [x] Full-screen lightbox viewer
 - [x] Guest photo moderation by photographer
-- [x] **Photo Reordering** - Drag & drop to rearrange photo sequence (NEW)
-- [x] **Multi-Select Actions** (NEW):
+- [x] **Photo Reordering** - Drag & drop to rearrange photo sequence (FIXED Jan 31, 2026)
+- [x] **Multi-Select Actions**:
   - Select/Select All photos
   - Bulk Delete
   - Bulk Move to Section
@@ -63,7 +63,7 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Landing page content customization
 - [x] Landing page image uploads
 - [x] Site-wide analytics
-- [x] **Enhanced Admin Panel** (NEW):
+- [x] **Enhanced Admin Panel**:
   - Search/filter photographers by name, email
   - Sort by newest, storage used, name
   - Suspend/Activate accounts
@@ -71,10 +71,11 @@ Build a website similar to Pic-time.com where photographers can create photo gal
   - View photographer's galleries
   - Activity logs tracking
   - Admin settings management
-- [x] **Admin Gallery Review System** (NEW):
+- [x] **Admin Gallery Review System**:
   - Access photographer galleries in controlled admin view
   - View and flag photos only (no edit/download)
   - Bulk photo selection
+  - **Single photo flagging via flag icon** (FIXED Jan 31, 2026)
   - Flag preview with confirmation before finalizing
   - Deselect photos in preview before confirming
   - Flagged photos auto-hidden from public gallery
@@ -96,7 +97,7 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 
 ### Gallery Themes (16 total)
 **Elegant:**
-- Classic Elegance, Romantic Blush, Modern Dark, Natural Earth, Ocean Breeze, Vintage Sepia, **Black & Gold** (NEW - Luxurious)
+- Classic Elegance, Romantic Blush, Modern Dark, Natural Earth, Ocean Breeze, Vintage Sepia, **Black & Gold** (Luxurious)
 
 **Fun/Colorful:**
 - Party Vibes, Tropical Paradise, Golden Sunset, Neon Nights, Spring Garden, Lavender Dreams, Corporate Professional, Holiday Cheer, Ultra Minimal
@@ -109,6 +110,20 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 ### Integrations
 - [x] **Google Drive Backup** - OAuth flow, auto-sync capability
 - [x] **Resend** - Password reset emails
+
+---
+
+## Recent Bug Fixes (Jan 31, 2026)
+
+### P0 - Admin Single Photo Flagging (FIXED)
+- **Issue**: Clicking flag icon on a single photo only selected it instead of opening the flag modal
+- **Fix**: Added `handleSingleFlag` function and passed `onSingleFlag` prop to `AdminPhotoItem` component
+- **Files**: `/app/frontend/src/pages/AdminGalleryReview.jsx`
+
+### P1 - Photo Reordering (FIXED)
+- **Issue**: Drag-and-drop reordering didn't visually update or persist
+- **Fix**: Fixed filtering logic in `handleDrop` to only include photographer photos, and added sorting by `order` field in display functions
+- **Files**: `/app/frontend/src/pages/GalleryDetail.jsx`
 
 ---
 
