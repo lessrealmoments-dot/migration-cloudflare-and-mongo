@@ -85,43 +85,50 @@ const PublicGallery = () => {
       return;
     }
 
-    // Check for duplicates based on filename
-    const existingFilenames = photos.map(p => p.filename.split('.').slice(0, -1).join('.').toLowerCase());
-    const duplicates = [];
-    const newFiles = [];
+    if (acceptedFiles.length === 0) return;
 
-    acceptedFiles.forEach(file => {
-      const fileBaseName = file.name.split('.').slice(0, -1).join('.').toLowerCase();
-      if (existingFilenames.includes(fileBaseName)) {
-        duplicates.push(file.name);
-      } else {
-        newFiles.push(file);
-      }
-    });
-
-    // Warn about duplicates
-    if (duplicates.length > 0) {
-      toast.warning(`${duplicates.length} file(s) already uploaded: ${duplicates.slice(0, 3).join(', ')}${duplicates.length > 3 ? '...' : ''}`);
-    }
-
-    // If no new files to upload
-    if (newFiles.length === 0) {
-      toast.info('All selected files have already been uploaded');
-      return;
-    }
-
+    // Server-side duplicate check
     setUploading(true);
+    setUploadProgress([{ name: 'Checking for duplicates...', status: 'uploading', progress: 50 }]);
+
+    let filesToUpload = acceptedFiles;
+    
+    try {
+      const checkResponse = await axios.post(
+        `${API}/public/gallery/${shareLink}/check-duplicates`,
+        { filenames: acceptedFiles.map(f => f.name) }
+      );
+      
+      const { duplicates, new_files } = checkResponse.data;
+      
+      if (duplicates.length > 0) {
+        toast.warning(`${duplicates.length} file(s) already uploaded: ${duplicates.slice(0, 3).join(', ')}${duplicates.length > 3 ? '...' : ''}`);
+      }
+      
+      if (new_files.length === 0) {
+        toast.info('All selected files have already been uploaded');
+        setUploadProgress([]);
+        setUploading(false);
+        return;
+      }
+      
+      // Filter to only new files
+      filesToUpload = acceptedFiles.filter(f => new_files.includes(f.name));
+    } catch (error) {
+      console.error('Duplicate check failed, proceeding with upload:', error);
+      // Continue with all files if check fails
+    }
     
     // Initialize progress tracking for each file
-    const initialProgress = newFiles.map(file => ({
+    const initialProgress = filesToUpload.map(file => ({
       name: file.name,
-      status: 'uploading', // 'uploading', 'success', 'error'
+      status: 'uploading',
       progress: 0
     }));
     setUploadProgress(initialProgress);
 
     const results = await Promise.allSettled(
-      newFiles.map(async (file, index) => {
+      filesToUpload.map(async (file, index) => {
         const formData = new FormData();
         formData.append('file', file);
         if (password) {
@@ -150,9 +157,10 @@ const PublicGallery = () => {
           
           return response;
         } catch (error) {
-          // Mark as error
+          // Mark as error with message
+          const errorMsg = error.response?.status === 409 ? 'Already uploaded' : 'Failed';
           setUploadProgress(prev => prev.map((item, i) => 
-            i === index ? { ...item, status: 'error' } : item
+            i === index ? { ...item, status: 'error', errorMsg } : item
           ));
           throw error;
         }
@@ -167,7 +175,15 @@ const PublicGallery = () => {
       fetchPhotos();
     }
     if (failCount > 0) {
-      toast.error(`${failCount} photo(s) failed to upload`);
+      const duplicateCount = results.filter(r => 
+        r.status === 'rejected' && r.reason?.response?.status === 409
+      ).length;
+      if (duplicateCount > 0) {
+        toast.warning(`${duplicateCount} duplicate file(s) skipped`);
+      }
+      if (failCount - duplicateCount > 0) {
+        toast.error(`${failCount - duplicateCount} photo(s) failed to upload`);
+      }
     }
 
     // Clear progress after a delay
@@ -175,7 +191,7 @@ const PublicGallery = () => {
       setUploadProgress([]);
       setUploading(false);
     }, 2000);
-  }, [shareLink, password, authenticated, gallery, photos]);
+  }, [shareLink, password, authenticated, gallery]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
