@@ -439,6 +439,39 @@ async def update_landing_config(config: LandingPageConfig, admin: dict = Depends
     
     return config
 
+@api_router.post("/admin/landing-image")
+async def upload_landing_image(
+    file: UploadFile = File(...),
+    image_slot: str = Form(...),  # "hero_image_1" or "hero_image_2"
+    admin: dict = Depends(get_admin_user)
+):
+    """Upload an image for the landing page"""
+    if image_slot not in ["hero_image_1", "hero_image_2"]:
+        raise HTTPException(status_code=400, detail="Invalid image slot")
+    
+    if not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    # Generate unique filename
+    file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    filename = f"landing_{image_slot}_{uuid.uuid4().hex[:8]}.{file_ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    # Save the file
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    # Update landing config with new image URL
+    image_url = f"/api/photos/serve/{filename}"
+    
+    await db.site_config.update_one(
+        {"type": "landing"},
+        {"$set": {image_slot: image_url}},
+        upsert=True
+    )
+    
+    return {"success": True, "url": image_url, "slot": image_slot}
+
 @api_router.get("/public/landing-config", response_model=LandingPageConfig)
 async def get_public_landing_config():
     """Get landing page config for public display"""
