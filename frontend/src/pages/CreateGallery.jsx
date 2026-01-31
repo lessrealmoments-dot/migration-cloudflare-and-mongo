@@ -94,6 +94,37 @@ const CreateGallery = () => {
           Set up a new gallery to share with your clients
         </p>
 
+        {/* Gallery Limit Reached Modal */}
+        {limitReached && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-8 max-w-md w-full text-center">
+              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertCircle className="w-8 h-8 text-amber-600" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-2xl font-medium mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
+                Gallery Limit Reached
+              </h3>
+              <p className="text-zinc-600 mb-6">
+                You have reached your maximum gallery limit. To create more galleries, please contact the administrator to upgrade your account.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 rounded-sm font-medium transition-colors"
+                >
+                  Back to Dashboard
+                </button>
+                <button
+                  onClick={() => setLimitReached(false)}
+                  className="border border-input h-10 px-6 rounded-sm hover:bg-zinc-50 transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-8" data-testid="create-gallery-form">
           <div>
             <label className="block text-sm font-medium mb-2">Gallery Title *</label>
