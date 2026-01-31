@@ -101,6 +101,19 @@ const GalleryDetail = () => {
     }
   };
 
+  const handleToggleAutoSync = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/auth/google/toggle-auto-sync`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGoogleDriveStatus(prev => ({ ...prev, auto_sync: response.data.auto_sync }));
+      toast.success(response.data.auto_sync ? 'Auto-sync enabled (every 5 minutes)' : 'Auto-sync disabled');
+    } catch (error) {
+      toast.error('Failed to toggle auto-sync');
+    }
+  };
+
   // Handle Google OAuth callback
   useEffect(() => {
     const handleGoogleCallback = async () => {
