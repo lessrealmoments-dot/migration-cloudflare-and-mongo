@@ -792,11 +792,15 @@ const GalleryDetail = () => {
   };
 
   const getPhotosBySection = (sectionId) => {
-    return photos.filter(p => p.section_id === sectionId && p.uploaded_by === 'photographer');
+    return photos
+      .filter(p => p.section_id === sectionId && p.uploaded_by === 'photographer')
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
   };
 
   const getPhotosWithoutSection = () => {
-    return photos.filter(p => !p.section_id && p.uploaded_by === 'photographer');
+    return photos
+      .filter(p => !p.section_id && p.uploaded_by === 'photographer')
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
   };
 
   const getGuestPhotos = () => {
