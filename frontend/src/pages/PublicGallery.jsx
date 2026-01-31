@@ -401,12 +401,22 @@ const PublicGallery = () => {
       </nav>
 
       {gallery?.cover_photo_url && (
-        <div className="w-full h-64 md:h-96 overflow-hidden" style={{ borderBottom: `1px solid ${currentTheme.colors.accent}` }}>
+        <div className="w-full h-64 md:h-96 overflow-hidden relative" style={{ borderBottom: `1px solid ${currentTheme.colors.accent}` }}>
           <OptimizedImage
             src={`${BACKEND_URL}${gallery.cover_photo_url}`}
             alt="Cover"
-            className="w-full h-full object-cover"
+            className="w-full h-full"
             showLoader={true}
+            style={{
+              objectFit: 'cover',
+              objectPosition: gallery.cover_photo_position 
+                ? `${gallery.cover_photo_position.positionX}% ${gallery.cover_photo_position.positionY}%`
+                : '50% 50%',
+              transform: gallery.cover_photo_position 
+                ? `scale(${gallery.cover_photo_position.scale})`
+                : 'scale(1)',
+              transformOrigin: 'center center'
+            }}
           />
         </div>
       )}
