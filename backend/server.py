@@ -852,7 +852,9 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         "guest_upload_enabled_days": gallery_data.guest_upload_enabled_days,
         "download_all_password": hash_password(gallery_data.download_all_password) if gallery_data.download_all_password else None,
         "theme": gallery_data.theme,
-        "created_at": created_at.isoformat()
+        "created_at": created_at.isoformat(),
+        "auto_delete_date": (created_at + timedelta(days=GALLERY_EXPIRATION_DAYS)).isoformat(),
+        "view_count": 0  # Track gallery views for analytics
     }
     
     await db.galleries.insert_one(gallery_doc)
@@ -862,6 +864,10 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         {"id": current_user["id"]},
         {"$inc": {"galleries_created_total": 1}}
     )
+    
+    # Calculate days until deletion
+    auto_delete_dt = created_at + timedelta(days=GALLERY_EXPIRATION_DAYS)
+    days_until_deletion = (auto_delete_dt - datetime.now(timezone.utc)).days
     
     return Gallery(
         id=gallery_id,
@@ -879,7 +885,9 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         has_download_all_password=gallery_data.download_all_password is not None,
         theme=gallery_data.theme,
         created_at=gallery_doc["created_at"],
-        photo_count=0
+        photo_count=0,
+        auto_delete_date=gallery_doc["auto_delete_date"],
+        days_until_deletion=days_until_deletion
     )
 
 @api_router.get("/galleries", response_model=List[Gallery])
