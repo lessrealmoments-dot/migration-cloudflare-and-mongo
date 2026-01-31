@@ -22,6 +22,7 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Guest upload time restrictions
 - [x] Password-protected "Download All"
 - [x] Delete gallery with double-confirmation
+- [x] **Upload progress UI for photographers** (NEW - shows individual file progress with status icons)
 
 ### Photo Management
 - [x] Photographer photo uploads
