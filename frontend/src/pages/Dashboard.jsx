@@ -115,6 +115,15 @@ const Dashboard = ({ user, setUser }) => {
               Welcome, {user?.business_name || user?.name}
             </span>
             <button
+              data-testid="analytics-button"
+              onClick={() => setShowAnalyticsModal(true)}
+              className="hover:bg-zinc-100 text-foreground h-10 px-4 rounded-sm font-medium transition-all duration-300 flex items-center gap-2"
+              title="View Analytics"
+            >
+              <BarChart3 className="w-4 h-4" strokeWidth={1.5} />
+              Analytics
+            </button>
+            <button
               data-testid="profile-button"
               onClick={() => setShowProfileModal(true)}
               className="hover:bg-zinc-100 text-foreground h-10 px-4 rounded-sm font-medium transition-all duration-300 flex items-center gap-2"
@@ -134,6 +143,40 @@ const Dashboard = ({ user, setUser }) => {
           </div>
         </div>
       </nav>
+
+      {/* Storage Quota Bar */}
+      {analytics && (
+        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 pt-6">
+          <div className="bg-white border border-zinc-200 rounded-sm p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-sm text-zinc-600">
+                <HardDrive className="w-4 h-4" strokeWidth={1.5} />
+                Storage Used
+              </div>
+              <span className="text-sm font-medium">
+                {formatBytes(analytics.storage_used)} / {formatBytes(analytics.storage_quota)}
+              </span>
+            </div>
+            <div className="w-full bg-zinc-200 rounded-full h-2">
+              <div 
+                className={`h-2 rounded-full transition-all ${
+                  (analytics.storage_used / analytics.storage_quota) > 0.9 
+                    ? 'bg-red-500' 
+                    : (analytics.storage_used / analytics.storage_quota) > 0.7 
+                      ? 'bg-amber-500' 
+                      : 'bg-green-500'
+                }`}
+                style={{ width: `${Math.min(100, (analytics.storage_used / analytics.storage_quota) * 100)}%` }}
+              />
+            </div>
+            {(analytics.storage_used / analytics.storage_quota) > 0.9 && (
+              <p className="text-xs text-red-600 mt-2">
+                Storage almost full! Contact admin to increase your quota.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-12">
         <div className="mb-12 flex justify-between items-center">
