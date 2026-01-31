@@ -587,17 +587,26 @@ const PublicGallery = () => {
             gallery.sections.map((section) => {
               const sectionPhotos = getPhotosBySection(section.id);
               if (sectionPhotos.length === 0) return null;
+              const isExpanded = isSectionExpanded(section.id);
+              const displayPhotos = isExpanded ? sectionPhotos : sectionPhotos.slice(0, PREVIEW_COUNT);
+              const hasMore = sectionPhotos.length > PREVIEW_COUNT;
               
               return (
-                <div key={section.id} className="mb-16">
-                  <h4
-                    className="text-2xl md:text-3xl font-normal mb-6 text-center"
-                    style={{ fontFamily: 'Playfair Display, serif' }}
+                <div key={section.id} className="mb-12">
+                  <div 
+                    className="flex items-center justify-center gap-4 mb-6 cursor-pointer"
+                    onClick={() => hasMore && toggleSectionExpand(section.id)}
                   >
-                    {section.name}
-                  </h4>
+                    <h4
+                      className="text-2xl md:text-3xl font-normal text-center"
+                      style={{ fontFamily: 'Playfair Display, serif' }}
+                    >
+                      {section.name}
+                      <span className="text-zinc-400 text-lg ml-2">({sectionPhotos.length})</span>
+                    </h4>
+                  </div>
                   <div className="masonry-grid">
-                    {sectionPhotos.map((photo, idx) => (
+                    {displayPhotos.map((photo, idx) => (
                       <PublicPhotoItem
                         key={photo.id}
                         photo={photo}
@@ -607,57 +616,127 @@ const PublicGallery = () => {
                       />
                     ))}
                   </div>
+                  {hasMore && (
+                    <button 
+                      onClick={() => toggleSectionExpand(section.id)}
+                      className="mt-6 mx-auto block px-6 py-3 border-2 border-zinc-300 rounded-full text-zinc-600 hover:border-zinc-400 hover:text-zinc-800 transition-colors flex items-center gap-2"
+                    >
+                      {isExpanded ? (
+                        <>Collapse <ChevronUp className="w-4 h-4" /></>
+                      ) : (
+                        <>Show all {sectionPhotos.length} photos <ChevronDown className="w-4 h-4" /></>
+                      )}
+                    </button>
+                  )}
                 </div>
               );
             })
           ) : null}
 
           {getPhotosWithoutSection().length > 0 && (
-            <div className="mb-16">
-              {gallery?.sections && gallery.sections.length > 0 && (
-                <h4
-                  className="text-2xl md:text-3xl font-normal mb-6 text-center"
-                  style={{ fontFamily: 'Playfair Display, serif' }}
-                >
-                  More Photos
-                </h4>
-              )}
-              <div className="masonry-grid">
-                {getPhotosWithoutSection().map((photo) => (
-                  <PublicPhotoItem
-                    key={photo.id}
-                    photo={photo}
-                    photoIndex={photos.findIndex(p => p.id === photo.id)}
-                    onView={setLightboxIndex}
-                    onDownload={handleDownload}
-                  />
-                ))}
-              </div>
-            </div>
+            (() => {
+              const unsortedPhotos = getPhotosWithoutSection();
+              const sectionId = 'unsorted';
+              const isExpanded = isSectionExpanded(sectionId);
+              const displayPhotos = isExpanded ? unsortedPhotos : unsortedPhotos.slice(0, PREVIEW_COUNT);
+              const hasMore = unsortedPhotos.length > PREVIEW_COUNT;
+              
+              return (
+                <div className="mb-12">
+                  {gallery?.sections && gallery.sections.length > 0 && (
+                    <div 
+                      className="flex items-center justify-center gap-4 mb-6 cursor-pointer"
+                      onClick={() => hasMore && toggleSectionExpand(sectionId)}
+                    >
+                      <h4
+                        className="text-2xl md:text-3xl font-normal text-center"
+                        style={{ fontFamily: 'Playfair Display, serif' }}
+                      >
+                        More Photos
+                        <span className="text-zinc-400 text-lg ml-2">({unsortedPhotos.length})</span>
+                      </h4>
+                    </div>
+                  )}
+                  <div className="masonry-grid">
+                    {displayPhotos.map((photo) => (
+                      <PublicPhotoItem
+                        key={photo.id}
+                        photo={photo}
+                        photoIndex={photos.findIndex(p => p.id === photo.id)}
+                        onView={setLightboxIndex}
+                        onDownload={handleDownload}
+                      />
+                    ))}
+                  </div>
+                  {hasMore && (
+                    <button 
+                      onClick={() => toggleSectionExpand(sectionId)}
+                      className="mt-6 mx-auto block px-6 py-3 border-2 border-zinc-300 rounded-full text-zinc-600 hover:border-zinc-400 hover:text-zinc-800 transition-colors flex items-center gap-2"
+                    >
+                      {isExpanded ? (
+                        <>Collapse <ChevronUp className="w-4 h-4" /></>
+                      ) : (
+                        <>Show all {unsortedPhotos.length} photos <ChevronDown className="w-4 h-4" /></>
+                      )}
+                    </button>
+                  )}
+                </div>
+              );
+            })()
           )}
 
           {getGuestPhotos().length > 0 && (
-            <div className="mb-16 mt-20 pt-12 border-t-2 border-zinc-200">
-              <h4
-                className="text-2xl md:text-3xl font-normal mb-6 text-center"
-                style={{ fontFamily: 'Playfair Display, serif' }}
-              >
-                Guest Uploads ({getGuestPhotos().length})
-              </h4>
-              <p className="text-center text-sm text-zinc-500 mb-8">
-                Photos shared by guests
-              </p>
-              <div className="masonry-grid">
-                {getGuestPhotos().map((photo) => (
-                  <PublicPhotoItem
-                    key={photo.id}
-                    photo={photo}
-                    photoIndex={photos.findIndex(p => p.id === photo.id)}
-                    onView={setLightboxIndex}
-                    onDownload={handleDownload}
-                    isGuest
-                  />
-                ))}
+            (() => {
+              const guestPhotos = getGuestPhotos();
+              const sectionId = 'guest';
+              const isExpanded = isSectionExpanded(sectionId);
+              const displayPhotos = isExpanded ? guestPhotos : guestPhotos.slice(0, PREVIEW_COUNT);
+              const hasMore = guestPhotos.length > PREVIEW_COUNT;
+              
+              return (
+                <div className="mb-12 mt-16 pt-12 border-t-2 border-zinc-200">
+                  <div 
+                    className="flex items-center justify-center gap-4 mb-6 cursor-pointer"
+                    onClick={() => hasMore && toggleSectionExpand(sectionId)}
+                  >
+                    <h4
+                      className="text-2xl md:text-3xl font-normal text-center"
+                      style={{ fontFamily: 'Playfair Display, serif' }}
+                    >
+                      Guest Uploads
+                      <span className="text-zinc-400 text-lg ml-2">({guestPhotos.length})</span>
+                    </h4>
+                  </div>
+                  <p className="text-center text-sm text-zinc-500 mb-8">
+                    Photos shared by guests
+                  </p>
+                  <div className="masonry-grid">
+                    {displayPhotos.map((photo) => (
+                      <PublicPhotoItem
+                        key={photo.id}
+                        photo={photo}
+                        photoIndex={photos.findIndex(p => p.id === photo.id)}
+                        onView={setLightboxIndex}
+                        onDownload={handleDownload}
+                        isGuest
+                      />
+                    ))}
+                  </div>
+                  {hasMore && (
+                    <button 
+                      onClick={() => toggleSectionExpand(sectionId)}
+                      className="mt-6 mx-auto block px-6 py-3 border-2 border-zinc-300 rounded-full text-zinc-600 hover:border-zinc-400 hover:text-zinc-800 transition-colors flex items-center gap-2"
+                    >
+                      {isExpanded ? (
+                        <>Collapse <ChevronUp className="w-4 h-4" /></>
+                      ) : (
+                        <>Show all {guestPhotos.length} photos <ChevronDown className="w-4 h-4" /></>
+                      )}
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
               </div>
             </div>
           )}
