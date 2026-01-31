@@ -989,7 +989,8 @@ const GalleryDetail = () => {
                           <div 
                             className={`h-1.5 rounded-full transition-all duration-300 ${
                               file.status === 'error' ? 'bg-red-500' : 
-                              file.status === 'success' ? 'bg-green-500' : 'bg-zinc-600'
+                              file.status === 'success' ? 'bg-green-500' : 
+                              file.status === 'retrying' ? 'bg-amber-500' : 'bg-zinc-600'
                             }`}
                             style={{ width: `${file.progress}%` }}
                           />
@@ -997,9 +998,12 @@ const GalleryDetail = () => {
                         {file.status === 'error' && file.errorMsg && (
                           <p className="text-xs text-red-500 mt-1">{file.errorMsg}</p>
                         )}
+                        {file.status === 'retrying' && (
+                          <p className="text-xs text-amber-500 mt-1">Retrying... (attempt {file.retries + 1})</p>
+                        )}
                       </div>
                       <div className="flex-shrink-0">
-                        {file.status === 'uploading' && (
+                        {(file.status === 'uploading' || file.status === 'retrying') && (
                           <Loader2 className="w-4 h-4 text-zinc-500 animate-spin" />
                         )}
                         {file.status === 'success' && (
@@ -1025,7 +1029,7 @@ const GalleryDetail = () => {
                 <p className="text-base font-light text-zinc-600 mb-2">
                   Drag & drop photos here, or click to select
                 </p>
-                <p className="text-sm text-zinc-500">Support for multiple images</p>
+                <p className="text-sm text-zinc-500">Max 50MB per file • JPEG, PNG, GIF, WebP, HEIC</p>
               </>
             )}
           </div>
