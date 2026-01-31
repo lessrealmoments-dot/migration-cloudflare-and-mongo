@@ -221,8 +221,15 @@ const LandingPage = ({ user }) => {
       </section>
 
       <footer className="border-t border-zinc-200 py-12">
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 text-center text-sm text-zinc-500">
-          <p>© 2024 PhotoShare. Built for photographers.</p>
+        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 flex justify-between items-center text-sm text-zinc-500">
+          <p>© 2024 {config.brand_name}. Built for photographers.</p>
+          <a 
+            href="/admin" 
+            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+            data-testid="admin-link"
+          >
+            Admin
+          </a>
         </div>
       </footer>
     </div>
