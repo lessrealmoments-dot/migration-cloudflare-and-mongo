@@ -1732,6 +1732,212 @@ async def get_backup_status(gallery_id: str, current_user: dict = Depends(get_cu
         last_updated=backup.get("last_updated", datetime.now(timezone.utc).isoformat())
     )
 
+# ============ ANALYTICS ENDPOINTS ============
+
+class GalleryAnalytics(BaseModel):
+    gallery_id: str
+    gallery_title: str
+    view_count: int = 0
+    total_photos: int = 0
+    photographer_photos: int = 0
+    guest_photos: int = 0
+    created_at: str
+    days_until_deletion: Optional[int] = None
+
+class PhotographerAnalytics(BaseModel):
+    total_galleries: int = 0
+    total_photos: int = 0
+    total_views: int = 0
+    storage_used: int = 0
+    storage_quota: int = DEFAULT_STORAGE_QUOTA
+    galleries: List[GalleryAnalytics] = []
+
+class AdminAnalytics(BaseModel):
+    total_photographers: int = 0
+    total_galleries: int = 0
+    total_photos: int = 0
+    total_storage_used: int = 0
+    top_galleries: List[GalleryAnalytics] = []
+
+@api_router.get("/analytics/photographer", response_model=PhotographerAnalytics)
+async def get_photographer_analytics(current_user: dict = Depends(get_current_user)):
+    """Get analytics for the current photographer"""
+    user_id = current_user["id"]
+    
+    # Get all galleries with photo counts
+    pipeline = [
+        {"$match": {"photographer_id": user_id}},
+        {"$lookup": {
+            "from": "photos",
+            "localField": "id",
+            "foreignField": "gallery_id",
+            "as": "all_photos"
+        }},
+        {"$addFields": {
+            "total_photos": {"$size": "$all_photos"},
+            "photographer_photos": {
+                "$size": {
+                    "$filter": {
+                        "input": "$all_photos",
+                        "cond": {"$eq": ["$$this.uploaded_by", "photographer"]}
+                    }
+                }
+            },
+            "guest_photos": {
+                "$size": {
+                    "$filter": {
+                        "input": "$all_photos",
+                        "cond": {"$eq": ["$$this.uploaded_by", "guest"]}
+                    }
+                }
+            }
+        }},
+        {"$project": {"_id": 0, "all_photos": 0, "password": 0, "download_all_password": 0}}
+    ]
+    
+    galleries = await db.galleries.aggregate(pipeline).to_list(None)
+    
+    gallery_analytics = []
+    total_photos = 0
+    total_views = 0
+    
+    for g in galleries:
+        days_remaining = calculate_days_until_deletion(g.get("auto_delete_date"))
+        gallery_analytics.append(GalleryAnalytics(
+            gallery_id=g["id"],
+            gallery_title=g["title"],
+            view_count=g.get("view_count", 0),
+            total_photos=g.get("total_photos", 0),
+            photographer_photos=g.get("photographer_photos", 0),
+            guest_photos=g.get("guest_photos", 0),
+            created_at=g["created_at"],
+            days_until_deletion=days_remaining
+        ))
+        total_photos += g.get("total_photos", 0)
+        total_views += g.get("view_count", 0)
+    
+    return PhotographerAnalytics(
+        total_galleries=len(galleries),
+        total_photos=total_photos,
+        total_views=total_views,
+        storage_used=current_user.get("storage_used", 0),
+        storage_quota=current_user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
+        galleries=gallery_analytics
+    )
+
+@api_router.get("/admin/analytics", response_model=AdminAnalytics)
+async def get_admin_analytics(admin: dict = Depends(get_admin_user)):
+    """Get site-wide analytics for admin"""
+    total_photographers = await db.users.count_documents({})
+    total_galleries = await db.galleries.count_documents({})
+    total_photos = await db.photos.count_documents({})
+    
+    # Get total storage used
+    storage_pipeline = [
+        {"$group": {"_id": None, "total": {"$sum": "$storage_used"}}}
+    ]
+    storage_result = await db.users.aggregate(storage_pipeline).to_list(1)
+    total_storage = storage_result[0]["total"] if storage_result else 0
+    
+    # Get top galleries by views
+    top_pipeline = [
+        {"$sort": {"view_count": -1}},
+        {"$limit": 10},
+        {"$lookup": {
+            "from": "photos",
+            "localField": "id",
+            "foreignField": "gallery_id",
+            "as": "photos"
+        }},
+        {"$addFields": {"total_photos": {"$size": "$photos"}}},
+        {"$project": {"_id": 0, "photos": 0, "password": 0, "download_all_password": 0}}
+    ]
+    
+    top_galleries = await db.galleries.aggregate(top_pipeline).to_list(None)
+    
+    gallery_analytics = []
+    for g in top_galleries:
+        gallery_analytics.append(GalleryAnalytics(
+            gallery_id=g["id"],
+            gallery_title=g["title"],
+            view_count=g.get("view_count", 0),
+            total_photos=g.get("total_photos", 0),
+            photographer_photos=0,
+            guest_photos=0,
+            created_at=g["created_at"],
+            days_until_deletion=calculate_days_until_deletion(g.get("auto_delete_date"))
+        ))
+    
+    return AdminAnalytics(
+        total_photographers=total_photographers,
+        total_galleries=total_galleries,
+        total_photos=total_photos,
+        total_storage_used=total_storage,
+        top_galleries=gallery_analytics
+    )
+
+# Track gallery view when public gallery is accessed
+@api_router.post("/public/gallery/{share_link}/view")
+async def track_gallery_view(share_link: str):
+    """Track a view when someone accesses a public gallery"""
+    result = await db.galleries.update_one(
+        {"share_link": share_link},
+        {"$inc": {"view_count": 1}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    return {"success": True}
+
+# ============ AUTO-DELETE TASK ============
+
+async def auto_delete_expired_galleries():
+    """Background task to delete galleries older than 6 months"""
+    global sync_task_running
+    
+    while sync_task_running:
+        try:
+            now = datetime.now(timezone.utc)
+            
+            # Find galleries that should be deleted
+            expired_galleries = await db.galleries.find({
+                "auto_delete_date": {"$lt": now.isoformat()}
+            }, {"_id": 0}).to_list(None)
+            
+            for gallery in expired_galleries:
+                gallery_id = gallery["id"]
+                photographer_id = gallery["photographer_id"]
+                
+                # Delete photos
+                photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(None)
+                for photo in photos:
+                    file_path = UPLOAD_DIR / photo["filename"]
+                    if file_path.exists():
+                        try:
+                            file_size = file_path.stat().st_size
+                            file_path.unlink()
+                            # Update storage used
+                            await db.users.update_one(
+                                {"id": photographer_id},
+                                {"$inc": {"storage_used": -file_size}}
+                            )
+                        except Exception as e:
+                            logger.error(f"Failed to delete photo file: {e}")
+                
+                await db.photos.delete_many({"gallery_id": gallery_id})
+                await db.drive_backups.delete_many({"gallery_id": gallery_id})
+                await db.galleries.delete_one({"id": gallery_id})
+                
+                logger.info(f"Auto-deleted expired gallery: {gallery['title']} ({gallery_id})")
+            
+            if expired_galleries:
+                logger.info(f"Auto-deleted {len(expired_galleries)} expired galleries")
+        
+        except Exception as e:
+            logger.error(f"Auto-delete task error: {e}")
+        
+        # Check daily
+        await asyncio.sleep(24 * 60 * 60)
+
 app.include_router(api_router)
 
 app.add_middleware(
