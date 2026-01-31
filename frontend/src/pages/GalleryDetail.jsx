@@ -952,7 +952,7 @@ const GalleryDetail = () => {
             </div>
             
             <p className="text-zinc-600 mb-6">
-              Are you sure you want to delete <strong>"{gallery?.title}"</strong>? 
+              Are you sure you want to delete <strong>&ldquo;{gallery?.title}&rdquo;</strong>? 
               All {photos.length} photo(s) in this gallery will be permanently removed.
             </p>
             
