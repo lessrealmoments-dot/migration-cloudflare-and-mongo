@@ -675,7 +675,7 @@ const PublicGallery = () => {
 
           {getRegularPhotosWithoutSection().length > 0 && (
             (() => {
-              const unsortedPhotos = getPhotosWithoutSection();
+              const unsortedPhotos = getRegularPhotosWithoutSection();
               const sectionId = 'unsorted';
               const isExpanded = isSectionExpanded(sectionId);
               const displayPhotos = isExpanded ? unsortedPhotos : unsortedPhotos.slice(0, PREVIEW_COUNT);
@@ -683,7 +683,7 @@ const PublicGallery = () => {
               
               return (
                 <div className="mb-12">
-                  {gallery?.sections && gallery.sections.length > 0 && (
+                  {(gallery?.sections && gallery.sections.length > 0) || getHighlightPhotos().length > 0 ? (
                     <div 
                       className="flex items-center justify-center gap-4 mb-6 cursor-pointer"
                       onClick={() => hasMore && toggleSectionExpand(sectionId)}
@@ -692,11 +692,11 @@ const PublicGallery = () => {
                         className="text-2xl md:text-3xl font-normal text-center"
                         style={{ fontFamily: 'Playfair Display, serif' }}
                       >
-                        More Photos
+                        {gallery?.sections?.length > 0 ? 'More Photos' : 'Gallery'}
                         <span className="text-zinc-400 text-lg ml-2">({unsortedPhotos.length})</span>
                       </h4>
                     </div>
-                  )}
+                  ) : null}
                   <div className="masonry-grid">
                     {displayPhotos.map((photo) => (
                       <PublicPhotoItem
