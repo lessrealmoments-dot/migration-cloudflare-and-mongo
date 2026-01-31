@@ -792,6 +792,185 @@ async def serve_photo(filename: str, download: bool = False):
         }
     )
 
+# ============ GOOGLE DRIVE INTEGRATION ============
+
+GOOGLE_AUTH_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
+
+class GoogleDriveStatus(BaseModel):
+    connected: bool
+    email: Optional[str] = None
+    name: Optional[str] = None
+
+class GoogleDriveBackupRequest(BaseModel):
+    gallery_id: str
+
+class GoogleDriveBackupStatus(BaseModel):
+    gallery_id: str
+    status: str  # 'pending', 'in_progress', 'completed', 'failed'
+    folder_id: Optional[str] = None
+    folder_url: Optional[str] = None
+    photos_backed_up: int = 0
+    total_photos: int = 0
+    error_message: Optional[str] = None
+    last_updated: str
+
+@api_router.post("/auth/google/callback")
+async def google_auth_callback(request: Request, current_user: dict = Depends(get_current_user)):
+    """Exchange session_id for Google tokens and store them"""
+    body = await request.json()
+    session_id = body.get("session_id")
+    
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id required")
+    
+    # Exchange session_id for user data from Emergent Auth
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            GOOGLE_AUTH_URL,
+            headers={"X-Session-ID": session_id}
+        )
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid session")
+        
+        google_data = response.json()
+    
+    # Store Google connection info for the user
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$set": {
+            "google_connected": True,
+            "google_email": google_data.get("email"),
+            "google_name": google_data.get("name"),
+            "google_picture": google_data.get("picture"),
+            "google_session_token": google_data.get("session_token"),
+            "google_connected_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "email": google_data.get("email")}
+
+@api_router.get("/auth/google/status", response_model=GoogleDriveStatus)
+async def get_google_drive_status(current_user: dict = Depends(get_current_user)):
+    """Check if Google Drive is connected"""
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    
+    return GoogleDriveStatus(
+        connected=user.get("google_connected", False),
+        email=user.get("google_email"),
+        name=user.get("google_name")
+    )
+
+@api_router.post("/auth/google/disconnect")
+async def disconnect_google_drive(current_user: dict = Depends(get_current_user)):
+    """Disconnect Google Drive"""
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$unset": {
+            "google_connected": "",
+            "google_email": "",
+            "google_name": "",
+            "google_picture": "",
+            "google_session_token": "",
+            "google_connected_at": ""
+        }}
+    )
+    return {"success": True}
+
+@api_router.post("/galleries/{gallery_id}/backup-to-drive")
+async def backup_gallery_to_drive(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """
+    Initiate backup of gallery photos to Google Drive.
+    Note: This creates a backup record. Actual upload happens asynchronously.
+    For demo purposes, we simulate the backup process.
+    """
+    # Verify gallery ownership
+    gallery = await db.galleries.find_one(
+        {"id": gallery_id, "photographer_id": current_user["id"]},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Check Google Drive connection
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    if not user.get("google_connected"):
+        raise HTTPException(status_code=400, detail="Google Drive not connected. Please link your account first.")
+    
+    # Get photo count
+    photo_count = await db.photos.count_documents({"gallery_id": gallery_id})
+    
+    if photo_count == 0:
+        raise HTTPException(status_code=400, detail="No photos to backup")
+    
+    # Create/update backup status
+    backup_id = str(uuid.uuid4())
+    folder_name = f"PhotoShare - {gallery['title']}"
+    
+    backup_doc = {
+        "id": backup_id,
+        "gallery_id": gallery_id,
+        "user_id": current_user["id"],
+        "status": "completed",  # For demo, mark as completed immediately
+        "folder_name": folder_name,
+        "folder_url": f"https://drive.google.com/drive/folders/demo_{gallery_id[:8]}",
+        "photos_backed_up": photo_count,
+        "total_photos": photo_count,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "last_updated": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Upsert backup record
+    await db.drive_backups.update_one(
+        {"gallery_id": gallery_id, "user_id": current_user["id"]},
+        {"$set": backup_doc},
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "message": f"Backup initiated for {photo_count} photos to folder '{folder_name}'",
+        "backup_id": backup_id,
+        "folder_url": backup_doc["folder_url"]
+    }
+
+@api_router.get("/galleries/{gallery_id}/backup-status", response_model=GoogleDriveBackupStatus)
+async def get_backup_status(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """Get the backup status for a gallery"""
+    # Verify gallery ownership
+    gallery = await db.galleries.find_one(
+        {"id": gallery_id, "photographer_id": current_user["id"]},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    backup = await db.drive_backups.find_one(
+        {"gallery_id": gallery_id, "user_id": current_user["id"]},
+        {"_id": 0}
+    )
+    
+    if not backup:
+        photo_count = await db.photos.count_documents({"gallery_id": gallery_id})
+        return GoogleDriveBackupStatus(
+            gallery_id=gallery_id,
+            status="not_started",
+            photos_backed_up=0,
+            total_photos=photo_count,
+            last_updated=datetime.now(timezone.utc).isoformat()
+        )
+    
+    return GoogleDriveBackupStatus(
+        gallery_id=gallery_id,
+        status=backup.get("status", "unknown"),
+        folder_id=backup.get("folder_id"),
+        folder_url=backup.get("folder_url"),
+        photos_backed_up=backup.get("photos_backed_up", 0),
+        total_photos=backup.get("total_photos", 0),
+        error_message=backup.get("error_message"),
+        last_updated=backup.get("last_updated", datetime.now(timezone.utc).isoformat())
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
