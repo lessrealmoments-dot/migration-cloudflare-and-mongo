@@ -269,6 +269,24 @@ export const themes = {
       heading: "'Helvetica Neue', sans-serif",
       body: "'Helvetica Neue', sans-serif"
     }
+  },
+
+  blackgold: {
+    name: "Black & Gold",
+    description: "Luxurious and opulent for VIP events",
+    preview: "https://images.unsplash.com/photo-1579547621113-e4bb2a19bdd6?w=400&q=80",
+    colors: {
+      primary: "#d4af37",
+      secondary: "#1a1a1a",
+      accent: "#ffd700",
+      background: "#0d0d0d",
+      text: "#ffffff",
+      textLight: "#d4af37"
+    },
+    fonts: {
+      heading: "'Cinzel', serif",
+      body: "'Cormorant Garamond', serif"
+    }
   }
 };
 
