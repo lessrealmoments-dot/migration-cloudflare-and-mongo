@@ -355,6 +355,98 @@ const Dashboard = ({ user, setUser }) => {
           </div>
         </div>
       )}
+
+      {/* Analytics Modal */}
+      {showAnalyticsModal && analytics && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-sm p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" data-testid="analytics-modal">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
+                Your Analytics
+              </h3>
+              <button
+                onClick={() => setShowAnalyticsModal(false)}
+                className="p-2 hover:bg-zinc-100 rounded-sm transition-colors"
+              >
+                <X className="w-5 h-5" strokeWidth={1.5} />
+              </button>
+            </div>
+
+            {/* Summary Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-zinc-50 rounded-sm p-4 text-center">
+                <div className="text-3xl font-bold text-zinc-900">{analytics.total_galleries}</div>
+                <div className="text-sm text-zinc-500">Galleries</div>
+              </div>
+              <div className="bg-zinc-50 rounded-sm p-4 text-center">
+                <div className="text-3xl font-bold text-zinc-900">{analytics.total_photos}</div>
+                <div className="text-sm text-zinc-500">Photos</div>
+              </div>
+              <div className="bg-zinc-50 rounded-sm p-4 text-center">
+                <div className="text-3xl font-bold text-zinc-900">{analytics.total_views}</div>
+                <div className="text-sm text-zinc-500">Total Views</div>
+              </div>
+              <div className="bg-zinc-50 rounded-sm p-4 text-center">
+                <div className="text-3xl font-bold text-zinc-900">{formatBytes(analytics.storage_used)}</div>
+                <div className="text-sm text-zinc-500">Storage Used</div>
+              </div>
+            </div>
+
+            {/* Storage Progress */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Storage Quota</span>
+                <span className="text-sm text-zinc-500">
+                  {formatBytes(analytics.storage_used)} / {formatBytes(analytics.storage_quota)}
+                </span>
+              </div>
+              <div className="w-full bg-zinc-200 rounded-full h-3">
+                <div 
+                  className={`h-3 rounded-full transition-all ${
+                    (analytics.storage_used / analytics.storage_quota) > 0.9 
+                      ? 'bg-red-500' 
+                      : (analytics.storage_used / analytics.storage_quota) > 0.7 
+                        ? 'bg-amber-500' 
+                        : 'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min(100, (analytics.storage_used / analytics.storage_quota) * 100)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Gallery Breakdown */}
+            <h4 className="text-lg font-medium mb-4">Gallery Performance</h4>
+            <div className="space-y-3">
+              {analytics.galleries.map((g) => (
+                <div key={g.gallery_id} className="border border-zinc-200 rounded-sm p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h5 className="font-medium">{g.gallery_title}</h5>
+                      <p className="text-xs text-zinc-500">Created {new Date(g.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-zinc-600">
+                      <Eye className="w-4 h-4" strokeWidth={1.5} />
+                      {g.view_count} views
+                    </div>
+                  </div>
+                  <div className="flex gap-4 text-sm text-zinc-600">
+                    <span>{g.photographer_photos} photos (you)</span>
+                    <span>{g.guest_photos} photos (guests)</span>
+                  </div>
+                  {g.days_until_deletion !== null && (
+                    <div className={`text-xs mt-2 flex items-center gap-1 ${
+                      g.days_until_deletion <= 30 ? 'text-red-600' : 'text-zinc-400'
+                    }`}>
+                      <Clock className="w-3 h-3" />
+                      {g.days_until_deletion} days until auto-delete
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
