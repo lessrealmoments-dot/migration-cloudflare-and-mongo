@@ -75,14 +75,14 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 
 ## Pending/Blocked Features
 
-### Google Drive Integration (BLOCKED - needs API keys)
-- Backend code complete for OAuth2 flow
-- Requires: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
-- Features: Manual backup, auto-sync toggle
-
 ### Forgot Password (BLOCKED - needs API key)
 - Backend code complete
 - Requires: `RESEND_API_KEY`
+
+### Google Drive Integration ✅ CONFIGURED
+- Client ID and Secret configured
+- OAuth flow ready to use
+- Click "Link Google Drive" button in any gallery to connect
 
 ---
 
