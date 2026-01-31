@@ -1460,6 +1460,92 @@ async def delete_photo(photo_id: str, current_user: dict = Depends(get_current_u
     
     return {"message": "Photo deleted"}
 
+@api_router.post("/galleries/{gallery_id}/photos/reorder")
+async def reorder_photos(gallery_id: str, data: PhotoReorder, current_user: dict = Depends(get_current_user)):
+    """Reorder photos in a gallery"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Update order for each photo
+    for item in data.photo_orders:
+        await db.photos.update_one(
+            {"id": item["id"], "gallery_id": gallery_id},
+            {"$set": {"order": item["order"]}}
+        )
+    
+    return {"message": "Photos reordered successfully"}
+
+@api_router.post("/galleries/{gallery_id}/photos/bulk-action")
+async def bulk_photo_action(gallery_id: str, data: BulkPhotoAction, current_user: dict = Depends(get_current_user)):
+    """Perform bulk actions on selected photos"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    if not data.photo_ids:
+        raise HTTPException(status_code=400, detail="No photos selected")
+    
+    affected_count = 0
+    
+    if data.action == "delete":
+        # Delete photos and update storage
+        for photo_id in data.photo_ids:
+            photo = await db.photos.find_one({"id": photo_id, "gallery_id": gallery_id}, {"_id": 0})
+            if photo:
+                file_path = UPLOAD_DIR / photo["filename"]
+                file_size = 0
+                if file_path.exists():
+                    file_size = file_path.stat().st_size
+                    file_path.unlink()
+                if file_size > 0:
+                    await db.users.update_one(
+                        {"id": current_user["id"]},
+                        {"$inc": {"storage_used": -file_size}}
+                    )
+                await db.photos.delete_one({"id": photo_id})
+                affected_count += 1
+    
+    elif data.action == "move_section":
+        result = await db.photos.update_many(
+            {"id": {"$in": data.photo_ids}, "gallery_id": gallery_id},
+            {"$set": {"section_id": data.section_id}}
+        )
+        affected_count = result.modified_count
+    
+    elif data.action == "highlight":
+        result = await db.photos.update_many(
+            {"id": {"$in": data.photo_ids}, "gallery_id": gallery_id},
+            {"$set": {"is_highlight": True}}
+        )
+        affected_count = result.modified_count
+    
+    elif data.action == "unhighlight":
+        result = await db.photos.update_many(
+            {"id": {"$in": data.photo_ids}, "gallery_id": gallery_id},
+            {"$set": {"is_highlight": False}}
+        )
+        affected_count = result.modified_count
+    
+    elif data.action == "hide":
+        result = await db.photos.update_many(
+            {"id": {"$in": data.photo_ids}, "gallery_id": gallery_id},
+            {"$set": {"is_hidden": True}}
+        )
+        affected_count = result.modified_count
+    
+    elif data.action == "unhide":
+        result = await db.photos.update_many(
+            {"id": {"$in": data.photo_ids}, "gallery_id": gallery_id},
+            {"$set": {"is_hidden": False}}
+        )
+        affected_count = result.modified_count
+    
+    else:
+        raise HTTPException(status_code=400, detail=f"Unknown action: {data.action}")
+    
+    return {"message": f"Action '{data.action}' applied to {affected_count} photos", "affected_count": affected_count}
+
 @api_router.get("/public/gallery/{share_link}", response_model=PublicGallery)
 async def get_public_gallery(share_link: str):
     gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
