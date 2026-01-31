@@ -53,6 +53,7 @@ function App() {
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+          <Route path="/admin/gallery/:galleryId" element={<AdminProtectedRoute><AdminGalleryReview /></AdminProtectedRoute>} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors />
