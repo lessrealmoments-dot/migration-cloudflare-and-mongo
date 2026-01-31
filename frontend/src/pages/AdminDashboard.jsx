@@ -331,43 +331,125 @@ const AdminDashboard = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm text-zinc-400 mb-2">Hero Image 1 URL</label>
-                  <div className="flex gap-2">
+                  <label className="block text-sm text-zinc-400 mb-2">Hero Image 1</label>
+                  <input
+                    type="file"
+                    ref={fileInput1Ref}
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageUpload(e.target.files[0], 'hero_image_1')}
+                  />
+                  <div className="space-y-3">
+                    {landingConfig.hero_image_1 ? (
+                      <div className="relative">
+                        <img 
+                          src={landingConfig.hero_image_1.startsWith('/api') 
+                            ? `${BACKEND_URL}${landingConfig.hero_image_1}` 
+                            : landingConfig.hero_image_1
+                          } 
+                          alt="Hero 1" 
+                          className="w-full h-40 object-cover rounded"
+                        />
+                        <button
+                          onClick={() => fileInput1Ref.current?.click()}
+                          disabled={uploadingImage === 'hero_image_1'}
+                          className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white font-medium rounded"
+                        >
+                          {uploadingImage === 'hero_image_1' ? (
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                          ) : (
+                            <>
+                              <Upload className="w-5 h-5 mr-2" />
+                              Replace Image
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => fileInput1Ref.current?.click()}
+                        disabled={uploadingImage === 'hero_image_1'}
+                        className="w-full h-40 border-2 border-dashed border-zinc-600 rounded flex flex-col items-center justify-center text-zinc-400 hover:border-zinc-500 hover:text-zinc-300 transition-colors"
+                      >
+                        {uploadingImage === 'hero_image_1' ? (
+                          <Loader2 className="w-8 h-8 animate-spin" />
+                        ) : (
+                          <>
+                            <Upload className="w-8 h-8 mb-2" />
+                            <span>Upload Image 1</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                     <input
                       type="text"
                       value={landingConfig.hero_image_1 || ''}
                       onChange={(e) => setLandingConfig({ ...landingConfig, hero_image_1: e.target.value })}
-                      className="flex-1 bg-zinc-700 border border-zinc-600 rounded-sm px-4 py-3 text-white focus:outline-none focus:border-zinc-500"
-                      placeholder="https://..."
-                      data-testid="hero-image-1-input"
+                      className="w-full bg-zinc-700 border border-zinc-600 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:border-zinc-500"
+                      placeholder="Or paste image URL..."
                     />
                   </div>
-                  {landingConfig.hero_image_1 && (
-                    <img 
-                      src={landingConfig.hero_image_1} 
-                      alt="Preview" 
-                      className="mt-2 h-32 object-cover rounded"
-                    />
-                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm text-zinc-400 mb-2">Hero Image 2 URL</label>
+                  <label className="block text-sm text-zinc-400 mb-2">Hero Image 2</label>
                   <input
-                    type="text"
-                    value={landingConfig.hero_image_2 || ''}
-                    onChange={(e) => setLandingConfig({ ...landingConfig, hero_image_2: e.target.value })}
-                    className="w-full bg-zinc-700 border border-zinc-600 rounded-sm px-4 py-3 text-white focus:outline-none focus:border-zinc-500"
-                    placeholder="https://..."
-                    data-testid="hero-image-2-input"
+                    type="file"
+                    ref={fileInput2Ref}
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageUpload(e.target.files[0], 'hero_image_2')}
                   />
-                  {landingConfig.hero_image_2 && (
-                    <img 
-                      src={landingConfig.hero_image_2} 
-                      alt="Preview" 
-                      className="mt-2 h-32 object-cover rounded"
+                  <div className="space-y-3">
+                    {landingConfig.hero_image_2 ? (
+                      <div className="relative">
+                        <img 
+                          src={landingConfig.hero_image_2.startsWith('/api') 
+                            ? `${BACKEND_URL}${landingConfig.hero_image_2}` 
+                            : landingConfig.hero_image_2
+                          } 
+                          alt="Hero 2" 
+                          className="w-full h-40 object-cover rounded"
+                        />
+                        <button
+                          onClick={() => fileInput2Ref.current?.click()}
+                          disabled={uploadingImage === 'hero_image_2'}
+                          className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white font-medium rounded"
+                        >
+                          {uploadingImage === 'hero_image_2' ? (
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                          ) : (
+                            <>
+                              <Upload className="w-5 h-5 mr-2" />
+                              Replace Image
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => fileInput2Ref.current?.click()}
+                        disabled={uploadingImage === 'hero_image_2'}
+                        className="w-full h-40 border-2 border-dashed border-zinc-600 rounded flex flex-col items-center justify-center text-zinc-400 hover:border-zinc-500 hover:text-zinc-300 transition-colors"
+                      >
+                        {uploadingImage === 'hero_image_2' ? (
+                          <Loader2 className="w-8 h-8 animate-spin" />
+                        ) : (
+                          <>
+                            <Upload className="w-8 h-8 mb-2" />
+                            <span>Upload Image 2</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                    <input
+                      type="text"
+                      value={landingConfig.hero_image_2 || ''}
+                      onChange={(e) => setLandingConfig({ ...landingConfig, hero_image_2: e.target.value })}
+                      className="w-full bg-zinc-700 border border-zinc-600 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:border-zinc-500"
+                      placeholder="Or paste image URL..."
                     />
-                  )}
+                  </div>
                 </div>
               </div>
 
