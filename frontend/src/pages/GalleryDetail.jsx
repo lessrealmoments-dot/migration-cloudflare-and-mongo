@@ -807,6 +807,61 @@ const GalleryDetail = () => {
             </div>
           )}
         </div>
+
+        {/* Guest Photos Section */}
+        {getGuestPhotos().length > 0 && (
+          <div className="mt-12 pt-12 border-t border-zinc-200">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  Guest Uploads ({getGuestPhotos().length})
+                </h3>
+                <p className="text-sm text-zinc-500 mt-1">
+                  Photos uploaded by guests. You can delete inappropriate content.
+                </p>
+              </div>
+              <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">
+                Needs Review
+              </span>
+            </div>
+            
+            <div className="masonry-grid">
+              {getGuestPhotos().map((photo, index) => (
+                <div
+                  key={photo.id}
+                  data-testid={`guest-photo-${photo.id}`}
+                  className="masonry-item group relative"
+                >
+                  <img
+                    src={`${BACKEND_URL}${photo.url}`}
+                    alt="Guest upload"
+                    className="w-full h-auto cursor-pointer rounded-sm"
+                    onClick={() => {
+                      const guestPhotos = getGuestPhotos();
+                      setLightboxIndex(photos.findIndex(p => p.id === photo.id));
+                    }}
+                  />
+                  <div className="absolute top-2 left-2 bg-amber-500 text-white px-2 py-1 rounded text-xs font-medium">
+                    Guest
+                  </div>
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 rounded-sm">
+                    <button
+                      data-testid={`delete-guest-photo-${photo.id}`}
+                      onClick={() => handleDelete(photo.id)}
+                      className="bg-red-500 text-white hover:bg-red-600 h-10 w-10 rounded-sm flex items-center justify-center transition-all duration-300"
+                      title="Delete this photo"
+                    >
+                      <Trash2 className="w-5 h-5" strokeWidth={1.5} />
+                    </button>
+                  </div>
+                  <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs text-zinc-600">
+                    {new Date(photo.uploaded_at).toLocaleDateString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Premium Lightbox */}
