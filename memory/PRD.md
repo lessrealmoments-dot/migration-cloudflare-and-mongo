@@ -15,7 +15,8 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 ### Gallery Management
 - [x] Create galleries with titles, descriptions, passwords
 - [x] Set cover photos for galleries
-- [x] **Cover Photo Editor** - zoom/pan/crop functionality (NEW)
+- [x] **Cover Photo Editor** - zoom/pan/crop functionality with touch support
+- [x] **QR Code Generator** - downloadable PNG for easy sharing (NEW)
 - [x] Create and manage sections within galleries
 - [x] Editable event title and event date
 - [x] 15 gallery themes (elegant + fun)
