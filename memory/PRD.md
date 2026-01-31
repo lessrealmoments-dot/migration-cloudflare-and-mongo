@@ -63,6 +63,14 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Landing page content customization
 - [x] Landing page image uploads
 - [x] Site-wide analytics
+- [x] **Enhanced Admin Panel** (NEW):
+  - Search/filter photographers by name, email
+  - Sort by newest, storage used, name
+  - Suspend/Activate accounts
+  - Delete photographer (with all data)
+  - View photographer's galleries
+  - Activity logs tracking
+  - Admin settings management
 
 ### Auto-Delete System
 - [x] Galleries auto-delete after 6 months (180 days)
