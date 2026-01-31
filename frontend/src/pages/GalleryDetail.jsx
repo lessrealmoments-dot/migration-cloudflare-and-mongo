@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { ArrowLeft, Upload, Trash2, Copy, ExternalLink, Lock, X, Plus, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Upload, Trash2, Copy, ExternalLink, Lock, X, Plus, Image as ImageIcon, AlertTriangle, Cloud, CloudOff, Check, Loader2 } from 'lucide-react';
 import { themes } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 
