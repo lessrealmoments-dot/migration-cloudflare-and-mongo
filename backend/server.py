@@ -1481,6 +1481,10 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
+    # Validate filename exists
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="File must have a filename")
+    
     # Check for duplicate filename
     original_filename = file.filename
     existing = await db.photos.find_one({
@@ -1517,29 +1521,75 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
         if not verify_password(password, gallery["password"]):
             raise HTTPException(status_code=401, detail="Invalid password")
     
-    if not file.content_type.startswith('image/'):
-        raise HTTPException(status_code=400, detail="Only image files are allowed")
+    # Validate file type more thoroughly
+    allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
+    if not file.content_type or not any(file.content_type.lower().startswith(t.split('/')[0]) for t in allowed_types):
+        raise HTTPException(status_code=400, detail=f"Invalid file type. Allowed: JPEG, PNG, GIF, WebP, HEIC")
+    
+    # Read file with size limit
+    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+    try:
+        file_content = await file.read()
+        file_size = len(file_content)
+        
+        if file_size == 0:
+            raise HTTPException(status_code=400, detail="File is empty")
+        
+        if file_size > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail=f"File too large. Maximum size is 50MB")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reading guest upload: {e}")
+        raise HTTPException(status_code=400, detail="Failed to read uploaded file")
     
     photo_id = str(uuid.uuid4())
-    file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    # Sanitize file extension
+    original_ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
+    allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif']
+    file_ext = original_ext if original_ext in allowed_extensions else 'jpg'
     filename = f"{photo_id}.{file_ext}"
     file_path = UPLOAD_DIR / filename
     
-    with open(file_path, 'wb') as f:
-        shutil.copyfileobj(file.file, f)
+    # Write file with error handling
+    try:
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+        
+        # Verify file was written correctly
+        if not file_path.exists() or file_path.stat().st_size != file_size:
+            raise Exception("File verification failed")
+    except Exception as e:
+        logger.error(f"Error writing guest upload {filename}: {e}")
+        if file_path.exists():
+            try:
+                file_path.unlink()
+            except:
+                pass
+        raise HTTPException(status_code=500, detail="Failed to save photo. Please try again.")
     
     photo_doc = {
         "id": photo_id,
         "gallery_id": gallery["id"],
         "filename": filename,
-        "original_filename": file.filename,  # Store original filename for duplicate detection
+        "original_filename": file.filename,
         "url": f"/api/photos/serve/{filename}",
         "uploaded_by": "guest",
         "section_id": None,
+        "file_size": file_size,
         "uploaded_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db.photos.insert_one(photo_doc)
+    try:
+        await db.photos.insert_one(photo_doc)
+    except Exception as e:
+        logger.error(f"Error saving guest photo to database: {e}")
+        if file_path.exists():
+            try:
+                file_path.unlink()
+            except:
+                pass
+        raise HTTPException(status_code=500, detail="Failed to save photo record. Please try again.")
     
     return Photo(**{k: v for k, v in photo_doc.items() if k != '_id'})
 
