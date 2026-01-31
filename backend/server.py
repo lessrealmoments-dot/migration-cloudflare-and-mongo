@@ -528,6 +528,7 @@ class PublicGallery(BaseModel):
     photographer_name: str
     has_password: bool
     cover_photo_url: Optional[str] = None
+    cover_photo_position: Optional[dict] = None  # {scale, positionX, positionY}
     sections: List[Section] = []
     event_title: Optional[str] = None
     event_date: Optional[str] = None
