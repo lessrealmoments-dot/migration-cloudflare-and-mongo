@@ -207,6 +207,72 @@ const Dashboard = ({ user, setUser }) => {
           </div>
         )}
       </div>
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-sm p-8 max-w-md w-full" data-testid="profile-modal">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
+                Edit Profile
+              </h3>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="p-2 hover:bg-zinc-100 rounded-sm transition-colors"
+              >
+                <X className="w-5 h-5" strokeWidth={1.5} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">Your Name</label>
+                <input
+                  type="text"
+                  value={profileData.name}
+                  onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                  className="w-full border border-zinc-300 rounded-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                  placeholder="Your personal name"
+                  data-testid="profile-name-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Business Name</label>
+                <input
+                  type="text"
+                  value={profileData.business_name}
+                  onChange={(e) => setProfileData({ ...profileData, business_name: e.target.value })}
+                  className="w-full border border-zinc-300 rounded-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                  placeholder="Shown on public galleries"
+                  data-testid="profile-business-name-input"
+                />
+                <p className="text-xs text-zinc-500 mt-2">
+                  This will be displayed on your public galleries instead of your personal name.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  className="flex-1 border border-zinc-300 h-10 rounded-sm font-medium hover:bg-zinc-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={savingProfile}
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 h-10 rounded-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  data-testid="save-profile-btn"
+                >
+                  <Save className="w-4 h-4" strokeWidth={1.5} />
+                  {savingProfile ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
