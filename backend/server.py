@@ -981,6 +981,7 @@ async def get_galleries(current_user: dict = Depends(get_current_user)):
     for g in galleries:
         auto_delete_date = g.get("auto_delete_date")
         days_until_deletion = calculate_days_until_deletion(auto_delete_date)
+        edit_info = get_edit_lock_info(g["created_at"])
         
         result.append(Gallery(
             id=g["id"],
@@ -1000,7 +1001,9 @@ async def get_galleries(current_user: dict = Depends(get_current_user)):
             created_at=g["created_at"],
             photo_count=g.get("photo_count", 0),
             auto_delete_date=auto_delete_date,
-            days_until_deletion=days_until_deletion
+            days_until_deletion=days_until_deletion,
+            is_edit_locked=edit_info["is_locked"],
+            days_until_edit_lock=edit_info["days_until_lock"]
         ))
     
     return result
