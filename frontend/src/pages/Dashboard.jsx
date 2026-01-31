@@ -262,12 +262,27 @@ const Dashboard = ({ user, setUser }) => {
                   {gallery.description && (
                     <p className="text-sm text-zinc-600 mb-4 line-clamp-2">{gallery.description}</p>
                   )}
-                  <div className="flex justify-between items-center text-sm text-zinc-500">
+                  <div className="flex justify-between items-center text-sm text-zinc-500 mb-2">
                     <span>{gallery.photo_count} photos</span>
                     <span className="text-xs uppercase tracking-wider">
                       {new Date(gallery.created_at).toLocaleDateString()}
                     </span>
                   </div>
+                  {/* Days until deletion indicator */}
+                  {gallery.days_until_deletion !== null && gallery.days_until_deletion !== undefined && (
+                    <div className={`flex items-center gap-1 text-xs ${
+                      gallery.days_until_deletion <= 30 
+                        ? 'text-red-600' 
+                        : gallery.days_until_deletion <= 60 
+                          ? 'text-amber-600' 
+                          : 'text-zinc-400'
+                    }`}>
+                      <Clock className="w-3 h-3" strokeWidth={1.5} />
+                      {gallery.days_until_deletion <= 0 
+                        ? 'Expires today' 
+                        : `${gallery.days_until_deletion} days remaining`}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
