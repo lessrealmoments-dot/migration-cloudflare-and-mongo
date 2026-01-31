@@ -29,9 +29,106 @@ const GalleryDetail = () => {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
+  // Google Drive state
+  const [googleDriveStatus, setGoogleDriveStatus] = useState({ connected: false });
+  const [backupStatus, setBackupStatus] = useState(null);
+  const [backingUp, setBackingUp] = useState(false);
 
   useEffect(() => {
     fetchGalleryData();
+    fetchGoogleDriveStatus();
+  }, [id]);
+
+  const fetchGoogleDriveStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const [driveRes, backupRes] = await Promise.all([
+        axios.get(`${API}/auth/google/status`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API}/galleries/${id}/backup-status`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+      setGoogleDriveStatus(driveRes.data);
+      setBackupStatus(backupRes.data);
+    } catch (error) {
+      console.error('Failed to fetch Google Drive status');
+    }
+  };
+
+  const handleLinkGoogleDrive = () => {
+    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    const redirectUrl = window.location.origin + `/gallery/${id}`;
+    // Store that we're linking Google Drive
+    localStorage.setItem('pendingGoogleDriveLink', id);
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  };
+
+  const handleDisconnectGoogleDrive = async () => {
+    if (!window.confirm('Disconnect Google Drive? Your existing backups will remain in Drive.')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/auth/google/disconnect`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGoogleDriveStatus({ connected: false });
+      toast.success('Google Drive disconnected');
+    } catch (error) {
+      toast.error('Failed to disconnect Google Drive');
+    }
+  };
+
+  const handleBackupToDrive = async () => {
+    if (!googleDriveStatus.connected) {
+      toast.error('Please link Google Drive first');
+      return;
+    }
+    
+    setBackingUp(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/galleries/${id}/backup-to-drive`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(response.data.message);
+      fetchGoogleDriveStatus(); // Refresh backup status
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to backup to Google Drive');
+    } finally {
+      setBackingUp(false);
+    }
+  };
+
+  // Handle Google OAuth callback
+  useEffect(() => {
+    const handleGoogleCallback = async () => {
+      const hash = window.location.hash;
+      const pendingGalleryId = localStorage.getItem('pendingGoogleDriveLink');
+      
+      if (hash.includes('session_id=') && pendingGalleryId === id) {
+        const sessionId = hash.split('session_id=')[1]?.split('&')[0];
+        if (sessionId) {
+          try {
+            const token = localStorage.getItem('token');
+            await axios.post(`${API}/auth/google/callback`, 
+              { session_id: sessionId },
+              { headers: { Authorization: `Bearer ${token}` }}
+            );
+            localStorage.removeItem('pendingGoogleDriveLink');
+            // Clear hash from URL
+            window.history.replaceState(null, '', window.location.pathname);
+            toast.success('Google Drive linked successfully!');
+            fetchGoogleDriveStatus();
+          } catch (error) {
+            toast.error('Failed to link Google Drive');
+          }
+        }
+      }
+    };
+    
+    handleGoogleCallback();
   }, [id]);
 
   const fetchGalleryData = async () => {
