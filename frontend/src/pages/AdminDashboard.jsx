@@ -91,6 +91,37 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleImageUpload = async (file, slot) => {
+    if (!file) return;
+    
+    setUploadingImage(slot);
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('image_slot', slot);
+    
+    try {
+      const response = await axios.post(`${API}/admin/landing-image`, formData, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      // Update local state with new image URL
+      setLandingConfig(prev => ({
+        ...prev,
+        [slot]: response.data.url
+      }));
+      
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      toast.error('Failed to upload image');
+    } finally {
+      setUploadingImage(null);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     navigate('/admin');
