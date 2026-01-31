@@ -1424,7 +1424,6 @@ async def download_all_photos(share_link: str, password_data: PasswordVerify):
     
     # Use async iteration for memory efficiency with large galleries
     import zipfile
-    import io
     
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
