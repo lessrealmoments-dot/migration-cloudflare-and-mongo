@@ -763,16 +763,49 @@ const GalleryDetail = () => {
               </p>
             </div>
             {gallery.cover_photo_url && (
-              <div className="rounded-sm overflow-hidden border border-zinc-200">
-                <img
-                  src={`${BACKEND_URL}${gallery.cover_photo_url}`}
-                  alt="Cover"
-                  className="w-full h-full object-cover"
-                />
+              <div className="relative">
+                <div 
+                  className="rounded-sm overflow-hidden border border-zinc-200"
+                  style={{ paddingBottom: '33.33%', position: 'relative' }}
+                >
+                  <img
+                    src={`${BACKEND_URL}${gallery.cover_photo_url}`}
+                    alt="Cover"
+                    className="absolute inset-0 w-full h-full"
+                    style={{
+                      objectFit: 'cover',
+                      objectPosition: `${coverPhotoPosition.positionX}% ${coverPhotoPosition.positionY}%`,
+                      transform: `scale(${coverPhotoPosition.scale})`,
+                      transformOrigin: 'center center'
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={() => setShowCoverEditor(true)}
+                  data-testid="edit-cover-position-btn"
+                  className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
+                  title="Adjust cover photo position"
+                >
+                  <Settings2 className="w-4 h-4" />
+                </button>
+                <p className="text-xs text-zinc-500 mt-2 text-center">
+                  Click the settings icon to adjust position and zoom
+                </p>
               </div>
             )}
           </div>
         </div>
+
+        {/* Cover Photo Editor Modal */}
+        {showCoverEditor && gallery.cover_photo_url && (
+          <CoverPhotoEditor
+            imageUrl={`${BACKEND_URL}${gallery.cover_photo_url}`}
+            initialSettings={coverPhotoPosition}
+            onSave={handleSaveCoverPosition}
+            onCancel={() => setShowCoverEditor(false)}
+            aspectRatio={3}
+          />
+        )}
 
         {/* Google Drive Backup Section */}
         <div className="mb-12">
