@@ -54,6 +54,40 @@ const GalleryDetail = () => {
   // Cover photo editor state
   const [showCoverEditor, setShowCoverEditor] = useState(false);
   const [coverPhotoPosition, setCoverPhotoPosition] = useState({ scale: 1, positionX: 50, positionY: 50 });
+  // QR Code state
+  const [showQRCode, setShowQRCode] = useState(false);
+  const qrRef = useRef(null);
+
+  // Download QR Code as PNG
+  const downloadQRCode = () => {
+    if (!qrRef.current) return;
+    const svg = qrRef.current.querySelector('svg');
+    if (!svg) return;
+    
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      canvas.width = 512;
+      canvas.height = 512;
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, 512, 512);
+      
+      const pngUrl = canvas.toDataURL('image/png');
+      const downloadLink = document.createElement('a');
+      downloadLink.href = pngUrl;
+      downloadLink.download = `${gallery?.title || 'gallery'}-qr-code.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      toast.success('QR Code downloaded!');
+    };
+    
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+  };
 
   useEffect(() => {
     fetchGalleryData();
