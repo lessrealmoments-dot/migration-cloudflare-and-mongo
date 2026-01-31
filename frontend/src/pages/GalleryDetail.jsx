@@ -387,11 +387,15 @@ const GalleryDetail = () => {
   };
 
   const getPhotosBySection = (sectionId) => {
-    return photos.filter(p => p.section_id === sectionId);
+    return photos.filter(p => p.section_id === sectionId && p.uploaded_by === 'photographer');
   };
 
   const getPhotosWithoutSection = () => {
     return photos.filter(p => !p.section_id && p.uploaded_by === 'photographer');
+  };
+
+  const getGuestPhotos = () => {
+    return photos.filter(p => p.uploaded_by === 'guest');
   };
 
   if (loading) {
