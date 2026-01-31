@@ -33,6 +33,9 @@ const GalleryDetail = () => {
   const [uploadProgress, setUploadProgress] = useState([]); // Track individual file uploads
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  // Section expand/collapse state
+  const [expandedSections, setExpandedSections] = useState({});
+  const PREVIEW_COUNT = 8; // Number of photos to show in collapsed view
   const [newSectionName, setNewSectionName] = useState('');
   const [showSectionForm, setShowSectionForm] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
