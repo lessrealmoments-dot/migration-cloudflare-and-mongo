@@ -1267,6 +1267,7 @@ async def delete_section(gallery_id: str, section_id: str, current_user: dict = 
 
 @api_router.post("/galleries/{gallery_id}/photos", response_model=Photo)
 async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id: Optional[str] = Form(None), current_user: dict = Depends(get_current_user)):
+    """Optimized photo upload with concurrency control and async I/O"""
     gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
@@ -1295,6 +1296,8 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
         
         if file_size > MAX_FILE_SIZE:
             raise HTTPException(status_code=400, detail=f"File too large. Maximum size is 50MB, got {file_size/(1024*1024):.1f}MB")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error reading uploaded file: {e}")
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
@@ -1313,23 +1316,24 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
     filename = f"{photo_id}.{file_ext}"
     file_path = UPLOAD_DIR / filename
     
-    # Write file with error handling
-    try:
-        with open(file_path, 'wb') as f:
-            f.write(file_content)
-        
-        # Verify file was written correctly
-        if not file_path.exists() or file_path.stat().st_size != file_size:
-            raise Exception("File verification failed")
-    except Exception as e:
-        logger.error(f"Error writing file {filename}: {e}")
-        # Clean up partial file
-        if file_path.exists():
-            try:
-                file_path.unlink()
-            except:
-                pass
-        raise HTTPException(status_code=500, detail="Failed to save photo. Please try again.")
+    # Use semaphore for concurrency control and async file I/O
+    async with upload_semaphore:
+        try:
+            async with aiofiles.open(file_path, 'wb') as f:
+                await f.write(file_content)
+            
+            # Verify file was written correctly (sync check is fast)
+            if not file_path.exists() or file_path.stat().st_size != file_size:
+                raise Exception("File verification failed")
+        except Exception as e:
+            logger.error(f"Error writing file {filename}: {e}")
+            # Clean up partial file
+            if file_path.exists():
+                try:
+                    file_path.unlink()
+                except:
+                    pass
+            raise HTTPException(status_code=500, detail="Failed to save photo. Please try again.")
     
     # Update storage used
     await db.users.update_one(
