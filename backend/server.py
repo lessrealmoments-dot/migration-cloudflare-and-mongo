@@ -436,6 +436,8 @@ class Gallery(BaseModel):
     photo_count: int = 0
     auto_delete_date: Optional[str] = None  # When gallery will be auto-deleted
     days_until_deletion: Optional[int] = None  # Days remaining until deletion
+    is_edit_locked: bool = False  # Whether editing is locked (7 days after creation)
+    days_until_edit_lock: int = 7  # Days remaining before edit lock
 
 class GalleryUpdate(BaseModel):
     title: Optional[str] = None
