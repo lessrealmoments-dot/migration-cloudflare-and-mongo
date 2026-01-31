@@ -1095,6 +1095,9 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
     updated_gallery = await db.galleries.find_one({"id": gallery_id}, {"_id": 0})
     photo_count = await db.photos.count_documents({"gallery_id": gallery_id})
     
+    # Get edit lock info for response
+    edit_info = get_edit_lock_info(updated_gallery["created_at"])
+    
     return Gallery(
         id=updated_gallery["id"],
         photographer_id=updated_gallery["photographer_id"],
@@ -1111,7 +1114,9 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
         has_download_all_password=updated_gallery.get("download_all_password") is not None,
         theme=updated_gallery.get("theme", "classic"),
         created_at=updated_gallery["created_at"],
-        photo_count=photo_count
+        photo_count=photo_count,
+        is_edit_locked=edit_info["is_locked"],
+        days_until_edit_lock=edit_info["days_until_lock"]
     )
 
 @api_router.delete("/galleries/{gallery_id}")
