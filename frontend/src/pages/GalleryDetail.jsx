@@ -121,30 +121,26 @@ const GalleryDetail = () => {
     }
   };
 
-  // Handle Google OAuth callback
+  // Handle Google OAuth callback from URL params
   useEffect(() => {
     const handleGoogleCallback = async () => {
-      const hash = window.location.hash;
-      const pendingGalleryId = localStorage.getItem('pendingGoogleDriveLink');
+      const params = new URLSearchParams(window.location.search);
+      const driveConnected = params.get('drive_connected');
+      const driveError = params.get('drive_error');
       
-      if (hash.includes('session_id=') && pendingGalleryId === id) {
-        const sessionId = hash.split('session_id=')[1]?.split('&')[0];
-        if (sessionId) {
-          try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API}/auth/google/callback`, 
-              { session_id: sessionId },
-              { headers: { Authorization: `Bearer ${token}` }}
-            );
-            localStorage.removeItem('pendingGoogleDriveLink');
-            // Clear hash from URL
-            window.history.replaceState(null, '', window.location.pathname);
-            toast.success('Google Drive linked successfully!');
-            fetchGoogleDriveStatus();
-          } catch (error) {
-            toast.error('Failed to link Google Drive');
-          }
-        }
+      if (driveConnected === 'true') {
+        toast.success('Google Drive linked successfully!');
+        fetchGoogleDriveStatus();
+        // Clean URL
+        window.history.replaceState(null, '', window.location.pathname);
+      } else if (driveError) {
+        const errorMessages = {
+          'invalid_state': 'Authorization expired. Please try again.',
+          'auth_failed': 'Failed to link Google Drive. Please try again.'
+        };
+        toast.error(errorMessages[driveError] || 'Google Drive connection failed');
+        // Clean URL
+        window.history.replaceState(null, '', window.location.pathname);
       }
     };
     
