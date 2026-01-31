@@ -587,15 +587,15 @@ const PublicGallery = () => {
 const PublicPhotoItem = ({ photo, photoIndex, onView, onDownload, isGuest }) => (
   <div
     data-testid={`public-photo-item-${photo.id}`}
-    className="masonry-item group relative"
+    className="masonry-item group relative cursor-pointer"
     onClick={() => onView(photoIndex)}
   >
     <img
       src={`${BACKEND_URL}${photo.url}`}
       alt="Gallery photo"
-      className="w-full h-auto cursor-pointer rounded-sm"
+      className="w-full h-auto rounded-sm"
     />
-    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center rounded-sm">
+    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-300 flex items-center justify-center rounded-sm">
       <button
         data-testid={`download-photo-${photo.id}`}
         onClick={(e) => {
@@ -608,7 +608,7 @@ const PublicPhotoItem = ({ photo, photoIndex, onView, onDownload, isGuest }) => 
       </button>
     </div>
     {isGuest && (
-      <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-sm text-xs font-medium">
+      <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-sm text-xs font-medium pointer-events-none">
         Guest
       </div>
     )}
