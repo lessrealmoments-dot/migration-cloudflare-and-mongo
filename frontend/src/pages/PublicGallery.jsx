@@ -444,7 +444,7 @@ const PublicGallery = () => {
                 </h3>
                 <p className="text-sm text-zinc-500">
                   {gallery?.guest_upload_enabled 
-                    ? 'Share your memories with the photographer'
+                    ? 'Share your shots with the celebrant'
                     : 'Guest uploads are no longer accepted for this gallery'}
                 </p>
               </div>
