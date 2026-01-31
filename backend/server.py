@@ -38,11 +38,24 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
+# Optimized MongoDB connection with connection pooling for high concurrency
+client = AsyncIOMotorClient(
+    mongo_url,
+    maxPoolSize=100,           # Max connections in pool
+    minPoolSize=10,            # Min connections always open
+    maxIdleTimeMS=30000,       # Close idle connections after 30s
+    connectTimeoutMS=5000,     # Connection timeout
+    serverSelectionTimeoutMS=5000,
+    waitQueueTimeoutMS=10000   # Queue timeout for connections
+)
 db = client[os.environ['DB_NAME']]
 
 UPLOAD_DIR = ROOT_DIR / 'uploads'
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+# Concurrency control for uploads (limit concurrent file writes to prevent I/O saturation)
+MAX_CONCURRENT_UPLOADS = 50  # Max simultaneous upload operations
+upload_semaphore = asyncio.Semaphore(MAX_CONCURRENT_UPLOADS)
 
 # JWT configuration - will fail if not set (secure by default)
 SECRET_KEY = os.environ['JWT_SECRET_KEY']
