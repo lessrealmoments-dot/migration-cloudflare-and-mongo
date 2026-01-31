@@ -87,16 +87,42 @@ const PublicGallery = () => {
 
     if (acceptedFiles.length === 0) return;
 
+    // Validate files before uploading
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    const validFiles = [];
+    const invalidFiles = [];
+    
+    for (const file of acceptedFiles) {
+      if (file.size === 0) {
+        invalidFiles.push({ name: file.name, reason: 'File is empty' });
+      } else if (file.size > MAX_FILE_SIZE) {
+        invalidFiles.push({ name: file.name, reason: 'File too large (max 50MB)' });
+      } else if (!file.type.startsWith('image/')) {
+        invalidFiles.push({ name: file.name, reason: 'Not an image file' });
+      } else {
+        validFiles.push(file);
+      }
+    }
+    
+    // Show warnings for invalid files
+    if (invalidFiles.length > 0) {
+      invalidFiles.forEach(f => toast.error(`${f.name}: ${f.reason}`));
+    }
+    
+    if (validFiles.length === 0) {
+      return;
+    }
+
     // Server-side duplicate check
     setUploading(true);
     setUploadProgress([{ name: 'Checking for duplicates...', status: 'uploading', progress: 50 }]);
 
-    let filesToUpload = acceptedFiles;
+    let filesToUpload = validFiles;
     
     try {
       const checkResponse = await axios.post(
         `${API}/public/gallery/${shareLink}/check-duplicates`,
-        { filenames: acceptedFiles.map(f => f.name) }
+        { filenames: validFiles.map(f => f.name) }
       );
       
       const { duplicates, new_files } = checkResponse.data;
