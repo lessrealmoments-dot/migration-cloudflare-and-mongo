@@ -524,6 +524,112 @@ const GalleryDetail = () => {
           </div>
         </div>
 
+        {/* Google Drive Backup Section */}
+        <div className="mb-12">
+          <h3 className="text-2xl font-normal mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
+            Google Drive Backup
+          </h3>
+          <div className="border border-zinc-200 rounded-sm p-6 bg-zinc-50/50">
+            {!googleDriveStatus.connected ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-zinc-200 rounded-full flex items-center justify-center">
+                    <CloudOff className="w-6 h-6 text-zinc-500" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <p className="font-medium text-zinc-800">Google Drive not connected</p>
+                    <p className="text-sm text-zinc-500">Link your account to backup photos automatically</p>
+                  </div>
+                </div>
+                <button
+                  data-testid="link-google-drive-btn"
+                  onClick={handleLinkGoogleDrive}
+                  className="bg-blue-600 text-white hover:bg-blue-700 h-10 px-6 rounded-sm font-medium transition-colors flex items-center gap-2"
+                >
+                  <Cloud className="w-4 h-4" strokeWidth={1.5} />
+                  Link Google Drive
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                      <Cloud className="w-6 h-6 text-green-600" strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <p className="font-medium text-zinc-800">Connected to Google Drive</p>
+                      <p className="text-sm text-zinc-500">{googleDriveStatus.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      data-testid="backup-to-drive-btn"
+                      onClick={handleBackupToDrive}
+                      disabled={backingUp || photos.length === 0}
+                      className={`h-10 px-6 rounded-sm font-medium transition-colors flex items-center gap-2 ${
+                        backingUp || photos.length === 0
+                          ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      {backingUp ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+                          Backing up...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" strokeWidth={1.5} />
+                          Backup to Drive
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleDisconnectGoogleDrive}
+                      className="border border-zinc-300 text-zinc-600 hover:bg-zinc-100 h-10 px-4 rounded-sm text-sm transition-colors"
+                    >
+                      Disconnect
+                    </button>
+                  </div>
+                </div>
+                
+                {backupStatus && backupStatus.status !== 'not_started' && (
+                  <div className="border-t border-zinc-200 pt-4 mt-4">
+                    <div className="flex items-center gap-3">
+                      {backupStatus.status === 'completed' ? (
+                        <Check className="w-5 h-5 text-green-600" strokeWidth={1.5} />
+                      ) : backupStatus.status === 'in_progress' ? (
+                        <Loader2 className="w-5 h-5 text-blue-600 animate-spin" strokeWidth={1.5} />
+                      ) : null}
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-zinc-700">
+                          {backupStatus.status === 'completed' 
+                            ? `${backupStatus.photos_backed_up} photos backed up`
+                            : backupStatus.status === 'in_progress'
+                            ? `Backing up ${backupStatus.photos_backed_up}/${backupStatus.total_photos} photos...`
+                            : 'Backup status unknown'}
+                        </p>
+                        {backupStatus.folder_url && (
+                          <a 
+                            href={backupStatus.folder_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                          >
+                            Open in Google Drive
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
