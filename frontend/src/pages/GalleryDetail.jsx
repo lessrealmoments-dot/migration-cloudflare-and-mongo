@@ -1424,14 +1424,32 @@ const GalleryDetail = () => {
             sections.map((section) => {
               const sectionPhotos = getPhotosBySection(section.id);
               if (sectionPhotos.length === 0) return null;
+              const isExpanded = isSectionExpanded(section.id);
+              const displayPhotos = isExpanded ? sectionPhotos : sectionPhotos.slice(0, PREVIEW_COUNT);
+              const hasMore = sectionPhotos.length > PREVIEW_COUNT;
               
               return (
-                <div key={section.id} className="mb-12">
-                  <h4 className="text-xl font-normal mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
-                    {section.name} ({sectionPhotos.length})
-                  </h4>
+                <div key={section.id} className="mb-8">
+                  <div 
+                    className="flex items-center justify-between mb-4 cursor-pointer group"
+                    onClick={() => toggleSectionExpand(section.id)}
+                  >
+                    <h4 className="text-xl font-normal flex items-center gap-2" style={{ fontFamily: 'Playfair Display, serif' }}>
+                      {section.name} 
+                      <span className="text-zinc-400 text-base">({sectionPhotos.length})</span>
+                    </h4>
+                    {hasMore && (
+                      <button className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-700 transition-colors">
+                        {isExpanded ? (
+                          <>Collapse <ChevronUp className="w-4 h-4" /></>
+                        ) : (
+                          <>Show all {sectionPhotos.length} <ChevronDown className="w-4 h-4" /></>
+                        )}
+                      </button>
+                    )}
+                  </div>
                   <div className="masonry-grid">
-                    {sectionPhotos.map((photo) => {
+                    {displayPhotos.map((photo) => {
                       const photoIndex = photos.findIndex(p => p.id === photo.id);
                       return (
                         <PhotoItem
@@ -1451,33 +1469,82 @@ const GalleryDetail = () => {
                       );
                     })}
                   </div>
+                  {hasMore && !isExpanded && (
+                    <button 
+                      onClick={() => toggleSectionExpand(section.id)}
+                      className="mt-4 w-full py-3 border-2 border-dashed border-zinc-200 rounded-lg text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                      Show {sectionPhotos.length - PREVIEW_COUNT} more photos
+                    </button>
+                  )}
                 </div>
               );
             })
           ) : null}
 
           {getPhotosWithoutSection().length > 0 && (
-            <div className="mb-12">
-              <h4 className="text-xl font-normal mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
-                {sections.length > 0 ? 'Unsorted' : 'All Photos'} ({getPhotosWithoutSection().length})
-              </h4>
-              <div className="masonry-grid">
-                {getPhotosWithoutSection().map((photo) => {
-                  const photoIndex = photos.findIndex(p => p.id === photo.id);
-                  return (
-                    <PhotoItem
-                      key={photo.id}
-                      photo={photo}
-                      photoIndex={photoIndex}
-                      onDelete={handleDelete}
-                      onView={setLightboxIndex}
-                      selectMode={selectMode}
-                      selected={selectedPhotos.has(photo.id)}
-                      onToggleSelect={togglePhotoSelection}
-                      reorderMode={reorderMode}
-                      onDragStart={handleDragStart}
-                      onDragOver={handleDragOver}
-                      onDrop={handleDrop}
+            <div className="mb-8">
+              {(() => {
+                const unsortedPhotos = getPhotosWithoutSection();
+                const sectionId = 'unsorted';
+                const isExpanded = isSectionExpanded(sectionId);
+                const displayPhotos = isExpanded ? unsortedPhotos : unsortedPhotos.slice(0, PREVIEW_COUNT);
+                const hasMore = unsortedPhotos.length > PREVIEW_COUNT;
+                
+                return (
+                  <>
+                    <div 
+                      className="flex items-center justify-between mb-4 cursor-pointer group"
+                      onClick={() => toggleSectionExpand(sectionId)}
+                    >
+                      <h4 className="text-xl font-normal flex items-center gap-2" style={{ fontFamily: 'Playfair Display, serif' }}>
+                        {sections.length > 0 ? 'Unsorted' : 'All Photos'}
+                        <span className="text-zinc-400 text-base">({unsortedPhotos.length})</span>
+                      </h4>
+                      {hasMore && (
+                        <button className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-700 transition-colors">
+                          {isExpanded ? (
+                            <>Collapse <ChevronUp className="w-4 h-4" /></>
+                          ) : (
+                            <>Show all {unsortedPhotos.length} <ChevronDown className="w-4 h-4" /></>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    <div className="masonry-grid">
+                      {displayPhotos.map((photo) => {
+                        const photoIndex = photos.findIndex(p => p.id === photo.id);
+                        return (
+                          <PhotoItem
+                            key={photo.id}
+                            photo={photo}
+                            photoIndex={photoIndex}
+                            onDelete={handleDelete}
+                            onView={setLightboxIndex}
+                            selectMode={selectMode}
+                            selected={selectedPhotos.has(photo.id)}
+                            onToggleSelect={togglePhotoSelection}
+                            reorderMode={reorderMode}
+                            onDragStart={handleDragStart}
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                          />
+                        );
+                      })}
+                    </div>
+                    {hasMore && !isExpanded && (
+                      <button 
+                        onClick={() => toggleSectionExpand(sectionId)}
+                        className="mt-4 w-full py-3 border-2 border-dashed border-zinc-200 rounded-lg text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                        Show {unsortedPhotos.length - PREVIEW_COUNT} more photos
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
                     />
                   );
                 })}
