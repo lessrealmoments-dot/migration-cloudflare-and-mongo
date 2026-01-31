@@ -57,6 +57,123 @@ const GalleryDetail = () => {
   // QR Code state
   const [showQRCode, setShowQRCode] = useState(false);
   const qrRef = useRef(null);
+  // Multi-select state
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState(new Set());
+  const [showBulkActionModal, setShowBulkActionModal] = useState(false);
+  const [bulkAction, setBulkAction] = useState(null);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  // Drag reorder state
+  const [draggedPhoto, setDraggedPhoto] = useState(null);
+  const [reorderMode, setReorderMode] = useState(false);
+
+  // Toggle photo selection
+  const togglePhotoSelection = (photoId) => {
+    setSelectedPhotos(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(photoId)) {
+        newSet.delete(photoId);
+      } else {
+        newSet.add(photoId);
+      }
+      return newSet;
+    });
+  };
+
+  // Select all photos
+  const selectAllPhotos = () => {
+    const filteredPhotos = selectedSection 
+      ? photos.filter(p => p.section_id === selectedSection)
+      : photos;
+    setSelectedPhotos(new Set(filteredPhotos.map(p => p.id)));
+  };
+
+  // Clear selection
+  const clearSelection = () => {
+    setSelectedPhotos(new Set());
+    setSelectMode(false);
+  };
+
+  // Bulk action handler
+  const handleBulkAction = async (action, sectionId = null) => {
+    if (selectedPhotos.size === 0) {
+      toast.error('No photos selected');
+      return;
+    }
+
+    setBulkActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/galleries/${id}/photos/bulk-action`, {
+        photo_ids: Array.from(selectedPhotos),
+        action: action,
+        section_id: sectionId
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success(`${action} applied to ${selectedPhotos.size} photos`);
+      clearSelection();
+      fetchGalleryData();
+      setShowBulkActionModal(false);
+    } catch (error) {
+      toast.error(`Failed to ${action} photos`);
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  // Drag and drop reorder
+  const handleDragStart = (e, photo) => {
+    setDraggedPhoto(photo);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e, targetPhoto) => {
+    e.preventDefault();
+    if (!draggedPhoto || draggedPhoto.id === targetPhoto.id) return;
+
+    const filteredPhotos = selectedSection 
+      ? photos.filter(p => p.section_id === selectedSection)
+      : photos;
+    
+    const dragIndex = filteredPhotos.findIndex(p => p.id === draggedPhoto.id);
+    const dropIndex = filteredPhotos.findIndex(p => p.id === targetPhoto.id);
+    
+    // Reorder locally first for instant feedback
+    const reordered = [...filteredPhotos];
+    const [removed] = reordered.splice(dragIndex, 1);
+    reordered.splice(dropIndex, 0, removed);
+    
+    // Update order values
+    const photoOrders = reordered.map((p, idx) => ({ id: p.id, order: idx }));
+    
+    // Optimistic update
+    setPhotos(prev => {
+      const otherPhotos = prev.filter(p => !reordered.find(r => r.id === p.id));
+      return [...reordered.map((p, idx) => ({ ...p, order: idx })), ...otherPhotos];
+    });
+    
+    // Save to backend
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/galleries/${id}/photos/reorder`, {
+        photo_orders: photoOrders
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (error) {
+      toast.error('Failed to save order');
+      fetchGalleryData(); // Revert on error
+    }
+    
+    setDraggedPhoto(null);
+  };
 
   // Download QR Code as PNG
   const downloadQRCode = () => {
