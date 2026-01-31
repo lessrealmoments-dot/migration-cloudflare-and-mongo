@@ -1569,12 +1569,9 @@ async def backup_gallery_to_drive(gallery_id: str, background_tasks: BackgroundT
         raise HTTPException(status_code=404, detail="Gallery not found")
     
     # Check Google Drive connection
-    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
-    if not user.get("google_connected"):
+    creds = await db.drive_credentials.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    if not creds:
         raise HTTPException(status_code=400, detail="Google Drive not connected. Please link your account first.")
-    
-    if not user.get("google_access_token"):
-        raise HTTPException(status_code=400, detail="Google Drive access token missing. Please reconnect your Google account.")
     
     # Get photo count
     photo_count = await db.photos.count_documents({"gallery_id": gallery_id})
