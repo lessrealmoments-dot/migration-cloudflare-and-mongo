@@ -552,7 +552,7 @@ const AdminDashboard = () => {
             <div className="bg-zinc-800 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
               <div className="p-6 border-b border-zinc-700 flex justify-between items-center">
                 <div>
-                  <h3 className="text-xl font-medium text-white">{selectedPhotographer.name}'s Galleries</h3>
+                  <h3 className="text-xl font-medium text-white">{selectedPhotographer.name}&apos;s Galleries</h3>
                   <p className="text-sm text-zinc-400">{photographerGalleries.length} galleries</p>
                 </div>
                 <button onClick={() => setShowGalleriesModal(false)} className="p-2 hover:bg-zinc-700 rounded">
