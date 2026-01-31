@@ -203,32 +203,82 @@ const GalleryDetail = () => {
   });
 
   const onDrop = useCallback(async (acceptedFiles) => {
+    if (acceptedFiles.length === 0) return;
+    
     setUploading(true);
     const token = localStorage.getItem('token');
 
-    try {
-      const uploadPromises = acceptedFiles.map(async (file) => {
+    // Initialize progress tracking for each file
+    const initialProgress = acceptedFiles.map(file => ({
+      name: file.name,
+      status: 'uploading',
+      progress: 0
+    }));
+    setUploadProgress(initialProgress);
+
+    const results = await Promise.allSettled(
+      acceptedFiles.map(async (file, index) => {
         const formData = new FormData();
         formData.append('file', file);
         if (selectedSection) {
           formData.append('section_id', selectedSection);
         }
-        return axios.post(`${API}/galleries/${id}/photos`, formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-      });
+        
+        try {
+          const response = await axios.post(`${API}/galleries/${id}/photos`, formData, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data'
+            },
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setUploadProgress(prev => prev.map((item, i) => 
+                i === index ? { ...item, progress: percentCompleted } : item
+              ));
+            }
+          });
+          
+          // Mark as success
+          setUploadProgress(prev => prev.map((item, i) => 
+            i === index ? { ...item, status: 'success', progress: 100 } : item
+          ));
+          
+          return response;
+        } catch (error) {
+          // Mark as error with message
+          const errorMsg = error.response?.status === 403 ? 'Storage full' : 'Failed';
+          setUploadProgress(prev => prev.map((item, i) => 
+            i === index ? { ...item, status: 'error', errorMsg } : item
+          ));
+          throw error;
+        }
+      })
+    );
 
-      await Promise.all(uploadPromises);
-      toast.success(`${acceptedFiles.length} photo(s) uploaded successfully!`);
+    const successCount = results.filter(r => r.status === 'fulfilled').length;
+    const failCount = results.filter(r => r.status === 'rejected').length;
+
+    if (successCount > 0) {
+      toast.success(`${successCount} photo(s) uploaded successfully!`);
       fetchGalleryData();
-    } catch (error) {
-      toast.error('Failed to upload photos');
-    } finally {
-      setUploading(false);
     }
+    if (failCount > 0) {
+      const storageFullCount = results.filter(r => 
+        r.status === 'rejected' && r.reason?.response?.status === 403
+      ).length;
+      if (storageFullCount > 0) {
+        toast.error(`${storageFullCount} photo(s) failed - storage quota exceeded`);
+      }
+      if (failCount - storageFullCount > 0) {
+        toast.error(`${failCount - storageFullCount} photo(s) failed to upload`);
+      }
+    }
+
+    // Clear progress after a delay
+    setTimeout(() => {
+      setUploadProgress([]);
+      setUploading(false);
+    }, 2000);
   }, [id, selectedSection]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
