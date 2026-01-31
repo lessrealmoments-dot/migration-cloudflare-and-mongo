@@ -311,7 +311,7 @@ class TestPublicGallery:
         print(f"✓ Password verified")
     
     def test_03_guest_upload(self):
-        """Test guest photo upload"""
+        """Test guest photo upload with password (required for protected galleries)"""
         # Create a simple test image
         test_image_data = bytes([
             0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01,
@@ -333,7 +333,8 @@ class TestPublicGallery:
         ])
         
         files = {"file": ("guest_photo.jpg", test_image_data, "image/jpeg")}
-        data = {"guest_name": "Test Guest"}
+        # Include password for protected gallery upload
+        data = {"guest_name": "Test Guest", "password": "gallery123"}
         
         start_time = time.time()
         response = requests.post(
