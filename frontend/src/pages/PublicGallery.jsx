@@ -19,6 +19,7 @@ const PublicGallery = () => {
   const [password, setPassword] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState([]); // Track individual file uploads
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [guestUploadExpanded, setGuestUploadExpanded] = useState(false);
