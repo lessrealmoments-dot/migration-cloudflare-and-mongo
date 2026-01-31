@@ -430,7 +430,7 @@ const AdminGalleryReview = () => {
 };
 
 // Admin Photo Item Component
-const AdminPhotoItem = ({ photo, selectMode, selected, onToggleSelect, onView, onUnflag }) => (
+const AdminPhotoItem = ({ photo, selectMode, selected, onToggleSelect, onView, onUnflag, onSingleFlag }) => (
   <div
     className={`relative aspect-square group cursor-pointer rounded-lg overflow-hidden ${
       photo.is_flagged ? 'ring-2 ring-red-500' : ''
@@ -484,9 +484,9 @@ const AdminPhotoItem = ({ photo, selectMode, selected, onToggleSelect, onView, o
           </button>
         ) : (
           <button
-            onClick={(e) => { e.stopPropagation(); onToggleSelect(photo.id); }}
+            onClick={(e) => { e.stopPropagation(); onSingleFlag(photo.id); }}
             className="p-3 bg-red-600 hover:bg-red-500 rounded-lg"
-            title="Select to Flag"
+            title="Flag Photo"
           >
             <Flag className="w-5 h-5" />
           </button>
