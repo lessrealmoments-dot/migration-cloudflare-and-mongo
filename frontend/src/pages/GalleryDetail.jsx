@@ -221,31 +221,69 @@ const GalleryDetail = () => {
   const onDrop = useCallback(async (acceptedFiles) => {
     if (acceptedFiles.length === 0) return;
     
+    // Validate files before uploading
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    const validFiles = [];
+    const invalidFiles = [];
+    
+    for (const file of acceptedFiles) {
+      if (file.size === 0) {
+        invalidFiles.push({ name: file.name, reason: 'File is empty' });
+      } else if (file.size > MAX_FILE_SIZE) {
+        invalidFiles.push({ name: file.name, reason: 'File too large (max 50MB)' });
+      } else if (!file.type.startsWith('image/')) {
+        invalidFiles.push({ name: file.name, reason: 'Not an image file' });
+      } else {
+        validFiles.push(file);
+      }
+    }
+    
+    // Show warnings for invalid files
+    if (invalidFiles.length > 0) {
+      invalidFiles.forEach(f => toast.error(`${f.name}: ${f.reason}`));
+    }
+    
+    if (validFiles.length === 0) {
+      return;
+    }
+    
     setUploading(true);
     const token = localStorage.getItem('token');
 
     // Initialize progress tracking for each file
-    const initialProgress = acceptedFiles.map(file => ({
+    const initialProgress = validFiles.map(file => ({
       name: file.name,
       status: 'uploading',
-      progress: 0
+      progress: 0,
+      retries: 0
     }));
     setUploadProgress(initialProgress);
 
-    const results = await Promise.allSettled(
-      acceptedFiles.map(async (file, index) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        if (selectedSection) {
-          formData.append('section_id', selectedSection);
-        }
-        
+    // Upload function with retry logic
+    const uploadWithRetry = async (file, index, maxRetries = 2) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (selectedSection) {
+        formData.append('section_id', selectedSection);
+      }
+      
+      let lastError;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
+          if (attempt > 0) {
+            setUploadProgress(prev => prev.map((item, i) => 
+              i === index ? { ...item, status: 'retrying', retries: attempt } : item
+            ));
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          }
+          
           const response = await axios.post(`${API}/galleries/${id}/photos`, formData, {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'multipart/form-data'
             },
+            timeout: 120000, // 2 minute timeout for large files
             onUploadProgress: (progressEvent) => {
               const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
               setUploadProgress(prev => prev.map((item, i) => 
@@ -261,14 +299,34 @@ const GalleryDetail = () => {
           
           return response;
         } catch (error) {
-          // Mark as error with message
-          const errorMsg = error.response?.status === 403 ? 'Storage full' : 'Failed';
-          setUploadProgress(prev => prev.map((item, i) => 
-            i === index ? { ...item, status: 'error', errorMsg } : item
-          ));
-          throw error;
+          lastError = error;
+          // Don't retry for these errors
+          if (error.response?.status === 403 || error.response?.status === 400 || error.response?.status === 409) {
+            break;
+          }
         }
-      })
+      }
+      
+      // Mark as error with specific message
+      let errorMsg = 'Upload failed';
+      if (lastError?.response?.status === 403) {
+        errorMsg = 'Storage full';
+      } else if (lastError?.response?.status === 400) {
+        errorMsg = lastError.response?.data?.detail || 'Invalid file';
+      } else if (lastError?.response?.status === 409) {
+        errorMsg = 'Duplicate file';
+      } else if (lastError?.code === 'ECONNABORTED') {
+        errorMsg = 'Timeout';
+      }
+      
+      setUploadProgress(prev => prev.map((item, i) => 
+        i === index ? { ...item, status: 'error', errorMsg } : item
+      ));
+      throw lastError;
+    };
+
+    const results = await Promise.allSettled(
+      validFiles.map((file, index) => uploadWithRetry(file, index))
     );
 
     const successCount = results.filter(r => r.status === 'fulfilled').length;
@@ -279,22 +337,14 @@ const GalleryDetail = () => {
       fetchGalleryData();
     }
     if (failCount > 0) {
-      const storageFullCount = results.filter(r => 
-        r.status === 'rejected' && r.reason?.response?.status === 403
-      ).length;
-      if (storageFullCount > 0) {
-        toast.error(`${storageFullCount} photo(s) failed - storage quota exceeded`);
-      }
-      if (failCount - storageFullCount > 0) {
-        toast.error(`${failCount - storageFullCount} photo(s) failed to upload`);
-      }
+      toast.error(`${failCount} photo(s) failed to upload`);
     }
 
     // Clear progress after a delay
     setTimeout(() => {
       setUploadProgress([]);
       setUploading(false);
-    }, 2000);
+    }, 3000);
   }, [id, selectedSection]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
