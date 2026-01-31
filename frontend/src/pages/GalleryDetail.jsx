@@ -3,12 +3,21 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { ArrowLeft, Upload, Trash2, Copy, ExternalLink, Lock, X, Plus, Image as ImageIcon, AlertTriangle, Cloud, CloudOff, Check, Loader2, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Upload, Trash2, Copy, ExternalLink, Lock, X, Plus, Image as ImageIcon, AlertTriangle, Cloud, CloudOff, Check, Loader2, RefreshCw, CheckCircle, AlertCircle, Download, Package } from 'lucide-react';
 import { themes } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Helper to format bytes
+const formatBytes = (bytes) => {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
 
 const GalleryDetail = () => {
   const { id } = useParams();
@@ -34,6 +43,11 @@ const GalleryDetail = () => {
   const [googleDriveStatus, setGoogleDriveStatus] = useState({ connected: false });
   const [backupStatus, setBackupStatus] = useState(null);
   const [backingUp, setBackingUp] = useState(false);
+  // Download state
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadInfo, setDownloadInfo] = useState(null);
+  const [downloadingChunks, setDownloadingChunks] = useState({}); // Track which chunks are downloading
+  const [downloadedChunks, setDownloadedChunks] = useState({}); // Track which chunks are done
 
   useEffect(() => {
     fetchGalleryData();
