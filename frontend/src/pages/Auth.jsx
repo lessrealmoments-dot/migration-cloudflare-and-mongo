@@ -48,6 +48,14 @@ const Auth = ({ setUser }) => {
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
+    
+    // Add confirmation dialog to prevent accidental password resets
+    const confirmed = window.confirm(
+      `Are you sure you want to reset the password for ${forgotEmail}?\n\nThis will generate a new random password and send it to your email. Your current password will no longer work.`
+    );
+    
+    if (!confirmed) return;
+    
     setLoading(true);
 
     try {
