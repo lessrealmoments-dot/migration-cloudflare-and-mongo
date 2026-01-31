@@ -246,7 +246,7 @@ const AdminDashboard = () => {
             <div className="px-6 py-4 border-b border-zinc-700">
               <h2 className="text-lg font-medium text-white">Manage Photographers</h2>
               <p className="text-sm text-zinc-500 mt-1">
-                Adjust gallery limits for each photographer. Total Created counts all galleries ever made (prevents recycling).
+                Adjust gallery limits and storage quotas. Total Created counts all galleries ever made (prevents recycling).
               </p>
             </div>
             
@@ -256,10 +256,9 @@ const AdminDashboard = () => {
                   <tr>
                     <th className="text-left px-6 py-3 text-sm font-medium text-zinc-400">Email</th>
                     <th className="text-left px-6 py-3 text-sm font-medium text-zinc-400">Name</th>
-                    <th className="text-left px-6 py-3 text-sm font-medium text-zinc-400">Business</th>
                     <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Active</th>
-                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Total Created</th>
-                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Max Allowed</th>
+                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Max Galleries</th>
+                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Storage</th>
                     <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Actions</th>
                   </tr>
                 </thead>
@@ -267,10 +266,11 @@ const AdminDashboard = () => {
                   {photographers.map((p) => (
                     <tr key={p.id} className="hover:bg-zinc-700/30">
                       <td className="px-6 py-4 text-sm text-zinc-300">{p.email}</td>
-                      <td className="px-6 py-4 text-sm text-white">{p.name}</td>
-                      <td className="px-6 py-4 text-sm text-zinc-400">{p.business_name || '-'}</td>
-                      <td className="px-6 py-4 text-sm text-center text-zinc-300">{p.active_galleries}</td>
-                      <td className="px-6 py-4 text-sm text-center text-zinc-300">{p.galleries_created_total}</td>
+                      <td className="px-6 py-4 text-sm text-white">
+                        {p.name}
+                        {p.business_name && <span className="text-zinc-400 ml-1">({p.business_name})</span>}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-center text-zinc-300">{p.active_galleries}/{p.galleries_created_total}</td>
                       <td className="px-6 py-4 text-center">
                         {editingLimit === p.id ? (
                           <div className="flex items-center justify-center gap-2">
@@ -299,12 +299,30 @@ const AdminDashboard = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 text-center">
+                        {editingStorage === p.id ? (
+                          <select
+                            value={newStorageQuota}
+                            onChange={(e) => setNewStorageQuota(parseInt(e.target.value))}
+                            className="bg-zinc-600 text-white rounded px-2 py-1 text-sm"
+                          >
+                            {STORAGE_OPTIONS.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="text-sm">
+                            <div className="text-zinc-300">{formatBytes(p.storage_used)}</div>
+                            <div className="text-zinc-500 text-xs">/ {formatBytes(p.storage_quota)}</div>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-center">
                         {editingLimit === p.id ? (
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => handleUpdateLimit(p.id)}
                               className="p-2 bg-green-600 rounded text-white hover:bg-green-500"
-                              title="Save"
+                              title="Save gallery limit"
                             >
                               <Save className="w-4 h-4" />
                             </button>
@@ -316,18 +334,48 @@ const AdminDashboard = () => {
                               <X className="w-4 h-4" />
                             </button>
                           </div>
+                        ) : editingStorage === p.id ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleUpdateStorageQuota(p.id)}
+                              className="p-2 bg-green-600 rounded text-white hover:bg-green-500"
+                              title="Save storage quota"
+                            >
+                              <Save className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setEditingStorage(null)}
+                              className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
+                              title="Cancel"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
                         ) : (
-                          <button
-                            onClick={() => {
-                              setEditingLimit(p.id);
-                              setNewLimit(p.max_galleries);
-                            }}
-                            className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
-                            title="Edit limit"
-                            data-testid={`edit-limit-${p.id}`}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingLimit(p.id);
+                                setNewLimit(p.max_galleries);
+                              }}
+                              className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
+                              title="Edit gallery limit"
+                              data-testid={`edit-limit-${p.id}`}
+                            >
+                              <FolderOpen className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingStorage(p.id);
+                                setNewStorageQuota(p.storage_quota || 500 * 1024 * 1024);
+                              }}
+                              className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
+                              title="Edit storage quota"
+                              data-testid={`edit-storage-${p.id}`}
+                            >
+                              <HardDrive className="w-4 h-4" />
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -340,6 +388,73 @@ const AdminDashboard = () => {
                   No photographers registered yet
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && analytics && (
+          <div className="space-y-6">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-zinc-800 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <Users className="w-5 h-5 text-blue-400" />
+                  <span className="text-zinc-400 text-sm">Photographers</span>
+                </div>
+                <div className="text-3xl font-bold text-white">{analytics.total_photographers}</div>
+              </div>
+              <div className="bg-zinc-800 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <FolderOpen className="w-5 h-5 text-green-400" />
+                  <span className="text-zinc-400 text-sm">Total Galleries</span>
+                </div>
+                <div className="text-3xl font-bold text-white">{analytics.total_galleries}</div>
+              </div>
+              <div className="bg-zinc-800 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <Image className="w-5 h-5 text-purple-400" />
+                  <span className="text-zinc-400 text-sm">Total Photos</span>
+                </div>
+                <div className="text-3xl font-bold text-white">{analytics.total_photos}</div>
+              </div>
+              <div className="bg-zinc-800 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <HardDrive className="w-5 h-5 text-amber-400" />
+                  <span className="text-zinc-400 text-sm">Storage Used</span>
+                </div>
+                <div className="text-3xl font-bold text-white">{formatBytes(analytics.total_storage_used)}</div>
+              </div>
+            </div>
+
+            {/* Top Galleries */}
+            <div className="bg-zinc-800 rounded-lg">
+              <div className="px-6 py-4 border-b border-zinc-700">
+                <h2 className="text-lg font-medium text-white">Top Galleries by Views</h2>
+              </div>
+              <div className="p-6">
+                {analytics.top_galleries.length > 0 ? (
+                  <div className="space-y-4">
+                    {analytics.top_galleries.map((g, index) => (
+                      <div key={g.gallery_id} className="flex items-center gap-4 bg-zinc-700/30 rounded-lg p-4">
+                        <div className="w-8 h-8 bg-zinc-600 rounded-full flex items-center justify-center text-white font-bold">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-white font-medium">{g.gallery_title}</h3>
+                          <p className="text-zinc-400 text-sm">{g.total_photos} photos</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-zinc-300">
+                          <Eye className="w-4 h-4" />
+                          {g.view_count} views
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-zinc-500 text-center py-8">No galleries yet</p>
+                )}
+              </div>
             </div>
           </div>
         )}
