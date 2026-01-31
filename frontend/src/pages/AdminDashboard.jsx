@@ -2,10 +2,30 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Upload, Loader2 } from 'lucide-react';
+import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Upload, Loader2, BarChart3, HardDrive, Eye, FolderOpen } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Helper to format bytes
+const formatBytes = (bytes) => {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
+// Storage quota options (in bytes)
+const STORAGE_OPTIONS = [
+  { label: '100 MB', value: 100 * 1024 * 1024 },
+  { label: '250 MB', value: 250 * 1024 * 1024 },
+  { label: '500 MB', value: 500 * 1024 * 1024 },
+  { label: '1 GB', value: 1024 * 1024 * 1024 },
+  { label: '2 GB', value: 2 * 1024 * 1024 * 1024 },
+  { label: '5 GB', value: 5 * 1024 * 1024 * 1024 },
+  { label: '10 GB', value: 10 * 1024 * 1024 * 1024 },
+];
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
