@@ -707,6 +707,8 @@ async def get_all_photographers(admin: dict = Depends(get_admin_user)):
             max_galleries=user.get("max_galleries", DEFAULT_MAX_GALLERIES),
             galleries_created_total=user.get("galleries_created_total", 0),
             active_galleries=user.get("active_galleries", 0),
+            storage_quota=user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
+            storage_used=user.get("storage_used", 0),
             created_at=user["created_at"]
         ))
     
