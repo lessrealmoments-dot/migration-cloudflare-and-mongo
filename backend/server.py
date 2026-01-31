@@ -1620,7 +1620,7 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
     # Validate file type more thoroughly
     allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
     if not file.content_type or not any(file.content_type.lower().startswith(t.split('/')[0]) for t in allowed_types):
-        raise HTTPException(status_code=400, detail=f"Invalid file type. Allowed: JPEG, PNG, GIF, WebP, HEIC")
+        raise HTTPException(status_code=400, detail="Invalid file type. Allowed: JPEG, PNG, GIF, WebP, HEIC")
     
     # Read file with size limit
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
@@ -1632,7 +1632,7 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
             raise HTTPException(status_code=400, detail="File is empty")
         
         if file_size > MAX_FILE_SIZE:
-            raise HTTPException(status_code=400, detail=f"File too large. Maximum size is 50MB")
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 50MB")
     except HTTPException:
         raise
     except Exception as e:
