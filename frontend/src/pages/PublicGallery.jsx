@@ -181,7 +181,7 @@ const PublicGallery = () => {
     onDrop,
     accept: { 'image/*': [] },
     multiple: true,
-    disabled: !authenticated
+    disabled: !authenticated || uploading
   });
 
   const handleDownload = async (photo) => {
