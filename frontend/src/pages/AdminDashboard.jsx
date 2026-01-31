@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Upload, Loader2, BarChart3, HardDrive, Eye, FolderOpen } from 'lucide-react';
+import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Upload, Loader2, BarChart3, HardDrive, Eye, FolderOpen, Search, UserX, UserCheck, Trash2, ExternalLink, Clock, Activity } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -45,9 +45,19 @@ const AdminDashboard = () => {
     hero_image_2: ''
   });
   const [savingConfig, setSavingConfig] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(null); // 'hero_image_1' or 'hero_image_2'
+  const [uploadingImage, setUploadingImage] = useState(null);
   const fileInput1Ref = useRef(null);
   const fileInput2Ref = useRef(null);
+  // New state for enhanced admin features
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [selectedPhotographer, setSelectedPhotographer] = useState(null);
+  const [photographerGalleries, setPhotographerGalleries] = useState([]);
+  const [showGalleriesModal, setShowGalleriesModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [adminSettings, setAdminSettings] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
