@@ -56,6 +56,7 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     name: str
+    business_name: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -66,12 +67,53 @@ class User(BaseModel):
     id: str
     email: str
     name: str
+    business_name: Optional[str] = None
+    max_galleries: int = DEFAULT_MAX_GALLERIES
+    galleries_created_total: int = 0  # Track total ever created (including deleted)
     created_at: str
+
+class UserProfile(BaseModel):
+    name: Optional[str] = None
+    business_name: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str
     token_type: str
     user: User
+
+class ForgotPassword(BaseModel):
+    email: EmailStr
+
+# Admin models
+class AdminLogin(BaseModel):
+    username: str
+    password: str
+
+class AdminToken(BaseModel):
+    access_token: str
+    token_type: str
+    is_admin: bool = True
+
+class PhotographerAdmin(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    email: str
+    name: str
+    business_name: Optional[str] = None
+    max_galleries: int
+    galleries_created_total: int
+    active_galleries: int = 0
+    created_at: str
+
+class UpdateGalleryLimit(BaseModel):
+    max_galleries: int
+
+class LandingPageConfig(BaseModel):
+    hero_title: str = "Share Your Photography, Beautifully"
+    hero_subtitle: str = "Create stunning galleries, share with clients, and let them upload their own photos. The professional way to showcase and collaborate."
+    brand_name: str = "PhotoShare"
+    hero_image_1: Optional[str] = None
+    hero_image_2: Optional[str] = None
 
 class GalleryCreate(BaseModel):
     title: str
