@@ -170,12 +170,26 @@ const GalleryDetail = () => {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      toast.success('Photos reordered!');
     } catch (error) {
       toast.error('Failed to save order');
       fetchGalleryData(); // Revert on error
     }
     
     setDraggedPhoto(null);
+  };
+
+  // Toggle section expand/collapse
+  const toggleSectionExpand = (sectionId) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  // Check if section is expanded
+  const isSectionExpanded = (sectionId) => {
+    return expandedSections[sectionId] ?? false;
   };
 
   // Download QR Code as PNG
