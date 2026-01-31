@@ -357,6 +357,76 @@ const GalleryDetail = () => {
     }
   };
 
+  // Download All functionality
+  const handleDownloadAll = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/galleries/${id}/download-info`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDownloadInfo(response.data);
+      setDownloadingChunks({});
+      setDownloadedChunks({});
+      setShowDownloadModal(true);
+    } catch (error) {
+      toast.error('Failed to get download info');
+    }
+  };
+
+  const downloadChunk = async (chunkNumber) => {
+    if (downloadingChunks[chunkNumber]) return; // Already downloading
+
+    setDownloadingChunks(prev => ({ ...prev, [chunkNumber]: true }));
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/galleries/${id}/download/${chunkNumber}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Get filename from Content-Disposition header or create one
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `${gallery.title}_part${chunkNumber}.zip`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename=(.+)/);
+        if (filenameMatch) {
+          filename = filenameMatch[1].replace(/"/g, '');
+        }
+      }
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      setDownloadedChunks(prev => ({ ...prev, [chunkNumber]: true }));
+      toast.success(`Downloaded ${filename}`);
+    } catch (error) {
+      toast.error(`Failed to download part ${chunkNumber}`);
+    } finally {
+      setDownloadingChunks(prev => ({ ...prev, [chunkNumber]: false }));
+    }
+  };
+
+  const downloadAllChunks = async () => {
+    if (!downloadInfo) return;
+    
+    for (let i = 1; i <= downloadInfo.chunk_count; i++) {
+      if (!downloadedChunks[i]) {
+        await downloadChunk(i);
+        // Small delay between downloads to prevent browser issues
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+  };
+
   // Delete gallery with double confirmation
   const handleDeleteGalleryStep1 = () => {
     setShowDeleteModal(true);
