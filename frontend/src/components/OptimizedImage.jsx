@@ -5,6 +5,7 @@ const OptimizedImage = ({
   src, 
   alt = '', 
   className = '', 
+  style = {},
   onClick,
   fallback = null,
   showLoader = true,
@@ -100,6 +101,7 @@ const OptimizedImage = ({
           src={currentSrc}
           alt={alt}
           className={`${className} ${loading || error ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+          style={style}
           onLoad={handleLoad}
           onError={handleError}
           onClick={onClick}
