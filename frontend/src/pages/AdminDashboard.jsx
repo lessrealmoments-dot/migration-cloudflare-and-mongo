@@ -33,7 +33,10 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [editingLimit, setEditingLimit] = useState(null);
   const [newLimit, setNewLimit] = useState(1);
+  const [editingStorage, setEditingStorage] = useState(null);
+  const [newStorageQuota, setNewStorageQuota] = useState(500 * 1024 * 1024);
   const [activeTab, setActiveTab] = useState('photographers');
+  const [analytics, setAnalytics] = useState(null);
   const [landingConfig, setLandingConfig] = useState({
     hero_title: '',
     hero_subtitle: '',
