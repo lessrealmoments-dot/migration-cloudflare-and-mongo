@@ -141,12 +141,22 @@ const GalleryDetail = () => {
     e.preventDefault();
     if (!draggedPhoto || draggedPhoto.id === targetPhoto.id) return;
 
+    // Get only photographer photos for reordering (matching the display logic)
+    const photographerPhotos = photos.filter(p => p.uploaded_by === 'photographer');
+    
+    // Apply section filter if active
     const filteredPhotos = selectedSection 
-      ? photos.filter(p => p.section_id === selectedSection)
-      : photos;
+      ? photographerPhotos.filter(p => p.section_id === selectedSection)
+      : photographerPhotos;
     
     const dragIndex = filteredPhotos.findIndex(p => p.id === draggedPhoto.id);
     const dropIndex = filteredPhotos.findIndex(p => p.id === targetPhoto.id);
+    
+    // If either photo not found in filtered list, exit
+    if (dragIndex === -1 || dropIndex === -1) {
+      setDraggedPhoto(null);
+      return;
+    }
     
     // Reorder locally first for instant feedback
     const reordered = [...filteredPhotos];
@@ -156,9 +166,11 @@ const GalleryDetail = () => {
     // Update order values
     const photoOrders = reordered.map((p, idx) => ({ id: p.id, order: idx }));
     
-    // Optimistic update
+    // Optimistic update - merge reordered photos back with other photos
     setPhotos(prev => {
+      // Get all photos NOT in our reordered set
       const otherPhotos = prev.filter(p => !reordered.find(r => r.id === p.id));
+      // Return reordered photos with updated order + other photos
       return [...reordered.map((p, idx) => ({ ...p, order: idx })), ...otherPhotos];
     });
     
