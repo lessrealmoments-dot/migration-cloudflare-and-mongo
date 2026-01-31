@@ -164,6 +164,12 @@ const AdminGalleryReview = () => {
     unflagPhotos(selectedFlagged);
   };
 
+  // Handle single photo flagging (for individual flag icon click)
+  const handleSingleFlag = (photoId) => {
+    setSelectedPhotos(new Set([photoId]));
+    setShowFlagPreview(true);
+  };
+
   const filteredPhotos = getFilteredPhotos();
   const flaggedCount = photos.filter(p => p.is_flagged).length;
 
