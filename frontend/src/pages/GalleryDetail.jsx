@@ -751,6 +751,14 @@ const GalleryDetail = () => {
               Copy Share Link
             </button>
             <button
+              data-testid="qr-code-button"
+              onClick={() => setShowQRCode(true)}
+              className="border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
+            >
+              <QrCode className="w-4 h-4" strokeWidth={1.5} />
+              QR Code
+            </button>
+            <button
               data-testid="open-share-link-button"
               onClick={openShareLink}
               className="border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
@@ -776,6 +784,46 @@ const GalleryDetail = () => {
             </button>
           </div>
         </div>
+
+        {/* QR Code Modal */}
+        {showQRCode && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg max-w-sm w-full p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-medium">Gallery QR Code</h3>
+                <button 
+                  onClick={() => setShowQRCode(false)} 
+                  className="p-2 hover:bg-zinc-100 rounded-full"
+                  data-testid="close-qr-modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div ref={qrRef} className="flex justify-center p-4 bg-white border border-zinc-200 rounded-lg">
+                <QRCodeSVG 
+                  value={`${BACKEND_URL}/g/${gallery?.share_link}`}
+                  size={256}
+                  level="H"
+                  includeMargin={true}
+                />
+              </div>
+              
+              <p className="text-center text-sm text-zinc-500 mt-4 mb-4">
+                Scan to access: <span className="font-medium">{gallery?.title}</span>
+              </p>
+              
+              <button
+                onClick={downloadQRCode}
+                data-testid="download-qr-button"
+                className="w-full bg-zinc-900 text-white py-3 rounded-lg hover:bg-zinc-800 font-medium flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download QR Code
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="mb-12">
           <h3 className="text-2xl font-normal mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
