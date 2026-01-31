@@ -115,7 +115,10 @@ const LandingPage = ({ user }) => {
           >
             <div className="grid grid-cols-2 gap-4">
               <img
-                src={config.hero_image_1}
+                src={config.hero_image_1?.startsWith('/api') 
+                  ? `${process.env.REACT_APP_BACKEND_URL}${config.hero_image_1}` 
+                  : config.hero_image_1
+                }
                 alt="Gallery sample"
                 className="w-full h-auto rounded-sm shadow-sm"
               />
