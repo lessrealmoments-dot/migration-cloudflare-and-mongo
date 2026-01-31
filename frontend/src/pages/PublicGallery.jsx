@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { Lock, Upload, Download, X, Camera, ChevronDown, ChevronUp } from 'lucide-react';
+import { Lock, Upload, Download, X, Camera, ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { getThemeStyles, themes } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 
