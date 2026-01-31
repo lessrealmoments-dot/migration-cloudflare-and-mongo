@@ -68,12 +68,17 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Storage bar in photographer dashboard
 - [x] Admin can adjust quotas per photographer
 
-### Gallery Themes (15 total)
+### Gallery Themes (16 total)
 **Elegant:**
-- Classic Elegance, Romantic Blush, Modern Dark, Natural Earth, Ocean Breeze, Vintage Sepia
+- Classic Elegance, Romantic Blush, Modern Dark, Natural Earth, Ocean Breeze, Vintage Sepia, **Black & Gold** (NEW - Luxurious)
 
 **Fun/Colorful:**
 - Party Vibes, Tropical Paradise, Golden Sunset, Neon Nights, Spring Garden, Lavender Dreams, Corporate Professional, Holiday Cheer, Ultra Minimal
+
+**Theme Selection UI:**
+- Color palette preview (4 swatches per theme)
+- Theme name and description
+- "Selected" indicator
 
 ### Integrations
 - [x] **Google Drive Backup** - OAuth flow, auto-sync capability
