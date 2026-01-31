@@ -1501,7 +1501,7 @@ const PhotoItem = ({ photo, photoIndex, onDelete, onView }) => (
     className="masonry-item group relative"
     onClick={() => onView(photoIndex)}
   >
-    <img
+    <OptimizedImage
       src={`${BACKEND_URL}${photo.url}`}
       alt="Gallery photo"
       className="w-full h-auto cursor-pointer rounded-sm"
