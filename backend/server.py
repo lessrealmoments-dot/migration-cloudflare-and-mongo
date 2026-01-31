@@ -382,14 +382,32 @@ async def admin_login(credentials: AdminLogin):
 
 @api_router.get("/admin/photographers", response_model=List[PhotographerAdmin])
 async def get_all_photographers(admin: dict = Depends(get_admin_user)):
-    """Get all photographers with their gallery limits"""
-    users = await db.users.find({}, {"_id": 0, "password": 0}).to_list(None)
+    """Get all photographers with their gallery limits using aggregation to avoid N+1 queries"""
+    # Use aggregation pipeline to get users with gallery counts in a single query
+    pipeline = [
+        {"$match": {}},
+        {"$lookup": {
+            "from": "galleries",
+            "localField": "id",
+            "foreignField": "photographer_id",
+            "as": "user_galleries"
+        }},
+        {"$addFields": {
+            "active_galleries": {"$size": "$user_galleries"}
+        }},
+        {"$project": {
+            "_id": 0,
+            "password": 0,
+            "user_galleries": 0,
+            "google_session_token": 0
+        }},
+        {"$limit": 1000}  # Safety limit
+    ]
+    
+    users = await db.users.aggregate(pipeline).to_list(None)
     
     result = []
     for user in users:
-        # Count active galleries
-        active_galleries = await db.galleries.count_documents({"photographer_id": user["id"]})
-        
         result.append(PhotographerAdmin(
             id=user["id"],
             email=user["email"],
@@ -397,7 +415,7 @@ async def get_all_photographers(admin: dict = Depends(get_admin_user)):
             business_name=user.get("business_name"),
             max_galleries=user.get("max_galleries", DEFAULT_MAX_GALLERIES),
             galleries_created_total=user.get("galleries_created_total", 0),
-            active_galleries=active_galleries,
+            active_galleries=user.get("active_galleries", 0),
             created_at=user["created_at"]
         ))
     
