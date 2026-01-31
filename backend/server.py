@@ -587,6 +587,8 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         business_name=current_user.get("business_name"),
         max_galleries=current_user.get("max_galleries", DEFAULT_MAX_GALLERIES),
         galleries_created_total=current_user.get("galleries_created_total", 0),
+        storage_quota=current_user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
+        storage_used=current_user.get("storage_used", 0),
         created_at=current_user["created_at"]
     )
 
