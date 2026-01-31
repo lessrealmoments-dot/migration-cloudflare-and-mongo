@@ -870,6 +870,36 @@ const PublicGallery = () => {
   );
 };
 
+// Highlight photo - square grid item
+const HighlightPhotoItem = ({ photo, photoIndex, onView, onDownload }) => (
+  <div
+    data-testid={`highlight-photo-item-${photo.id}`}
+    className="highlight-item group relative cursor-pointer"
+    onClick={() => onView(photoIndex)}
+  >
+    <OptimizedImage
+      src={`${BACKEND_URL}${photo.url}`}
+      alt="Highlight photo"
+      className="w-full h-full object-cover rounded-sm"
+    />
+    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-300 flex items-center justify-center rounded-sm">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDownload(photo);
+        }}
+        className="bg-white text-zinc-900 hover:bg-zinc-100 h-10 w-10 rounded-sm flex items-center justify-center transition-all duration-300"
+      >
+        <Download className="w-5 h-5" strokeWidth={1.5} />
+      </button>
+    </div>
+    <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium pointer-events-none flex items-center gap-1">
+      <Star className="w-3 h-3" /> Featured
+    </div>
+  </div>
+);
+
+// Regular photo - masonry item with natural aspect ratio
 const PublicPhotoItem = ({ photo, photoIndex, onView, onDownload, isGuest }) => (
   <div
     data-testid={`public-photo-item-${photo.id}`}
@@ -879,7 +909,7 @@ const PublicPhotoItem = ({ photo, photoIndex, onView, onDownload, isGuest }) => 
     <OptimizedImage
       src={`${BACKEND_URL}${photo.url}`}
       alt="Gallery photo"
-      className="w-full h-full object-cover rounded-sm"
+      className="w-full h-auto rounded-sm"
     />
     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-300 flex items-center justify-center rounded-sm">
       <button
@@ -893,11 +923,6 @@ const PublicPhotoItem = ({ photo, photoIndex, onView, onDownload, isGuest }) => 
         <Download className="w-5 h-5" strokeWidth={1.5} />
       </button>
     </div>
-    {photo.is_highlight && (
-      <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium pointer-events-none flex items-center gap-1">
-        <Star className="w-3 h-3" /> Featured
-      </div>
-    )}
     {isGuest && (
       <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-sm text-xs font-medium pointer-events-none">
         Guest
