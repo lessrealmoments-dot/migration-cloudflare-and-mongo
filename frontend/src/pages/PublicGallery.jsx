@@ -346,8 +346,7 @@ const PublicGallery = () => {
             <div>
               <h1
                 className="text-2xl font-medium"
-                style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
-                style={{ fontFamily: 'Playfair Display, serif' }}
+                style={{ fontFamily: currentTheme.fonts.heading || 'Playfair Display, serif', color: currentTheme.colors.text }}
               >
                 {gallery?.title}
               </h1>
