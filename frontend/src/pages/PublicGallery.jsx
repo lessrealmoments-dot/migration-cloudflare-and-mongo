@@ -85,33 +85,97 @@ const PublicGallery = () => {
       return;
     }
 
-    setUploading(true);
+    // Check for duplicates based on filename
+    const existingFilenames = photos.map(p => p.filename.split('.').slice(0, -1).join('.').toLowerCase());
+    const duplicates = [];
+    const newFiles = [];
 
-    try {
-      const uploadPromises = acceptedFiles.map(async (file) => {
+    acceptedFiles.forEach(file => {
+      const fileBaseName = file.name.split('.').slice(0, -1).join('.').toLowerCase();
+      if (existingFilenames.includes(fileBaseName)) {
+        duplicates.push(file.name);
+      } else {
+        newFiles.push(file);
+      }
+    });
+
+    // Warn about duplicates
+    if (duplicates.length > 0) {
+      toast.warning(`${duplicates.length} file(s) already uploaded: ${duplicates.slice(0, 3).join(', ')}${duplicates.length > 3 ? '...' : ''}`);
+    }
+
+    // If no new files to upload
+    if (newFiles.length === 0) {
+      toast.info('All selected files have already been uploaded');
+      return;
+    }
+
+    setUploading(true);
+    
+    // Initialize progress tracking for each file
+    const initialProgress = newFiles.map(file => ({
+      name: file.name,
+      status: 'uploading', // 'uploading', 'success', 'error'
+      progress: 0
+    }));
+    setUploadProgress(initialProgress);
+
+    const results = await Promise.allSettled(
+      newFiles.map(async (file, index) => {
         const formData = new FormData();
         formData.append('file', file);
         if (password) {
           formData.append('password', password);
         }
-        return axios.post(
-          `${API}/public/gallery/${shareLink}/upload`,
-          formData,
-          {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          }
-        );
-      });
+        
+        try {
+          const response = await axios.post(
+            `${API}/public/gallery/${shareLink}/upload`,
+            formData,
+            {
+              headers: { 'Content-Type': 'multipart/form-data' },
+              onUploadProgress: (progressEvent) => {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setUploadProgress(prev => prev.map((item, i) => 
+                  i === index ? { ...item, progress: percentCompleted } : item
+                ));
+              }
+            }
+          );
+          
+          // Mark as success
+          setUploadProgress(prev => prev.map((item, i) => 
+            i === index ? { ...item, status: 'success', progress: 100 } : item
+          ));
+          
+          return response;
+        } catch (error) {
+          // Mark as error
+          setUploadProgress(prev => prev.map((item, i) => 
+            i === index ? { ...item, status: 'error' } : item
+          ));
+          throw error;
+        }
+      })
+    );
 
-      await Promise.all(uploadPromises);
-      toast.success(`${acceptedFiles.length} photo(s) uploaded successfully!`);
+    const successCount = results.filter(r => r.status === 'fulfilled').length;
+    const failCount = results.filter(r => r.status === 'rejected').length;
+
+    if (successCount > 0) {
+      toast.success(`${successCount} photo(s) uploaded successfully!`);
       fetchPhotos();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to upload photos');
-    } finally {
-      setUploading(false);
     }
-  }, [shareLink, password, authenticated, gallery]);
+    if (failCount > 0) {
+      toast.error(`${failCount} photo(s) failed to upload`);
+    }
+
+    // Clear progress after a delay
+    setTimeout(() => {
+      setUploadProgress([]);
+      setUploading(false);
+    }, 2000);
+  }, [shareLink, password, authenticated, gallery, photos]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
