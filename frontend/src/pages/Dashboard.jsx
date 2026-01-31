@@ -87,11 +87,22 @@ const Dashboard = ({ user, setUser }) => {
             PhotoShare
           </h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-zinc-600">Welcome, {user?.name}</span>
+            <span className="text-sm text-zinc-600">
+              Welcome, {user?.business_name || user?.name}
+            </span>
+            <button
+              data-testid="profile-button"
+              onClick={() => setShowProfileModal(true)}
+              className="hover:bg-zinc-100 text-foreground h-10 px-4 rounded-sm font-medium transition-all duration-300 flex items-center gap-2"
+              title="Edit Profile"
+            >
+              <User className="w-4 h-4" strokeWidth={1.5} />
+              Profile
+            </button>
             <button
               data-testid="logout-button"
               onClick={handleLogout}
-              className="hover:bg-zinc-100 text-foreground h-10 px-6 rounded-sm font-medium transition-all duration-300 flex items-center gap-2"
+              className="hover:bg-zinc-100 text-foreground h-10 px-4 rounded-sm font-medium transition-all duration-300 flex items-center gap-2"
             >
               <LogOut className="w-4 h-4" strokeWidth={1.5} />
               Logout
