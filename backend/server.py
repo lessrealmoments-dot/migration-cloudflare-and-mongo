@@ -1346,8 +1346,8 @@ async def google_auth_callback(request: Request, current_user: dict = Depends(ge
         raise HTTPException(status_code=400, detail="session_id required")
     
     # Exchange session_id for user data from Emergent Auth
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
+    async with httpx.AsyncClient() as http_client:
+        response = await http_client.get(
             GOOGLE_AUTH_URL,
             headers={"X-Session-ID": session_id}
         )
@@ -1357,7 +1357,7 @@ async def google_auth_callback(request: Request, current_user: dict = Depends(ge
         
         google_data = response.json()
     
-    # Store Google connection info for the user
+    # Store Google connection info for the user (including access token for API calls)
     await db.users.update_one(
         {"id": current_user["id"]},
         {"$set": {
@@ -1366,22 +1366,44 @@ async def google_auth_callback(request: Request, current_user: dict = Depends(ge
             "google_name": google_data.get("name"),
             "google_picture": google_data.get("picture"),
             "google_session_token": google_data.get("session_token"),
+            "google_access_token": google_data.get("access_token"),  # Store access token for Drive API
+            "drive_auto_sync": True,  # Enable auto-sync by default
             "google_connected_at": datetime.now(timezone.utc).isoformat()
         }}
     )
     
     return {"success": True, "email": google_data.get("email")}
 
-@api_router.get("/auth/google/status", response_model=GoogleDriveStatus)
+class GoogleDriveStatusExtended(BaseModel):
+    connected: bool
+    email: Optional[str] = None
+    name: Optional[str] = None
+    auto_sync: bool = False
+
+@api_router.get("/auth/google/status")
 async def get_google_drive_status(current_user: dict = Depends(get_current_user)):
     """Check if Google Drive is connected"""
     user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
     
-    return GoogleDriveStatus(
-        connected=user.get("google_connected", False),
-        email=user.get("google_email"),
-        name=user.get("google_name")
+    return {
+        "connected": user.get("google_connected", False),
+        "email": user.get("google_email"),
+        "name": user.get("google_name"),
+        "auto_sync": user.get("drive_auto_sync", False)
+    }
+
+@api_router.post("/auth/google/toggle-auto-sync")
+async def toggle_auto_sync(current_user: dict = Depends(get_current_user)):
+    """Toggle auto-sync for Google Drive"""
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    current_auto_sync = user.get("drive_auto_sync", False)
+    
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"drive_auto_sync": not current_auto_sync}}
     )
+    
+    return {"auto_sync": not current_auto_sync}
 
 @api_router.post("/auth/google/disconnect")
 async def disconnect_google_drive(current_user: dict = Depends(get_current_user)):
@@ -1394,6 +1416,8 @@ async def disconnect_google_drive(current_user: dict = Depends(get_current_user)
             "google_name": "",
             "google_picture": "",
             "google_session_token": "",
+            "google_access_token": "",
+            "drive_auto_sync": "",
             "google_connected_at": ""
         }}
     )
