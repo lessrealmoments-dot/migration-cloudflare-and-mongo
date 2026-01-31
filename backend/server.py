@@ -60,11 +60,74 @@ if RESEND_API_KEY:
 # Default gallery limits
 DEFAULT_MAX_GALLERIES = 1  # 1 free trial gallery
 
+# Google Drive OAuth configuration
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+GOOGLE_DRIVE_REDIRECT_URI = os.environ.get('GOOGLE_DRIVE_REDIRECT_URI', '')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', '')
+GOOGLE_DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive.file']
+
 # Google Drive sync interval (in seconds)
 DRIVE_SYNC_INTERVAL = 5 * 60  # 5 minutes
 
 # Background task control
 sync_task_running = False
+
+def get_google_oauth_flow(state: str = None):
+    """Create Google OAuth flow"""
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        return None
+    
+    return Flow.from_client_config(
+        {
+            "web": {
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": [GOOGLE_DRIVE_REDIRECT_URI]
+            }
+        },
+        scopes=GOOGLE_DRIVE_SCOPES,
+        redirect_uri=GOOGLE_DRIVE_REDIRECT_URI
+    )
+
+async def get_drive_service_for_user(user_id: str):
+    """Get Google Drive service with auto-refresh credentials"""
+    creds_doc = await db.drive_credentials.find_one({"user_id": user_id}, {"_id": 0})
+    if not creds_doc:
+        return None
+    
+    # Create credentials object
+    creds = Credentials(
+        token=creds_doc["access_token"],
+        refresh_token=creds_doc.get("refresh_token"),
+        token_uri=creds_doc["token_uri"],
+        client_id=creds_doc["client_id"],
+        client_secret=creds_doc["client_secret"],
+        scopes=creds_doc.get("scopes", GOOGLE_DRIVE_SCOPES)
+    )
+    
+    # Auto-refresh if expired
+    if creds.expired and creds.refresh_token:
+        logger.info(f"Refreshing expired token for user {user_id}")
+        try:
+            creds.refresh(GoogleRequest())
+            
+            # Update in database
+            await db.drive_credentials.update_one(
+                {"user_id": user_id},
+                {"$set": {
+                    "access_token": creds.token,
+                    "expiry": creds.expiry.isoformat() if creds.expiry else None,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+        except Exception as e:
+            logger.error(f"Failed to refresh token: {e}")
+            return None
+    
+    return build('drive', 'v3', credentials=creds)
 
 async def auto_sync_drive_task():
     """Background task that auto-syncs galleries to Google Drive every 5 minutes"""
@@ -75,19 +138,19 @@ async def auto_sync_drive_task():
     while sync_task_running:
         try:
             # Find all users with Google Drive connected and auto_sync enabled
-            users_with_drive = await db.users.find({
-                "google_connected": True,
+            users_with_drive = await db.drive_credentials.find({
                 "drive_auto_sync": True
             }, {"_id": 0}).to_list(None)
             
-            for user in users_with_drive:
-                # Find galleries that need syncing (modified since last sync)
+            for creds in users_with_drive:
+                user_id = creds["user_id"]
+                # Find galleries that need syncing
                 galleries = await db.galleries.find({
-                    "photographer_id": user["id"]
+                    "photographer_id": user_id
                 }, {"_id": 0}).to_list(None)
                 
                 for gallery in galleries:
-                    await sync_gallery_to_drive(user["id"], gallery["id"])
+                    await sync_gallery_to_drive(user_id, gallery["id"])
             
             logger.info(f"Auto-sync completed for {len(users_with_drive)} users")
         except Exception as e:
