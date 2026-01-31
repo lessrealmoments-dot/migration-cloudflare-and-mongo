@@ -60,6 +60,12 @@ if RESEND_API_KEY:
 # Default gallery limits
 DEFAULT_MAX_GALLERIES = 1  # 1 free trial gallery
 
+# Default storage quota (in bytes) - 500 MB
+DEFAULT_STORAGE_QUOTA = 500 * 1024 * 1024
+
+# Gallery auto-delete after 6 months (in days)
+GALLERY_EXPIRATION_DAYS = 180
+
 # Google Drive OAuth configuration
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
