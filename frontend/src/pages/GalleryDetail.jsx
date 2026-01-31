@@ -731,6 +731,105 @@ const GalleryDetail = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Gallery - First Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-sm p-8 max-w-md w-full" data-testid="delete-gallery-modal-1">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h3 className="text-xl font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  Delete Gallery?
+                </h3>
+                <p className="text-sm text-zinc-500">This action cannot be undone</p>
+              </div>
+            </div>
+            
+            <p className="text-zinc-600 mb-6">
+              Are you sure you want to delete <strong>"{gallery?.title}"</strong>? 
+              All {photos.length} photo(s) in this gallery will be permanently removed.
+            </p>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="border border-input h-10 px-6 rounded-sm hover:bg-zinc-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                data-testid="delete-gallery-continue-btn"
+                onClick={handleDeleteGalleryStep2}
+                className="bg-red-600 text-white hover:bg-red-700 h-10 px-6 rounded-sm font-medium transition-colors"
+              >
+                Yes, Delete Gallery
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Gallery - Final Confirmation Modal */}
+      {showDeleteConfirmModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-sm p-8 max-w-md w-full" data-testid="delete-gallery-modal-2">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h3 className="text-xl font-medium text-red-600" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  Final Warning
+                </h3>
+                <p className="text-sm text-zinc-500">This cannot be recovered</p>
+              </div>
+            </div>
+            
+            <p className="text-zinc-600 mb-4">
+              To confirm deletion, please type the gallery name:
+            </p>
+            <p className="text-sm font-medium text-zinc-800 mb-2 bg-zinc-100 px-3 py-2 rounded">
+              {gallery?.title}
+            </p>
+            
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="Type gallery name to confirm"
+              className="w-full border border-zinc-300 rounded-sm px-4 py-3 mb-6 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              data-testid="delete-gallery-confirm-input"
+            />
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirmModal(false);
+                  setDeleteConfirmText('');
+                }}
+                className="border border-input h-10 px-6 rounded-sm hover:bg-zinc-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                data-testid="delete-gallery-final-btn"
+                onClick={handleDeleteGalleryFinal}
+                disabled={deleteConfirmText !== gallery?.title || deleting}
+                className={`h-10 px-6 rounded-sm font-medium transition-colors ${
+                  deleteConfirmText === gallery?.title && !deleting
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-zinc-300 text-zinc-500 cursor-not-allowed'
+                }`}
+              >
+                {deleting ? 'Deleting...' : 'Delete Forever'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
