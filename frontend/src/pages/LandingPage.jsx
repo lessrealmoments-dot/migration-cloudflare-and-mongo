@@ -1,17 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Camera, Upload, Lock, Share2, Image as ImageIcon } from 'lucide-react';
+import axios from 'axios';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const LandingPage = ({ user }) => {
   const navigate = useNavigate();
+  const [config, setConfig] = useState({
+    hero_title: 'Share Your Photography, Beautifully',
+    hero_subtitle: 'Create stunning galleries, share with clients, and let them upload their own photos. The professional way to showcase and collaborate.',
+    brand_name: 'PhotoShare',
+    hero_image_1: 'https://images.unsplash.com/photo-1730476513367-16fe58a8a653?crop=entropy&cs=srgb&fm=jpg&q=85',
+    hero_image_2: 'https://images.unsplash.com/photo-1729948552636-fe6f7cc88f4a?crop=entropy&cs=srgb&fm=jpg&q=85'
+  });
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await axios.get(`${API}/public/landing-config`);
+        // Merge with defaults (only override if values exist)
+        setConfig(prev => ({
+          ...prev,
+          ...Object.fromEntries(
+            Object.entries(response.data).filter(([_, v]) => v)
+          )
+        }));
+      } catch (error) {
+        console.error('Using default landing config');
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  // Parse hero title for line breaks
+  const renderHeroTitle = () => {
+    const parts = config.hero_title.split(',');
+    if (parts.length > 1) {
+      return (
+        <>
+          {parts[0]},
+          <br />
+          {parts[1]}
+        </>
+      );
+    }
+    return config.hero_title;
+  };
 
   return (
     <div className="min-h-screen bg-white">
       <nav className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-6 flex justify-between items-center">
           <h1 className="text-2xl font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
-            PhotoShare
+            {config.brand_name}
           </h1>
           <div className="flex gap-4">
             {user ? (
@@ -50,15 +93,10 @@ const LandingPage = ({ user }) => {
               className="text-5xl md:text-7xl font-medium tracking-tight leading-tight mb-6"
               style={{ fontFamily: 'Playfair Display, serif' }}
             >
-              Share Your
-              <br />
-              Photography,
-              <br />
-              Beautifully
+              {renderHeroTitle()}
             </h1>
             <p className="text-lg md:text-xl font-light leading-relaxed text-zinc-600 mb-12 max-w-xl">
-              Create stunning galleries, share with clients, and let them upload their own photos.
-              The professional way to showcase and collaborate.
+              {config.hero_subtitle}
             </p>
             <button
               data-testid="hero-get-started-button"
