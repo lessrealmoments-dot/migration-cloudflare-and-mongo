@@ -425,6 +425,8 @@ class Gallery(BaseModel):
     theme: str = "classic"
     created_at: str
     photo_count: int = 0
+    auto_delete_date: Optional[str] = None  # When gallery will be auto-deleted
+    days_until_deletion: Optional[int] = None  # Days remaining until deletion
 
 class GalleryUpdate(BaseModel):
     title: Optional[str] = None
