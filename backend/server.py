@@ -160,14 +160,16 @@ async def auto_sync_drive_task():
         await asyncio.sleep(DRIVE_SYNC_INTERVAL)
 
 async def sync_gallery_to_drive(user_id: str, gallery_id: str):
-    """Sync a single gallery to Google Drive"""
+    """Sync a single gallery to Google Drive using proper OAuth"""
     try:
-        user = await db.users.find_one({"id": user_id}, {"_id": 0})
-        if not user or not user.get("google_connected"):
-            return
-        
         gallery = await db.galleries.find_one({"id": gallery_id}, {"_id": 0})
         if not gallery:
+            return
+        
+        # Get Drive service for user
+        drive_service = await get_drive_service_for_user(user_id)
+        if not drive_service:
+            logger.warning(f"No Drive service available for user {user_id}")
             return
         
         # Get photos that haven't been synced yet
@@ -185,13 +187,15 @@ async def sync_gallery_to_drive(user_id: str, gallery_id: str):
             "user_id": user_id
         }, {"_id": 0})
         
+        folder_name = f"PhotoShare - {gallery['title']}"
+        
         if not backup:
             backup = {
                 "id": str(uuid.uuid4()),
                 "gallery_id": gallery_id,
                 "user_id": user_id,
                 "status": "in_progress",
-                "folder_name": f"PhotoShare - {gallery['title']}",
+                "folder_name": folder_name,
                 "photos_backed_up": 0,
                 "total_photos": len(photos),
                 "created_at": datetime.now(timezone.utc).isoformat(),
@@ -199,24 +203,45 @@ async def sync_gallery_to_drive(user_id: str, gallery_id: str):
             }
             await db.drive_backups.insert_one(backup)
         
-        # Upload photos using Google Drive API
-        access_token = user.get("google_access_token")
-        if not access_token:
-            logger.warning(f"No access token for user {user_id}")
-            return
-        
         # Create folder if not exists
         folder_id = backup.get("folder_id")
         if not folder_id:
-            folder_id = await create_drive_folder(access_token, backup["folder_name"])
-            if folder_id:
-                await db.drive_backups.update_one(
-                    {"id": backup["id"]},
-                    {"$set": {"folder_id": folder_id, "folder_url": f"https://drive.google.com/drive/folders/{folder_id}"}}
-                )
+            try:
+                # Search for existing folder first
+                results = drive_service.files().list(
+                    q=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+                    spaces='drive',
+                    fields='files(id, name)'
+                ).execute()
+                
+                existing_folders = results.get('files', [])
+                if existing_folders:
+                    folder_id = existing_folders[0]['id']
+                    logger.info(f"Found existing folder: {folder_id}")
+                else:
+                    # Create new folder
+                    file_metadata = {
+                        'name': folder_name,
+                        'mimeType': 'application/vnd.google-apps.folder'
+                    }
+                    folder = drive_service.files().create(body=file_metadata, fields='id').execute()
+                    folder_id = folder.get('id')
+                    logger.info(f"Created new folder: {folder_id}")
+                
+                if folder_id:
+                    await db.drive_backups.update_one(
+                        {"id": backup["id"]},
+                        {"$set": {
+                            "folder_id": folder_id, 
+                            "folder_url": f"https://drive.google.com/drive/folders/{folder_id}"
+                        }}
+                    )
+            except Exception as e:
+                logger.error(f"Failed to create/find Drive folder: {e}")
+                return
         
         if not folder_id:
-            logger.error(f"Failed to create Drive folder for gallery {gallery_id}")
+            logger.error(f"Failed to get Drive folder for gallery {gallery_id}")
             return
         
         # Upload each photo
@@ -224,10 +249,62 @@ async def sync_gallery_to_drive(user_id: str, gallery_id: str):
         for photo in photos:
             file_path = UPLOAD_DIR / photo["filename"]
             if file_path.exists():
-                success = await upload_to_drive(access_token, folder_id, file_path, photo.get("original_filename", photo["filename"]))
-                if success:
-                    await db.photos.update_one(
-                        {"id": photo["id"]},
+                try:
+                    # Determine mime type
+                    ext = file_path.suffix.lower()
+                    mime_types = {
+                        '.jpg': 'image/jpeg',
+                        '.jpeg': 'image/jpeg',
+                        '.png': 'image/png',
+                        '.gif': 'image/gif',
+                        '.webp': 'image/webp'
+                    }
+                    mime_type = mime_types.get(ext, 'application/octet-stream')
+                    
+                    # Upload file
+                    file_metadata = {
+                        'name': photo.get("original_filename", photo["filename"]),
+                        'parents': [folder_id]
+                    }
+                    media = MediaFileUpload(str(file_path), mimetype=mime_type, resumable=True)
+                    file = drive_service.files().create(
+                        body=file_metadata,
+                        media_body=media,
+                        fields='id'
+                    ).execute()
+                    
+                    if file.get('id'):
+                        await db.photos.update_one(
+                            {"id": photo["id"]},
+                            {"$set": {
+                                "drive_synced": True, 
+                                "drive_file_id": file['id'],
+                                "drive_synced_at": datetime.now(timezone.utc).isoformat()
+                            }}
+                        )
+                        synced_count += 1
+                        logger.info(f"Uploaded photo {photo['id']} to Drive")
+                except Exception as e:
+                    logger.error(f"Failed to upload photo {photo['id']}: {e}")
+        
+        # Update backup status
+        total_synced = backup.get("photos_backed_up", 0) + synced_count
+        total_photos = await db.photos.count_documents({"gallery_id": gallery_id})
+        
+        await db.drive_backups.update_one(
+            {"id": backup["id"]},
+            {"$set": {
+                "status": "completed" if total_synced >= total_photos else "in_progress",
+                "photos_backed_up": total_synced,
+                "total_photos": total_photos,
+                "last_updated": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        logger.info(f"Synced {synced_count} photos for gallery {gallery_id}")
+        
+    except Exception as e:
+        logger.error(f"Error syncing gallery {gallery_id}: {e}")
                         {"$set": {"drive_synced": True, "drive_synced_at": datetime.now(timezone.utc).isoformat()}}
                     )
                     synced_count += 1
