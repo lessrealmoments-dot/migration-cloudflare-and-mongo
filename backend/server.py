@@ -833,11 +833,14 @@ async def get_public_gallery(share_link: str):
     photo_count = await db.photos.count_documents({"gallery_id": gallery["id"]})
     sections = gallery.get("sections", [])
     
+    # Use business_name if available, otherwise use personal name
+    display_name = photographer.get("business_name") or photographer.get("name", "Unknown") if photographer else "Unknown"
+    
     return PublicGallery(
         id=gallery["id"],
         title=gallery["title"],
         description=gallery.get("description"),
-        photographer_name=photographer["name"] if photographer else "Unknown",
+        photographer_name=display_name,
         has_password=gallery.get("password") is not None,
         cover_photo_url=gallery.get("cover_photo_url"),
         sections=[Section(**s) for s in sections],
