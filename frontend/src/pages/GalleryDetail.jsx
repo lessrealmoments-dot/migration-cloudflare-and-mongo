@@ -1123,7 +1123,7 @@ const GalleryDetail = () => {
                   data-testid={`guest-photo-${photo.id}`}
                   className="masonry-item group relative"
                 >
-                  <img
+                  <OptimizedImage
                     src={`${BACKEND_URL}${photo.url}`}
                     alt="Guest upload"
                     className="w-full h-auto cursor-pointer rounded-sm"
