@@ -106,6 +106,7 @@ class Photo(BaseModel):
     id: str
     gallery_id: str
     filename: str
+    original_filename: Optional[str] = None  # Store original filename for duplicate detection
     url: str
     uploaded_by: str
     section_id: Optional[str] = None
