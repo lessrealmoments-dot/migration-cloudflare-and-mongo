@@ -566,18 +566,28 @@ const AdminDashboard = () => {
                   <div className="space-y-3">
                     {photographerGalleries.map(g => (
                       <div key={g.id} className="bg-zinc-700/50 rounded-lg p-4 flex items-center justify-between">
-                        <div>
+                        <div className="flex-1">
                           <h4 className="text-white font-medium">{g.title}</h4>
                           <p className="text-sm text-zinc-400">{g.photo_count} photos • {g.theme}</p>
                         </div>
-                        <a
-                          href={`${BACKEND_URL}/g/${g.share_link}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => { setShowGalleriesModal(false); navigate(`/admin/gallery/${g.id}`); }}
+                            className="p-2 bg-primary rounded text-white hover:opacity-90"
+                            title="Review & Flag Photos"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <a
+                            href={`${BACKEND_URL}/g/${g.share_link}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
+                            title="View Public Gallery"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        </div>
                       </div>
                     ))}
                   </div>
