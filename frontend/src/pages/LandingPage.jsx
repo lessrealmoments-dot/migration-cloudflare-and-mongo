@@ -115,12 +115,12 @@ const LandingPage = ({ user }) => {
           >
             <div className="grid grid-cols-2 gap-4">
               <img
-                src="https://images.unsplash.com/photo-1730476513367-16fe58a8a653?crop=entropy&cs=srgb&fm=jpg&q=85"
+                src={config.hero_image_1}
                 alt="Gallery sample"
                 className="w-full h-auto rounded-sm shadow-sm"
               />
               <img
-                src="https://images.unsplash.com/photo-1729948552636-fe6f7cc88f4a?crop=entropy&cs=srgb&fm=jpg&q=85"
+                src={config.hero_image_2}
                 alt="Gallery sample"
                 className="w-full h-auto rounded-sm shadow-sm mt-8"
               />
