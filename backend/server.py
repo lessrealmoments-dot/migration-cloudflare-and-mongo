@@ -443,6 +443,7 @@ class PhotographerAdmin(BaseModel):
     active_galleries: int = 0
     storage_quota: int = DEFAULT_STORAGE_QUOTA
     storage_used: int = 0
+    status: str = "active"
     created_at: str
 
 class UpdateGalleryLimit(BaseModel):
