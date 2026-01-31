@@ -331,7 +331,7 @@ const Dashboard = ({ user, setUser }) => {
       {/* Profile Modal */}
       {showProfileModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm p-8 max-w-md w-full" data-testid="profile-modal">
+          <div className="bg-white rounded-sm p-8 max-w-md w-full max-h-[90vh] overflow-y-auto" data-testid="profile-modal">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
                 Edit Profile
@@ -388,6 +388,62 @@ const Dashboard = ({ user, setUser }) => {
                   <Save className="w-4 h-4" strokeWidth={1.5} />
                   {savingProfile ? 'Saving...' : 'Save Changes'}
                 </button>
+              </div>
+
+              {/* Change Password Section */}
+              <div className="border-t border-zinc-200 pt-6 mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Key className="w-5 h-5 text-zinc-600" strokeWidth={1.5} />
+                  <h4 className="text-lg font-medium">Change Password</h4>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Current Password</label>
+                    <input
+                      type="password"
+                      value={passwordData.current_password}
+                      onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                      className="w-full border border-zinc-300 rounded-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                      placeholder="Enter current password"
+                      data-testid="current-password-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">New Password</label>
+                    <input
+                      type="password"
+                      value={passwordData.new_password}
+                      onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                      className="w-full border border-zinc-300 rounded-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                      placeholder="Enter new password"
+                      data-testid="new-password-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Confirm New Password</label>
+                    <input
+                      type="password"
+                      value={passwordData.confirm_password}
+                      onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
+                      className="w-full border border-zinc-300 rounded-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                      placeholder="Confirm new password"
+                      data-testid="confirm-password-input"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleChangePassword}
+                    disabled={changingPassword || !passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password}
+                    className="w-full bg-zinc-800 text-white hover:bg-zinc-700 h-10 rounded-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    data-testid="change-password-btn"
+                  >
+                    <Key className="w-4 h-4" strokeWidth={1.5} />
+                    {changingPassword ? 'Updating...' : 'Update Password'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
