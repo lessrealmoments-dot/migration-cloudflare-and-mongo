@@ -954,6 +954,8 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         raise HTTPException(status_code=404, detail="Gallery not found")
     
     photo_count = await db.photos.count_documents({"gallery_id": gallery_id})
+    auto_delete_date = gallery.get("auto_delete_date")
+    days_until_deletion = calculate_days_until_deletion(auto_delete_date)
     
     return Gallery(
         id=gallery["id"],
@@ -971,7 +973,9 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         has_download_all_password=gallery.get("download_all_password") is not None,
         theme=gallery.get("theme", "classic"),
         created_at=gallery["created_at"],
-        photo_count=photo_count
+        photo_count=photo_count,
+        auto_delete_date=auto_delete_date,
+        days_until_deletion=days_until_deletion
     )
 
 @api_router.put("/galleries/{gallery_id}", response_model=Gallery)
