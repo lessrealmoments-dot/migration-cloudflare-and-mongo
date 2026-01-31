@@ -731,8 +731,6 @@ const PublicGallery = () => {
   );
 };
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
 const PublicPhotoItem = ({ photo, photoIndex, onView, onDownload, isGuest }) => (
   <div
     data-testid={`public-photo-item-${photo.id}`}
