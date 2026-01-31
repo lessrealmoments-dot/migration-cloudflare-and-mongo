@@ -535,6 +535,8 @@ async def register(user_data: UserRegister):
         "business_name": user_data.business_name,
         "max_galleries": DEFAULT_MAX_GALLERIES,
         "galleries_created_total": 0,
+        "storage_quota": DEFAULT_STORAGE_QUOTA,
+        "storage_used": 0,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -548,6 +550,8 @@ async def register(user_data: UserRegister):
         business_name=user_data.business_name,
         max_galleries=DEFAULT_MAX_GALLERIES,
         galleries_created_total=0,
+        storage_quota=DEFAULT_STORAGE_QUOTA,
+        storage_used=0,
         created_at=user_doc["created_at"]
     )
     
