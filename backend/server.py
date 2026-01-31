@@ -513,14 +513,26 @@ class Photo(BaseModel):
     id: str
     gallery_id: str
     filename: str
-    original_filename: Optional[str] = None  # Store original filename for duplicate detection
+    original_filename: Optional[str] = None
     url: str
     uploaded_by: str
     section_id: Optional[str] = None
     uploaded_at: str
+    order: int = 0
+    is_highlight: bool = False
+    is_hidden: bool = False
 
 class PasswordVerify(BaseModel):
     password: str
+
+# Bulk action models
+class BulkPhotoAction(BaseModel):
+    photo_ids: List[str]
+    action: str  # delete, move_section, highlight, unhighlight, hide, unhide
+    section_id: Optional[str] = None
+
+class PhotoReorder(BaseModel):
+    photo_orders: List[dict]  # [{"id": "...", "order": 0}, ...]
 
 class PublicGallery(BaseModel):
     model_config = ConfigDict(extra="ignore")
