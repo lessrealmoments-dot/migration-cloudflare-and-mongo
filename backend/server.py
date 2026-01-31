@@ -890,6 +890,18 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         days_until_deletion=days_until_deletion
     )
 
+def calculate_days_until_deletion(auto_delete_date: str) -> int:
+    """Calculate days remaining until auto-deletion"""
+    if not auto_delete_date:
+        return None
+    try:
+        delete_dt = datetime.fromisoformat(auto_delete_date.replace('Z', '+00:00'))
+        if delete_dt.tzinfo is None:
+            delete_dt = delete_dt.replace(tzinfo=timezone.utc)
+        return max(0, (delete_dt - datetime.now(timezone.utc)).days)
+    except:
+        return None
+
 @api_router.get("/galleries", response_model=List[Gallery])
 async def get_galleries(current_user: dict = Depends(get_current_user)):
     pipeline = [
@@ -909,6 +921,9 @@ async def get_galleries(current_user: dict = Depends(get_current_user)):
     
     result = []
     for g in galleries:
+        auto_delete_date = g.get("auto_delete_date")
+        days_until_deletion = calculate_days_until_deletion(auto_delete_date)
+        
         result.append(Gallery(
             id=g["id"],
             photographer_id=g["photographer_id"],
@@ -925,7 +940,9 @@ async def get_galleries(current_user: dict = Depends(get_current_user)):
             has_download_all_password=g.get("download_all_password") is not None,
             theme=g.get("theme", "classic"),
             created_at=g["created_at"],
-            photo_count=g.get("photo_count", 0)
+            photo_count=g.get("photo_count", 0),
+            auto_delete_date=auto_delete_date,
+            days_until_deletion=days_until_deletion
         ))
     
     return result
