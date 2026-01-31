@@ -1370,8 +1370,6 @@ async def serve_photo(filename: str, download: bool = False):
 
 # ============ GOOGLE DRIVE INTEGRATION ============
 
-GOOGLE_AUTH_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
-
 class GoogleDriveStatus(BaseModel):
     connected: bool
     email: Optional[str] = None
@@ -1390,43 +1388,171 @@ class GoogleDriveBackupStatus(BaseModel):
     error_message: Optional[str] = None
     last_updated: str
 
-@api_router.post("/auth/google/callback")
-async def google_auth_callback(request: Request, current_user: dict = Depends(get_current_user)):
-    """Exchange session_id for Google tokens and store them"""
-    body = await request.json()
-    session_id = body.get("session_id")
-    
-    if not session_id:
-        raise HTTPException(status_code=400, detail="session_id required")
-    
-    # Exchange session_id for user data from Emergent Auth
-    async with httpx.AsyncClient() as http_client:
-        response = await http_client.get(
-            GOOGLE_AUTH_URL,
-            headers={"X-Session-ID": session_id}
+# Store temporary state for OAuth flow
+oauth_states = {}
+
+@api_router.get("/oauth/drive/authorize")
+async def google_drive_authorize(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """Start Google Drive OAuth flow"""
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        raise HTTPException(
+            status_code=400, 
+            detail="Google Drive not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET."
         )
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=401, detail="Invalid session")
-        
-        google_data = response.json()
     
-    # Store Google connection info for the user (including access token for API calls)
-    await db.users.update_one(
-        {"id": current_user["id"]},
-        {"$set": {
-            "google_connected": True,
-            "google_email": google_data.get("email"),
-            "google_name": google_data.get("name"),
-            "google_picture": google_data.get("picture"),
-            "google_session_token": google_data.get("session_token"),
-            "google_access_token": google_data.get("access_token"),  # Store access token for Drive API
-            "drive_auto_sync": True,  # Enable auto-sync by default
-            "google_connected_at": datetime.now(timezone.utc).isoformat()
-        }}
+    flow = get_google_oauth_flow()
+    if not flow:
+        raise HTTPException(status_code=500, detail="Failed to create OAuth flow")
+    
+    # Generate state with user ID and gallery ID
+    state = f"{current_user['id']}:{gallery_id}:{secrets.token_urlsafe(16)}"
+    oauth_states[state] = {
+        "user_id": current_user["id"],
+        "gallery_id": gallery_id,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    authorization_url, _ = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true',
+        state=state,
+        prompt='consent'
     )
     
-    return {"success": True, "email": google_data.get("email")}
+    return {"authorization_url": authorization_url}
+
+@api_router.get("/oauth/drive/callback")
+async def google_drive_callback(code: str = Query(...), state: str = Query(...)):
+    """Handle Google Drive OAuth callback"""
+    # Verify state
+    state_data = oauth_states.get(state)
+    if not state_data:
+        # Redirect to frontend with error
+        return RedirectResponse(
+            url=f"{FRONTEND_URL}/dashboard?drive_error=invalid_state",
+            status_code=302
+        )
+    
+    user_id = state_data["user_id"]
+    gallery_id = state_data["gallery_id"]
+    
+    # Clean up state
+    del oauth_states[state]
+    
+    try:
+        flow = get_google_oauth_flow()
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
+        
+        # Store credentials in database
+        creds_doc = {
+            "user_id": user_id,
+            "access_token": credentials.token,
+            "refresh_token": credentials.refresh_token,
+            "token_uri": credentials.token_uri,
+            "client_id": credentials.client_id,
+            "client_secret": credentials.client_secret,
+            "scopes": list(credentials.scopes) if credentials.scopes else GOOGLE_DRIVE_SCOPES,
+            "expiry": credentials.expiry.isoformat() if credentials.expiry else None,
+            "drive_auto_sync": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Get user info from Google
+        drive_service = build('drive', 'v3', credentials=credentials)
+        about = drive_service.about().get(fields="user").execute()
+        user_info = about.get('user', {})
+        
+        creds_doc["google_email"] = user_info.get('emailAddress')
+        creds_doc["google_name"] = user_info.get('displayName')
+        
+        # Upsert credentials
+        await db.drive_credentials.update_one(
+            {"user_id": user_id},
+            {"$set": creds_doc},
+            upsert=True
+        )
+        
+        # Update user record
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {
+                "google_connected": True,
+                "google_email": user_info.get('emailAddress'),
+                "google_name": user_info.get('displayName'),
+                "drive_auto_sync": True,
+                "google_connected_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # Redirect back to gallery
+        return RedirectResponse(
+            url=f"{FRONTEND_URL}/gallery/{gallery_id}?drive_connected=true",
+            status_code=302
+        )
+        
+    except Exception as e:
+        logger.error(f"OAuth callback error: {e}")
+        return RedirectResponse(
+            url=f"{FRONTEND_URL}/gallery/{gallery_id}?drive_error=auth_failed",
+            status_code=302
+        )
+
+@api_router.get("/auth/google/status")
+async def get_google_drive_status(current_user: dict = Depends(get_current_user)):
+    """Check if Google Drive is connected"""
+    creds = await db.drive_credentials.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    
+    if creds:
+        return {
+            "connected": True,
+            "email": creds.get("google_email"),
+            "name": creds.get("google_name"),
+            "auto_sync": creds.get("drive_auto_sync", False)
+        }
+    
+    return {
+        "connected": False,
+        "email": None,
+        "name": None,
+        "auto_sync": False
+    }
+
+@api_router.post("/auth/google/toggle-auto-sync")
+async def toggle_auto_sync(current_user: dict = Depends(get_current_user)):
+    """Toggle auto-sync for Google Drive"""
+    creds = await db.drive_credentials.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    if not creds:
+        raise HTTPException(status_code=400, detail="Google Drive not connected")
+    
+    current_auto_sync = creds.get("drive_auto_sync", False)
+    
+    await db.drive_credentials.update_one(
+        {"user_id": current_user["id"]},
+        {"$set": {"drive_auto_sync": not current_auto_sync}}
+    )
+    
+    return {"auto_sync": not current_auto_sync}
+
+@api_router.post("/auth/google/disconnect")
+async def disconnect_google_drive(current_user: dict = Depends(get_current_user)):
+    """Disconnect Google Drive"""
+    # Remove credentials
+    await db.drive_credentials.delete_one({"user_id": current_user["id"]})
+    
+    # Update user record
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$unset": {
+            "google_connected": "",
+            "google_email": "",
+            "google_name": "",
+            "drive_auto_sync": "",
+            "google_connected_at": ""
+        }}
+    )
+    return {"success": True}
 
 class GoogleDriveStatusExtended(BaseModel):
     connected: bool
