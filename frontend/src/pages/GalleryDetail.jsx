@@ -760,8 +760,7 @@ const GalleryDetail = () => {
                   </h4>
                   <div className="masonry-grid">
                     {sectionPhotos.map((photo) => {
-                      const photographerPhotos = photos.filter(p => p.uploaded_by === 'photographer');
-                      const photoIndex = photographerPhotos.findIndex(p => p.id === photo.id);
+                      const photoIndex = photos.findIndex(p => p.id === photo.id);
                       return (
                         <PhotoItem
                           key={photo.id}
@@ -785,8 +784,7 @@ const GalleryDetail = () => {
               </h4>
               <div className="masonry-grid">
                 {getPhotosWithoutSection().map((photo) => {
-                  const photographerPhotos = photos.filter(p => p.uploaded_by === 'photographer');
-                  const photoIndex = photographerPhotos.findIndex(p => p.id === photo.id);
+                  const photoIndex = photos.findIndex(p => p.id === photo.id);
                   return (
                     <PhotoItem
                       key={photo.id}
