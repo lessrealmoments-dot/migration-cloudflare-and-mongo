@@ -317,6 +317,8 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown"""
     # Start background sync task
     asyncio.create_task(auto_sync_drive_task())
+    # Start auto-delete task
+    asyncio.create_task(auto_delete_expired_galleries())
     yield
     # Stop background task
     global sync_task_running
