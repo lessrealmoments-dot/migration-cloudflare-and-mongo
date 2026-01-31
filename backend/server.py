@@ -1481,6 +1481,9 @@ async def get_public_gallery(share_link: str):
     # Use business_name if available, otherwise use personal name
     display_name = photographer.get("business_name") or photographer.get("name", "Unknown") if photographer else "Unknown"
     
+    # Get cover photo position
+    cover_position = gallery.get("cover_photo_position", {"scale": 1, "positionX": 50, "positionY": 50})
+    
     return PublicGallery(
         id=gallery["id"],
         title=gallery["title"],
@@ -1488,6 +1491,7 @@ async def get_public_gallery(share_link: str):
         photographer_name=display_name,
         has_password=gallery.get("password") is not None,
         cover_photo_url=gallery.get("cover_photo_url"),
+        cover_photo_position=cover_position,
         sections=[Section(**s) for s in sections],
         event_title=gallery.get("event_title"),
         event_date=gallery.get("event_date"),
