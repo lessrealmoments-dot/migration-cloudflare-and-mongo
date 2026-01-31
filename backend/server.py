@@ -571,6 +571,8 @@ async def login(credentials: UserLogin):
         business_name=user.get("business_name"),
         max_galleries=user.get("max_galleries", DEFAULT_MAX_GALLERIES),
         galleries_created_total=user.get("galleries_created_total", 0),
+        storage_quota=user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
+        storage_used=user.get("storage_used", 0),
         created_at=user["created_at"]
     )
     
