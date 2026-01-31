@@ -841,6 +841,144 @@ async def update_storage_quota(user_id: str, data: UpdateStorageQuota, admin: di
     quota_mb = data.storage_quota / (1024 * 1024)
     return {"message": f"Storage quota updated to {quota_mb:.0f} MB"}
 
+@api_router.put("/admin/photographers/{user_id}/status")
+async def update_photographer_status(user_id: str, data: dict, admin: dict = Depends(get_admin_user)):
+    """Suspend or activate a photographer account"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    status = data.get("status", "active")
+    if status not in ["active", "suspended"]:
+        raise HTTPException(status_code=400, detail="Invalid status. Use 'active' or 'suspended'")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"status": status, "status_updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    # Log activity
+    await db.activity_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "action": f"photographer_{status}",
+        "target_type": "user",
+        "target_id": user_id,
+        "target_name": user.get("name", user["email"]),
+        "admin_user": "admin",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": f"Photographer {status}", "status": status}
+
+@api_router.delete("/admin/photographers/{user_id}")
+async def delete_photographer(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Delete a photographer and all their data"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get all galleries
+    galleries = await db.galleries.find({"photographer_id": user_id}, {"_id": 0}).to_list(None)
+    
+    # Delete all photos and their files
+    for gallery in galleries:
+        photos = await db.photos.find({"gallery_id": gallery["id"]}, {"_id": 0}).to_list(None)
+        for photo in photos:
+            file_path = UPLOAD_DIR / photo["filename"]
+            if file_path.exists():
+                file_path.unlink()
+        await db.photos.delete_many({"gallery_id": gallery["id"]})
+        
+        # Delete cover photo if exists
+        if gallery.get("cover_photo_url"):
+            cover_filename = gallery["cover_photo_url"].split('/')[-1]
+            cover_path = UPLOAD_DIR / cover_filename
+            if cover_path.exists():
+                cover_path.unlink()
+    
+    # Delete galleries
+    await db.galleries.delete_many({"photographer_id": user_id})
+    
+    # Delete drive credentials and backups
+    await db.drive_credentials.delete_many({"user_id": user_id})
+    await db.drive_backups.delete_many({"user_id": user_id})
+    
+    # Delete user
+    await db.users.delete_one({"id": user_id})
+    
+    # Log activity
+    await db.activity_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "action": "photographer_deleted",
+        "target_type": "user",
+        "target_id": user_id,
+        "target_name": user.get("name", user["email"]),
+        "admin_user": "admin",
+        "details": f"Deleted {len(galleries)} galleries",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": f"Photographer deleted along with {len(galleries)} galleries"}
+
+@api_router.get("/admin/photographers/{user_id}/galleries")
+async def get_photographer_galleries(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Get all galleries for a specific photographer"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    galleries = await db.galleries.find({"photographer_id": user_id}, {"_id": 0}).to_list(None)
+    
+    result = []
+    for g in galleries:
+        photo_count = await db.photos.count_documents({"gallery_id": g["id"]})
+        result.append({
+            "id": g["id"],
+            "title": g["title"],
+            "share_link": g["share_link"],
+            "photo_count": photo_count,
+            "theme": g.get("theme", "classic"),
+            "created_at": g["created_at"],
+            "cover_photo_url": g.get("cover_photo_url")
+        })
+    
+    return result
+
+@api_router.get("/admin/activity-logs")
+async def get_activity_logs(limit: int = 50, admin: dict = Depends(get_admin_user)):
+    """Get recent admin activity logs"""
+    logs = await db.activity_logs.find({}, {"_id": 0}).sort("timestamp", -1).limit(limit).to_list(None)
+    return logs
+
+@api_router.get("/admin/settings")
+async def get_admin_settings(admin: dict = Depends(get_admin_user)):
+    """Get admin settings"""
+    settings = await db.site_config.find_one({"type": "admin_settings"}, {"_id": 0})
+    if not settings:
+        settings = {
+            "type": "admin_settings",
+            "default_storage_quota": DEFAULT_STORAGE_QUOTA,
+            "default_max_galleries": DEFAULT_MAX_GALLERIES,
+            "default_theme": "classic",
+            "auto_delete_days": 180
+        }
+    return settings
+
+@api_router.put("/admin/settings")
+async def update_admin_settings(data: dict, admin: dict = Depends(get_admin_user)):
+    """Update admin settings"""
+    allowed_fields = ["default_storage_quota", "default_max_galleries", "default_theme", "auto_delete_days"]
+    update_data = {k: v for k, v in data.items() if k in allowed_fields}
+    update_data["type"] = "admin_settings"
+    
+    await db.site_config.update_one(
+        {"type": "admin_settings"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    return {"message": "Settings updated", "settings": update_data}
+
 @api_router.get("/admin/landing-config", response_model=LandingPageConfig)
 async def get_landing_config(admin: dict = Depends(get_admin_user)):
     """Get landing page configuration"""
