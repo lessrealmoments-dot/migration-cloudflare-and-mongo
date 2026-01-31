@@ -66,6 +66,9 @@ DEFAULT_STORAGE_QUOTA = 500 * 1024 * 1024
 # Gallery auto-delete after 6 months (in days)
 GALLERY_EXPIRATION_DAYS = 180
 
+# Gallery edit lock after 7 days from creation
+GALLERY_EDIT_LOCK_DAYS = 7
+
 # Google Drive OAuth configuration
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
