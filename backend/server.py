@@ -507,6 +507,7 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
         "id": photo_id,
         "gallery_id": gallery_id,
         "filename": filename,
+        "original_filename": file.filename,  # Store original filename for duplicate detection
         "url": f"/api/photos/serve/{filename}",
         "uploaded_by": "photographer",
         "section_id": section_id,
