@@ -1,126 +1,183 @@
-# PhotoShare - Pic-time.com Clone
+# PhotoShare - Product Requirements Document
 
 ## Original Problem Statement
-Build a website similar to Pic-time.com - a professional photo gallery platform where photographers can create accounts, create customizable galleries, and share them with clients. Guests can view galleries and upload their own photos via shareable links.
+Build a website similar to Pic-time.com where photographers can create photo galleries and share them with guests via shareable links.
 
-## User Personas
-1. **Admin**: Manage photographers, adjust gallery limits, customize landing page
-2. **Photographers**: Create and manage galleries, upload photos, customize themes, share links with clients
-3. **Guests/Clients**: View shared galleries, upload photos, download individual/all photos
-
-## Core Requirements
-- [x] Photographer authentication (register/login)
-- [x] Gallery CRUD operations
-- [x] Photo upload (photographer + guest)
-- [x] Shareable links for galleries
-- [x] Gallery customization (cover photos, sections, themes)
-- [x] Access controls (expiring links, upload timeframes)
-- [x] Password-protected bulk downloads
-- [x] Premium lightbox for photo viewing
-- [x] **Upload progress animation** (Jan 2026)
-- [x] **Server-side duplicate file prevention** (Jan 2026)
-- [x] **Delete gallery with double confirmation** (Jan 2026)
-- [x] **Google Drive backup integration** (Jan 2026)
-- [x] **Admin Panel** (Jan 2026)
-- [x] **Gallery limits per photographer** (Jan 2026)
-- [x] **Anti-recycling mechanism** (Jan 2026)
-- [x] **Forgot password with email** (Jan 2026)
-- [x] **Photographer profile (business name)** (Jan 2026)
-- [x] **Customizable landing page** (Jan 2026)
+## Core Features
+- **Photographers**: Create accounts, manage galleries, upload photos
+- **Guests**: View galleries and upload photos via shareable links
+- **Admin**: Manage photographers, site settings, and analytics
 
 ---
 
-## What's Been Implemented (January 2026)
+## Implemented Features (as of Jan 31, 2026)
 
-### Admin Panel (/admin)
-- **Login**: admin / Aa@58798546521325
-- **Features**:
-  - View all photographers with their gallery usage
-  - Adjust max gallery limits per photographer
-  - Edit landing page (brand name, hero title, subtitle, images)
-  - Cannot delete galleries (admin limitation)
+### Gallery Management
+- [x] Create galleries with titles, descriptions, passwords
+- [x] Set cover photos for galleries
+- [x] Create and manage sections within galleries
+- [x] Editable event title and event date
+- [x] 15 gallery themes (elegant + fun)
+- [x] Share link expiration periods
+- [x] Guest upload time restrictions
+- [x] Password-protected "Download All"
+- [x] Delete gallery with double-confirmation
 
-### Gallery Limits & Anti-Recycling
-- Default: 1 free trial gallery per photographer
-- `galleries_created_total` tracks ALL galleries ever created (including deleted)
-- Prevents recycling: deleted galleries still count against limit
-- Popup when limit reached: "Please contact administrator"
+### Photo Management
+- [x] Photographer photo uploads
+- [x] Guest photo uploads via share link
+- [x] Duplicate upload prevention (server-side)
+- [x] Upload animations and progress indicators
+- [x] Full-screen lightbox viewer
+- [x] Guest photo moderation by photographer
 
-### Forgot Password
-- Email-based password reset using Resend
-- Generates random secure password
-- Sends to registered email
-- User can change after login
+### User Features
+- [x] Photographer registration/login (JWT)
+- [x] Profile editing (name, business name)
+- [x] Forgot password functionality (requires Resend API key)
+- [x] Analytics dashboard showing views, photos, storage
 
-### Photographer Profile
-- Business name field (optional)
-- Shown on public galleries instead of personal name
-- Can be set during registration or updated later
+### Admin Features
+- [x] Admin login and dashboard
+- [x] Manage photographer gallery limits
+- [x] **Storage quota management** (NEW - admin can set quotas from 100MB to 10GB)
+- [x] Landing page content customization
+- [x] Landing page image uploads
+- [x] **Site-wide analytics** (NEW - photographers, galleries, photos, storage stats)
 
-### Landing Page Customization
-- Admin can edit via `/admin/dashboard` → Landing Page tab
-- Configurable: brand name, hero title, subtitle, hero images
-- Changes apply immediately to public landing page
+### Auto-Delete System (NEW)
+- [x] Galleries auto-delete after 6 months (180 days)
+- [x] Days until deletion shown in dashboard
+- [x] Background task for automated cleanup
 
-### Backend (FastAPI + MongoDB)
-- JWT-based authentication system
-- Admin authentication with fixed credentials
-- Gallery CRUD with limit enforcement
-- Photo upload/serve/delete endpoints with duplicate detection
-- Forgot password with email (Resend)
-- Landing page config stored in `site_config` collection
+### Storage Quota System (NEW)
+- [x] Default 500MB quota per photographer
+- [x] Storage tracking on upload/delete
+- [x] Quota enforcement (rejects uploads when exceeded)
+- [x] Storage bar in photographer dashboard
+- [x] Admin can adjust quotas per photographer
 
-### Database Schema
-- **users**: id, email, password, name, business_name, max_galleries, galleries_created_total, google_connected, google_email
-- **galleries**: id, photographer_id, title, description, password, share_link, cover_photo_url, sections[], theme, created_at
-- **photos**: id, gallery_id, filename, original_filename, url, uploaded_by, section_id, uploaded_at
-- **site_config**: type, hero_title, hero_subtitle, brand_name, hero_image_1, hero_image_2
-- **drive_backups**: id, gallery_id, user_id, status, folder_name, folder_url, photos_backed_up
+### Analytics (NEW)
+- [x] Photographer analytics: galleries, photos, views, storage
+- [x] Admin analytics: site-wide stats, top galleries
+- [x] View count tracking for public galleries
+- [x] Gallery performance breakdown
+
+### Gallery Themes (15 total)
+**Elegant:**
+- Classic Elegance, Romantic Blush, Modern Dark, Natural Earth, Ocean Breeze, Vintage Sepia
+
+**Fun/Colorful:**
+- Party Vibes, Tropical Paradise, Golden Sunset, Neon Nights, Spring Garden, Lavender Dreams, Corporate Professional, Holiday Cheer, Ultra Minimal
 
 ---
 
-## Key API Endpoints
+## Pending/Blocked Features
+
+### Google Drive Integration (BLOCKED - needs API keys)
+- Backend code complete for OAuth2 flow
+- Requires: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- Features: Manual backup, auto-sync toggle
+
+### Forgot Password (BLOCKED - needs API key)
+- Backend code complete
+- Requires: `RESEND_API_KEY`
+
+---
+
+## Backlog / Future Tasks
+
+### P1 (High Priority)
+- Gallery analytics dashboard for individual galleries
+- More detailed view tracking (unique visitors, time on page)
+
+### P2 (Medium Priority)
+- Storage usage alerts/notifications
+- Gallery templates for quick creation
+- Bulk photo upload improvements
+
+### P3 (Low Priority)
+- Social sharing buttons
+- Watermark options for photos
+- Guest comments on photos
+
+---
+
+## Technical Architecture
+
+### Backend
+- **Framework**: FastAPI
+- **Database**: MongoDB (Motor async driver)
+- **Auth**: JWT tokens
+- **File Storage**: Local `/uploads` directory
+- **Background Tasks**: asyncio tasks for auto-sync and auto-delete
+
+### Frontend
+- **Framework**: React 18
+- **Routing**: React Router
+- **Styling**: Tailwind CSS
+- **Components**: Shadcn/UI
+- **Icons**: Lucide React
+
+### Key Files
+- `/app/backend/server.py` - Main API (1800+ lines)
+- `/app/frontend/src/pages/Dashboard.jsx` - Photographer dashboard
+- `/app/frontend/src/pages/AdminDashboard.jsx` - Admin panel
+- `/app/frontend/src/pages/GalleryDetail.jsx` - Gallery management
+- `/app/frontend/src/themes.js` - 15 gallery themes
+
+---
+
+## API Endpoints
+
+### Auth
+- `POST /api/auth/register` - Register photographer
+- `POST /api/auth/login` - Login
+- `GET /api/auth/me` - Get current user
+- `PUT /api/auth/profile` - Update profile
+- `POST /api/auth/forgot-password` - Password reset (requires Resend)
+
+### Galleries
+- `GET /api/galleries` - List user's galleries
+- `POST /api/galleries` - Create gallery
+- `GET /api/galleries/{id}` - Get gallery details
+- `PUT /api/galleries/{id}` - Update gallery
+- `DELETE /api/galleries/{id}` - Delete gallery
+
+### Photos
+- `POST /api/galleries/{id}/photos` - Upload photo
+- `DELETE /api/photos/{id}` - Delete photo
+- `GET /api/photos/serve/{filename}` - Serve photo
+
+### Analytics (NEW)
+- `GET /api/analytics/photographer` - Photographer stats
+- `GET /api/admin/analytics` - Site-wide stats
+- `POST /api/public/gallery/{share_link}/view` - Track view
 
 ### Admin
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/admin/login | Admin login |
-| GET | /api/admin/photographers | List all photographers |
-| PUT | /api/admin/photographers/{id}/gallery-limit | Update gallery limit |
-| GET | /api/admin/landing-config | Get landing config |
-| PUT | /api/admin/landing-config | Update landing config |
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/auth/register | User registration (with business_name) |
-| POST | /api/auth/login | User login |
-| PUT | /api/auth/profile | Update profile (name, business_name) |
-| POST | /api/auth/forgot-password | Send new password email |
-
-### Public
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/public/landing-config | Get landing config for public display |
+- `POST /api/admin/login` - Admin login
+- `GET /api/admin/photographers` - List photographers
+- `PUT /api/admin/photographers/{id}/gallery-limit` - Set gallery limit
+- `PUT /api/admin/photographers/{id}/storage-quota` - Set storage quota (NEW)
+- `GET/POST /api/admin/landing-config` - Landing page settings
 
 ---
 
-## Admin Credentials
-- **URL**: /admin
-- **Username**: admin
-- **Password**: Aa@58798546521325
+## Credentials
+
+### Admin
+- URL: `/admin`
+- Username: `admin`
+- Password: `Aa@58798546521325`
+
+### Test Photographer
+- Create via registration form at `/auth`
 
 ---
 
-## Email Configuration (for forgot password)
-Set in `/app/backend/.env`:
-- `RESEND_API_KEY`: Your Resend API key
-- `SENDER_EMAIL`: Sender email address
+## Known Issues
+- None currently blocking
 
----
-
-## Future/Backlog (P2)
-- Auto-delete galleries after 6 months with warning emails
-- Photo tagging/favoriting
-- Gallery analytics dashboard
-- Storage quotas for photographers
+## Notes for Future Development
+- `server.py` could be refactored into modules (routes/, models/, services/)
+- Large frontend components could be split into smaller sub-components
