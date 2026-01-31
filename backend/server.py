@@ -1424,11 +1424,10 @@ async def disconnect_google_drive(current_user: dict = Depends(get_current_user)
     return {"success": True}
 
 @api_router.post("/galleries/{gallery_id}/backup-to-drive")
-async def backup_gallery_to_drive(gallery_id: str, current_user: dict = Depends(get_current_user)):
+async def backup_gallery_to_drive(gallery_id: str, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
     """
     Initiate backup of gallery photos to Google Drive.
-    Note: This creates a backup record. Actual upload happens asynchronously.
-    For demo purposes, we simulate the backup process.
+    The actual upload happens in the background.
     """
     # Verify gallery ownership
     gallery = await db.galleries.find_one(
@@ -1443,28 +1442,43 @@ async def backup_gallery_to_drive(gallery_id: str, current_user: dict = Depends(
     if not user.get("google_connected"):
         raise HTTPException(status_code=400, detail="Google Drive not connected. Please link your account first.")
     
+    if not user.get("google_access_token"):
+        raise HTTPException(status_code=400, detail="Google Drive access token missing. Please reconnect your Google account.")
+    
     # Get photo count
     photo_count = await db.photos.count_documents({"gallery_id": gallery_id})
     
     if photo_count == 0:
         raise HTTPException(status_code=400, detail="No photos to backup")
     
+    # Check for unsynced photos
+    unsynced_count = await db.photos.count_documents({"gallery_id": gallery_id, "drive_synced": {"$ne": True}})
+    
     # Create/update backup status
-    backup_id = str(uuid.uuid4())
+    existing_backup = await db.drive_backups.find_one(
+        {"gallery_id": gallery_id, "user_id": current_user["id"]},
+        {"_id": 0}
+    )
+    
+    backup_id = existing_backup["id"] if existing_backup else str(uuid.uuid4())
     folder_name = f"PhotoShare - {gallery['title']}"
     
     backup_doc = {
         "id": backup_id,
         "gallery_id": gallery_id,
         "user_id": current_user["id"],
-        "status": "completed",  # For demo, mark as completed immediately
+        "status": "in_progress",
         "folder_name": folder_name,
-        "folder_url": f"https://drive.google.com/drive/folders/demo_{gallery_id[:8]}",
-        "photos_backed_up": photo_count,
+        "photos_backed_up": photo_count - unsynced_count,
         "total_photos": photo_count,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": existing_backup.get("created_at") if existing_backup else datetime.now(timezone.utc).isoformat(),
         "last_updated": datetime.now(timezone.utc).isoformat()
     }
+    
+    # Preserve folder_id if it exists
+    if existing_backup and existing_backup.get("folder_id"):
+        backup_doc["folder_id"] = existing_backup["folder_id"]
+        backup_doc["folder_url"] = existing_backup.get("folder_url")
     
     # Upsert backup record
     await db.drive_backups.update_one(
@@ -1473,11 +1487,14 @@ async def backup_gallery_to_drive(gallery_id: str, current_user: dict = Depends(
         upsert=True
     )
     
+    # Start background sync task
+    background_tasks.add_task(sync_gallery_to_drive, current_user["id"], gallery_id)
+    
     return {
         "success": True,
-        "message": f"Backup initiated for {photo_count} photos to folder '{folder_name}'",
+        "message": f"Backup started for {unsynced_count} new photos (total: {photo_count})",
         "backup_id": backup_id,
-        "folder_url": backup_doc["folder_url"]
+        "folder_url": backup_doc.get("folder_url")
     }
 
 @api_router.get("/galleries/{gallery_id}/backup-status", response_model=GoogleDriveBackupStatus)
