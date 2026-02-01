@@ -618,6 +618,11 @@ const GalleryDetail = () => {
 
   // Download All functionality
   const handleDownloadAll = async () => {
+    if (isPreparingDownload) return; // Prevent double-click
+    
+    setIsPreparingDownload(true);
+    toast.loading('Preparing download...', { id: 'prepare-download' });
+    
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(`${API}/galleries/${id}/download-info`, {
@@ -627,8 +632,11 @@ const GalleryDetail = () => {
       setDownloadingChunks({});
       setDownloadedChunks({});
       setShowDownloadModal(true);
+      toast.success('Download ready!', { id: 'prepare-download' });
     } catch (error) {
-      toast.error('Failed to get download info');
+      toast.error('Failed to get download info', { id: 'prepare-download' });
+    } finally {
+      setIsPreparingDownload(false);
     }
   };
 
