@@ -257,17 +257,40 @@ const CreateGallery = () => {
                   key={key}
                   data-testid={`theme-${key}`}
                   onClick={() => setFormData({ ...formData, theme: key })}
-                  className={`cursor-pointer border-2 rounded-sm p-3 transition-all duration-300 hover:shadow-md ${
-                    formData.theme === key ? 'border-primary bg-zinc-50' : 'border-zinc-200'
+                  className={`cursor-pointer border-2 rounded-lg p-4 transition-all duration-300 hover:shadow-md ${
+                    formData.theme === key 
+                      ? 'border-primary ring-2 ring-primary/20' 
+                      : 'border-zinc-200 hover:border-zinc-300'
                   }`}
                 >
-                  <img 
-                    src={theme.preview} 
-                    alt={theme.name}
-                    className="w-full h-24 object-cover rounded-sm mb-2"
-                  />
-                  <h4 className="font-medium text-sm mb-1">{theme.name}</h4>
-                  <p className="text-xs text-zinc-500">{theme.description}</p>
+                  {/* Color palette preview */}
+                  <div className="flex gap-1 mb-3">
+                    <div 
+                      className="w-8 h-8 rounded-full border border-zinc-200"
+                      style={{ backgroundColor: theme.colors.background }}
+                      title="Background"
+                    />
+                    <div 
+                      className="w-8 h-8 rounded-full border border-zinc-200"
+                      style={{ backgroundColor: theme.colors.primary }}
+                      title="Primary"
+                    />
+                    <div 
+                      className="w-8 h-8 rounded-full border border-zinc-200"
+                      style={{ backgroundColor: theme.colors.accent }}
+                      title="Accent"
+                    />
+                    <div 
+                      className="w-8 h-8 rounded-full border border-zinc-200"
+                      style={{ backgroundColor: theme.colors.text }}
+                      title="Text"
+                    />
+                  </div>
+                  <h4 className="font-medium text-sm">{theme.name}</h4>
+                  <p className="text-xs text-zinc-500 line-clamp-1">{theme.description}</p>
+                  {formData.theme === key && (
+                    <div className="mt-2 text-xs text-primary font-medium">✓ Selected</div>
+                  )}
                 </div>
               ))}
             </div>
