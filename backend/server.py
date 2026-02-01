@@ -1901,16 +1901,16 @@ async def get_gallery_opengraph(share_link: str, request: Request):
     <meta property="og:title" content="{title}">
     <meta property="og:description" content="{description}">
     <meta property="og:site_name" content="PhotoShare">
-    {f'<meta property="og:image" content="{og_image}">' if og_image else ''}
-    {f'<meta property="og:image:width" content="1200">' if og_image else ''}
-    {f'<meta property="og:image:height" content="630">' if og_image else ''}
+    {'<meta property="og:image" content="' + og_image + '">' if og_image else ''}
+    {'<meta property="og:image:width" content="1200">' if og_image else ''}
+    {'<meta property="og:image:height" content="630">' if og_image else ''}
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{gallery_url}">
     <meta property="twitter:title" content="{title}">
     <meta property="twitter:description" content="{description}">
-    {f'<meta property="twitter:image" content="{og_image}">' if og_image else ''}
+    {'<meta property="twitter:image" content="' + og_image + '">' if og_image else ''}
     
     <!-- Redirect to actual gallery page -->
     <meta http-equiv="refresh" content="0;url={gallery_url}">
