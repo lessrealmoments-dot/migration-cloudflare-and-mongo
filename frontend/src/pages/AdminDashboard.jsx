@@ -267,6 +267,45 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleFaviconUpload = async (file) => {
+    if (!file) return;
+    
+    setUploadingImage('favicon');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const response = await axios.post(`${API}/admin/favicon`, formData, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      // Update local state with new favicon URL
+      setLandingConfig(prev => ({
+        ...prev,
+        favicon_url: response.data.url
+      }));
+      
+      // Also update the browser favicon immediately
+      let link = document.querySelector("link[rel~='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = `${BACKEND_URL}${response.data.url}`;
+      
+      toast.success('Favicon updated successfully! Refresh to see changes in browser tab.');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to upload favicon');
+    } finally {
+      setUploadingImage(null);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     navigate('/admin');
