@@ -82,7 +82,7 @@ class TestLandingConfigEndpoints:
             "password": ADMIN_PASSWORD
         })
         assert login_response.status_code == 200
-        token = login_response.json()["token"]
+        token = login_response.json()["access_token"]
         
         headers = {"Authorization": f"Bearer {token}"}
         
@@ -112,7 +112,8 @@ class TestAdminEndpoints:
         })
         assert response.status_code == 200
         data = response.json()
-        assert "token" in data
+        assert "access_token" in data
+        assert data.get("is_admin") == True
         print("SUCCESS: Admin login works")
     
     def test_admin_landing_config_fields(self):
@@ -122,7 +123,7 @@ class TestAdminEndpoints:
             "username": ADMIN_USERNAME,
             "password": ADMIN_PASSWORD
         })
-        token = login_response.json()["token"]
+        token = login_response.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
         
         config_response = requests.get(f"{BASE_URL}/api/admin/landing-config", headers=headers)
@@ -152,7 +153,7 @@ class TestPhotographerGalleryEndpoints:
             "password": PHOTOGRAPHER_PASSWORD
         })
         if response.status_code == 200:
-            return response.json().get("token")
+            return response.json().get("access_token")
         pytest.skip("Photographer authentication failed")
     
     def test_photographer_login(self):
@@ -163,7 +164,8 @@ class TestPhotographerGalleryEndpoints:
         })
         assert response.status_code == 200
         data = response.json()
-        assert "token" in data
+        assert "access_token" in data
+        assert "user" in data
         print("SUCCESS: Photographer login works")
     
     def test_gallery_has_share_link(self, auth_token):
