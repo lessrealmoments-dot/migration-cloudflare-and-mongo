@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
@@ -7,6 +7,7 @@ import { Lock, Upload, Download, X, Camera, ChevronDown, ChevronUp, Loader2, Che
 import { getThemeStyles, themes } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 import OptimizedImage from '@/components/OptimizedImage';
+import SocialSharePanel from '@/components/SocialSharePanel';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -14,6 +15,8 @@ const PREVIEW_COUNT = 8;
 
 const PublicGallery = () => {
   const { shareLink } = useParams();
+  const [searchParams] = useSearchParams();
+  const isViewOnly = searchParams.get('view') === '1';
   const [gallery, setGallery] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
