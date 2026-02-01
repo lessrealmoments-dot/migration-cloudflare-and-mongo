@@ -119,20 +119,22 @@ const EmbedCodeModal = ({ galleryTitle, shareLink, onClose }) => {
 
           {/* Preview */}
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-3">Preview</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-3">Live Preview</label>
             <div 
               className="border border-zinc-200 rounded-lg bg-zinc-50 p-4 overflow-hidden"
-              style={{ maxHeight: 300 }}
+              style={{ maxHeight: 350 }}
             >
-              <div 
-                className="bg-zinc-200 rounded-lg flex items-center justify-center text-zinc-500"
+              <iframe
+                src={embedUrl}
+                title={`Preview: ${galleryTitle}`}
+                className="rounded-lg border border-zinc-200"
                 style={{ 
-                  width: isResponsive ? '100%' : Math.min(selectedSize.width, 500),
-                  height: isResponsive ? 200 : Math.min(selectedSize.height, 250),
-                  margin: '0 auto'
+                  width: isResponsive ? '100%' : Math.min(selectedSize.width, 520),
+                  height: isResponsive ? 250 : Math.min(selectedSize.height, 300),
+                  margin: '0 auto',
+                  display: 'block'
                 }}
-              >
-                <div className="text-center">
+              />
                   <Code className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">Gallery Preview</p>
                   <p className="text-xs opacity-75">{galleryTitle}</p>
