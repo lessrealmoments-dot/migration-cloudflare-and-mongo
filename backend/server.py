@@ -1159,11 +1159,12 @@ async def update_landing_config(config: LandingPageConfig, admin: dict = Depends
 @api_router.post("/admin/landing-image")
 async def upload_landing_image(
     file: UploadFile = File(...),
-    image_slot: str = Form(...),  # "hero_image_1" or "hero_image_2"
+    image_slot: str = Form(...),  # "hero_image_1" through "hero_image_10"
     admin: dict = Depends(get_admin_user)
 ):
     """Upload an image for the landing page"""
-    if image_slot not in ["hero_image_1", "hero_image_2"]:
+    valid_slots = [f"hero_image_{i}" for i in range(1, 11)]
+    if image_slot not in valid_slots:
         raise HTTPException(status_code=400, detail="Invalid image slot")
     
     if not file.content_type.startswith('image/'):
