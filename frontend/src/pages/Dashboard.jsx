@@ -148,7 +148,7 @@ const Dashboard = ({ user, setUser }) => {
             style={{ fontFamily: 'Playfair Display, serif' }}
             onClick={() => navigate('/')}
           >
-            PhotoShare
+            {brandConfig.brand_name || 'PhotoShare'}
           </h1>
           <div className="flex items-center gap-4">
             <span className="text-sm text-zinc-600">
