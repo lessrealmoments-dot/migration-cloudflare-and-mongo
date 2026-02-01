@@ -25,15 +25,23 @@ const SocialSharePanel = ({ galleryTitle, shareLink, isVisible = true }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Create view-only share URL (appends ?view=1 to disable uploads)
+  // Extract share code from the URL
+  const shareCode = shareLink.split('/g/')[1] || shareLink.split('/').pop();
+  
+  // Create OG-enabled share URL (uses backend endpoint for social media previews)
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+  const ogShareUrl = `${BACKEND_URL}/api/og/gallery/${shareCode}`;
+  
+  // View-only URL for when users click through
   const viewOnlyUrl = `${shareLink}?view=1`;
-  const encodedUrl = encodeURIComponent(viewOnlyUrl);
+  
+  const encodedOgUrl = encodeURIComponent(ogShareUrl);
   const encodedTitle = encodeURIComponent(`Check out this photo gallery: ${galleryTitle}`);
 
   const shareLinks = {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-    whatsapp: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedOgUrl}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodedOgUrl}&text=${encodedTitle}`,
+    whatsapp: `https://wa.me/?text=${encodedTitle}%20${encodedOgUrl}`,
   };
 
   const handleShare = (platform) => {
