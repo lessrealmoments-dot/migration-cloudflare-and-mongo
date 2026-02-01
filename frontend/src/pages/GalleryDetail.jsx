@@ -462,7 +462,7 @@ const GalleryDetail = () => {
     // Initialize progress tracking for each file
     const initialProgress = validFiles.map(file => ({
       name: file.name,
-      status: 'uploading',
+      status: 'pending',
       progress: 0,
       retries: 0
     }));
@@ -534,12 +534,25 @@ const GalleryDetail = () => {
       throw lastError;
     };
 
-    const results = await Promise.allSettled(
-      validFiles.map((file, index) => uploadWithRetry(file, index))
-    );
+    // Sequential upload - one file at a time
+    let successCount = 0;
+    let failCount = 0;
 
-    const successCount = results.filter(r => r.status === 'fulfilled').length;
-    const failCount = results.filter(r => r.status === 'rejected').length;
+    for (let index = 0; index < validFiles.length; index++) {
+      const file = validFiles[index];
+      
+      // Update status to uploading
+      setUploadProgress(prev => prev.map((item, i) => 
+        i === index ? { ...item, status: 'uploading' } : item
+      ));
+
+      try {
+        await uploadWithRetry(file, index);
+        successCount++;
+      } catch (error) {
+        failCount++;
+      }
+    }
 
     if (successCount > 0) {
       toast.success(`${successCount} photo(s) uploaded successfully!`);
@@ -554,7 +567,7 @@ const GalleryDetail = () => {
       setUploadProgress([]);
       setUploading(false);
     }, 3000);
-  }, [id, selectedSection]);
+  }, [id, selectedSection, fetchGalleryData]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
