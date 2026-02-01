@@ -31,6 +31,8 @@ const PublicGallery = () => {
   const [showDownloadAllModal, setShowDownloadAllModal] = useState(false);
   const [downloadAllPassword, setDownloadAllPassword] = useState('');
   const [expandedSections, setExpandedSections] = useState({});
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const [downloadingPhoto, setDownloadingPhoto] = useState(null);
 
   // Toggle section expand/collapse
   const toggleSectionExpand = (sectionId) => {
