@@ -1,20 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Camera, Upload, Lock, Share2, Image as ImageIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Camera, Upload, Lock, Share2, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const LandingPage = ({ user }) => {
   const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [config, setConfig] = useState({
     hero_title: 'Share Your Photography, Beautifully',
     hero_subtitle: 'Create stunning galleries, share with clients, and let them upload their own photos. The professional way to showcase and collaborate.',
     brand_name: 'PhotoShare',
-    hero_image_1: 'https://images.unsplash.com/photo-1730476513367-16fe58a8a653?crop=entropy&cs=srgb&fm=jpg&q=85',
-    hero_image_2: 'https://images.unsplash.com/photo-1729948552636-fe6f7cc88f4a?crop=entropy&cs=srgb&fm=jpg&q=85'
+    brand_tagline: '',
+    hero_image_1: null,
+    hero_image_2: null,
+    hero_image_3: null,
+    hero_image_4: null,
+    hero_image_5: null,
+    hero_image_6: null,
+    hero_image_7: null,
+    hero_image_8: null,
+    hero_image_9: null,
+    hero_image_10: null
   });
+
+  // Get all hero images that have values
+  const heroImages = [
+    config.hero_image_1,
+    config.hero_image_2,
+    config.hero_image_3,
+    config.hero_image_4,
+    config.hero_image_5,
+    config.hero_image_6,
+    config.hero_image_7,
+    config.hero_image_8,
+    config.hero_image_9,
+    config.hero_image_10
+  ].filter(img => img && img.trim() !== '');
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -33,6 +58,32 @@ const LandingPage = ({ user }) => {
     };
     fetchConfig();
   }, []);
+
+  // Auto-advance carousel
+  useEffect(() => {
+    if (heroImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
+
+  const nextSlide = () => {
+    setCurrentSlide(prev => (prev + 1) % heroImages.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide(prev => (prev - 1 + heroImages.length) % heroImages.length);
+  };
+
+  // Get image URL (handles both uploaded and external URLs)
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('/api')) {
+      return `${BACKEND_URL}${imageUrl}`;
+    }
+    return imageUrl;
+  };
 
   // Parse hero title for line breaks
   const renderHeroTitle = () => {
@@ -53,9 +104,27 @@ const LandingPage = ({ user }) => {
     <div className="min-h-screen bg-white">
       <nav className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-6 flex justify-between items-center">
-          <h1 className="text-2xl font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
-            {config.brand_name}
-          </h1>
+          {/* Admin link moved to left */}
+          <div className="flex items-center gap-4">
+            <a 
+              href="/admin" 
+              className="text-zinc-400 hover:text-zinc-600 transition-colors text-sm"
+              data-testid="admin-link"
+            >
+              Admin
+            </a>
+          </div>
+          
+          {/* Brand name centered */}
+          <div className="absolute left-1/2 -translate-x-1/2 text-center">
+            <h1 className="text-2xl font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
+              {config.brand_name}
+            </h1>
+            {config.brand_tagline && (
+              <p className="text-xs text-zinc-500 mt-0.5">{config.brand_tagline}</p>
+            )}
+          </div>
+          
           <div className="flex gap-4">
             {user ? (
               <button
@@ -113,24 +182,66 @@ const LandingPage = ({ user }) => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="md:col-span-6"
           >
-            <div className="grid grid-cols-2 gap-4">
-              <img
-                src={config.hero_image_1?.startsWith('/api') 
-                  ? `${process.env.REACT_APP_BACKEND_URL}${config.hero_image_1}` 
-                  : config.hero_image_1
-                }
-                alt="Gallery sample"
-                className="w-full h-auto rounded-sm shadow-sm"
-              />
-              <img
-                src={config.hero_image_2?.startsWith('/api') 
-                  ? `${process.env.REACT_APP_BACKEND_URL}${config.hero_image_2}` 
-                  : config.hero_image_2
-                }
-                alt="Gallery sample"
-                className="w-full h-auto rounded-sm shadow-sm mt-8"
-              />
-            </div>
+            {/* Image Carousel */}
+            {heroImages.length > 0 ? (
+              <div className="relative">
+                <div className="relative overflow-hidden rounded-sm shadow-lg aspect-[4/3]">
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={currentSlide}
+                      src={getImageUrl(heroImages[currentSlide])}
+                      alt={`Gallery sample ${currentSlide + 1}`}
+                      className="w-full h-full object-cover"
+                      initial={{ opacity: 0, x: 50 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -50 }}
+                      transition={{ duration: 0.5 }}
+                    />
+                  </AnimatePresence>
+                </div>
+                
+                {/* Carousel Controls */}
+                {heroImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevSlide}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md transition-colors"
+                      data-testid="carousel-prev"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={nextSlide}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md transition-colors"
+                      data-testid="carousel-next"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                    
+                    {/* Dots indicator */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                      {heroImages.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentSlide(idx)}
+                          className={`w-2 h-2 rounded-full transition-all ${
+                            idx === currentSlide 
+                              ? 'bg-white w-6' 
+                              : 'bg-white/50 hover:bg-white/75'
+                          }`}
+                          data-testid={`carousel-dot-${idx}`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              /* Fallback placeholder */
+              <div className="aspect-[4/3] bg-zinc-100 rounded-sm flex items-center justify-center">
+                <ImageIcon className="w-16 h-16 text-zinc-300" />
+              </div>
+            )}
           </motion.div>
         </div>
       </section>
