@@ -2441,6 +2441,39 @@ async def serve_photo(filename: str, download: bool = False):
         }
     )
 
+@api_router.get("/photos/thumb/{filename}")
+async def serve_thumbnail(filename: str):
+    """Serve optimized thumbnail images"""
+    file_path = THUMBNAILS_DIR / filename
+    if not file_path.exists():
+        # Try to generate thumbnail on-the-fly if original exists
+        parts = filename.rsplit('_', 1)
+        if len(parts) == 2:
+            photo_id = parts[0]
+            size_name = parts[1].replace('.jpg', '')
+            # Find original file
+            for ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+                original = UPLOAD_DIR / f"{photo_id}.{ext}"
+                if original.exists():
+                    thumb_url = generate_thumbnail(original, photo_id, size_name)
+                    if thumb_url and file_path.exists():
+                        break
+        
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="Thumbnail not found")
+    
+    file_size = file_path.stat().st_size
+    
+    return FileResponse(
+        file_path,
+        media_type="image/jpeg",
+        headers={
+            "Content-Length": str(file_size),
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "Access-Control-Allow-Origin": "*"
+        }
+    )
+
 # ============ GOOGLE DRIVE INTEGRATION ============
 
 class GoogleDriveStatus(BaseModel):
