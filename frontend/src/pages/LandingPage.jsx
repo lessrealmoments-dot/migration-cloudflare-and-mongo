@@ -101,33 +101,49 @@ const LandingPage = ({ user }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white relative">
       <nav className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-6 flex justify-between items-center">
-          {/* Admin link moved to left */}
-          <div className="flex items-center gap-4">
-            <a 
-              href="/admin" 
-              className="text-zinc-400 hover:text-zinc-600 transition-colors text-sm"
-              data-testid="admin-link"
+        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-6 flex justify-center items-center">
+          {/* Brand name centered - aesthetic design */}
+          <div className="text-center">
+            <h1 
+              className="text-3xl md:text-4xl font-medium tracking-tight"
+              style={{ fontFamily: 'Playfair Display, serif' }}
             >
-              Admin
-            </a>
-          </div>
-          
-          {/* Brand name centered */}
-          <div className="absolute left-1/2 -translate-x-1/2 text-center">
-            <h1 className="text-2xl font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
               {config.brand_name}
             </h1>
             {config.brand_tagline && (
-              <p className="text-xs text-zinc-500 mt-0.5">{config.brand_tagline}</p>
+              <p 
+                className="text-xs md:text-sm text-zinc-400 mt-1 tracking-widest uppercase"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.2em' }}
+              >
+                {config.brand_tagline}
+              </p>
             )}
           </div>
           
-          <div className="flex gap-4">
+          {/* Get Started button - absolute right */}
+          <div className="absolute right-6 md:right-12">
             {user ? (
               <button
+                data-testid="nav-dashboard-button"
+                onClick={() => navigate('/dashboard')}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300"
+              >
+                Dashboard
+              </button>
+            ) : (
+              <button
+                data-testid="nav-login-button"
+                onClick={() => navigate('/auth')}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300"
+              >
+                Get Started
+              </button>
+            )}
+          </div>
+        </div>
+      </nav>
                 data-testid="nav-dashboard-button"
                 onClick={() => navigate('/dashboard')}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300"
