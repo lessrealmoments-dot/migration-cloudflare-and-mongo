@@ -492,6 +492,8 @@ const PublicGallery = () => {
 
         {!gallery?.is_expired && (
           <>
+            {/* Guest Upload Section - Hidden in view-only mode */}
+            {!isViewOnly && (
             <div className="mb-12">
               <button
                 data-testid="guest-upload-toggle"
