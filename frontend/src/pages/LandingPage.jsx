@@ -10,10 +10,11 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const LandingPage = ({ user }) => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [configLoaded, setConfigLoaded] = useState(false);
   const [config, setConfig] = useState({
     hero_title: 'Share Your Photography, Beautifully',
     hero_subtitle: 'Create stunning galleries, share with clients, and let them upload their own photos. The professional way to showcase and collaborate.',
-    brand_name: 'PhotoShare',
+    brand_name: '',  // Start empty to prevent flash
     brand_tagline: '',
     hero_image_1: null,
     hero_image_2: null,
