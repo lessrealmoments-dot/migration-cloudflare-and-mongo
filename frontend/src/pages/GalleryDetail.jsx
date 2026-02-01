@@ -912,6 +912,14 @@ const GalleryDetail = () => {
               QR Code
             </button>
             <button
+              data-testid="embed-code-button"
+              onClick={() => setShowEmbedModal(true)}
+              className="border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
+            >
+              <Code className="w-4 h-4" strokeWidth={1.5} />
+              Embed
+            </button>
+            <button
               data-testid="open-share-link-button"
               onClick={openShareLink}
               className="border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
@@ -937,6 +945,15 @@ const GalleryDetail = () => {
             </button>
           </div>
         </div>
+
+        {/* Embed Code Modal */}
+        {showEmbedModal && (
+          <EmbedCodeModal
+            galleryTitle={gallery?.title || 'Gallery'}
+            shareLink={`${window.location.origin}/g/${gallery?.share_link}`}
+            onClose={() => setShowEmbedModal(false)}
+          />
+        )}
 
         {/* QR Code Modal */}
         {showQRCode && (
