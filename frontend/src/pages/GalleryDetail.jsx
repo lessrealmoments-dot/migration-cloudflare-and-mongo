@@ -939,10 +939,20 @@ const GalleryDetail = () => {
             <button
               data-testid="download-all-button"
               onClick={handleDownloadAll}
-              className="border border-green-300 bg-white hover:bg-green-50 text-green-700 h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
+              disabled={isPreparingDownload}
+              className="border border-green-300 bg-white hover:bg-green-50 text-green-700 h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2 disabled:opacity-70"
             >
-              <Download className="w-4 h-4" strokeWidth={1.5} />
-              Download All
+              {isPreparingDownload ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Preparing...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" strokeWidth={1.5} />
+                  Download All
+                </>
+              )}
             </button>
             <button
               data-testid="delete-gallery-button"
