@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { ArrowLeft, Upload, Trash2, Copy, ExternalLink, Lock, X, Plus, Image as ImageIcon, AlertTriangle, Cloud, CloudOff, Check, Loader2, RefreshCw, CheckCircle, AlertCircle, Download, Package, Settings2, QrCode, Star, EyeOff, Eye, GripVertical, CheckSquare, Square, FolderInput, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Upload, Trash2, Copy, ExternalLink, Lock, X, Plus, Image as ImageIcon, AlertTriangle, Cloud, CloudOff, Check, Loader2, RefreshCw, CheckCircle, AlertCircle, Download, Package, Settings2, QrCode, Star, EyeOff, Eye, GripVertical, CheckSquare, Square, FolderInput, ChevronDown, ChevronUp, Code } from 'lucide-react';
 import { themes } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 import OptimizedImage from '@/components/OptimizedImage';
 import CoverPhotoEditor from '@/components/CoverPhotoEditor';
+import EmbedCodeModal from '@/components/EmbedCodeModal';
 import { QRCodeSVG } from 'qrcode.react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
