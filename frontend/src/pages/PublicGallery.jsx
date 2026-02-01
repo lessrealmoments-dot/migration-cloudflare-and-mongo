@@ -271,6 +271,9 @@ const PublicGallery = () => {
 
   const handleDownloadAll = async (e) => {
     e.preventDefault();
+    if (isDownloadingAll) return; // Prevent double-click
+    
+    setIsDownloadingAll(true);
     
     try {
       const response = await axios.post(
@@ -280,6 +283,12 @@ const PublicGallery = () => {
           responseType: 'blob',
           headers: {
             'Content-Type': 'application/json'
+          },
+          onDownloadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            if (percentCompleted < 100) {
+              toast.loading(`Downloading... ${percentCompleted}%`, { id: 'download-all' });
+            }
           }
         }
       );
@@ -310,18 +319,20 @@ const PublicGallery = () => {
         window.URL.revokeObjectURL(url);
       }, 100);
       
-      toast.success('All photos downloaded!');
+      toast.success('All photos downloaded!', { id: 'download-all' });
       setShowDownloadAllModal(false);
       setDownloadAllPassword('');
     } catch (error) {
       console.error('Download all error:', error);
       if (error.response?.status === 401) {
-        toast.error('Invalid download password');
+        toast.error('Invalid download password', { id: 'download-all' });
       } else if (error.response?.status === 403) {
-        toast.error('Download all is not enabled for this gallery');
+        toast.error('Download all is not enabled for this gallery', { id: 'download-all' });
       } else {
-        toast.error('Download failed. Please try again.');
+        toast.error('Download failed. Please try again.', { id: 'download-all' });
       }
+    } finally {
+      setIsDownloadingAll(false);
     }
   };
 
