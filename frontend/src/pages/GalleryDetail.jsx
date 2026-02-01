@@ -73,6 +73,10 @@ const GalleryDetail = () => {
   // Drag reorder state
   const [draggedPhoto, setDraggedPhoto] = useState(null);
   const [reorderMode, setReorderMode] = useState(false);
+  // Guest photos multi-select state
+  const [guestSelectMode, setGuestSelectMode] = useState(false);
+  const [selectedGuestPhotos, setSelectedGuestPhotos] = useState(new Set());
+  const [guestBulkActionLoading, setGuestBulkActionLoading] = useState(false);
 
   // Toggle photo selection
   const togglePhotoSelection = (photoId) => {
