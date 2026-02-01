@@ -515,6 +515,7 @@ class LandingPageConfig(BaseModel):
     hero_subtitle: str = "Create stunning galleries, share with clients, and let them upload their own photos. The professional way to showcase and collaborate."
     brand_name: str = "PhotoShare"
     brand_tagline: Optional[str] = None  # e.g., "by Less Real Moments"
+    favicon_url: Optional[str] = None  # Custom favicon URL
     hero_image_1: Optional[str] = None
     hero_image_2: Optional[str] = None
     hero_image_3: Optional[str] = None
