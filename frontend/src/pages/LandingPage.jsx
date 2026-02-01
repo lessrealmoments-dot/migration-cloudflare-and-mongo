@@ -103,9 +103,9 @@ const LandingPage = ({ user }) => {
   return (
     <div className="min-h-screen bg-white relative">
       <nav className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-6 flex justify-center items-center">
-          {/* Brand name centered - aesthetic design */}
-          <div className="text-center">
+        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-6 flex justify-between items-center">
+          {/* Brand name on left - premium look */}
+          <div className="text-left">
             {/* Smart brand name parsing - if contains " by " and no tagline, split it */}
             {(() => {
               let brandMain = config.brand_name;
@@ -121,15 +121,15 @@ const LandingPage = ({ user }) => {
               return (
                 <>
                   <h1 
-                    className="text-3xl md:text-4xl font-medium tracking-tight"
+                    className="text-2xl md:text-3xl font-medium tracking-tight"
                     style={{ fontFamily: 'Playfair Display, serif' }}
                   >
                     {brandMain}
                   </h1>
                   {tagline && (
                     <p 
-                      className="text-xs md:text-sm text-zinc-400 mt-1 tracking-widest uppercase"
-                      style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.15em' }}
+                      className="text-[10px] md:text-xs text-zinc-400 mt-0.5 tracking-widest uppercase"
+                      style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.12em' }}
                     >
                       {tagline}
                     </p>
@@ -139,13 +139,13 @@ const LandingPage = ({ user }) => {
             })()}
           </div>
           
-          {/* Get Started button - absolute right */}
-          <div className="absolute right-6 md:right-12">
+          {/* Get Started button on right */}
+          <div>
             {user ? (
               <button
                 data-testid="nav-dashboard-button"
                 onClick={() => navigate('/dashboard')}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 md:px-8 rounded-sm font-medium tracking-wide transition-all duration-300 text-sm md:text-base"
               >
                 Dashboard
               </button>
@@ -153,7 +153,7 @@ const LandingPage = ({ user }) => {
               <button
                 data-testid="nav-login-button"
                 onClick={() => navigate('/auth')}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 md:px-8 rounded-sm font-medium tracking-wide transition-all duration-300 text-sm md:text-base"
               >
                 Get Started
               </button>
