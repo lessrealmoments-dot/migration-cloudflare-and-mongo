@@ -615,6 +615,11 @@ async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(sec
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication")
 
+@api_router.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "service": "photoshare-api"}
+
 @api_router.post("/auth/register", response_model=Token)
 async def register(user_data: UserRegister):
     existing = await db.users.find_one({"email": user_data.email}, {"_id": 0})
