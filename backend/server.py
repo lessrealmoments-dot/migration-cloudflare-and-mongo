@@ -1859,11 +1859,14 @@ async def get_gallery_opengraph(share_link: str, request: Request):
     # Get photo count
     photo_count = await db.photos.count_documents({"gallery_id": gallery["id"]})
     
-    # Build the frontend URL
+    # Build the frontend URL - ensure HTTPS for social media
     frontend_url = str(request.base_url).rstrip('/')
     # Remove /api if present (we want the frontend URL)
     if '/api' in frontend_url:
         frontend_url = frontend_url.replace('/api', '')
+    # Force HTTPS for production URLs
+    if 'localhost' not in frontend_url and frontend_url.startswith('http://'):
+        frontend_url = frontend_url.replace('http://', 'https://')
     gallery_url = f"{frontend_url}/g/{share_link}"
     
     # Get cover image or first photo as preview image
