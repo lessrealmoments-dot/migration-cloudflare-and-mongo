@@ -166,68 +166,76 @@ const PublicGallery = () => {
     // Initialize progress tracking for each file
     const initialProgress = filesToUpload.map(file => ({
       name: file.name,
-      status: 'uploading',
+      status: 'pending',
       progress: 0
     }));
     setUploadProgress(initialProgress);
 
-    const results = await Promise.allSettled(
-      filesToUpload.map(async (file, index) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        if (password) {
-          formData.append('password', password);
-        }
-        
-        try {
-          const response = await axios.post(
-            `${API}/public/gallery/${shareLink}/upload`,
-            formData,
-            {
-              headers: { 'Content-Type': 'multipart/form-data' },
-              onUploadProgress: (progressEvent) => {
-                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                setUploadProgress(prev => prev.map((item, i) => 
-                  i === index ? { ...item, progress: percentCompleted } : item
-                ));
-              }
+    // Sequential upload - one file at a time
+    let successCount = 0;
+    let failCount = 0;
+    let duplicateCount = 0;
+
+    for (let index = 0; index < filesToUpload.length; index++) {
+      const file = filesToUpload[index];
+      
+      // Update status to uploading
+      setUploadProgress(prev => prev.map((item, i) => 
+        i === index ? { ...item, status: 'uploading' } : item
+      ));
+
+      const formData = new FormData();
+      formData.append('file', file);
+      if (password) {
+        formData.append('password', password);
+      }
+      
+      try {
+        await axios.post(
+          `${API}/public/gallery/${shareLink}/upload`,
+          formData,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setUploadProgress(prev => prev.map((item, i) => 
+                i === index ? { ...item, progress: percentCompleted } : item
+              ));
             }
-          );
-          
-          // Mark as success
-          setUploadProgress(prev => prev.map((item, i) => 
-            i === index ? { ...item, status: 'success', progress: 100 } : item
-          ));
-          
-          return response;
-        } catch (error) {
-          // Mark as error with message
-          const errorMsg = error.response?.status === 409 ? 'Already uploaded' : 'Failed';
-          setUploadProgress(prev => prev.map((item, i) => 
-            i === index ? { ...item, status: 'error', errorMsg } : item
-          ));
-          throw error;
+          }
+        );
+        
+        // Mark as success
+        setUploadProgress(prev => prev.map((item, i) => 
+          i === index ? { ...item, status: 'success', progress: 100 } : item
+        ));
+        successCount++;
+        
+      } catch (error) {
+        // Mark as error with message
+        const isDuplicate = error.response?.status === 409;
+        const errorMsg = isDuplicate ? 'Already uploaded' : 'Failed';
+        setUploadProgress(prev => prev.map((item, i) => 
+          i === index ? { ...item, status: 'error', errorMsg } : item
+        ));
+        
+        if (isDuplicate) {
+          duplicateCount++;
         }
-      })
-    );
+        failCount++;
+      }
+    }
 
-    const successCount = results.filter(r => r.status === 'fulfilled').length;
-    const failCount = results.filter(r => r.status === 'rejected').length;
-
+    // Show summary
     if (successCount > 0) {
       toast.success(`${successCount} photo(s) uploaded successfully!`);
       fetchPhotos();
     }
-    if (failCount > 0) {
-      const duplicateCount = results.filter(r => 
-        r.status === 'rejected' && r.reason?.response?.status === 409
-      ).length;
-      if (duplicateCount > 0) {
-        toast.warning(`${duplicateCount} duplicate file(s) skipped`);
-      }
-      if (failCount - duplicateCount > 0) {
-        toast.error(`${failCount - duplicateCount} photo(s) failed to upload`);
-      }
+    if (duplicateCount > 0) {
+      toast.warning(`${duplicateCount} duplicate file(s) skipped`);
+    }
+    if (failCount - duplicateCount > 0) {
+      toast.error(`${failCount - duplicateCount} photo(s) failed to upload`);
     }
 
     // Clear progress after a delay
@@ -235,7 +243,7 @@ const PublicGallery = () => {
       setUploadProgress([]);
       setUploading(false);
     }, 2000);
-  }, [shareLink, password, authenticated, gallery]);
+  }, [shareLink, password, authenticated, gallery, fetchPhotos]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
