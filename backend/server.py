@@ -1256,6 +1256,39 @@ async def upload_landing_image(
     
     return {"success": True, "url": image_url, "slot": image_slot}
 
+@api_router.post("/admin/favicon")
+async def upload_favicon(
+    file: UploadFile = File(...),
+    admin: dict = Depends(get_admin_user)
+):
+    """Upload a custom favicon for the site"""
+    # Validate file type - favicons can be ico, png, svg, or jpg
+    allowed_types = ['image/x-icon', 'image/vnd.microsoft.icon', 'image/png', 'image/svg+xml', 'image/jpeg', 'image/jpg', 'image/gif']
+    if not file.content_type or file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Allowed: ICO, PNG, SVG, JPG, GIF")
+    
+    # Generate unique filename
+    file_ext = file.filename.split('.')[-1].lower() if '.' in file.filename else 'png'
+    if file_ext not in ['ico', 'png', 'svg', 'jpg', 'jpeg', 'gif']:
+        file_ext = 'png'
+    filename = f"favicon_{uuid.uuid4().hex[:8]}.{file_ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    # Save the file
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    # Update landing config with new favicon URL
+    favicon_url = f"/api/photos/serve/{filename}"
+    
+    await db.site_config.update_one(
+        {"type": "landing"},
+        {"$set": {"favicon_url": favicon_url}},
+        upsert=True
+    )
+    
+    return {"success": True, "url": favicon_url}
+
 @api_router.get("/public/landing-config", response_model=LandingPageConfig)
 async def get_public_landing_config():
     """Get landing page config for public display"""
