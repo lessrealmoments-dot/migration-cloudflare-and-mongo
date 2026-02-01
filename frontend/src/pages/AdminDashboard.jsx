@@ -747,6 +747,68 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* Favicon Upload */}
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">Site Favicon (Browser Tab Icon)</label>
+                <p className="text-xs text-zinc-500 mb-3">Upload your logo to display in the browser tab. Recommended: 32x32 or 64x64 PNG/ICO file.</p>
+                
+                <div className="flex items-center gap-4">
+                  {landingConfig.favicon_url ? (
+                    <div className="relative">
+                      <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center border border-zinc-600 overflow-hidden">
+                        <img 
+                          src={`${BACKEND_URL}${landingConfig.favicon_url}`} 
+                          alt="Current favicon" 
+                          className="w-full h-full object-contain p-2"
+                        />
+                      </div>
+                      <button
+                        onClick={() => setLandingConfig({ ...landingConfig, favicon_url: '' })}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                        title="Remove favicon"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-600">
+                      <Image className="w-6 h-6 text-zinc-500" />
+                    </div>
+                  )}
+                  
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      id="favicon-upload"
+                      accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/jpeg,image/gif,.ico"
+                      className="hidden"
+                      onChange={(e) => handleFaviconUpload(e.target.files[0])}
+                      data-testid="favicon-upload-input"
+                    />
+                    <label
+                      htmlFor="favicon-upload"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-sm cursor-pointer transition-colors ${
+                        uploadingImage === 'favicon' 
+                          ? 'bg-zinc-600 text-zinc-400 cursor-not-allowed'
+                          : 'bg-zinc-700 hover:bg-zinc-600 text-white'
+                      }`}
+                    >
+                      {uploadingImage === 'favicon' ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          {landingConfig.favicon_url ? 'Change Favicon' : 'Upload Favicon'}
+                        </>
+                      )}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm text-zinc-400 mb-2">Hero Title</label>
                 <input
