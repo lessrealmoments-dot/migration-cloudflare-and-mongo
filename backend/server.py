@@ -85,6 +85,63 @@ GALLERY_EXPIRATION_DAYS = 180
 # Gallery edit lock after 7 days from creation
 GALLERY_EDIT_LOCK_DAYS = 7
 
+# Image optimization settings
+THUMBNAIL_SIZES = {
+    'small': (300, 300),    # For grid thumbnails
+    'medium': (800, 800),   # For gallery view
+    'large': (1600, 1600),  # For lightbox
+}
+JPEG_QUALITY = 85  # Balance between quality and size
+THUMBNAILS_DIR = UPLOAD_DIR / 'thumbnails'
+THUMBNAILS_DIR.mkdir(exist_ok=True)
+
+def generate_thumbnail(source_path: Path, photo_id: str, size_name: str = 'medium') -> Optional[str]:
+    """Generate optimized thumbnail from source image"""
+    try:
+        size = THUMBNAIL_SIZES.get(size_name, THUMBNAIL_SIZES['medium'])
+        thumb_filename = f"{photo_id}_{size_name}.jpg"
+        thumb_path = THUMBNAILS_DIR / thumb_filename
+        
+        with Image.open(source_path) as img:
+            # Convert to RGB if necessary (handles PNG with transparency, HEIC, etc.)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Preserve aspect ratio
+            img.thumbnail(size, Image.Resampling.LANCZOS)
+            
+            # Auto-rotate based on EXIF
+            try:
+                from PIL import ExifTags
+                for orientation in ExifTags.TAGS.keys():
+                    if ExifTags.TAGS[orientation] == 'Orientation':
+                        break
+                exif = img._getexif()
+                if exif:
+                    orientation_value = exif.get(orientation)
+                    if orientation_value == 3:
+                        img = img.rotate(180, expand=True)
+                    elif orientation_value == 6:
+                        img = img.rotate(270, expand=True)
+                    elif orientation_value == 8:
+                        img = img.rotate(90, expand=True)
+            except (AttributeError, KeyError, IndexError):
+                pass
+            
+            # Save optimized JPEG
+            img.save(thumb_path, 'JPEG', quality=JPEG_QUALITY, optimize=True)
+        
+        return f"/api/photos/thumb/{thumb_filename}"
+    except Exception as e:
+        logger.error(f"Error generating thumbnail for {photo_id}: {e}")
+        return None
+
 # Google Drive OAuth configuration
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
