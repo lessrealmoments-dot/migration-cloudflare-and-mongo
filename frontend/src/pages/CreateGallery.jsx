@@ -4,12 +4,14 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { themes } from '@/themes';
+import useBrandConfig from '../hooks/useBrandConfig';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const CreateGallery = () => {
   const navigate = useNavigate();
+  const brandConfig = useBrandConfig();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
