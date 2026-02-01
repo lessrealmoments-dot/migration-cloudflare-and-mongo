@@ -135,11 +135,6 @@ const EmbedCodeModal = ({ galleryTitle, shareLink, onClose }) => {
                   display: 'block'
                 }}
               />
-                  <Code className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Gallery Preview</p>
-                  <p className="text-xs opacity-75">{galleryTitle}</p>
-                </div>
-              </div>
             </div>
           </div>
 
