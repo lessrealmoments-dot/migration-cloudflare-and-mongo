@@ -456,8 +456,17 @@ class LandingPageConfig(BaseModel):
     hero_title: str = "Share Your Photography, Beautifully"
     hero_subtitle: str = "Create stunning galleries, share with clients, and let them upload their own photos. The professional way to showcase and collaborate."
     brand_name: str = "PhotoShare"
+    brand_tagline: Optional[str] = None  # e.g., "by Less Real Moments"
     hero_image_1: Optional[str] = None
     hero_image_2: Optional[str] = None
+    hero_image_3: Optional[str] = None
+    hero_image_4: Optional[str] = None
+    hero_image_5: Optional[str] = None
+    hero_image_6: Optional[str] = None
+    hero_image_7: Optional[str] = None
+    hero_image_8: Optional[str] = None
+    hero_image_9: Optional[str] = None
+    hero_image_10: Optional[str] = None
 
 class GalleryCreate(BaseModel):
     title: str
