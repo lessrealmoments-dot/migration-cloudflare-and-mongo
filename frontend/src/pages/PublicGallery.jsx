@@ -925,7 +925,7 @@ const PublicGallery = () => {
 
       <footer className="border-t py-8 mt-12" style={{ borderColor: currentTheme.colors.accent }}>
         <div className="max-w-screen-2xl mx-auto px-6 md:px-12 text-center text-sm" style={{ color: currentTheme.colors.textLight }}>
-          <p>© 2024 PhotoShare. Built for photographers.</p>
+          <p>© {new Date().getFullYear()} {brandConfig.brand_name || 'PhotoShare'}. Built for photographers.</p>
         </div>
       </footer>
     </div>
