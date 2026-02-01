@@ -3,6 +3,7 @@ import { Loader2, ImageOff } from 'lucide-react';
 
 const OptimizedImage = ({ 
   src, 
+  thumbnailSrc = null,  // Optimized thumbnail URL
   alt = '', 
   className = '', 
   style = {},
@@ -10,20 +11,37 @@ const OptimizedImage = ({
   fallback = null,
   showLoader = true,
   retryCount = 3,
-  retryDelay = 1000
+  retryDelay = 1000,
+  priority = false  // Load immediately without lazy loading
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [currentSrc, setCurrentSrc] = useState(null);
+  const [currentSrc, setCurrentSrc] = useState(priority ? (thumbnailSrc || src) : null);
   const [retries, setRetries] = useState(0);
+  const [useThumbnail, setUseThumbnail] = useState(!!thumbnailSrc);
   const imgRef = useRef(null);
   const observerRef = useRef(null);
+
+  // Get the appropriate source (thumbnail or original)
+  const getImageSrc = () => {
+    if (useThumbnail && thumbnailSrc) {
+      return thumbnailSrc;
+    }
+    return src;
+  };
 
   useEffect(() => {
     // Reset state when src changes
     setLoading(true);
     setError(false);
     setRetries(0);
+    setUseThumbnail(!!thumbnailSrc);
+    
+    if (priority) {
+      setCurrentSrc(thumbnailSrc || src);
+      return;
+    }
+    
     setCurrentSrc(null);
 
     // Use Intersection Observer for lazy loading
@@ -31,13 +49,13 @@ const OptimizedImage = ({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            setCurrentSrc(src);
+            setCurrentSrc(thumbnailSrc || src);
             observer.disconnect();
           }
         });
       },
       {
-        rootMargin: '100px', // Start loading 100px before entering viewport
+        rootMargin: '200px', // Start loading 200px before entering viewport
         threshold: 0.01
       }
     );
@@ -53,7 +71,7 @@ const OptimizedImage = ({
         observerRef.current.disconnect();
       }
     };
-  }, [src]);
+  }, [src, thumbnailSrc, priority]);
 
   const handleLoad = () => {
     setLoading(false);
@@ -61,12 +79,20 @@ const OptimizedImage = ({
   };
 
   const handleError = () => {
+    // If thumbnail fails, try original
+    if (useThumbnail && thumbnailSrc && currentSrc === thumbnailSrc) {
+      setUseThumbnail(false);
+      setCurrentSrc(src);
+      return;
+    }
+    
     if (retries < retryCount) {
       // Retry loading after delay
       setTimeout(() => {
         setRetries(prev => prev + 1);
         // Force reload by adding cache-busting parameter
-        setCurrentSrc(`${src}${src.includes('?') ? '&' : '?'}retry=${retries + 1}`);
+        const baseSrc = useThumbnail && thumbnailSrc ? thumbnailSrc : src;
+        setCurrentSrc(`${baseSrc}${baseSrc.includes('?') ? '&' : '?'}retry=${retries + 1}`);
       }, retryDelay * (retries + 1));
     } else {
       setLoading(false);
@@ -105,7 +131,7 @@ const OptimizedImage = ({
           onLoad={handleLoad}
           onError={handleError}
           onClick={onClick}
-          loading="lazy"
+          loading={priority ? 'eager' : 'lazy'}
           decoding="async"
         />
       )}
