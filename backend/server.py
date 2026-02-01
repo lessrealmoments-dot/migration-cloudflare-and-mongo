@@ -1843,6 +1843,85 @@ async def bulk_photo_action(gallery_id: str, data: BulkPhotoAction, current_user
     
     return {"message": f"Action '{data.action}' applied to {affected_count} photos", "affected_count": affected_count}
 
+@api_router.get("/og/gallery/{share_link}", response_class=HTMLResponse)
+async def get_gallery_opengraph(share_link: str, request: Request):
+    """
+    Serve Open Graph meta tags for social media preview.
+    Social crawlers (Facebook, Twitter, WhatsApp, etc.) will fetch this to show rich previews.
+    """
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
+    display_name = photographer.get("business_name") or photographer.get("name", "Photographer") if photographer else "Photographer"
+    
+    # Get photo count
+    photo_count = await db.photos.count_documents({"gallery_id": gallery["id"]})
+    
+    # Build the frontend URL
+    frontend_url = str(request.base_url).rstrip('/')
+    # Remove /api if present (we want the frontend URL)
+    if '/api' in frontend_url:
+        frontend_url = frontend_url.replace('/api', '')
+    gallery_url = f"{frontend_url}/g/{share_link}"
+    
+    # Get cover image or first photo as preview image
+    og_image = None
+    if gallery.get("cover_photo_url"):
+        og_image = f"{frontend_url}{gallery['cover_photo_url']}"
+    else:
+        # Try to get the first photo
+        first_photo = await db.photos.find_one(
+            {"gallery_id": gallery["id"], "is_flagged": {"$ne": True}},
+            {"_id": 0, "url": 1}
+        )
+        if first_photo and first_photo.get("url"):
+            og_image = f"{frontend_url}{first_photo['url']}"
+    
+    # Build description
+    description = gallery.get("description") or f"View {photo_count} photos from {display_name}"
+    title = gallery.get("title", "Photo Gallery")
+    
+    # Generate HTML with Open Graph meta tags
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary Meta Tags -->
+    <title>{title} | PhotoShare</title>
+    <meta name="title" content="{title} by {display_name}">
+    <meta name="description" content="{description}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{gallery_url}">
+    <meta property="og:title" content="{title}">
+    <meta property="og:description" content="{description}">
+    <meta property="og:site_name" content="PhotoShare">
+    {f'<meta property="og:image" content="{og_image}">' if og_image else ''}
+    {f'<meta property="og:image:width" content="1200">' if og_image else ''}
+    {f'<meta property="og:image:height" content="630">' if og_image else ''}
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{gallery_url}">
+    <meta property="twitter:title" content="{title}">
+    <meta property="twitter:description" content="{description}">
+    {f'<meta property="twitter:image" content="{og_image}">' if og_image else ''}
+    
+    <!-- Redirect to actual gallery page -->
+    <meta http-equiv="refresh" content="0;url={gallery_url}">
+</head>
+<body>
+    <p>Redirecting to <a href="{gallery_url}">{title}</a>...</p>
+</body>
+</html>"""
+    
+    return HTMLResponse(content=html)
+
 @api_router.get("/public/gallery/{share_link}", response_model=PublicGallery)
 async def get_public_gallery(share_link: str):
     gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
