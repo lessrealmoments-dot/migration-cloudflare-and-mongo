@@ -583,6 +583,8 @@ class Photo(BaseModel):
     filename: str
     original_filename: Optional[str] = None
     url: str
+    thumbnail_url: Optional[str] = None  # Small thumbnail for grids
+    thumbnail_medium_url: Optional[str] = None  # Medium thumbnail for gallery view
     uploaded_by: str
     section_id: Optional[str] = None
     uploaded_at: str
