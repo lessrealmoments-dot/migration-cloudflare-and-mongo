@@ -105,6 +105,63 @@ const GalleryDetail = () => {
     setSelectMode(false);
   };
 
+  // Guest photos selection handlers
+  const toggleGuestPhotoSelection = (photoId) => {
+    setSelectedGuestPhotos(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(photoId)) {
+        newSet.delete(photoId);
+      } else {
+        newSet.add(photoId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllGuestPhotos = () => {
+    const guestPhotos = getGuestPhotos();
+    setSelectedGuestPhotos(new Set(guestPhotos.map(p => p.id)));
+  };
+
+  const clearGuestSelection = () => {
+    setSelectedGuestPhotos(new Set());
+    setGuestSelectMode(false);
+  };
+
+  // Guest bulk action handler (hide or delete)
+  const handleGuestBulkAction = async (action) => {
+    if (selectedGuestPhotos.size === 0) {
+      toast.error('No guest photos selected');
+      return;
+    }
+
+    const confirmMsg = action === 'delete' 
+      ? `Are you sure you want to delete ${selectedGuestPhotos.size} guest photo(s)? This cannot be undone.`
+      : `Hide ${selectedGuestPhotos.size} guest photo(s) from the public gallery?`;
+    
+    if (!window.confirm(confirmMsg)) return;
+
+    setGuestBulkActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/galleries/${id}/photos/bulk-action`, {
+        photo_ids: Array.from(selectedGuestPhotos),
+        action: action
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const actionText = action === 'delete' ? 'deleted' : 'hidden';
+      toast.success(`${selectedGuestPhotos.size} guest photo(s) ${actionText}`);
+      clearGuestSelection();
+      fetchGalleryData();
+    } catch (error) {
+      toast.error(`Failed to ${action} photos`);
+    } finally {
+      setGuestBulkActionLoading(false);
+    }
+  };
+
   // Bulk action handler
   const handleBulkAction = async (action, sectionId = null) => {
     if (selectedPhotos.size === 0) {
