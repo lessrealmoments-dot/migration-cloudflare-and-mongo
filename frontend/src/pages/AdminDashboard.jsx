@@ -42,6 +42,7 @@ const AdminDashboard = () => {
     hero_subtitle: '',
     brand_name: 'PhotoShare',
     brand_tagline: '',
+    favicon_url: '',
     hero_image_1: '',
     hero_image_2: '',
     hero_image_3: '',
