@@ -621,7 +621,7 @@ const PublicGallery = () => {
                     <p className="text-base font-light text-zinc-600 mb-2">
                       Drag & drop your photos here, or click to select
                     </p>
-                    <p className="text-sm text-zinc-500">Support for multiple images</p>
+                    <p className="text-sm text-zinc-500">Max 10 photos at a time • JPEG, PNG, GIF, WebP</p>
                   </>
                 )}
               </div>
