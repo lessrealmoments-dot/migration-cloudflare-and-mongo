@@ -10,13 +10,14 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 
 ---
 
-## Implemented Features (as of Jan 31, 2026)
+## Implemented Features (as of Feb 1, 2026)
 
 ### Gallery Management
 - [x] Create galleries with titles, descriptions, passwords
 - [x] Set cover photos for galleries
 - [x] **Cover Photo Editor** - zoom/pan/crop functionality with touch support
 - [x] **QR Code Generator** - downloadable PNG for easy sharing
+- [x] **Album Embed** - Generate iframe embed code for external websites (NEW)
 - [x] Create and manage sections within galleries
 - [x] Editable event title and event date
 - [x] 15 gallery themes (elegant + fun)
@@ -25,6 +26,14 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Password-protected "Download All"
 - [x] Delete gallery with double-confirmation
 - [x] Upload progress UI for photographers
+
+### Social Sharing (NEW - Feb 1, 2026)
+- [x] **Floating Share Panel** - appears on public galleries
+- [x] **Facebook Sharing** - opens share dialog
+- [x] **X (Twitter) Sharing** - opens tweet dialog
+- [x] **WhatsApp Sharing** - opens message dialog
+- [x] **Copy Link** - copies view-only URL to clipboard
+- [x] **View-Only Mode** - shared links disable guest uploads (?view=1)
 
 ### High Concurrency Optimization
 - [x] **Database Indexes** - Optimized indexes on users, galleries, photos collections
@@ -40,7 +49,7 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Upload animations and progress indicators
 - [x] Full-screen lightbox viewer
 - [x] Guest photo moderation by photographer
-- [x] **Photo Reordering** - Drag & drop to rearrange photo sequence (FIXED Jan 31, 2026)
+- [x] **Photo Reordering** - Drag & drop to rearrange photo sequence
 - [x] **Multi-Select Actions**:
   - Select/Select All photos
   - Bulk Delete
@@ -61,7 +70,8 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Manage photographer gallery limits
 - [x] Storage quota management (100MB to 10GB)
 - [x] Landing page content customization
-- [x] Landing page image uploads
+- [x] Landing page image uploads (up to 10 carousel images)
+- [x] **Brand Tagline** - separate field for "by Less Real Moments" style text (NEW)
 - [x] Site-wide analytics
 - [x] **Enhanced Admin Panel**:
   - Search/filter photographers by name, email
@@ -75,13 +85,19 @@ Build a website similar to Pic-time.com where photographers can create photo gal
   - Access photographer galleries in controlled admin view
   - View and flag photos only (no edit/download)
   - Bulk photo selection
-  - **Single photo flagging via flag icon** (FIXED Jan 31, 2026)
+  - Single photo flagging via flag icon
   - Flag preview with confirmation before finalizing
   - Deselect photos in preview before confirming
   - Flagged photos auto-hidden from public gallery
   - Visual indicators for flagged photos (red overlay)
   - Filter by All/Flagged/Unflagged
   - Undo/restore flagged photos
+
+### Landing Page Improvements (NEW - Feb 1, 2026)
+- [x] **Admin Link Moved** - Now on left side of navigation (avoids Emergent logo)
+- [x] **Brand Layout** - Brand name centered with optional tagline below
+- [x] **Image Carousel** - Up to 10 images with auto-rotate and manual controls
+- [x] **No Image Flash** - Images load without showing placeholder first
 
 ### Auto-Delete System
 - [x] Galleries auto-delete after 6 months (180 days)
@@ -118,12 +134,10 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 ### P0 - Admin Single Photo Flagging (FIXED)
 - **Issue**: Clicking flag icon on a single photo only selected it instead of opening the flag modal
 - **Fix**: Added `handleSingleFlag` function and passed `onSingleFlag` prop to `AdminPhotoItem` component
-- **Files**: `/app/frontend/src/pages/AdminGalleryReview.jsx`
 
 ### P1 - Photo Reordering (FIXED)
 - **Issue**: Drag-and-drop reordering didn't visually update or persist
 - **Fix**: Fixed filtering logic in `handleDrop` to only include photographer photos, and added sorting by `order` field in display functions
-- **Files**: `/app/frontend/src/pages/GalleryDetail.jsx`
 
 ---
 
@@ -139,9 +153,7 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - More detailed view tracking (unique visitors, time on page)
 
 ### P3 (Low Priority)
-- Social sharing buttons
 - Watermark options for photos
-- Guest comments on photos
 - Publish Google OAuth app (remove "unverified app" warning)
 - More seasonal/event-based gallery themes
 - Frontend component refactoring (GalleryDetail, AdminDashboard)
