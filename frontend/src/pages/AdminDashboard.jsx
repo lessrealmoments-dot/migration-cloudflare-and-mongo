@@ -41,13 +41,21 @@ const AdminDashboard = () => {
     hero_title: '',
     hero_subtitle: '',
     brand_name: 'PhotoShare',
+    brand_tagline: '',
     hero_image_1: '',
-    hero_image_2: ''
+    hero_image_2: '',
+    hero_image_3: '',
+    hero_image_4: '',
+    hero_image_5: '',
+    hero_image_6: '',
+    hero_image_7: '',
+    hero_image_8: '',
+    hero_image_9: '',
+    hero_image_10: ''
   });
   const [savingConfig, setSavingConfig] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(null);
-  const fileInput1Ref = useRef(null);
-  const fileInput2Ref = useRef(null);
+  const fileInputRefs = useRef({});
   // New state for enhanced admin features
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
