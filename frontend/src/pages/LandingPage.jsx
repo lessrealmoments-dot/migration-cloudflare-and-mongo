@@ -55,6 +55,10 @@ const LandingPage = ({ user }) => {
         }));
       } catch (error) {
         console.error('Using default landing config');
+        // Set fallback brand name on error
+        setConfig(prev => ({ ...prev, brand_name: 'PhotoShare' }));
+      } finally {
+        setConfigLoaded(true);
       }
     };
     fetchConfig();
