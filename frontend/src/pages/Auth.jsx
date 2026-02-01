@@ -107,7 +107,7 @@ const Auth = ({ setUser }) => {
 
             <form onSubmit={handleForgotPassword} className="space-y-6">
               <div className="bg-amber-50 border border-amber-200 rounded-sm p-4 text-sm text-amber-800">
-                <strong>Warning:</strong> This will replace your current password with a new randomly generated one. Only use this if you've forgotten your password.
+                <strong>Warning:</strong> This will replace your current password with a new randomly generated one. Only use this if you&apos;ve forgotten your password.
               </div>
               
               <div>
