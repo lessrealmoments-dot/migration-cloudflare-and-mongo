@@ -917,7 +917,7 @@ const GalleryDetail = () => {
             style={{ fontFamily: 'Playfair Display, serif' }}
             onClick={() => navigate('/dashboard')}
           >
-            PhotoShare
+            {brandConfig.brand_name || 'PhotoShare'}
           </h1>
         </div>
       </nav>
