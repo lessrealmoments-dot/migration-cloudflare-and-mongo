@@ -61,6 +61,8 @@ const GalleryDetail = () => {
   // QR Code state
   const [showQRCode, setShowQRCode] = useState(false);
   const qrRef = useRef(null);
+  // Embed code state
+  const [showEmbedModal, setShowEmbedModal] = useState(false);
   // Multi-select state
   const [selectMode, setSelectMode] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState(new Set());
