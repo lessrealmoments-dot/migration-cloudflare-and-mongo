@@ -593,6 +593,7 @@ const PublicGallery = () => {
             </div>
           )}
         </div>
+            )}
 
         <div>
           <h3
