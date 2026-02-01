@@ -146,6 +146,13 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - **Auto-apply**: Favicon updates immediately across the site after upload
 - **Backend**: `/api/admin/favicon` endpoint for upload
 
+### Dynamic Brand Name (NEW)
+- **Feature**: Brand name from admin settings now updates across ALL pages
+- **Fix**: Eliminated flash of default "PhotoShare" before config loads
+- **Pages updated**: LandingPage, Dashboard, GalleryDetail, CreateGallery, PublicGallery
+- **Implementation**: Created `useBrandConfig` hook with memory caching
+- **Files**: `/app/frontend/src/hooks/useBrandConfig.js`
+
 ### Guest Upload Limit (NEW)
 - **Feature**: Guests can upload max 10 photos at a time
 - **Frontend**: Validation in PublicGallery.jsx prevents selecting > 10 files
