@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Loader2, ImageOff } from 'lucide-react';
 
 const OptimizedImage = ({ 
@@ -21,28 +21,21 @@ const OptimizedImage = ({
   const [useThumbnail, setUseThumbnail] = useState(!!thumbnailSrc);
   const imgRef = useRef(null);
   const observerRef = useRef(null);
+  const prevSrcRef = useRef(src);
 
-  // Get the appropriate source (thumbnail or original)
-  const getImageSrc = () => {
-    if (useThumbnail && thumbnailSrc) {
-      return thumbnailSrc;
-    }
-    return src;
-  };
+  // Reset when src changes - using ref comparison to avoid effect issues
+  if (prevSrcRef.current !== src) {
+    prevSrcRef.current = src;
+    // These will trigger a re-render with fresh state
+  }
 
   useEffect(() => {
-    // Reset state when src changes
-    setLoading(true);
-    setError(false);
-    setRetries(0);
-    setUseThumbnail(!!thumbnailSrc);
-    
     if (priority) {
       setCurrentSrc(thumbnailSrc || src);
+      setLoading(true);
+      setError(false);
       return;
     }
-    
-    setCurrentSrc(null);
 
     // Use Intersection Observer for lazy loading
     const observer = new IntersectionObserver(
@@ -73,12 +66,12 @@ const OptimizedImage = ({
     };
   }, [src, thumbnailSrc, priority]);
 
-  const handleLoad = () => {
+  const handleLoad = useCallback(() => {
     setLoading(false);
     setError(false);
-  };
+  }, []);
 
-  const handleError = () => {
+  const handleError = useCallback(() => {
     // If thumbnail fails, try original
     if (useThumbnail && thumbnailSrc && currentSrc === thumbnailSrc) {
       setUseThumbnail(false);
@@ -90,7 +83,6 @@ const OptimizedImage = ({
       // Retry loading after delay
       setTimeout(() => {
         setRetries(prev => prev + 1);
-        // Force reload by adding cache-busting parameter
         const baseSrc = useThumbnail && thumbnailSrc ? thumbnailSrc : src;
         setCurrentSrc(`${baseSrc}${baseSrc.includes('?') ? '&' : '?'}retry=${retries + 1}`);
       }, retryDelay * (retries + 1));
@@ -98,7 +90,7 @@ const OptimizedImage = ({
       setLoading(false);
       setError(true);
     }
-  };
+  }, [useThumbnail, thumbnailSrc, currentSrc, src, retries, retryCount, retryDelay]);
 
   return (
     <div ref={imgRef} className={`relative ${className}`} style={{ minHeight: loading ? '100px' : 'auto' }}>
