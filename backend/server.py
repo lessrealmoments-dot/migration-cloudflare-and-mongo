@@ -1761,6 +1761,18 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
         "uploaded_at": datetime.now(timezone.utc).isoformat()
     }
     
+    # Generate thumbnails in background (non-blocking)
+    try:
+        thumb_small = generate_thumbnail(file_path, photo_id, 'small')
+        thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
+        if thumb_small:
+            photo_doc["thumbnail_url"] = thumb_small
+        if thumb_medium:
+            photo_doc["thumbnail_medium_url"] = thumb_medium
+    except Exception as e:
+        logger.warning(f"Thumbnail generation failed for {photo_id}: {e}")
+        # Continue without thumbnails - not critical
+    
     try:
         await db.photos.insert_one(photo_doc)
     except Exception as e:
