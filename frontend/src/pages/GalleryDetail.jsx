@@ -128,18 +128,23 @@ const GalleryDetail = () => {
     setGuestSelectMode(false);
   };
 
-  // Guest bulk action handler (hide or delete)
+  // Guest bulk action handler (hide, unhide, or delete)
   const handleGuestBulkAction = async (action) => {
     if (selectedGuestPhotos.size === 0) {
       toast.error('No guest photos selected');
       return;
     }
 
-    const confirmMsg = action === 'delete' 
-      ? `Are you sure you want to delete ${selectedGuestPhotos.size} guest photo(s)? This cannot be undone.`
-      : `Hide ${selectedGuestPhotos.size} guest photo(s) from the public gallery?`;
+    let confirmMsg;
+    if (action === 'delete') {
+      confirmMsg = `Are you sure you want to delete ${selectedGuestPhotos.size} guest photo(s)? This cannot be undone.`;
+    } else if (action === 'hide') {
+      confirmMsg = `Hide ${selectedGuestPhotos.size} guest photo(s) from the public gallery?`;
+    } else if (action === 'unhide') {
+      confirmMsg = `Make ${selectedGuestPhotos.size} guest photo(s) visible in the public gallery?`;
+    }
     
-    if (!window.confirm(confirmMsg)) return;
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
 
     setGuestBulkActionLoading(true);
     try {
@@ -151,7 +156,7 @@ const GalleryDetail = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const actionText = action === 'delete' ? 'deleted' : 'hidden';
+      const actionText = action === 'delete' ? 'deleted' : action === 'hide' ? 'hidden' : 'restored';
       toast.success(`${selectedGuestPhotos.size} guest photo(s) ${actionText}`);
       clearGuestSelection();
       fetchGalleryData();
