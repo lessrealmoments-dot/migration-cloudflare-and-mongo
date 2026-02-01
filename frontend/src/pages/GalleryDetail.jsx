@@ -27,6 +27,7 @@ const formatBytes = (bytes) => {
 const GalleryDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const brandConfig = useBrandConfig();
   const [gallery, setGallery] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [sections, setSections] = useState([]);
