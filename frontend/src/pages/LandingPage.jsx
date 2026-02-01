@@ -345,7 +345,7 @@ const LandingPage = ({ user }) => {
             Ready to share your work?
           </h2>
           <p className="text-lg md:text-xl font-light leading-relaxed text-zinc-600 mb-8 max-w-2xl mx-auto">
-            Join photographers who trust PhotoShare for their client galleries.
+            Join photographers who trust {config.brand_name || 'us'} for their client galleries.
           </p>
           <button
             data-testid="cta-get-started-button"
