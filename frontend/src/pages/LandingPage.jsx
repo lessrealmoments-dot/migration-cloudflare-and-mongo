@@ -106,20 +106,37 @@ const LandingPage = ({ user }) => {
         <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-6 flex justify-center items-center">
           {/* Brand name centered - aesthetic design */}
           <div className="text-center">
-            <h1 
-              className="text-3xl md:text-4xl font-medium tracking-tight"
-              style={{ fontFamily: 'Playfair Display, serif' }}
-            >
-              {config.brand_name}
-            </h1>
-            {config.brand_tagline && (
-              <p 
-                className="text-xs md:text-sm text-zinc-400 mt-1 tracking-widest uppercase"
-                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.2em' }}
-              >
-                {config.brand_tagline}
-              </p>
-            )}
+            {/* Smart brand name parsing - if contains " by " and no tagline, split it */}
+            {(() => {
+              let brandMain = config.brand_name;
+              let tagline = config.brand_tagline;
+              
+              // Auto-split if brand_name contains " by " and no separate tagline
+              if (!tagline && config.brand_name && config.brand_name.includes(' by ')) {
+                const parts = config.brand_name.split(' by ');
+                brandMain = parts[0];
+                tagline = 'by ' + parts.slice(1).join(' by ');
+              }
+              
+              return (
+                <>
+                  <h1 
+                    className="text-3xl md:text-4xl font-medium tracking-tight"
+                    style={{ fontFamily: 'Playfair Display, serif' }}
+                  >
+                    {brandMain}
+                  </h1>
+                  {tagline && (
+                    <p 
+                      className="text-xs md:text-sm text-zinc-400 mt-1 tracking-widest uppercase"
+                      style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.15em' }}
+                    >
+                      {tagline}
+                    </p>
+                  )}
+                </>
+              );
+            })()}
           </div>
           
           {/* Get Started button - absolute right */}
