@@ -1944,7 +1944,8 @@ async def get_gallery_opengraph(share_link: str, request: Request):
     # Force HTTPS for production URLs
     if 'localhost' not in frontend_url and frontend_url.startswith('http://'):
         frontend_url = frontend_url.replace('http://', 'https://')
-    gallery_url = f"{frontend_url}/g/{share_link}"
+    # Add ?view=1 to make shared links view-only (no upload section)
+    gallery_url = f"{frontend_url}/g/{share_link}?view=1"
     
     # Get cover image or first photo as preview image
     og_image = None
