@@ -145,7 +145,7 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 
 ### P1 (High Priority)
 - Storage usage alerts/notifications when approaching quota
-- Backend refactoring (server.py is 2500+ lines - needs modularization into routes/, models/, services/)
+- ~~Backend refactoring (server.py is 2500+ lines - needs modularization)~~ → Guide created at `/app/backend/REFACTOR_GUIDE.md`
 
 ### P2 (Medium Priority)
 - Gallery templates for quick creation
@@ -157,6 +157,20 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - Publish Google OAuth app (remove "unverified app" warning)
 - More seasonal/event-based gallery themes
 - Frontend component refactoring (GalleryDetail, AdminDashboard)
+
+---
+
+## Technical Notes
+
+### Backend Structure
+- Main API: `/app/backend/server.py` (~2900 lines, 61 endpoints)
+- Refactoring guide: `/app/backend/REFACTOR_GUIDE.md`
+- Recommended modular structure documented for future work
+
+### Code Quality
+- ESLint: Minor React hooks warnings (non-blocking)
+- Python lint: Clean (fixed comparison issues)
+- Health endpoint: `/api/health` returns `{"status": "healthy"}`
 
 ---
 
