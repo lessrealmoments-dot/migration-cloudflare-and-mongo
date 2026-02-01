@@ -55,6 +55,7 @@ const GalleryDetail = () => {
   const [downloadInfo, setDownloadInfo] = useState(null);
   const [downloadingChunks, setDownloadingChunks] = useState({}); // Track which chunks are downloading
   const [downloadedChunks, setDownloadedChunks] = useState({}); // Track which chunks are done
+  const [isPreparingDownload, setIsPreparingDownload] = useState(false); // Loading state for download button
   // Cover photo editor state
   const [showCoverEditor, setShowCoverEditor] = useState(false);
   const [coverPhotoPosition, setCoverPhotoPosition] = useState({ scale: 1, positionX: 50, positionY: 50 });
