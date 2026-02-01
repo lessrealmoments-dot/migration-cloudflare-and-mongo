@@ -1686,50 +1686,120 @@ const GalleryDetail = () => {
 
         {/* Guest Photos Section */}
         {getGuestPhotos().length > 0 && (
-          <div className="mt-12 pt-12 border-t border-zinc-200">
+          <div className="mt-12 pt-12 border-t border-zinc-200" data-testid="guest-photos-section">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-2xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
                   Guest Uploads ({getGuestPhotos().length})
                 </h3>
                 <p className="text-sm text-zinc-500 mt-1">
-                  Photos uploaded by guests. You can delete inappropriate content.
+                  Photos uploaded by guests. Select photos to hide or delete them.
                 </p>
               </div>
-              <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">
-                Needs Review
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">
+                  Needs Review
+                </span>
+                <button
+                  onClick={() => { setGuestSelectMode(!guestSelectMode); if (guestSelectMode) clearGuestSelection(); }}
+                  data-testid="toggle-guest-select-mode"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    guestSelectMode ? 'bg-primary text-white' : 'bg-zinc-100 hover:bg-zinc-200'
+                  }`}
+                >
+                  <CheckSquare className="w-4 h-4 inline mr-2" />
+                  {guestSelectMode ? 'Cancel' : 'Select'}
+                </button>
+              </div>
             </div>
+
+            {/* Guest Bulk Action Bar */}
+            {guestSelectMode && selectedGuestPhotos.size > 0 && (
+              <div className="bg-zinc-900 text-white p-4 rounded-lg mb-6 flex items-center justify-between" data-testid="guest-bulk-action-bar">
+                <span className="font-medium">{selectedGuestPhotos.size} guest photo(s) selected</span>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={selectAllGuestPhotos} 
+                    className="px-3 py-1 bg-zinc-700 hover:bg-zinc-600 rounded text-sm"
+                    data-testid="select-all-guest-photos"
+                  >
+                    Select All
+                  </button>
+                  <button 
+                    onClick={() => handleGuestBulkAction('hide')} 
+                    disabled={guestBulkActionLoading}
+                    className="px-3 py-1 bg-zinc-600 hover:bg-zinc-500 rounded text-sm flex items-center gap-1 disabled:opacity-50"
+                    data-testid="hide-guest-photos"
+                  >
+                    <EyeOff className="w-4 h-4" /> Hide from Gallery
+                  </button>
+                  <button 
+                    onClick={() => handleGuestBulkAction('delete')} 
+                    disabled={guestBulkActionLoading}
+                    className="px-3 py-1 bg-red-600 hover:bg-red-500 rounded text-sm flex items-center gap-1 disabled:opacity-50"
+                    data-testid="delete-guest-photos"
+                  >
+                    <Trash2 className="w-4 h-4" /> Delete
+                  </button>
+                  <button 
+                    onClick={clearGuestSelection} 
+                    className="px-3 py-1 bg-zinc-700 hover:bg-zinc-600 rounded text-sm"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
             
             <div className="masonry-grid">
               {getGuestPhotos().map((photo, index) => (
                 <div
                   key={photo.id}
                   data-testid={`guest-photo-${photo.id}`}
-                  className="masonry-item group relative"
+                  className={`masonry-item group relative ${guestSelectMode && selectedGuestPhotos.has(photo.id) ? 'ring-4 ring-primary ring-offset-2' : ''}`}
+                  onClick={guestSelectMode ? () => toggleGuestPhotoSelection(photo.id) : undefined}
                 >
                   <OptimizedImage
                     src={`${BACKEND_URL}${photo.url}`}
                     alt="Guest upload"
-                    className="w-full h-auto cursor-pointer rounded-sm"
-                    onClick={() => {
-                      const guestPhotos = getGuestPhotos();
+                    className={`w-full h-auto rounded-sm ${guestSelectMode ? 'cursor-pointer' : 'cursor-pointer'}`}
+                    onClick={guestSelectMode ? undefined : () => {
                       setLightboxIndex(photos.findIndex(p => p.id === photo.id));
                     }}
                   />
+                  {/* Selection checkbox */}
+                  {guestSelectMode && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
+                        selectedGuestPhotos.has(photo.id) 
+                          ? 'bg-primary border-primary text-white' 
+                          : 'bg-white/90 border-zinc-400'
+                      }`}>
+                        {selectedGuestPhotos.has(photo.id) && <Check className="w-4 h-4" />}
+                      </div>
+                    </div>
+                  )}
                   <div className="absolute top-2 left-2 bg-amber-500 text-white px-2 py-1 rounded text-xs font-medium">
                     Guest
                   </div>
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 rounded-sm">
-                    <button
-                      data-testid={`delete-guest-photo-${photo.id}`}
-                      onClick={() => handleDelete(photo.id)}
-                      className="bg-red-500 text-white hover:bg-red-600 h-10 w-10 rounded-sm flex items-center justify-center transition-all duration-300"
-                      title="Delete this photo"
-                    >
-                      <Trash2 className="w-5 h-5" strokeWidth={1.5} />
-                    </button>
-                  </div>
+                  {/* Hidden indicator */}
+                  {photo.is_hidden && (
+                    <div className="absolute top-2 left-16 bg-zinc-700 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                      <EyeOff className="w-3 h-3" /> Hidden
+                    </div>
+                  )}
+                  {!guestSelectMode && (
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 rounded-sm">
+                      <button
+                        data-testid={`delete-guest-photo-${photo.id}`}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(photo.id); }}
+                        className="bg-red-500 text-white hover:bg-red-600 h-10 w-10 rounded-sm flex items-center justify-center transition-all duration-300"
+                        title="Delete this photo"
+                      >
+                        <Trash2 className="w-5 h-5" strokeWidth={1.5} />
+                      </button>
+                    </div>
+                  )}
                   <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs text-zinc-600">
                     {new Date(photo.uploaded_at).toLocaleDateString()}
                   </div>
