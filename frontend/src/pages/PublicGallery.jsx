@@ -105,6 +105,13 @@ const PublicGallery = () => {
 
     if (acceptedFiles.length === 0) return;
 
+    // Guest upload limit: max 10 photos per batch
+    const MAX_GUEST_UPLOAD = 10;
+    if (acceptedFiles.length > MAX_GUEST_UPLOAD) {
+      toast.error(`You can only upload up to ${MAX_GUEST_UPLOAD} photos at a time. Please select fewer photos.`);
+      return;
+    }
+
     // Validate files before uploading
     const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
     const validFiles = [];
