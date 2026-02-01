@@ -139,6 +139,13 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 
 ## Recent Updates (Feb 1, 2026)
 
+### Custom Favicon (NEW)
+- **Feature**: Admin can upload a custom favicon (browser tab icon) 
+- **Location**: Admin Dashboard > Landing Page > "Site Favicon (Browser Tab Icon)"
+- **Formats**: PNG, ICO, SVG, JPG, GIF supported
+- **Auto-apply**: Favicon updates immediately across the site after upload
+- **Backend**: `/api/admin/favicon` endpoint for upload
+
 ### Guest Upload Limit (NEW)
 - **Feature**: Guests can upload max 10 photos at a time
 - **Frontend**: Validation in PublicGallery.jsx prevents selecting > 10 files
