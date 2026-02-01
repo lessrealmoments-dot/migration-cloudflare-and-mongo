@@ -1731,7 +1731,15 @@ const GalleryDetail = () => {
                     className="px-3 py-1 bg-zinc-600 hover:bg-zinc-500 rounded text-sm flex items-center gap-1 disabled:opacity-50"
                     data-testid="hide-guest-photos"
                   >
-                    <EyeOff className="w-4 h-4" /> Hide from Gallery
+                    <EyeOff className="w-4 h-4" /> Hide
+                  </button>
+                  <button 
+                    onClick={() => handleGuestBulkAction('unhide')} 
+                    disabled={guestBulkActionLoading}
+                    className="px-3 py-1 bg-green-600 hover:bg-green-500 rounded text-sm flex items-center gap-1 disabled:opacity-50"
+                    data-testid="unhide-guest-photos"
+                  >
+                    <Eye className="w-4 h-4" /> Unhide
                   </button>
                   <button 
                     onClick={() => handleGuestBulkAction('delete')} 
