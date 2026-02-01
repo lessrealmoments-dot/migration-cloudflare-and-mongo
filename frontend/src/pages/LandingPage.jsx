@@ -144,24 +144,6 @@ const LandingPage = ({ user }) => {
           </div>
         </div>
       </nav>
-                data-testid="nav-dashboard-button"
-                onClick={() => navigate('/dashboard')}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300"
-              >
-                Dashboard
-              </button>
-            ) : (
-              <button
-                data-testid="nav-login-button"
-                onClick={() => navigate('/auth')}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300"
-              >
-                Get Started
-              </button>
-            )}
-          </div>
-        </div>
-      </nav>
 
       <section className="max-w-screen-2xl mx-auto px-6 md:px-12 py-24 md:py-32">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
