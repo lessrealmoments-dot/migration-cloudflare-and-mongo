@@ -245,7 +245,12 @@ const PublicGallery = () => {
   });
 
   const handleDownload = async (photo) => {
+    if (downloadingPhoto === photo.id) return; // Prevent double-click
+    
     try {
+      setDownloadingPhoto(photo.id);
+      toast.loading('Preparing download...', { id: 'download-photo' });
+      
       // Use backend URL with download parameter
       const downloadUrl = `${BACKEND_URL}${photo.url}?download=true`;
       const link = document.createElement('a');
@@ -255,10 +260,12 @@ const PublicGallery = () => {
       link.click();
       document.body.removeChild(link);
       
-      toast.success('Photo download started!');
+      toast.success('Photo download started!', { id: 'download-photo' });
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to download photo');
+      toast.error('Failed to download photo', { id: 'download-photo' });
+    } finally {
+      setTimeout(() => setDownloadingPhoto(null), 1000);
     }
   };
 
