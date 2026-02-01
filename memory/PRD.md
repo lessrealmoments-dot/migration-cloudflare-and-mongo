@@ -137,6 +137,22 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 
 ---
 
+## Recent Updates (Feb 1, 2026)
+
+### Guest Upload Limit (NEW)
+- **Feature**: Guests can upload max 10 photos at a time
+- **Frontend**: Validation in PublicGallery.jsx prevents selecting > 10 files
+- **UI**: Upload area shows "Max 10 photos at a time • JPEG, PNG, GIF, WebP"
+- **Error**: Toast message if limit exceeded
+
+### Multi-Select Guest Photos (NEW)
+- **Feature**: Photographers can select multiple guest photos for bulk actions
+- **Location**: Guest Uploads section in GalleryDetail.jsx
+- **Actions**: Hide, Unhide, Delete
+- **UI**: Select button, bulk action bar, checkboxes, ring highlight
+
+---
+
 ## Recent Bug Fixes (Jan 31, 2026)
 
 ### P0 - Admin Single Photo Flagging (FIXED)
