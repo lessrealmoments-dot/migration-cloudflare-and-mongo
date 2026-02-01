@@ -12,9 +12,51 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import AdminGalleryReview from '@/pages/AdminGalleryReview';
 import '@/App.css';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Hook to dynamically set the favicon
+const useDynamicFavicon = () => {
+  useEffect(() => {
+    const fetchAndSetFavicon = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/public/landing-config`);
+        if (response.ok) {
+          const config = await response.json();
+          if (config.favicon_url) {
+            // Create or update favicon link element
+            let link = document.querySelector("link[rel~='icon']");
+            if (!link) {
+              link = document.createElement('link');
+              link.rel = 'icon';
+              document.head.appendChild(link);
+            }
+            link.href = `${BACKEND_URL}${config.favicon_url}`;
+            
+            // Also set apple-touch-icon for mobile devices
+            let appleLink = document.querySelector("link[rel='apple-touch-icon']");
+            if (!appleLink) {
+              appleLink = document.createElement('link');
+              appleLink.rel = 'apple-touch-icon';
+              document.head.appendChild(appleLink);
+            }
+            appleLink.href = `${BACKEND_URL}${config.favicon_url}`;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch favicon config:', error);
+      }
+    };
+    
+    fetchAndSetFavicon();
+  }, []);
+};
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Set dynamic favicon from admin config
+  useDynamicFavicon();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
