@@ -8,6 +8,7 @@ import { getThemeStyles, themes } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 import OptimizedImage from '@/components/OptimizedImage';
 import SocialSharePanel from '@/components/SocialSharePanel';
+import useBrandConfig from '../hooks/useBrandConfig';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -17,6 +18,7 @@ const PublicGallery = () => {
   const { shareLink } = useParams();
   const [searchParams] = useSearchParams();
   const isViewOnly = searchParams.get('view') === '1';
+  const brandConfig = useBrandConfig();
   const [gallery, setGallery] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
