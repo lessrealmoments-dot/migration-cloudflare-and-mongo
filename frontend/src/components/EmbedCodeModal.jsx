@@ -164,7 +164,7 @@ const EmbedCodeModal = ({ galleryTitle, shareLink, onClose }) => {
             <h4 className="font-medium text-blue-900 mb-2">How to use</h4>
             <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
               <li>Copy the embed code above</li>
-              <li>Paste it into your website's HTML where you want the gallery to appear</li>
+              <li>Paste it into your website&apos;s HTML where you want the gallery to appear</li>
               <li>The embedded gallery is view-only (visitors cannot upload photos)</li>
             </ol>
           </div>
