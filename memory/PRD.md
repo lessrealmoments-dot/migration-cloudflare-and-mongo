@@ -45,18 +45,26 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 ### Photo Management
 - [x] Photographer photo uploads with progress tracking
 - [x] Guest photo uploads via share link
+- [x] **Guest Upload Limit** - Max 10 photos per upload batch (Feb 1, 2026)
 - [x] Duplicate upload prevention (server-side)
 - [x] Upload animations and progress indicators
 - [x] Full-screen lightbox viewer
 - [x] Guest photo moderation by photographer
 - [x] **Photo Reordering** - Drag & drop to rearrange photo sequence
-- [x] **Multi-Select Actions**:
+- [x] **Multi-Select Actions (Photographer Photos)**:
   - Select/Select All photos
   - Bulk Delete
   - Bulk Move to Section
   - Mark as Highlight (appears first)
   - Hide from Guests
   - Show Hidden Photos
+- [x] **Multi-Select Actions (Guest Photos)** - NEW Feb 1, 2026:
+  - Select/Select All guest photos
+  - Bulk Hide from public gallery
+  - Bulk Unhide (restore visibility)
+  - Bulk Delete with confirmation
+  - Visual selection feedback (ring highlight)
+  - Hidden indicator badges
 
 ### User Features
 - [x] Photographer registration/login (JWT)
