@@ -2411,7 +2411,6 @@ async def download_gallery_chunk(gallery_id: str, chunk_number: int, current_use
         }
     )
 
-from fastapi.responses import FileResponse
 import mimetypes
 
 # Initialize mimetypes
