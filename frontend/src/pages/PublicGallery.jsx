@@ -833,7 +833,7 @@ const PublicGallery = () => {
               <h3 className="text-2xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
                 Download All Photos
               </h3>
-              <button onClick={() => setShowDownloadAllModal(false)}>
+              <button onClick={() => !isDownloadingAll && setShowDownloadAllModal(false)} disabled={isDownloadingAll}>
                 <X className="w-6 h-6" strokeWidth={1.5} />
               </button>
             </div>
@@ -849,6 +849,7 @@ const PublicGallery = () => {
                   placeholder="Download password"
                   required
                   autoFocus
+                  disabled={isDownloadingAll}
                 />
                 <p className="text-xs text-zinc-500 mt-2">
                   This password was provided by the photographer
@@ -858,17 +859,28 @@ const PublicGallery = () => {
                 <button
                   type="button"
                   onClick={() => setShowDownloadAllModal(false)}
-                  className="border border-input h-10 px-6 rounded-sm"
+                  className="border border-input h-10 px-6 rounded-sm disabled:opacity-50"
+                  disabled={isDownloadingAll}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   data-testid="download-all-submit-button"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 rounded-sm font-medium flex items-center gap-2"
+                  disabled={isDownloadingAll}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 rounded-sm font-medium flex items-center gap-2 disabled:opacity-70"
                 >
-                  <Download className="w-4 h-4" strokeWidth={1.5} />
-                  Download
+                  {isDownloadingAll ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" strokeWidth={1.5} />
+                      Download
+                    </>
+                  )}
                 </button>
               </div>
             </form>
