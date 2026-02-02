@@ -173,12 +173,17 @@ Build a website similar to Pic-time.com where photographers can create photo gal
   - "Copy Link" / "Revoke" buttons for active links
   - Green "Contributor" badge on sections with active links
   - Dedicated upload portal at `/c/{contributorLink}`
+  - **Section drag-and-drop reordering** with grip handles
+- **Public Gallery Display**:
+  - Section title with "Photos by [Contributor Name]" subtitle
+  - Contributor photos displayed alongside photographer photos
 - **Backend Endpoints**:
   - `POST /api/galleries/{id}/sections/{section_id}/contributor-link` - Generate link
   - `DELETE /api/galleries/{id}/sections/{section_id}/contributor-link` - Revoke link
+  - `PUT /api/galleries/{id}/sections/reorder` - Reorder sections
   - `GET /api/contributor/{link}` - Get upload info
   - `POST /api/contributor/{link}/upload` - Upload photo
-- **Files Modified**: `server.py`, `GalleryDetail.jsx`, `ContributorUpload.jsx` (new)
+- **Files Modified**: `server.py`, `GalleryDetail.jsx`, `PublicGallery.jsx`, `ContributorUpload.jsx` (new)
 
 ### Guest Upload Limit (NEW)
 - **Feature**: Guests can upload max 10 photos at a time
