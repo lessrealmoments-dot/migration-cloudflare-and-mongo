@@ -1438,16 +1438,25 @@ const GalleryDetail = () => {
               All Photos
             </button>
             {sections.map((section) => (
-              <div key={section.id} className="relative group">
+              <div 
+                key={section.id} 
+                className={`relative group cursor-move ${draggedSection?.id === section.id ? 'opacity-50' : ''}`}
+                draggable
+                onDragStart={(e) => handleSectionDragStart(e, section)}
+                onDragOver={(e) => handleSectionDragOver(e, section)}
+                onDrop={(e) => handleSectionDrop(e, section)}
+                onDragEnd={() => setDraggedSection(null)}
+              >
                 <button
                   data-testid={`section-${section.id}-button`}
                   onClick={() => setSelectedSection(section.id)}
-                  className={`w-full h-12 rounded-sm font-medium transition-all duration-300 ${
+                  className={`w-full h-12 rounded-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
                     selectedSection === section.id
                       ? 'bg-primary text-primary-foreground'
                       : 'border border-zinc-200 hover:bg-zinc-50'
                   }`}
                 >
+                  <GripVertical className="w-4 h-4 opacity-50" />
                   {section.name}
                 </button>
                 <button
