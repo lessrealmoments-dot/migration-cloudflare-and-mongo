@@ -1690,40 +1690,6 @@ const GalleryDetail = () => {
                         </button>
                       )}
                     </div>
-                    
-                    {/* Contributor Link Controls */}
-                    <div className="flex items-center gap-2 mt-3">
-                      {section.contributor_link ? (
-                        <>
-                          <div className="flex-1 flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                            <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                            <span className="text-sm text-green-800">Contributor link active</span>
-                          </div>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); copyContributorLink(section.contributor_link); }}
-                            className="px-3 py-2 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
-                            data-testid={`copy-contributor-link-${section.id}`}
-                          >
-                            <Copy className="w-4 h-4" /> Copy Link
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); revokeContributorLink(section.id); }}
-                            className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-sm font-medium transition-colors"
-                            data-testid={`revoke-contributor-link-${section.id}`}
-                          >
-                            Revoke
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); generateContributorLink(section.id); }}
-                          className="px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
-                          data-testid={`generate-contributor-link-${section.id}`}
-                        >
-                          <Upload className="w-4 h-4" /> Generate Contributor Link
-                        </button>
-                      )}
-                    </div>
                   </div>
                   
                   {sectionPhotos.length > 0 && (
