@@ -354,7 +354,7 @@ const PublicGallery = () => {
   };
 
   const getPhotosBySection = (sectionId) => {
-    return photos.filter(p => p.section_id === sectionId && p.uploaded_by === 'photographer');
+    return photos.filter(p => p.section_id === sectionId && (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor'));
   };
 
   const getPhotosWithoutSection = () => {
@@ -367,12 +367,12 @@ const PublicGallery = () => {
 
   // Get highlighted photos (shown in grid)
   const getHighlightPhotos = () => {
-    return photos.filter(p => p.is_highlight && p.uploaded_by === 'photographer');
+    return photos.filter(p => p.is_highlight && (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor'));
   };
 
   // Get regular photos (shown in masonry)
   const getRegularPhotosBySection = (sectionId) => {
-    return photos.filter(p => p.section_id === sectionId && p.uploaded_by === 'photographer' && !p.is_highlight);
+    return photos.filter(p => p.section_id === sectionId && (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor') && !p.is_highlight);
   };
 
   const getRegularPhotosWithoutSection = () => {
