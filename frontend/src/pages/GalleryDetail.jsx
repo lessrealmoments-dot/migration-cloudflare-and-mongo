@@ -79,6 +79,51 @@ const GalleryDetail = () => {
   const [guestSelectMode, setGuestSelectMode] = useState(false);
   const [selectedGuestPhotos, setSelectedGuestPhotos] = useState(new Set());
   const [guestBulkActionLoading, setGuestBulkActionLoading] = useState(false);
+  // Section drag reorder state
+  const [draggedSection, setDraggedSection] = useState(null);
+
+  // Section drag handlers
+  const handleSectionDragStart = (e, section) => {
+    setDraggedSection(section);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleSectionDragOver = (e, section) => {
+    e.preventDefault();
+    if (!draggedSection || draggedSection.id === section.id) return;
+  };
+
+  const handleSectionDrop = async (e, targetSection) => {
+    e.preventDefault();
+    if (!draggedSection || draggedSection.id === targetSection.id) return;
+
+    const newSections = [...sections];
+    const draggedIdx = newSections.findIndex(s => s.id === draggedSection.id);
+    const targetIdx = newSections.findIndex(s => s.id === targetSection.id);
+
+    // Remove dragged section and insert at target position
+    const [removed] = newSections.splice(draggedIdx, 1);
+    newSections.splice(targetIdx, 0, removed);
+
+    // Update order values
+    const updatedSections = newSections.map((s, idx) => ({ ...s, order: idx }));
+    setSections(updatedSections);
+    setDraggedSection(null);
+
+    // Save to backend
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/galleries/${id}/sections/reorder`, {
+        section_orders: updatedSections.map(s => ({ id: s.id, order: s.order }))
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Sections reordered');
+    } catch (error) {
+      toast.error('Failed to save section order');
+      fetchGalleryData(); // Revert on error
+    }
+  };
 
   // Toggle photo selection
   const togglePhotoSelection = (photoId) => {
