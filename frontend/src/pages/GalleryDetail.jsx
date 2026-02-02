@@ -169,6 +169,49 @@ const GalleryDetail = () => {
     }
   };
 
+  // Contributor link functions
+  const generateContributorLink = async (sectionId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API}/galleries/${id}/sections/${sectionId}/contributor-link`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      const contributorUrl = `${window.location.origin}/c/${response.data.contributor_link}`;
+      await navigator.clipboard.writeText(contributorUrl);
+      toast.success(`Contributor link created and copied to clipboard!`);
+      fetchGalleryData();
+    } catch (error) {
+      toast.error('Failed to generate contributor link');
+    }
+  };
+
+  const copyContributorLink = async (contributorLink) => {
+    const contributorUrl = `${window.location.origin}/c/${contributorLink}`;
+    await navigator.clipboard.writeText(contributorUrl);
+    toast.success('Contributor link copied to clipboard!');
+  };
+
+  const revokeContributorLink = async (sectionId) => {
+    if (!window.confirm('Are you sure you want to revoke this contributor link? The contributor will no longer be able to upload photos.')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(
+        `${API}/galleries/${id}/sections/${sectionId}/contributor-link`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Contributor link revoked');
+      fetchGalleryData();
+    } catch (error) {
+      toast.error('Failed to revoke contributor link');
+    }
+  };
+
   // Bulk action handler
   const handleBulkAction = async (action, sectionId = null) => {
     if (selectedPhotos.size === 0) {
