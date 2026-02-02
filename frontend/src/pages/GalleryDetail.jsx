@@ -1798,7 +1798,7 @@ const GalleryDetail = () => {
             </div>
           )}
 
-          {photos.filter(p => p.uploaded_by === 'photographer').length === 0 && (
+          {photos.filter(p => p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor').length === 0 && (
             <div className="text-center py-20 border border-zinc-200 rounded-sm">
               <p className="text-zinc-500">No photos yet. Upload some to get started!</p>
             </div>
