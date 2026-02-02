@@ -93,6 +93,8 @@ function App() {
           <Route path="/gallery/create" element={<ProtectedRoute><CreateGallery /></ProtectedRoute>} />
           <Route path="/gallery/:id" element={<ProtectedRoute><GalleryDetail /></ProtectedRoute>} />
           <Route path="/g/:shareLink" element={<PublicGallery />} />
+          {/* Contributor Upload Route */}
+          <Route path="/c/:contributorLink" element={<ContributorUpload />} />
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
