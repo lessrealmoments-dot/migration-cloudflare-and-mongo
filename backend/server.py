@@ -576,6 +576,9 @@ class Section(BaseModel):
     id: str
     name: str
     order: int
+    contributor_link: Optional[str] = None  # Unique link for contributor uploads
+    contributor_name: Optional[str] = None  # Company/contributor name
+    contributor_enabled: bool = False  # Whether contributor uploads are enabled
 
 class Photo(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -586,7 +589,8 @@ class Photo(BaseModel):
     url: str
     thumbnail_url: Optional[str] = None  # Small thumbnail for grids
     thumbnail_medium_url: Optional[str] = None  # Medium thumbnail for gallery view
-    uploaded_by: str
+    uploaded_by: str  # "photographer", "guest", or "contributor"
+    contributor_name: Optional[str] = None  # Company name if uploaded by contributor
     section_id: Optional[str] = None
     uploaded_at: str
     order: int = 0
