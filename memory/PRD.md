@@ -155,9 +155,30 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 ### Dynamic Brand Name (NEW)
 - **Feature**: Brand name from admin settings now updates across ALL pages
 - **Fix**: Eliminated flash of default "PhotoShare" before config loads
-- **Pages updated**: LandingPage, Dashboard, GalleryDetail, CreateGallery, PublicGallery
+- **Pages updated**: LandingPage, Dashboard, GalleryDetail, CreateGallery, PublicGallery, ContributorUpload
 - **Implementation**: Created `useBrandConfig` hook with memory caching
 - **Files**: `/app/frontend/src/hooks/useBrandConfig.js`
+
+### Contributor Upload Links (NEW - Feb 2, 2026)
+- **Feature**: Section-specific upload links for external teams/vendors
+- **Flow**: 
+  1. Photographer creates a section (e.g., "Event Coverage Team")
+  2. Generates a contributor link for that section
+  3. Shares link privately with the contributor
+  4. Contributor enters company name (with confirmation step)
+  5. Contributor uploads photos (no upload limit)
+  6. Photos appear in section with contributor name credited
+- **UI Elements**:
+  - "Generate Link" button when section is selected
+  - "Copy Link" / "Revoke" buttons for active links
+  - Green "Contributor" badge on sections with active links
+  - Dedicated upload portal at `/c/{contributorLink}`
+- **Backend Endpoints**:
+  - `POST /api/galleries/{id}/sections/{section_id}/contributor-link` - Generate link
+  - `DELETE /api/galleries/{id}/sections/{section_id}/contributor-link` - Revoke link
+  - `GET /api/contributor/{link}` - Get upload info
+  - `POST /api/contributor/{link}/upload` - Upload photo
+- **Files Modified**: `server.py`, `GalleryDetail.jsx`, `ContributorUpload.jsx` (new)
 
 ### Guest Upload Limit (NEW)
 - **Feature**: Guests can upload max 10 photos at a time
