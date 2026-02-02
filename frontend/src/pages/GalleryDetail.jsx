@@ -1551,7 +1551,7 @@ const GalleryDetail = () => {
           {/* Photo Management Toolbar */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
-              Photographer Photos ({photos.filter(p => p.uploaded_by === 'photographer').length})
+              Photographer Photos ({photos.filter(p => p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor').length})
             </h3>
             <div className="flex items-center gap-2">
               <button
