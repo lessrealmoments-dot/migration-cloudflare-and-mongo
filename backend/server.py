@@ -1713,6 +1713,218 @@ async def delete_section(gallery_id: str, section_id: str, current_user: dict = 
     
     return {"message": "Section deleted"}
 
+# ============ Contributor Upload Link Endpoints ============
+
+@api_router.post("/galleries/{gallery_id}/sections/{section_id}/contributor-link")
+async def generate_contributor_link(gallery_id: str, section_id: str, current_user: dict = Depends(get_current_user)):
+    """Generate a unique contributor upload link for a section"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    sections = gallery.get("sections", [])
+    section_idx = next((i for i, s in enumerate(sections) if s["id"] == section_id), None)
+    if section_idx is None:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    # Generate unique contributor link
+    contributor_link = secrets.token_urlsafe(16)
+    
+    # Update section with contributor link
+    sections[section_idx]["contributor_link"] = contributor_link
+    sections[section_idx]["contributor_enabled"] = True
+    
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    return {
+        "contributor_link": contributor_link,
+        "section_id": section_id,
+        "section_name": sections[section_idx]["name"]
+    }
+
+@api_router.delete("/galleries/{gallery_id}/sections/{section_id}/contributor-link")
+async def revoke_contributor_link(gallery_id: str, section_id: str, current_user: dict = Depends(get_current_user)):
+    """Revoke/disable contributor upload link for a section"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    sections = gallery.get("sections", [])
+    section_idx = next((i for i, s in enumerate(sections) if s["id"] == section_id), None)
+    if section_idx is None:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    # Disable contributor link
+    sections[section_idx]["contributor_link"] = None
+    sections[section_idx]["contributor_enabled"] = False
+    # Note: We keep contributor_name to preserve attribution on existing photos
+    
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    return {"message": "Contributor link revoked"}
+
+@api_router.get("/contributor/{contributor_link}")
+async def get_contributor_upload_info(contributor_link: str):
+    """Get gallery and section info for contributor upload page"""
+    # Find gallery with this contributor link in any section
+    gallery = await db.galleries.find_one(
+        {"sections.contributor_link": contributor_link},
+        {"_id": 0, "id": 1, "title": 1, "sections": 1, "photographer_id": 1}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid or expired contributor link")
+    
+    # Find the specific section
+    section = next((s for s in gallery.get("sections", []) if s.get("contributor_link") == contributor_link), None)
+    if not section or not section.get("contributor_enabled", False):
+        raise HTTPException(status_code=404, detail="Contributor uploads are not enabled for this section")
+    
+    # Get photographer info for display
+    photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0, "business_name": 1, "name": 1})
+    
+    return {
+        "gallery_id": gallery["id"],
+        "gallery_title": gallery["title"],
+        "section_id": section["id"],
+        "section_name": section["name"],
+        "photographer_name": photographer.get("business_name") or photographer.get("name", "Photographer"),
+        "existing_contributor_name": section.get("contributor_name")
+    }
+
+@api_router.post("/contributor/{contributor_link}/set-name")
+async def set_contributor_name(contributor_link: str, data: dict = Body(...)):
+    """Set the contributor/company name for a section"""
+    company_name = data.get("company_name", "").strip()
+    if not company_name:
+        raise HTTPException(status_code=400, detail="Company name is required")
+    
+    if len(company_name) > 100:
+        raise HTTPException(status_code=400, detail="Company name must be 100 characters or less")
+    
+    # Find gallery with this contributor link
+    gallery = await db.galleries.find_one(
+        {"sections.contributor_link": contributor_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid contributor link")
+    
+    sections = gallery.get("sections", [])
+    section_idx = next((i for i, s in enumerate(sections) if s.get("contributor_link") == contributor_link), None)
+    if section_idx is None:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    # Update contributor name
+    sections[section_idx]["contributor_name"] = company_name
+    
+    await db.galleries.update_one({"id": gallery["id"]}, {"$set": {"sections": sections}})
+    
+    return {"success": True, "company_name": company_name}
+
+@api_router.post("/contributor/{contributor_link}/upload")
+async def upload_contributor_photo(
+    contributor_link: str,
+    file: UploadFile = File(...),
+    company_name: str = Form(...)
+):
+    """Upload a photo as a contributor to a specific section"""
+    # Validate company name
+    if not company_name or not company_name.strip():
+        raise HTTPException(status_code=400, detail="Company name is required")
+    
+    # Find gallery with this contributor link
+    gallery = await db.galleries.find_one(
+        {"sections.contributor_link": contributor_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid contributor link")
+    
+    # Find the section
+    section = next((s for s in gallery.get("sections", []) if s.get("contributor_link") == contributor_link), None)
+    if not section or not section.get("contributor_enabled", False):
+        raise HTTPException(status_code=404, detail="Contributor uploads are not enabled")
+    
+    # Validate file type
+    allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
+    if not file.content_type or file.content_type.lower() not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"Invalid file type. Allowed: JPEG, PNG, GIF, WebP, HEIC")
+    
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="File must have a filename")
+    
+    # Check for duplicates
+    existing_filenames = set()
+    async for photo in db.photos.find({"gallery_id": gallery["id"]}, {"original_filename": 1}):
+        if photo.get("original_filename"):
+            existing_filenames.add(photo["original_filename"].lower())
+    
+    if file.filename.lower() in existing_filenames:
+        raise HTTPException(status_code=400, detail=f"Photo '{file.filename}' already exists in this gallery")
+    
+    # Generate unique filename
+    file_ext = file.filename.split('.')[-1].lower()
+    filename = f"{uuid.uuid4().hex}.{file_ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    # Get current photo count for order
+    photo_count = await db.photos.count_documents({"gallery_id": gallery["id"], "section_id": section["id"]})
+    
+    # Save the file
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    # Generate thumbnail
+    thumbnail_filename = None
+    try:
+        thumbnail_filename = await generate_thumbnail(file_path, filename)
+    except Exception as e:
+        logger.error(f"Failed to generate thumbnail: {e}")
+    
+    # Create photo document
+    photo_id = str(uuid.uuid4())
+    photo = {
+        "id": photo_id,
+        "gallery_id": gallery["id"],
+        "filename": filename,
+        "original_filename": file.filename,
+        "url": f"/api/photos/serve/{filename}",
+        "thumbnail_url": f"/api/photos/{photo_id}/thumbnail" if thumbnail_filename else None,
+        "uploaded_by": "contributor",
+        "contributor_name": company_name.strip(),
+        "section_id": section["id"],
+        "uploaded_at": datetime.now(timezone.utc).isoformat(),
+        "order": photo_count,
+        "is_highlight": False,
+        "is_hidden": False,
+        "is_flagged": False
+    }
+    
+    await db.photos.insert_one(photo)
+    
+    # Update section contributor name if not set
+    if not section.get("contributor_name"):
+        sections = gallery.get("sections", [])
+        section_idx = next((i for i, s in enumerate(sections) if s["id"] == section["id"]), None)
+        if section_idx is not None:
+            sections[section_idx]["contributor_name"] = company_name.strip()
+            await db.galleries.update_one({"id": gallery["id"]}, {"$set": {"sections": sections}})
+    
+    # Update gallery photo count
+    await db.galleries.update_one(
+        {"id": gallery["id"]},
+        {"$inc": {"photo_count": 1, "contributor_photos": 1}}
+    )
+    
+    return {
+        "id": photo_id,
+        "url": photo["url"],
+        "thumbnail_url": photo["thumbnail_url"],
+        "filename": file.filename
+    }
+
+# ============ End Contributor Upload Endpoints ============
+
 @api_router.post("/galleries/{gallery_id}/photos", response_model=Photo)
 async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id: Optional[str] = Form(None), current_user: dict = Depends(get_current_user)):
     """Optimized photo upload with concurrency control and async I/O"""
