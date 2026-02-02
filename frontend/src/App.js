@@ -7,6 +7,7 @@ import Dashboard from '@/pages/Dashboard';
 import CreateGallery from '@/pages/CreateGallery';
 import GalleryDetail from '@/pages/GalleryDetail';
 import PublicGallery from '@/pages/PublicGallery';
+import ContributorUpload from '@/pages/ContributorUpload';
 import AdminLogin from '@/pages/AdminLogin';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AdminGalleryReview from '@/pages/AdminGalleryReview';
