@@ -46,6 +46,12 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - [x] Photographer photo uploads with progress tracking
 - [x] Guest photo uploads via share link
 - [x] **Guest Upload Limit** - Max 10 photos per upload batch (Feb 1, 2026)
+- [x] **Contributor Upload Links** - Section-specific upload links for external teams (Feb 2, 2026)
+  - Generate unique upload links for specific gallery sections
+  - Company name required with confirmation step
+  - No upload limit for contributors
+  - Gentle reminder: "Please upload only your best photos"
+  - Contributor name displayed under section title
 - [x] Duplicate upload prevention (server-side)
 - [x] Upload animations and progress indicators
 - [x] Full-screen lightbox viewer
