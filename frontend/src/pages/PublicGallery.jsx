@@ -680,13 +680,20 @@ const PublicGallery = () => {
                     className="flex items-center justify-center gap-4 mb-6 cursor-pointer"
                     onClick={() => hasMore && toggleSectionExpand(section.id)}
                   >
-                    <h4
-                      className="text-2xl md:text-3xl font-normal text-center"
-                      style={{ fontFamily: 'Playfair Display, serif' }}
-                    >
-                      {section.name}
-                      <span className="text-zinc-400 text-lg ml-2">({sectionPhotos.length})</span>
-                    </h4>
+                    <div className="text-center">
+                      <h4
+                        className="text-2xl md:text-3xl font-normal"
+                        style={{ fontFamily: 'Playfair Display, serif' }}
+                      >
+                        {section.name}
+                        <span className="text-zinc-400 text-lg ml-2">({sectionPhotos.length})</span>
+                      </h4>
+                      {section.contributor_name && (
+                        <p className="text-sm mt-1" style={{ color: currentTheme.colors.textLight }}>
+                          Photos by <span className="font-medium" style={{ color: currentTheme.colors.text }}>{section.contributor_name}</span>
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="masonry-grid">
                     {displayPhotos.map((photo, idx) => (
