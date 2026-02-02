@@ -1407,9 +1407,64 @@ const GalleryDetail = () => {
                 >
                   <X className="w-3 h-3" strokeWidth={2} />
                 </button>
+                {/* Contributor link indicator */}
+                {section.contributor_link && (
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-green-500 text-white px-2 py-0.5 rounded-full text-xs flex items-center gap-1">
+                    <Upload className="w-3 h-3" /> Contributor
+                  </div>
+                )}
               </div>
             ))}
           </div>
+          
+          {/* Contributor Link Management Card */}
+          {selectedSection && (
+            <div className="mt-6 bg-zinc-50 border border-zinc-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-zinc-900">Contributor Upload Link</h4>
+                  <p className="text-sm text-zinc-600 mt-1">
+                    Share this link with external teams to let them upload photos to "{sections.find(s => s.id === selectedSection)?.name}"
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {sections.find(s => s.id === selectedSection)?.contributor_link ? (
+                    <>
+                      <button
+                        onClick={() => copyContributorLink(sections.find(s => s.id === selectedSection)?.contributor_link)}
+                        className="px-4 py-2 bg-white border border-zinc-300 hover:bg-zinc-50 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        data-testid="copy-contributor-link"
+                      >
+                        <Copy className="w-4 h-4" /> Copy Link
+                      </button>
+                      <button
+                        onClick={() => revokeContributorLink(selectedSection)}
+                        className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-sm font-medium transition-colors"
+                        data-testid="revoke-contributor-link"
+                      >
+                        Revoke
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => generateContributorLink(selectedSection)}
+                      className="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                      data-testid="generate-contributor-link"
+                    >
+                      <Upload className="w-4 h-4" /> Generate Link
+                    </button>
+                  )}
+                </div>
+              </div>
+              {sections.find(s => s.id === selectedSection)?.contributor_name && (
+                <div className="mt-3 pt-3 border-t border-zinc-200">
+                  <p className="text-sm text-zinc-600">
+                    Contributor: <span className="font-medium text-zinc-900">{sections.find(s => s.id === selectedSection)?.contributor_name}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="mb-12">
