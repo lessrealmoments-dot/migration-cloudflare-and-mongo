@@ -929,7 +929,7 @@ const GalleryDetail = () => {
 
   const getPhotosBySection = (sectionId) => {
     return photos
-      .filter(p => p.section_id === sectionId && p.uploaded_by === 'photographer')
+      .filter(p => p.section_id === sectionId && (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor'))
       .sort((a, b) => (a.order || 0) - (b.order || 0));
   };
 
@@ -941,6 +941,10 @@ const GalleryDetail = () => {
 
   const getGuestPhotos = () => {
     return photos.filter(p => p.uploaded_by === 'guest');
+  };
+
+  const getContributorPhotos = () => {
+    return photos.filter(p => p.uploaded_by === 'contributor');
   };
 
   if (loading) {
