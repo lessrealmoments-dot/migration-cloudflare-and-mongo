@@ -1692,7 +1692,8 @@ const GalleryDetail = () => {
                         />
                       );
                     })}
-                  </div>
+                    </div>
+                  )}
                   {hasMore && !isExpanded && (
                     <button 
                       onClick={() => toggleSectionExpand(section.id)}
