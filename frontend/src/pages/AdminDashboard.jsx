@@ -667,9 +667,10 @@ const AdminDashboard = () => {
                 <thead className="bg-zinc-700/50">
                   <tr>
                     <th className="text-left px-6 py-3 text-sm font-medium text-zinc-400">User</th>
-                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Status</th>
+                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Plan</th>
+                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Credits</th>
+                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Payment</th>
                     <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Galleries</th>
-                    <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Max</th>
                     <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Storage</th>
                     <th className="text-center px-6 py-3 text-sm font-medium text-zinc-400">Actions</th>
                   </tr>
@@ -680,15 +681,39 @@ const AdminDashboard = () => {
                       <td className="px-6 py-4">
                         <div className="text-sm text-white font-medium">{p.name}</div>
                         <div className="text-xs text-zinc-400">{p.email}</div>
-                        {p.business_name && <div className="text-xs text-zinc-500">{p.business_name}</div>}
+                        {p.override_mode && (
+                          <div className="text-xs text-amber-400 mt-0.5">
+                            {MODE_LABELS[p.override_mode]}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          p.status === 'suspended' 
-                            ? 'bg-red-900/50 text-red-300' 
-                            : 'bg-green-900/50 text-green-300'
+                          p.override_mode ? 'bg-amber-900/50 text-amber-300' :
+                          p.plan === 'pro' ? 'bg-purple-900/50 text-purple-300' :
+                          p.plan === 'standard' ? 'bg-blue-900/50 text-blue-300' :
+                          'bg-zinc-700 text-zinc-400'
                         }`}>
-                          {p.status || 'active'}
+                          {p.override_mode ? MODE_LABELS[p.override_mode]?.split(' ')[0] : 
+                           PLAN_LABELS[p.plan] || 'Free'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {(p.override_mode === 'founders_circle' || p.event_credits === 999) ? (
+                          <span className="text-green-400 text-sm font-medium">∞</span>
+                        ) : (
+                          <span className="text-white text-sm">
+                            {(p.event_credits || 0) + (p.extra_credits || 0)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          p.payment_status === 'approved' ? 'bg-green-900/50 text-green-300' :
+                          p.payment_status === 'pending' ? 'bg-amber-900/50 text-amber-300' :
+                          'bg-zinc-700 text-zinc-400'
+                        }`}>
+                          {PAYMENT_STATUS_LABELS[p.payment_status] || 'None'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-center">
