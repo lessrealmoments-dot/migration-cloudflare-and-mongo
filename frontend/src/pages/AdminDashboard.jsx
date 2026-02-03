@@ -570,6 +570,21 @@ const AdminDashboard = () => {
             Photographers
           </button>
           <button
+            onClick={() => setActiveTab('billing')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-sm transition-colors ${
+              activeTab === 'billing'
+                ? 'bg-white text-zinc-900'
+                : 'bg-zinc-800 text-zinc-400 hover:text-white'
+            }`}
+            data-testid="billing-tab"
+          >
+            <CreditCard className="w-5 h-5" strokeWidth={1.5} />
+            Billing
+            {pendingPayments.length > 0 && (
+              <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingPayments.length}</span>
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab('analytics')}
             className={`flex items-center gap-2 px-4 py-2 rounded-sm transition-colors ${
               activeTab === 'analytics'
