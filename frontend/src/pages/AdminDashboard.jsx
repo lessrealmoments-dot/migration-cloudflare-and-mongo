@@ -908,7 +908,7 @@ const AdminDashboard = () => {
                   <strong className="text-zinc-300">Note:</strong> When a feature is disabled, users will see the following message:
                 </p>
                 <p className="text-sm text-amber-400 mt-2 font-medium">
-                  "FEATURE NOT AVAILABLE - Contact Admin: {ADMIN_CONTACT.phone} / {ADMIN_CONTACT.email}"
+                  &ldquo;FEATURE NOT AVAILABLE - Contact Admin: {ADMIN_CONTACT.phone} / {ADMIN_CONTACT.email}&rdquo;
                 </p>
               </div>
 
