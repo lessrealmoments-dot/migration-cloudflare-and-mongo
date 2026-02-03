@@ -356,18 +356,60 @@ const CollageDisplay = () => {
               <span className="text-white/80 text-lg font-light">
                 {photos.length} photos
               </span>
+              <span className="text-white/50 text-sm">
+                • {updateInterval}s interval
+              </span>
             </div>
             
-            <button
-              onClick={toggleFullscreen}
-              className="text-white/80 hover:text-white p-2 transition-colors"
-              data-testid="fullscreen-btn"
-            >
-              {isFullscreen ? <Minimize className="w-8 h-8" /> : <Maximize className="w-8 h-8" />}
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className="text-white/80 hover:text-white p-2 transition-colors"
+                data-testid="settings-btn"
+              >
+                <Settings className="w-7 h-7" />
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="text-white/80 hover:text-white p-2 transition-colors"
+                data-testid="fullscreen-btn"
+              >
+                {isFullscreen ? <Minimize className="w-8 h-8" /> : <Maximize className="w-8 h-8" />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Settings Panel */}
+      {showSettings && showControls && (
+        <div 
+          className="absolute bottom-24 right-8 z-50 bg-black/80 backdrop-blur-md rounded-lg p-6 pointer-events-auto"
+          data-testid="settings-panel"
+        >
+          <h3 className="text-white font-medium mb-4">Display Settings</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="text-white/70 text-sm block mb-2">
+                Update Interval: {updateInterval} seconds
+              </label>
+              <input
+                type="range"
+                min={MIN_INTERVAL}
+                max={MAX_INTERVAL}
+                value={updateInterval}
+                onChange={(e) => setUpdateInterval(parseInt(e.target.value))}
+                className="w-48 accent-white"
+                data-testid="interval-slider"
+              />
+              <div className="flex justify-between text-white/50 text-xs mt-1">
+                <span>{MIN_INTERVAL}s</span>
+                <span>{MAX_INTERVAL}s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pause indicator */}
       {isPaused && showControls && (
