@@ -141,10 +141,11 @@ MODE_CREDITS = {
 }
 
 # Standard features (available to Standard and above)
-STANDARD_FEATURES = ["qr_share", "online_gallery", "display_mode", "owner_uploads", "guest_uploads"]
+# Note: display_mode is DISABLED for Standard, only available in Pro
+STANDARD_FEATURES = ["qr_share", "online_gallery", "owner_uploads", "guest_uploads"]
 
 # Pro features (available to Pro only)
-PRO_FEATURES = ["contributor_link", "supplier_sections", "supplier_attribution", "photographer_moderation"]
+PRO_FEATURES = ["display_mode", "contributor_link", "supplier_sections", "supplier_attribution", "photographer_moderation"]
 
 # Image optimization settings
 THUMBNAIL_SIZES = {
