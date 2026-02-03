@@ -1208,6 +1208,15 @@ const GalleryDetail = () => {
                 </div>
               </div>
             </div>
+            ) : (
+              <button
+                onClick={() => toast.error(getUnavailableMessage())}
+                className="border border-purple-300 bg-white text-purple-700 h-10 px-6 rounded-sm flex items-center gap-2 opacity-50 cursor-not-allowed"
+              >
+                <Monitor className="w-4 h-4" strokeWidth={1.5} />
+                Display Mode
+              </button>
+            )}
             <button
               data-testid="download-all-button"
               onClick={handleDownloadAll}
