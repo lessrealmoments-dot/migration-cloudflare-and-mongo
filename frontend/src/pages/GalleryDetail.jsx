@@ -1667,7 +1667,7 @@ const GalleryDetail = () => {
                 <div>
                   <h4 className="font-medium text-zinc-900">Contributor Upload Link</h4>
                   <p className="text-sm text-zinc-600 mt-1">
-                    Share this link with external teams to let them upload photos to "{sections.find(s => s.id === selectedSection)?.name}"
+                    Share this link with external teams to let them upload photos to &ldquo;{sections.find(s => s.id === selectedSection)?.name}&rdquo;
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
