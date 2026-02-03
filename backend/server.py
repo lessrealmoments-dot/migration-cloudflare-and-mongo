@@ -1179,7 +1179,15 @@ async def get_all_photographers(admin: dict = Depends(get_admin_user)):
             storage_quota=user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
             storage_used=user.get("storage_used", 0),
             status=user.get("status", "active"),
-            created_at=user["created_at"]
+            created_at=user["created_at"],
+            # Subscription fields
+            plan=user.get("plan", PLAN_FREE),
+            event_credits=user.get("event_credits", 0),
+            extra_credits=user.get("extra_credits", 0),
+            payment_status=user.get("payment_status", PAYMENT_NONE),
+            override_mode=user.get("override_mode"),
+            override_expires=user.get("override_expires"),
+            requested_plan=user.get("requested_plan")
         ))
     
     return result
