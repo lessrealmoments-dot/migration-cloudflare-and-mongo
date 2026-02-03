@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Maximize, Minimize, Pause, Play } from 'lucide-react';
+import { Maximize, Minimize, Pause, Play, Settings } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -29,14 +29,10 @@ const TILE_LAYOUT = [
   { x: 33.33, y: 50, w: 16.67, h: 16.66 },
 ];
 
-// Group tiles into sets for batch updates (2-3 tiles per set)
-const TILE_SETS = [
-  [0, 3],       // Set 1: Corner tiles (left-top, right-top)
-  [1, 5],       // Set 2: Upper middle tiles
-  [2, 4],       // Set 3: Middle tiles
-  [6, 9],       // Set 4: Bottom corner tiles
-  [7, 8, 10],   // Set 5: Remaining tiles
-];
+// Default interval settings
+const DEFAULT_INTERVAL = 7; // seconds
+const MIN_INTERVAL = 3;
+const MAX_INTERVAL = 15;
 
 const CollageDisplay = () => {
   const { shareLink } = useParams();
