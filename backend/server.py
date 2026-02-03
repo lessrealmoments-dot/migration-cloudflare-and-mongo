@@ -4284,15 +4284,62 @@ async def reject_payment(data: RejectPayment, admin: dict = Depends(get_admin_us
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Check if user still has a dispute attempt
+    dispute_count = user.get("payment_dispute_count", 0)
+    can_dispute = dispute_count < 1
+    
     await db.users.update_one(
         {"id": data.user_id},
         {"$set": {
             "payment_status": PAYMENT_NONE,
             "payment_rejected_at": datetime.now(timezone.utc).isoformat(),
             "payment_rejected_reason": data.reason,
-            "payment_proof_url": None
+            # Don't clear payment_proof_url so they can reference it in dispute
         }}
     )
+    
+    # Create notification for user
+    dispute_msg = " You have 1 attempt to dispute and resubmit." if can_dispute else " Please contact customer service for assistance."
+    await create_notification(
+        user_id=data.user_id,
+        notification_type="payment_rejected",
+        title="Payment Rejected",
+        message=f"Your payment was rejected. Reason: {data.reason}.{dispute_msg}",
+        metadata={
+            "reason": data.reason,
+            "can_dispute": can_dispute,
+            "requested_plan": user.get("requested_plan"),
+            "requested_extra_credits": user.get("requested_extra_credits")
+        }
+    )
+    
+    # Create transaction record
+    billing_settings = await get_billing_settings()
+    pricing = billing_settings.get("pricing", DEFAULT_PRICING)
+    requested_plan = user.get("requested_plan")
+    requested_extra_credits = user.get("requested_extra_credits")
+    tx_amount = 0
+    tx_type = "subscription"
+    
+    if requested_plan:
+        tx_type = "upgrade"
+        tx_amount = pricing.get(f"{requested_plan}_monthly", 0)
+    if requested_extra_credits:
+        tx_type = "extra_credits"
+        tx_amount = pricing.get("extra_credit", 500) * requested_extra_credits
+    
+    await create_transaction(
+        user_id=data.user_id,
+        tx_type=tx_type,
+        amount=tx_amount,
+        status="rejected",
+        plan=requested_plan,
+        extra_credits=requested_extra_credits,
+        payment_proof_url=user.get("payment_proof_url"),
+        rejection_reason=data.reason,
+        resolved_at=datetime.now(timezone.utc).isoformat()
+    )
+    
     return {"message": "Payment rejected"}
 
 @api_router.post("/admin/upload-payment-qr")
