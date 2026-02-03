@@ -4029,10 +4029,20 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
     
     # If user has a pending upgrade request, apply it
     requested_plan = user.get("requested_plan")
+    current_plan = user.get("plan", PLAN_FREE)
+    
     if requested_plan:
+        # Check if upgrading from Standard to Pro
+        if current_plan == PLAN_STANDARD and requested_plan == PLAN_PRO:
+            # Keep existing credits and add Pro credits
+            current_credits = user.get("event_credits", 0)
+            update_data["event_credits"] = current_credits + PLAN_CREDITS.get(requested_plan, 2)
+        else:
+            # Fresh plan activation
+            update_data["event_credits"] = PLAN_CREDITS.get(requested_plan, 2)
+        
         update_data["plan"] = requested_plan
         update_data["requested_plan"] = None
-        update_data["event_credits"] = PLAN_CREDITS.get(requested_plan, 2)
         update_data["billing_cycle_start"] = datetime.now(timezone.utc).isoformat()
         
         # Update storage quota based on new plan
@@ -4060,6 +4070,14 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
         {"id": data.user_id},
         {"$set": update_data}
     )
+    
+    # Unlock downloads on galleries that were created with pending payment
+    result = await db.galleries.update_many(
+        {"photographer_id": data.user_id, "download_locked_until_payment": True},
+        {"$set": {"download_locked_until_payment": False}}
+    )
+    if result.modified_count > 0:
+        message_parts.append(f"{result.modified_count} gallery downloads unlocked")
     
     return {"message": ", ".join(message_parts)}
 
