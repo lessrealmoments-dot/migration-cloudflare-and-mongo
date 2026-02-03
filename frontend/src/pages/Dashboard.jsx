@@ -1,12 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Plus, LogOut, Image as ImageIcon, Lock, User, X, Save, BarChart3, HardDrive, Clock, Eye, Key } from 'lucide-react';
+import { Plus, LogOut, Image as ImageIcon, Lock, User, X, Save, BarChart3, HardDrive, Clock, Eye, Key, CreditCard, Crown, Zap, Star, Upload, CheckCircle, AlertCircle, Download, ExternalLink } from 'lucide-react';
 import useBrandConfig from '../hooks/useBrandConfig';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Plan labels and colors
+const PLAN_CONFIG = {
+  free: { label: 'Free', color: 'zinc', icon: Star },
+  standard: { label: 'Standard', color: 'blue', icon: Zap },
+  pro: { label: 'Pro', color: 'purple', icon: Crown }
+};
+
+const MODE_LABELS = {
+  founders_circle: 'Founders Circle',
+  early_partner_beta: 'Early Partner Beta',
+  comped_pro: 'Comped Pro',
+  comped_standard: 'Comped Standard'
+};
 
 // Helper to format bytes
 const formatBytes = (bytes) => {
@@ -36,10 +50,18 @@ const Dashboard = ({ user, setUser }) => {
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  
+  // Subscription state
+  const [subscription, setSubscription] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentProof, setPaymentProof] = useState(null);
+  const [uploadingProof, setUploadingProof] = useState(false);
+  const paymentFileRef = useRef(null);
 
   useEffect(() => {
     fetchGalleries();
     fetchAnalytics();
+    fetchSubscription();
   }, []);
 
   useEffect(() => {
@@ -50,6 +72,57 @@ const Dashboard = ({ user, setUser }) => {
       });
     }
   }, [user]);
+
+  const fetchSubscription = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/user/subscription`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSubscription(response.data);
+    } catch (error) {
+      console.error('Failed to fetch subscription');
+    }
+  };
+
+  const handlePaymentProofUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+    
+    setUploadingProof(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const token = localStorage.getItem('token');
+      const uploadResponse = await axios.post(`${API}/upload-payment-proof`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      // Submit payment proof
+      await axios.post(`${API}/user/payment-proof`, {
+        proof_url: uploadResponse.data.url
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Payment proof submitted! Awaiting admin approval.');
+      setShowPaymentModal(false);
+      fetchSubscription();
+    } catch (error) {
+      toast.error('Failed to upload payment proof');
+    } finally {
+      setUploadingProof(false);
+    }
+  };
 
   const fetchGalleries = async () => {
     try {
