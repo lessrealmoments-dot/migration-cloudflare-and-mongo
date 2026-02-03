@@ -808,15 +808,17 @@ def get_effective_credits(user: dict) -> int:
             expires = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
             if expires > datetime.now(timezone.utc):
                 mode_credits = MODE_CREDITS.get(override_mode, 0)
-                if mode_credits == -1:  # Unlimited
+                if mode_credits == -1:  # Unlimited (founders_circle)
                     return 999
+                # For other override modes, use the mode credits + extra
                 return mode_credits + user.get("extra_credits", 0)
         except:
             pass
     
+    # Regular plan credits
     base_credits = user.get("event_credits", 0)
     extra_credits = user.get("extra_credits", 0)
-    return base_credits + extra_credits
+    return max(0, base_credits + extra_credits)
 
 def is_feature_enabled_for_user(user: dict, feature: str) -> bool:
     """Check if a feature is enabled for the user based on their plan"""
