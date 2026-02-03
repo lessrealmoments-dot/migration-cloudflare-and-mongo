@@ -461,9 +461,18 @@ const PricingPage = () => {
             <h3 className="text-xl font-semibold mb-2">
               Upgrade to {showUpgradeModal === 'standard' ? 'Standard' : 'Pro'}
             </h3>
-            <p className="text-zinc-600 mb-6">
+            <p className="text-zinc-600 mb-4">
               Complete your upgrade by uploading payment proof:
             </p>
+            
+            {/* Show credit bonus message for Standard to Pro upgrade */}
+            {subscription?.effective_plan === 'standard' && showUpgradeModal === 'pro' && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
+                <p className="text-sm text-green-800">
+                  <strong>Upgrade Bonus:</strong> Your current {subscription?.total_credits || 0} credit(s) will be kept, plus you'll get 2 additional Pro credits!
+                </p>
+              </div>
+            )}
             
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
               <h4 className="font-medium text-blue-900 mb-3">Payment Instructions</h4>
