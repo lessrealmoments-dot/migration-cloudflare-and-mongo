@@ -812,6 +812,17 @@ const Dashboard = ({ user, setUser }) => {
           </div>
         </div>
       )}
+
+      {/* Buy Credits Modal */}
+      <PaymentMethodsModal
+        isOpen={showBuyCreditsModal}
+        onClose={() => setShowBuyCreditsModal(false)}
+        onPaymentProofUploaded={handleBuyCredits}
+        title="Buy Extra Credits"
+        subtitle="Purchase additional event credits to create more galleries"
+        amount={pricing?.extra_credit || 500}
+        itemDescription="1 extra event credit"
+      />
     </div>
   );
 };
