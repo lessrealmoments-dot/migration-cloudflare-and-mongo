@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, X, Crown, Zap, Star, ArrowRight, Sparkles, Shield, Clock, Upload, Users, QrCode, Monitor, Download } from 'lucide-react';
+import { Check, X, Crown, Zap, Star, ArrowRight, Sparkles, Shield, Clock, Upload, Users, QrCode, Monitor, Download, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import axios from 'axios';
 import useBrandConfig from '../hooks/useBrandConfig';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -15,10 +17,30 @@ const PricingPage = () => {
     extra_credit: 500
   });
   const [billingCycle, setBillingCycle] = useState('monthly');
+  const [user, setUser] = useState(null);
+  const [subscription, setSubscription] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(null); // Plan name
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
 
   useEffect(() => {
     fetchPricing();
+    checkUser();
   }, []);
+
+  const checkUser = async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const response = await axios.get(`${API}/user/subscription`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSubscription(response.data);
+        setUser(true);
+      } catch (error) {
+        setUser(null);
+      }
+    }
+  };
 
   const fetchPricing = async () => {
     try {
@@ -29,6 +51,47 @@ const PricingPage = () => {
       }
     } catch (error) {
       console.error('Failed to fetch pricing');
+    }
+  };
+
+  const handlePlanSelect = (planName) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    
+    const currentPlan = subscription?.effective_plan || 'free';
+    
+    if (planName.toLowerCase() === currentPlan) {
+      toast.info('You are already on this plan');
+      return;
+    }
+    
+    if (planName.toLowerCase() === 'free') {
+      toast.info('Contact admin to downgrade to Free plan');
+      return;
+    }
+    
+    // Show upgrade modal
+    setShowUpgradeModal(planName.toLowerCase());
+  };
+
+  const handleUpgradeRequest = async () => {
+    setUpgradeLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/user/upgrade-request`, {
+        requested_plan: showUpgradeModal
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Upgrade request submitted! Please submit payment proof.');
+      setShowUpgradeModal(null);
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to submit request');
+    } finally {
+      setUpgradeLoading(false);
     }
   };
 
