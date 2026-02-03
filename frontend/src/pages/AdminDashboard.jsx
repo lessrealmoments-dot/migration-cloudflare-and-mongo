@@ -1060,6 +1060,219 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Billing Tab */}
+        {activeTab === 'billing' && (
+          <div className="space-y-6">
+            {/* Billing Mode Toggle */}
+            <div className="bg-zinc-800 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-medium text-white">Billing Mode</h3>
+                  <p className="text-sm text-zinc-400 mt-1">
+                    {billingSettings.billing_enforcement_enabled 
+                      ? 'Live Billing - Automated payments enabled' 
+                      : 'Manual Billing (Soft Launch) - Handle payments externally'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setBillingSettings(prev => ({
+                    ...prev,
+                    billing_enforcement_enabled: !prev.billing_enforcement_enabled
+                  }))}
+                  className={`p-2 rounded-lg transition-colors ${
+                    billingSettings.billing_enforcement_enabled ? 'bg-green-600' : 'bg-zinc-600'
+                  }`}
+                >
+                  {billingSettings.billing_enforcement_enabled ? (
+                    <ToggleRight className="w-6 h-6 text-white" />
+                  ) : (
+                    <ToggleLeft className="w-6 h-6 text-zinc-400" />
+                  )}
+                </button>
+              </div>
+              <div className="text-xs text-amber-400 bg-amber-400/10 px-3 py-2 rounded">
+                Current Status: {billingSettings.billing_enforcement_enabled ? 'LIVE' : 'SOFT LAUNCH (Manual)'}
+              </div>
+            </div>
+
+            {/* Pricing Configuration */}
+            <div className="bg-zinc-800 rounded-lg p-6">
+              <h3 className="text-lg font-medium text-white mb-4">Pricing Configuration</h3>
+              <p className="text-sm text-zinc-400 mb-4">Changes apply to new subscriptions only. Existing subscriptions keep their current price.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm text-zinc-400 block mb-2">Standard Plan (₱/month)</label>
+                  <input
+                    type="number"
+                    value={billingSettings.pricing?.standard_monthly || 1000}
+                    onChange={(e) => setBillingSettings(prev => ({
+                      ...prev,
+                      pricing: { ...prev.pricing, standard_monthly: parseInt(e.target.value) || 0 }
+                    }))}
+                    className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-zinc-400 block mb-2">Pro Plan (₱/month)</label>
+                  <input
+                    type="number"
+                    value={billingSettings.pricing?.pro_monthly || 1500}
+                    onChange={(e) => setBillingSettings(prev => ({
+                      ...prev,
+                      pricing: { ...prev.pricing, pro_monthly: parseInt(e.target.value) || 0 }
+                    }))}
+                    className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-zinc-400 block mb-2">Extra Credit (₱/event)</label>
+                  <input
+                    type="number"
+                    value={billingSettings.pricing?.extra_credit || 500}
+                    onChange={(e) => setBillingSettings(prev => ({
+                      ...prev,
+                      pricing: { ...prev.pricing, extra_credit: parseInt(e.target.value) || 0 }
+                    }))}
+                    className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2"
+                  />
+                </div>
+              </div>
+              
+              <button
+                onClick={handleSaveBillingSettings}
+                disabled={savingBilling}
+                className="mt-4 bg-white text-zinc-900 hover:bg-zinc-100 px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {savingBilling ? 'Saving...' : 'Save Billing Settings'}
+              </button>
+            </div>
+
+            {/* Pending Payments */}
+            <div className="bg-zinc-800 rounded-lg overflow-hidden">
+              <div className="px-6 py-4 border-b border-zinc-700">
+                <h3 className="text-lg font-medium text-white">Pending Payments</h3>
+                <p className="text-sm text-zinc-400 mt-1">Review and approve payment proofs</p>
+              </div>
+              
+              {pendingPayments.length === 0 ? (
+                <div className="p-8 text-center text-zinc-500">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500/50" />
+                  No pending payments
+                </div>
+              ) : (
+                <div className="divide-y divide-zinc-700">
+                  {pendingPayments.map(user => (
+                    <div key={user.id} className="p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-amber-600/20 rounded-full flex items-center justify-center">
+                          <AlertCircle className="w-5 h-5 text-amber-400" />
+                        </div>
+                        <div>
+                          <div className="text-white font-medium">{user.name}</div>
+                          <div className="text-sm text-zinc-400">{user.email}</div>
+                          <div className="text-xs text-zinc-500">
+                            Submitted: {user.payment_submitted_at ? new Date(user.payment_submitted_at).toLocaleString() : 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {user.payment_proof_url && (
+                          <a
+                            href={`${BACKEND_URL}${user.payment_proof_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 bg-zinc-700 text-zinc-300 rounded hover:bg-zinc-600 text-sm"
+                          >
+                            View Proof
+                          </a>
+                        )}
+                        <button
+                          onClick={() => handleApprovePayment(user.id)}
+                          className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-500 text-sm flex items-center gap-1"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => {
+                            const reason = prompt('Reason for rejection:');
+                            if (reason) handleRejectPayment(user.id, reason);
+                          }}
+                          className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-500 text-sm flex items-center gap-1"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Plan Reference */}
+            <div className="bg-zinc-800 rounded-lg p-6">
+              <h3 className="text-lg font-medium text-white mb-4">Plan Reference</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="border border-zinc-700 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 bg-zinc-600 rounded-full flex items-center justify-center">
+                      <Star className="w-4 h-4 text-zinc-400" />
+                    </div>
+                    <span className="text-white font-medium">Free</span>
+                  </div>
+                  <ul className="text-sm text-zinc-400 space-y-1">
+                    <li>• 1 demo gallery</li>
+                    <li>• 500MB storage</li>
+                    <li>• 6-hour feature window</li>
+                  </ul>
+                </div>
+                <div className="border border-blue-500/30 rounded-lg p-4 bg-blue-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                      <Zap className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-white font-medium">Standard</span>
+                  </div>
+                  <ul className="text-sm text-zinc-400 space-y-1">
+                    <li>• 2 credits/month</li>
+                    <li>• All Standard features</li>
+                    <li>• ₱{billingSettings.pricing?.standard_monthly}/mo</li>
+                  </ul>
+                </div>
+                <div className="border border-purple-500/30 rounded-lg p-4 bg-purple-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                      <Crown className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-white font-medium">Pro</span>
+                  </div>
+                  <ul className="text-sm text-zinc-400 space-y-1">
+                    <li>• 2 credits/month</li>
+                    <li>• All Pro features</li>
+                    <li>• ₱{billingSettings.pricing?.pro_monthly}/mo</li>
+                  </ul>
+                </div>
+                <div className="border border-amber-500/30 rounded-lg p-4 bg-amber-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center">
+                      <DollarSign className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-white font-medium">Extra Credit</span>
+                  </div>
+                  <ul className="text-sm text-zinc-400 space-y-1">
+                    <li>• +1 event credit</li>
+                    <li>• Current cycle only</li>
+                    <li>• ₱{billingSettings.pricing?.extra_credit}/credit</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Analytics Tab */}
         {activeTab === 'analytics' && analytics && (
           <div className="space-y-6">
