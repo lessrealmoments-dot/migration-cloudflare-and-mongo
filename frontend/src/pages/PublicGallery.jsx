@@ -48,7 +48,17 @@ const PublicGallery = () => {
 
   useEffect(() => {
     fetchGalleryInfo();
+    // Track view
+    trackView();
   }, [shareLink]);
+
+  const trackView = async () => {
+    try {
+      await axios.post(`${API}/public/gallery/${shareLink}/view`);
+    } catch (error) {
+      // Silently fail - view tracking is not critical
+    }
+  };
 
   const fetchGalleryInfo = async () => {
     try {
