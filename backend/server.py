@@ -1685,15 +1685,51 @@ async def get_public_landing_config():
 
 @api_router.post("/galleries", response_model=Gallery)
 async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depends(get_current_user)):
-    # Check gallery limit (count total created, not just active)
-    galleries_created_total = current_user.get("galleries_created_total", 0)
-    max_galleries = current_user.get("max_galleries", DEFAULT_MAX_GALLERIES)
+    # Get full user data
+    user = await db.users.find_one({"id": current_user["id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    if galleries_created_total >= max_galleries:
-        raise HTTPException(
-            status_code=403, 
-            detail=f"Gallery limit reached ({max_galleries}). Please contact administrator to add more galleries."
-        )
+    # Check and reset credits if billing cycle passed
+    await reset_user_credits_if_needed(current_user["id"])
+    user = await db.users.find_one({"id": current_user["id"]})
+    
+    effective_plan = get_effective_plan(user)
+    effective_credits = get_effective_credits(user)
+    
+    # Check if user is on Free plan (demo gallery)
+    is_demo = effective_plan == PLAN_FREE
+    
+    if is_demo:
+        # Free users get 1 demo gallery total
+        existing_demo = await db.galleries.find_one({
+            "photographer_id": current_user["id"],
+            "is_demo": True
+        })
+        if existing_demo:
+            raise HTTPException(
+                status_code=403,
+                detail="Demo gallery already created. Upgrade to Standard or Pro for more galleries."
+            )
+    else:
+        # Paid plans use credit system
+        if effective_credits <= 0:
+            raise HTTPException(
+                status_code=403,
+                detail="No event credits remaining. Purchase extra credits or wait for next billing cycle."
+            )
+        
+        # Deduct credit
+        if user.get("extra_credits", 0) > 0:
+            await db.users.update_one(
+                {"id": current_user["id"]},
+                {"$inc": {"extra_credits": -1}}
+            )
+        else:
+            await db.users.update_one(
+                {"id": current_user["id"]},
+                {"$inc": {"event_credits": -1}}
+            )
     
     gallery_id = str(uuid.uuid4())
     share_link = str(uuid.uuid4())[:8]
@@ -1710,6 +1746,11 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
             guest_upload_expiration_date = (event_dt + timedelta(days=gallery_data.guest_upload_enabled_days)).isoformat()
         except:
             pass
+    
+    # Demo gallery feature expiry (6 hours)
+    demo_features_expire = None
+    if is_demo:
+        demo_features_expire = (created_at + timedelta(hours=DEMO_FEATURE_WINDOW_HOURS)).isoformat()
     
     gallery_doc = {
         "id": gallery_id,
@@ -1730,12 +1771,15 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         "theme": gallery_data.theme,
         "created_at": created_at.isoformat(),
         "auto_delete_date": (created_at + timedelta(days=GALLERY_EXPIRATION_DAYS)).isoformat(),
-        "view_count": 0  # Track gallery views for analytics
+        "edit_lock_date": (created_at + timedelta(days=GALLERY_EDIT_LOCK_DAYS)).isoformat(),
+        "is_demo": is_demo,
+        "demo_features_expire": demo_features_expire,
+        "view_count": 0
     }
     
     await db.galleries.insert_one(gallery_doc)
     
-    # Increment total galleries created (this prevents recycling)
+    # Increment total galleries created
     await db.users.update_one(
         {"id": current_user["id"]},
         {"$inc": {"galleries_created_total": 1}}
