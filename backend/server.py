@@ -1083,8 +1083,59 @@ async def update_admin_settings(data: dict, admin: dict = Depends(get_admin_user
     return {"message": "Settings updated", "settings": update_data}
 
 # ============================================
-# Admin Gallery Review Endpoints
+# Feature Toggles Endpoints
 # ============================================
+
+class FeatureToggle(BaseModel):
+    qr_share: bool = True
+    online_gallery: bool = True
+    display_mode: bool = True
+    contributor_link: bool = True
+    auto_delete_enabled: bool = True  # If false, disable auto-delete after 6 months
+
+@api_router.get("/admin/feature-toggles")
+async def get_feature_toggles(admin: dict = Depends(get_admin_user)):
+    """Get feature toggle settings"""
+    toggles = await db.site_config.find_one({"type": "feature_toggles"}, {"_id": 0})
+    if not toggles:
+        toggles = {
+            "type": "feature_toggles",
+            "qr_share": True,
+            "online_gallery": True,
+            "display_mode": True,
+            "contributor_link": True,
+            "auto_delete_enabled": True
+        }
+    return toggles
+
+@api_router.put("/admin/feature-toggles")
+async def update_feature_toggles(data: FeatureToggle, admin: dict = Depends(get_admin_user)):
+    """Update feature toggle settings"""
+    toggle_doc = data.model_dump()
+    toggle_doc["type"] = "feature_toggles"
+    
+    await db.site_config.update_one(
+        {"type": "feature_toggles"},
+        {"$set": toggle_doc},
+        upsert=True
+    )
+    
+    return {"message": "Feature toggles updated", "toggles": toggle_doc}
+
+@api_router.get("/public/feature-toggles")
+async def get_public_feature_toggles():
+    """Get feature toggles for public use (to check feature availability)"""
+    toggles = await db.site_config.find_one({"type": "feature_toggles"}, {"_id": 0})
+    if not toggles:
+        return {
+            "qr_share": True,
+            "online_gallery": True,
+            "display_mode": True,
+            "contributor_link": True,
+            "auto_delete_enabled": True
+        }
+    # Remove internal type field from response
+    return {k: v for k, v in toggles.items() if k != "type"}
 
 @api_router.get("/admin/galleries/{gallery_id}")
 async def admin_get_gallery(gallery_id: str, admin: dict = Depends(get_admin_user)):
