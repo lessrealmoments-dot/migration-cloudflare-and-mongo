@@ -836,7 +836,6 @@ class NotificationCreate(BaseModel):
 # ============================================
 
 class PaymentDispute(BaseModel):
-    user_id: str
     dispute_message: str
     new_proof_url: str
 
