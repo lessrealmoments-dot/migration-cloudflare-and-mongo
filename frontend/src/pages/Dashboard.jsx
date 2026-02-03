@@ -496,6 +496,68 @@ const Dashboard = ({ user, setUser }) => {
         )}
       </div>
 
+      {/* Payment Proof Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full" data-testid="payment-modal">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-medium">Submit Payment Proof</h3>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 mb-2">Payment Instructions</h4>
+                <ol className="text-sm text-blue-800 space-y-2">
+                  <li>1. Send payment via GCash or PayMaya</li>
+                  <li>2. Take a screenshot of the confirmation</li>
+                  <li>3. Upload the screenshot below</li>
+                </ol>
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <p className="text-sm font-medium text-blue-900">GCash/PayMaya Number:</p>
+                  <p className="text-lg font-bold text-blue-900">09952568450</p>
+                  <p className="text-xs text-blue-700 mt-1">Less Real Moments</p>
+                </div>
+              </div>
+              
+              <div
+                onClick={() => paymentFileRef.current?.click()}
+                className="border-2 border-dashed border-zinc-300 rounded-lg p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/50 transition-colors"
+              >
+                <input
+                  ref={paymentFileRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePaymentProofUpload}
+                  className="hidden"
+                />
+                {uploadingProof ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm text-zinc-600">Uploading...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
+                    <p className="text-sm font-medium text-zinc-700">Click to upload payment screenshot</p>
+                    <p className="text-xs text-zinc-500 mt-1">PNG, JPG up to 5MB</p>
+                  </>
+                )}
+              </div>
+              
+              <p className="text-xs text-zinc-500 text-center">
+                Your payment will be verified within 24 hours. Downloads will be unlocked once approved.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Profile Modal */}
       {showProfileModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
