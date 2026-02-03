@@ -810,8 +810,11 @@ def get_effective_credits(user: dict) -> int:
                 mode_credits = MODE_CREDITS.get(override_mode, 0)
                 if mode_credits == -1:  # Unlimited (founders_circle)
                     return 999
-                # For other override modes, use the mode credits + extra
-                return mode_credits + user.get("extra_credits", 0)
+                # For other override modes, use actual remaining credits
+                # (event_credits stores the remaining credits after deductions)
+                base_credits = user.get("event_credits", 0)
+                extra_credits = user.get("extra_credits", 0)
+                return max(0, base_credits + extra_credits)
         except:
             pass
     
