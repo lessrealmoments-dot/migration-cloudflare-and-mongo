@@ -537,7 +537,7 @@ const PricingPage = () => {
                     </button>
                   </div>
                   <img 
-                    src={`${BACKEND_URL}${paymentProofUrl}`} 
+                    src={getFileUrl(paymentProofUrl)} 
                     alt="Payment proof" 
                     className="mt-3 w-full h-32 object-cover rounded-lg"
                   />
