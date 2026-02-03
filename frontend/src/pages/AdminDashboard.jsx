@@ -1458,7 +1458,7 @@ const AdminDashboard = () => {
                       <div className="flex items-center gap-3">
                         {user.payment_proof_url && (
                           <button
-                            onClick={() => window.open(`${BACKEND_URL}${user.payment_proof_url}`, '_blank')}
+                            onClick={() => window.open(getFileUrl(user.payment_proof_url), '_blank')}
                             className="px-3 py-1.5 bg-zinc-700 text-zinc-300 rounded hover:bg-zinc-600 text-sm flex items-center gap-1"
                           >
                             <Eye className="w-4 h-4" />
