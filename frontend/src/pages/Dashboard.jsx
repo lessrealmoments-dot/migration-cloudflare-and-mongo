@@ -291,6 +291,92 @@ const Dashboard = ({ user, setUser }) => {
         </div>
       )}
 
+      {/* Subscription Card */}
+      {subscription && (
+        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 pt-4">
+          <div className="bg-white border border-zinc-200 rounded-sm p-4">
+            <div className="flex items-center justify-between">
+              {/* Plan Info */}
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                  subscription.effective_plan === 'pro' ? 'bg-purple-100' :
+                  subscription.effective_plan === 'standard' ? 'bg-blue-100' : 'bg-zinc-100'
+                }`}>
+                  {subscription.effective_plan === 'pro' ? (
+                    <Crown className="w-6 h-6 text-purple-600" />
+                  ) : subscription.effective_plan === 'standard' ? (
+                    <Zap className="w-6 h-6 text-blue-600" />
+                  ) : (
+                    <Star className="w-6 h-6 text-zinc-600" />
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-lg">
+                      {PLAN_CONFIG[subscription.effective_plan]?.label || 'Free'} Plan
+                    </span>
+                    {subscription.override_mode && (
+                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                        {MODE_LABELS[subscription.override_mode]}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-sm text-zinc-500">
+                    {subscription.total_credits === 999 ? (
+                      <span className="text-green-600 font-medium">Unlimited Credits</span>
+                    ) : (
+                      <span>{subscription.total_credits} event credits remaining</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Status */}
+              <div className="flex items-center gap-4">
+                {subscription.payment_status === 'pending' && (
+                  <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+                    <AlertCircle className="w-4 h-4" />
+                    <span className="text-sm font-medium">Payment Pending</span>
+                  </div>
+                )}
+                {subscription.payment_status === 'approved' && (
+                  <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="text-sm font-medium">Active</span>
+                  </div>
+                )}
+                {subscription.payment_status === 'none' && subscription.effective_plan !== 'free' && !subscription.override_mode && (
+                  <button
+                    onClick={() => setShowPaymentModal(true)}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-500 flex items-center gap-2 text-sm font-medium"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Submit Payment
+                  </button>
+                )}
+                <a
+                  href="/pricing"
+                  className="text-sm text-purple-600 hover:underline flex items-center gap-1"
+                >
+                  View Plans
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+
+            {/* Download Warning */}
+            {subscription.payment_status === 'pending' && (
+              <div className="mt-3 pt-3 border-t border-zinc-100">
+                <p className="text-sm text-amber-700 flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Downloads are temporarily locked while payment is being verified.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-12">
         <div className="mb-12 flex justify-between items-center">
           <div>
