@@ -115,7 +115,7 @@ const CollageDisplay = () => {
 
   // Update ALL tiles at once with cube flip transition
   const updateAllTiles = useCallback(() => {
-    if (isPaused || photos.length === 0) return;
+    if (isPaused || photos.length === 0 || isFlipping) return;
     
     // Prepare next photos for ALL tiles
     const nextPhotos = [];
@@ -132,10 +132,12 @@ const CollageDisplay = () => {
       }));
     });
     
-    // Trigger flip animation
+    // Trigger flip animation (with 'animating' class for transition)
     setIsFlipping(true);
     
-    // After flip animation completes (800ms), swap current/next
+    // After flip animation completes (800ms):
+    // 1. Swap images (next becomes current)
+    // 2. Reset flip state (removes classes, cube snaps back to 0deg without animation)
     setTimeout(() => {
       setTilePhotos(prev => {
         return prev.map((tile) => ({
@@ -143,9 +145,12 @@ const CollageDisplay = () => {
           next: null,
         }));
       });
-      setIsFlipping(false);
-    }, 800);
-  }, [isPaused, photos, layout.length]);
+      // Small delay to let the DOM update with new images before removing flip
+      requestAnimationFrame(() => {
+        setIsFlipping(false);
+      });
+    }, 850);
+  }, [isPaused, photos, layout.length, isFlipping]);
 
   // Initial load
   useEffect(() => {
