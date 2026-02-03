@@ -1276,6 +1276,127 @@ const AdminDashboard = () => {
               </button>
             </div>
 
+            {/* Payment Methods Configuration */}
+            <div className="bg-zinc-800 rounded-lg p-6">
+              <h3 className="text-lg font-medium text-white mb-4">Payment Methods</h3>
+              <p className="text-sm text-zinc-400 mb-6">Configure payment options for users (GCash, Maya, Bank Transfer)</p>
+              
+              <div className="space-y-6">
+                {Object.entries(billingSettings.payment_methods || {}).map(([key, method]) => (
+                  <div key={key} className={`border rounded-lg p-4 ${method.enabled ? 'border-green-500/50 bg-green-500/5' : 'border-zinc-700 bg-zinc-800/50'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium text-white">{method.name || key}</span>
+                        {method.enabled && <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">Enabled</span>}
+                      </div>
+                      <button
+                        onClick={() => setBillingSettings(prev => ({
+                          ...prev,
+                          payment_methods: {
+                            ...prev.payment_methods,
+                            [key]: { ...method, enabled: !method.enabled }
+                          }
+                        }))}
+                        className={`w-12 h-6 rounded-full relative transition-colors ${method.enabled ? 'bg-green-600' : 'bg-zinc-600'}`}
+                      >
+                        <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${method.enabled ? 'right-0.5' : 'left-0.5'}`} />
+                      </button>
+                    </div>
+                    
+                    {method.enabled && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-zinc-400 mb-1">Account Name</label>
+                          <input
+                            type="text"
+                            value={method.account_name || ''}
+                            onChange={(e) => setBillingSettings(prev => ({
+                              ...prev,
+                              payment_methods: {
+                                ...prev.payment_methods,
+                                [key]: { ...method, account_name: e.target.value }
+                              }
+                            }))}
+                            className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white text-sm"
+                            placeholder="Account holder name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-zinc-400 mb-1">Account Number</label>
+                          <input
+                            type="text"
+                            value={method.account_number || ''}
+                            onChange={(e) => setBillingSettings(prev => ({
+                              ...prev,
+                              payment_methods: {
+                                ...prev.payment_methods,
+                                [key]: { ...method, account_number: e.target.value }
+                              }
+                            }))}
+                            className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white text-sm"
+                            placeholder="Account/Phone number"
+                          />
+                        </div>
+                        {key === 'bank' && (
+                          <div>
+                            <label className="block text-xs text-zinc-400 mb-1">Bank Name</label>
+                            <input
+                              type="text"
+                              value={method.bank_name || ''}
+                              onChange={(e) => setBillingSettings(prev => ({
+                                ...prev,
+                                payment_methods: {
+                                  ...prev.payment_methods,
+                                  [key]: { ...method, bank_name: e.target.value }
+                                }
+                              }))}
+                              className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white text-sm"
+                              placeholder="e.g., BDO, BPI"
+                            />
+                          </div>
+                        )}
+                        <div className={key === 'bank' ? '' : 'col-span-2'}>
+                          <label className="block text-xs text-zinc-400 mb-1">QR Code Image</label>
+                          <div className="flex items-center gap-3">
+                            {method.qr_code_url ? (
+                              <img 
+                                src={`${BACKEND_URL}${method.qr_code_url}`}
+                                alt={`${method.name} QR`}
+                                className="w-16 h-16 object-contain bg-white rounded"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-zinc-700 rounded flex items-center justify-center text-zinc-500 text-xs">
+                                No QR
+                              </div>
+                            )}
+                            <label className="cursor-pointer bg-zinc-700 hover:bg-zinc-600 text-white px-3 py-2 rounded text-sm transition-colors">
+                              {uploadingQR === key ? 'Uploading...' : 'Upload QR'}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleUploadPaymentQR(key, e.target.files[0])}
+                                className="hidden"
+                                disabled={uploadingQR === key}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <button
+                onClick={handleSaveBillingSettings}
+                disabled={savingBilling}
+                className="mt-6 bg-white text-zinc-900 hover:bg-zinc-100 px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {savingBilling ? 'Saving...' : 'Save Payment Methods'}
+              </button>
+            </div>
+
             {/* Pending Payments */}
             <div className="bg-zinc-800 rounded-lg overflow-hidden">
               <div className="px-6 py-4 border-b border-zinc-700">
