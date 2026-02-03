@@ -482,6 +482,16 @@ async def create_database_indexes():
         # Site config
         await db.site_config.create_index("type", unique=True)
         
+        # Notifications collection indexes
+        await db.notifications.create_index("id", unique=True)
+        await db.notifications.create_index("user_id")
+        await db.notifications.create_index([("user_id", 1), ("read", 1), ("created_at", -1)])
+        
+        # Transactions collection indexes
+        await db.transactions.create_index("id", unique=True)
+        await db.transactions.create_index("user_id")
+        await db.transactions.create_index([("user_id", 1), ("created_at", -1)])
+        
         logger.info("Database indexes created successfully")
     except Exception as e:
         logger.error(f"Error creating indexes (may already exist): {e}")
