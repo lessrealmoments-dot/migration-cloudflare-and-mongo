@@ -4397,6 +4397,150 @@ async def update_user_plan(user_id: str, plan: str = Body(..., embed=True), admi
     )
     return {"message": f"User plan updated to {plan}"}
 
+# ============================================
+# NOTIFICATION ENDPOINTS
+# ============================================
+
+@api_router.get("/user/notifications")
+async def get_user_notifications(limit: int = 50, user: dict = Depends(get_current_user)):
+    """Get notifications for the current user"""
+    notifications = await db.notifications.find(
+        {"user_id": user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(None)
+    return notifications
+
+@api_router.get("/user/notifications/unread-count")
+async def get_unread_notification_count(user: dict = Depends(get_current_user)):
+    """Get count of unread notifications"""
+    count = await db.notifications.count_documents({"user_id": user["id"], "read": False})
+    return {"count": count}
+
+@api_router.put("/user/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str, user: dict = Depends(get_current_user)):
+    """Mark a notification as read"""
+    result = await db.notifications.update_one(
+        {"id": notification_id, "user_id": user["id"]},
+        {"$set": {"read": True}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"message": "Notification marked as read"}
+
+@api_router.put("/user/notifications/read-all")
+async def mark_all_notifications_read(user: dict = Depends(get_current_user)):
+    """Mark all notifications as read"""
+    await db.notifications.update_many(
+        {"user_id": user["id"], "read": False},
+        {"$set": {"read": True}}
+    )
+    return {"message": "All notifications marked as read"}
+
+# ============================================
+# PAYMENT DISPUTE ENDPOINTS
+# ============================================
+
+@api_router.post("/user/payment-dispute")
+async def submit_payment_dispute(data: PaymentDispute, user: dict = Depends(get_current_user)):
+    """Submit a dispute for a rejected payment - only 1 attempt allowed"""
+    db_user = await db.users.find_one({"id": user["id"]})
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if payment was rejected
+    if db_user.get("payment_rejected_at") is None:
+        raise HTTPException(status_code=400, detail="No rejected payment to dispute")
+    
+    # Check if already disputed (only 1 attempt)
+    if db_user.get("payment_dispute_count", 0) >= 1:
+        raise HTTPException(
+            status_code=400, 
+            detail="You have already used your dispute attempt. Please contact customer service at lessrealmoments@gmail.com or 09952568450"
+        )
+    
+    # Update user with dispute info
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {
+            "payment_status": PAYMENT_PENDING,
+            "payment_proof_url": data.new_proof_url,
+            "payment_dispute_message": data.dispute_message,
+            "payment_disputed_at": datetime.now(timezone.utc).isoformat(),
+            "payment_rejected_at": None,
+            "payment_rejected_reason": None
+        },
+        "$inc": {"payment_dispute_count": 1}}
+    )
+    
+    return {"message": "Dispute submitted successfully. Your payment will be reviewed again."}
+
+@api_router.get("/user/payment-status")
+async def get_payment_status(user: dict = Depends(get_current_user)):
+    """Get detailed payment status including rejection info"""
+    db_user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "payment_status": db_user.get("payment_status", PAYMENT_NONE),
+        "payment_rejected_at": db_user.get("payment_rejected_at"),
+        "payment_rejected_reason": db_user.get("payment_rejected_reason"),
+        "payment_dispute_count": db_user.get("payment_dispute_count", 0),
+        "can_dispute": db_user.get("payment_rejected_at") is not None and db_user.get("payment_dispute_count", 0) < 1,
+        "payment_proof_url": db_user.get("payment_proof_url"),
+        "requested_plan": db_user.get("requested_plan"),
+        "requested_extra_credits": db_user.get("requested_extra_credits")
+    }
+
+# ============================================
+# TRANSACTION HISTORY ENDPOINTS
+# ============================================
+
+@api_router.get("/user/transactions")
+async def get_user_transactions(limit: int = 50, user: dict = Depends(get_current_user)):
+    """Get transaction history for the current user"""
+    transactions = await db.transactions.find(
+        {"user_id": user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(None)
+    return transactions
+
+@api_router.get("/admin/users/{user_id}/transactions")
+async def get_admin_user_transactions(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Get transaction history for a specific user (admin only)"""
+    transactions = await db.transactions.find(
+        {"user_id": user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(None)
+    return transactions
+
+@api_router.get("/admin/transactions")
+async def get_all_transactions(
+    limit: int = 100, 
+    status: Optional[str] = None,
+    admin: dict = Depends(get_admin_user)
+):
+    """Get all transactions (admin only)"""
+    query = {}
+    if status:
+        query["status"] = status
+    
+    transactions = await db.transactions.find(
+        query,
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(None)
+    
+    # Enrich with user info
+    result = []
+    for tx in transactions:
+        user = await db.users.find_one({"id": tx["user_id"]}, {"_id": 0, "name": 1, "email": 1})
+        result.append({
+            **tx,
+            "user_name": user.get("name") if user else "Unknown",
+            "user_email": user.get("email") if user else "Unknown"
+        })
+    return result
+
 app.include_router(api_router)
 
 # Mount static files for uploads (payment proofs, QR codes, etc.)
