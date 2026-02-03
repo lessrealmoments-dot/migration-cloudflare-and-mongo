@@ -626,6 +626,14 @@ const AdminDashboard = () => {
                         ) : (
                           <div className="flex items-center justify-center gap-1">
                             <button
+                              onClick={() => openUserFeatures(p.id)}
+                              className="p-2 bg-purple-600 rounded text-white hover:bg-purple-500"
+                              title="Edit features"
+                              data-testid={`features-btn-${p.id}`}
+                            >
+                              <ToggleRight className="w-4 h-4" />
+                            </button>
+                            <button
                               onClick={() => { setEditingLimit(p.id); setNewLimit(p.max_galleries); }}
                               className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
                               title="Edit gallery limit"
