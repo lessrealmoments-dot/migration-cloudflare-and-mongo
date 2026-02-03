@@ -140,6 +140,8 @@ const AdminDashboard = () => {
     fetchActivityLogs();
     fetchAdminSettings();
     fetchFeatureToggles();
+    fetchBillingSettings();
+    fetchPendingPayments();
   }, [navigate]);
 
   const getAuthHeader = () => ({
