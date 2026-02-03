@@ -1425,6 +1425,11 @@ const AdminDashboard = () => {
                               Upgrading to: {PLAN_LABELS[user.requested_plan] || user.requested_plan}
                             </div>
                           )}
+                          {user.requested_extra_credits && (
+                            <div className="text-xs text-green-400 mt-0.5">
+                              Buying: {user.requested_extra_credits} extra credit(s)
+                            </div>
+                          )}
                           <div className="text-xs text-zinc-500">
                             Submitted: {user.payment_submitted_at ? new Date(user.payment_submitted_at).toLocaleString() : 'N/A'}
                           </div>
