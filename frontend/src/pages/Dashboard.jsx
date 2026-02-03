@@ -877,6 +877,18 @@ const Dashboard = ({ user, setUser }) => {
         amount={pricing?.extra_credit || 500}
         itemDescription="1 extra event credit"
       />
+
+      {/* Payment Dispute Modal */}
+      <PaymentDisputeModal
+        isOpen={showDisputeModal}
+        onClose={() => setShowDisputeModal(false)}
+        onDisputeSubmitted={() => {
+          fetchPaymentStatus();
+          fetchSubscription();
+        }}
+        rejectionReason={paymentStatus?.payment_rejected_reason}
+        originalProofUrl={paymentStatus?.payment_proof_url}
+      />
     </div>
   );
 };
