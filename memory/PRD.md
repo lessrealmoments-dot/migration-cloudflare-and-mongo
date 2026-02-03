@@ -161,11 +161,18 @@ Admin-controlled features that can be independently toggled per package/mode:
 
 ### User
 - `GET /api/user/subscription` - Get subscription info (plan, credits, features, can_download)
+- `GET /api/user/features` - Get resolved features using authority hierarchy
 - `POST /api/user/upgrade-request` - Submit upgrade with payment proof
 - `POST /api/user/extra-credits-request` - Request extra credits with payment proof
 - `POST /api/upload-payment-proof` - Upload proof image file
 
-### Admin
+### Admin - Global Feature Toggles (NEW)
+- `GET /api/admin/global-feature-toggles` - Get all modes/plans with feature configurations
+- `PUT /api/admin/global-feature-toggles` - Update all feature toggles
+- `PUT /api/admin/global-feature-toggles/{mode_or_plan}` - Update single mode/plan features
+- `GET /api/admin/users/{user_id}/features` - Get resolved features for specific user
+
+### Admin - Billing
 - `GET /api/admin/billing/settings` - Get billing config (includes payment_methods)
 - `PUT /api/admin/billing/settings` - Update pricing and payment methods
 - `GET /api/admin/pending-payments` - List pending payments (upgrades + extra credits)
