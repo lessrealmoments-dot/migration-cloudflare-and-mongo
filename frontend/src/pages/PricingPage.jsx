@@ -392,6 +392,67 @@ const PricingPage = () => {
           </div>
         </div>
       </footer>
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold mb-2">
+              Upgrade to {showUpgradeModal === 'standard' ? 'Standard' : 'Pro'}
+            </h3>
+            <p className="text-zinc-600 mb-6">
+              You're about to upgrade your plan. Here's what happens next:
+            </p>
+            
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+              <h4 className="font-medium text-blue-900 mb-3">Payment Instructions</h4>
+              <ol className="text-sm text-blue-800 space-y-2">
+                <li className="flex gap-2">
+                  <span className="font-bold">1.</span>
+                  <span>Send {formatPrice(showUpgradeModal === 'standard' ? pricing.standard_monthly : pricing.pro_monthly)} via GCash or PayMaya</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold">2.</span>
+                  <span>Take a screenshot of the confirmation</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold">3.</span>
+                  <span>Upload proof in your Dashboard</span>
+                </li>
+              </ol>
+              <div className="mt-4 pt-3 border-t border-blue-200">
+                <p className="text-sm font-medium text-blue-900">GCash/PayMaya Number:</p>
+                <p className="text-xl font-bold text-blue-900">09952568450</p>
+                <p className="text-xs text-blue-700">Less Real Moments</p>
+              </div>
+            </div>
+            
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6">
+              <div className="flex gap-2 items-start">
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-amber-800">
+                  Your upgrade will be activated once payment is verified (usually within 24 hours).
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowUpgradeModal(null)}
+                className="flex-1 py-3 rounded-xl font-medium bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpgradeRequest}
+                disabled={upgradeLoading}
+                className="flex-1 py-3 rounded-xl font-medium bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+              >
+                {upgradeLoading ? 'Processing...' : 'Request Upgrade'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
