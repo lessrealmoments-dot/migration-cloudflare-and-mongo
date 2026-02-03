@@ -205,7 +205,7 @@ const PaymentMethodsModal = ({
                   {paymentMethods[selectedMethod]?.qr_code_url && (
                     <div className="bg-white rounded-lg p-4 mb-4 text-center">
                       <img 
-                        src={`${BACKEND_URL}${paymentMethods[selectedMethod].qr_code_url}`}
+                        src={getFileUrl(paymentMethods[selectedMethod].qr_code_url)}
                         alt={`${paymentMethods[selectedMethod].name} QR Code`}
                         className="w-48 h-48 mx-auto object-contain"
                       />
