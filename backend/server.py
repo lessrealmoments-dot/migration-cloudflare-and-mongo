@@ -638,6 +638,7 @@ class Gallery(BaseModel):
     days_until_deletion: Optional[int] = None  # Days remaining until deletion
     is_edit_locked: bool = False  # Whether editing is locked (7 days after creation)
     days_until_edit_lock: int = 7  # Days remaining before edit lock
+    download_locked_until_payment: bool = False  # Downloads locked until payment approved
 
 class GalleryUpdate(BaseModel):
     title: Optional[str] = None
