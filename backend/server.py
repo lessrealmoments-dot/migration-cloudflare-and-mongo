@@ -1137,6 +1137,67 @@ async def get_public_feature_toggles():
     # Remove internal type field from response
     return {k: v for k, v in toggles.items() if k != "type"}
 
+# ============================================
+# Per-User Feature Toggles
+# ============================================
+
+class UserFeatureToggle(BaseModel):
+    qr_share: bool = True
+    online_gallery: bool = True
+    display_mode: bool = True
+    contributor_link: bool = True
+    auto_delete_enabled: bool = True
+
+@api_router.get("/admin/users/{user_id}/features")
+async def get_user_feature_toggles(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Get feature toggles for a specific user"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Return user's feature toggles or defaults
+    features = user.get("feature_toggles", {
+        "qr_share": True,
+        "online_gallery": True,
+        "display_mode": True,
+        "contributor_link": True,
+        "auto_delete_enabled": True
+    })
+    return features
+
+@api_router.put("/admin/users/{user_id}/features")
+async def update_user_feature_toggles(user_id: str, data: UserFeatureToggle, admin: dict = Depends(get_admin_user)):
+    """Update feature toggles for a specific user"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    toggle_doc = data.model_dump()
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"feature_toggles": toggle_doc}}
+    )
+    
+    return {"message": "User features updated", "features": toggle_doc}
+
+@api_router.get("/user/features")
+async def get_current_user_features(user: dict = Depends(get_current_user)):
+    """Get feature toggles for the currently logged-in user"""
+    db_user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Return user's feature toggles or defaults
+    features = db_user.get("feature_toggles", {
+        "qr_share": True,
+        "online_gallery": True,
+        "display_mode": True,
+        "contributor_link": True,
+        "auto_delete_enabled": True
+    })
+    return features
+
 @api_router.get("/admin/galleries/{gallery_id}")
 async def admin_get_gallery(gallery_id: str, admin: dict = Depends(get_admin_user)):
     """Get gallery details for admin review"""
