@@ -1725,9 +1725,13 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     
     effective_plan = get_effective_plan(user)
     effective_credits = get_effective_credits(user)
+    override_mode = user.get("override_mode")
     
     # Check if user is on Free plan (demo gallery)
     is_demo = effective_plan == PLAN_FREE
+    
+    # Check if user is a founder (unlimited credits, no expiration)
+    is_founder = override_mode == MODE_FOUNDERS_CIRCLE
     
     if is_demo:
         # Free users get 1 demo gallery total
@@ -1741,24 +1745,25 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
                 detail="Demo gallery already created. Upgrade to Standard or Pro for more galleries."
             )
     else:
-        # Paid plans use credit system
-        if effective_credits <= 0:
+        # Paid/Override plans use credit system (except founders with unlimited)
+        if effective_credits != 999 and effective_credits <= 0:
             raise HTTPException(
                 status_code=403,
                 detail="No event credits remaining. Purchase extra credits or wait for next billing cycle."
             )
         
-        # Deduct credit
-        if user.get("extra_credits", 0) > 0:
-            await db.users.update_one(
-                {"id": current_user["id"]},
-                {"$inc": {"extra_credits": -1}}
-            )
-        else:
-            await db.users.update_one(
-                {"id": current_user["id"]},
-                {"$inc": {"event_credits": -1}}
-            )
+        # Deduct credit (skip for founders with unlimited)
+        if effective_credits != 999:
+            if user.get("extra_credits", 0) > 0:
+                await db.users.update_one(
+                    {"id": current_user["id"]},
+                    {"$inc": {"extra_credits": -1}}
+                )
+            else:
+                await db.users.update_one(
+                    {"id": current_user["id"]},
+                    {"$inc": {"event_credits": -1}}
+                )
     
     gallery_id = str(uuid.uuid4())
     share_link = str(uuid.uuid4())[:8]
@@ -1776,7 +1781,18 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         except:
             pass
     
-    # Demo gallery feature expiry (6 hours)
+    # Set auto-delete date based on plan
+    # Free/Demo: 6 hours
+    # Paid plans: 6 months
+    # Founders: Never (set to 100 years)
+    if is_founder:
+        auto_delete_date = (created_at + timedelta(days=36500)).isoformat()  # ~100 years
+    elif is_demo:
+        auto_delete_date = (created_at + timedelta(hours=FREE_GALLERY_EXPIRATION_HOURS)).isoformat()
+    else:
+        auto_delete_date = (created_at + timedelta(days=GALLERY_EXPIRATION_DAYS)).isoformat()
+    
+    # Demo gallery feature expiry (6 hours) - only for free plan
     demo_features_expire = None
     if is_demo:
         demo_features_expire = (created_at + timedelta(hours=DEMO_FEATURE_WINDOW_HOURS)).isoformat()
@@ -1799,9 +1815,10 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         "download_all_password": hash_password(gallery_data.download_all_password) if gallery_data.download_all_password else None,
         "theme": gallery_data.theme,
         "created_at": created_at.isoformat(),
-        "auto_delete_date": (created_at + timedelta(days=GALLERY_EXPIRATION_DAYS)).isoformat(),
+        "auto_delete_date": auto_delete_date,
         "edit_lock_date": (created_at + timedelta(days=GALLERY_EDIT_LOCK_DAYS)).isoformat(),
         "is_demo": is_demo,
+        "is_founder_gallery": is_founder,
         "demo_features_expire": demo_features_expire,
         "view_count": 0
     }
