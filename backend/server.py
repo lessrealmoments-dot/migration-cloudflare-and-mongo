@@ -4170,7 +4170,7 @@ async def upload_payment_qr(file: UploadFile = File(...), method: str = Form(...
     with open(file_path, "wb") as f:
         f.write(content)
     
-    return {"url": f"/uploads/payment_qr/{filename}"}
+    return {"url": f"/api/files/payment_qr/{filename}"}
 
 @api_router.post("/admin/assign-override")
 async def assign_override_mode(data: AssignOverrideMode, admin: dict = Depends(get_admin_user)):
