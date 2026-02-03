@@ -4233,6 +4233,12 @@ async def update_user_plan(user_id: str, plan: str = Body(..., embed=True), admi
 
 app.include_router(api_router)
 
+# Mount static files for uploads (payment proofs, QR codes, etc.)
+from fastapi.staticfiles import StaticFiles
+uploads_path = ROOT_DIR / "uploads"
+uploads_path.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
