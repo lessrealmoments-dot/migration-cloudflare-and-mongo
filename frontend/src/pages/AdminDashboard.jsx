@@ -420,6 +420,26 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchTransactions = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/transactions?limit=100`, getAuthHeader());
+      setTransactions(response.data);
+    } catch (error) {
+      console.error('Failed to load transactions');
+    }
+  };
+
+  const fetchUserTransactions = async (userId, userName) => {
+    try {
+      const response = await axios.get(`${API}/admin/users/${userId}/transactions`, getAuthHeader());
+      setUserTransactions(response.data);
+      setSelectedUserTransactions({ id: userId, name: userName });
+      setShowTransactionModal(true);
+    } catch (error) {
+      toast.error('Failed to load user transactions');
+    }
+  };
+
   const fetchPhotographerGalleries = async (userId) => {
     try {
       const response = await axios.get(`${API}/admin/photographers/${userId}/galleries`, getAuthHeader());
