@@ -1442,14 +1442,13 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex items-center gap-3">
                         {user.payment_proof_url && (
-                          <a
-                            href={`${BACKEND_URL}${user.payment_proof_url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3 py-1.5 bg-zinc-700 text-zinc-300 rounded hover:bg-zinc-600 text-sm"
+                          <button
+                            onClick={() => window.open(`${BACKEND_URL}${user.payment_proof_url}`, '_blank')}
+                            className="px-3 py-1.5 bg-zinc-700 text-zinc-300 rounded hover:bg-zinc-600 text-sm flex items-center gap-1"
                           >
+                            <Eye className="w-4 h-4" />
                             View Proof
-                          </a>
+                          </button>
                         )}
                         <button
                           onClick={() => handleApprovePayment(user.id)}
