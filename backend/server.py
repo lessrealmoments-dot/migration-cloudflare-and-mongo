@@ -3913,6 +3913,18 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
         update_data["requested_plan"] = None
         update_data["event_credits"] = PLAN_CREDITS.get(requested_plan, 2)
         update_data["billing_cycle_start"] = datetime.now(timezone.utc).isoformat()
+        
+        # Update storage quota based on new plan
+        update_data["storage_quota"] = PLAN_STORAGE_QUOTAS.get(requested_plan, DEFAULT_STORAGE_QUOTA)
+        
+        # Update feature toggles based on new plan
+        update_data["feature_toggles"] = {
+            "qr_share": True,
+            "online_gallery": True,
+            "display_mode": requested_plan == PLAN_PRO,
+            "contributor_link": requested_plan == PLAN_PRO,
+            "auto_delete_enabled": True
+        }
     
     await db.users.update_one(
         {"id": data.user_id},
