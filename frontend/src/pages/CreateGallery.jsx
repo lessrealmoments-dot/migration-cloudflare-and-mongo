@@ -167,8 +167,37 @@ const CreateGallery = () => {
                 Gallery Limit Reached
               </h3>
               <p className="text-zinc-600 mb-6">
-                You have reached your maximum gallery limit. To create more galleries, please contact the administrator to upgrade your account.
+                {limitMessage}
               </p>
+              
+              {/* Show Buy Credits option if user is not on free plan */}
+              {subscription && subscription.effective_plan !== 'free' && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-purple-700 mb-3">Need more galleries?</p>
+                  <button
+                    onClick={handleBuyCredits}
+                    className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-500 flex items-center gap-2 mx-auto font-medium"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Buy Extra Credit (₱{pricing?.extra_credit || 500})
+                  </button>
+                </div>
+              )}
+              
+              {/* Show Upgrade option if user is on free plan */}
+              {subscription && subscription.effective_plan === 'free' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-700 mb-3">Upgrade to create more galleries</p>
+                  <button
+                    onClick={() => navigate('/pricing')}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-500 flex items-center gap-2 mx-auto font-medium"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    View Plans
+                  </button>
+                </div>
+              )}
+              
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={() => navigate('/dashboard')}
@@ -186,6 +215,17 @@ const CreateGallery = () => {
             </div>
           </div>
         )}
+
+        {/* Payment Methods Modal */}
+        <PaymentMethodsModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentProofUploaded={handlePaymentProofSubmitted}
+          title="Buy Extra Credits"
+          subtitle="Purchase additional event credits to create more galleries"
+          amount={pricing?.extra_credit || 500}
+          itemDescription="1 extra event credit"
+        />
 
         <form onSubmit={handleSubmit} className="space-y-8" data-testid="create-gallery-form">
           <div>
