@@ -2388,6 +2388,40 @@ async def get_public_gallery_photos(share_link: str, password: Optional[str] = N
     ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).limit(500).to_list(None)
     return [Photo(**p) for p in photos]
 
+@api_router.get("/display/{share_link}")
+async def get_display_data(share_link: str):
+    """Get gallery data optimized for display/slideshow mode - no password required"""
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Get all visible photos for display
+    photos = await db.photos.find(
+        {
+            "gallery_id": gallery["id"],
+            "is_hidden": {"$ne": True},
+            "is_flagged": {"$ne": True}
+        },
+        {"_id": 0, "id": 1, "url": 1, "thumbnail_url": 1, "is_highlight": 1, "uploaded_at": 1}
+    ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).limit(500).to_list(None)
+    
+    # Get photographer info for branding
+    photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0, "business_name": 1, "name": 1})
+    
+    return {
+        "gallery_id": gallery["id"],
+        "title": gallery.get("title", ""),
+        "event_title": gallery.get("event_title", ""),
+        "event_date": gallery.get("event_date", ""),
+        "photographer_name": photographer.get("business_name") or photographer.get("name", "") if photographer else "",
+        "display_mode": gallery.get("display_mode", "slideshow"),
+        "display_transition": gallery.get("display_transition", "crossfade"),
+        "display_interval": gallery.get("display_interval", 6),
+        "photos": photos,
+        "photo_count": len(photos),
+        "last_updated": max([p.get("uploaded_at", "") for p in photos]) if photos else ""
+    }
+
 class DuplicateCheckRequest(BaseModel):
     filenames: List[str]
 
