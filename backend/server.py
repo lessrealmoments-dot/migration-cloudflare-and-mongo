@@ -763,9 +763,41 @@ class RejectPayment(BaseModel):
     user_id: str
     reason: str
 
+class PaymentMethod(BaseModel):
+    enabled: bool = True
+    name: str
+    account_name: str = ""
+    account_number: str = ""
+    bank_name: Optional[str] = None  # For bank transfer
+    qr_code_url: Optional[str] = None
+
 class BillingSettings(BaseModel):
     billing_enforcement_enabled: bool = False
     pricing: dict = Field(default_factory=lambda: DEFAULT_PRICING.copy())
+    payment_methods: dict = Field(default_factory=lambda: {
+        "gcash": {
+            "enabled": True,
+            "name": "GCash",
+            "account_name": "Less Real Moments",
+            "account_number": "09952568450",
+            "qr_code_url": None
+        },
+        "maya": {
+            "enabled": True,
+            "name": "Maya",
+            "account_name": "Less Real Moments",
+            "account_number": "09952568450",
+            "qr_code_url": None
+        },
+        "bank": {
+            "enabled": False,
+            "name": "Bank Transfer",
+            "account_name": "",
+            "account_number": "",
+            "bank_name": "",
+            "qr_code_url": None
+        }
+    })
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
