@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Maximize, Minimize, Pause, Play } from 'lucide-react';
 
@@ -14,7 +14,7 @@ const getPollInterval = (photoCount) => {
   return 180000;                           // 3 minutes for 50+
 };
 
-// Tile layout configuration for 16:9 aspect ratio
+// Tile layout configuration for 16:9 aspect ratio - 11 tiles
 const TILE_LAYOUT = [
   { x: 0, y: 0, w: 25, h: 50 },
   { x: 25, y: 0, w: 25, h: 33.33 },
@@ -29,8 +29,14 @@ const TILE_LAYOUT = [
   { x: 33.33, y: 50, w: 16.67, h: 16.66 },
 ];
 
-// Transition types
-const TRANSITIONS = ['crossfade', 'fade-zoom', 'slide-up'];
+// Group tiles into sets for batch updates (2-3 tiles per set)
+const TILE_SETS = [
+  [0, 3],       // Set 1: Corner tiles (left-top, right-top)
+  [1, 5],       // Set 2: Upper middle tiles
+  [2, 4],       // Set 3: Middle tiles
+  [6, 9],       // Set 4: Bottom corner tiles
+  [7, 8, 10],   // Set 5: Remaining tiles
+];
 
 const CollageDisplay = () => {
   const { shareLink } = useParams();
@@ -39,16 +45,17 @@ const CollageDisplay = () => {
   const [displayData, setDisplayData] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [tilePhotos, setTilePhotos] = useState([]);
-  const [tileTransitions, setTileTransitions] = useState([]);
+  const [transitioningTiles, setTransitioningTiles] = useState(new Set());
   const [isPaused, setIsPaused] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentSetIndex, setCurrentSetIndex] = useState(0);
   
   const containerRef = useRef(null);
   const hideControlsTimer = useRef(null);
-  const tileTimers = useRef({});
+  const setUpdateTimer = useRef(null);
   const pollTimer = useRef(null);
   const photoPoolIndex = useRef(0);
   const lastPhotoCount = useRef(0);
@@ -92,74 +99,63 @@ const CollageDisplay = () => {
   // Initialize tiles with photos
   const initializeTiles = (photoList) => {
     const tiles = [];
-    const transitions = [];
     
     for (let i = 0; i < layout.length; i++) {
       tiles.push({
         current: photoList[i % photoList.length],
         next: null,
-        isTransitioning: false,
       });
-      transitions.push(TRANSITIONS[Math.floor(Math.random() * TRANSITIONS.length)]);
     }
     
     setTilePhotos(tiles);
-    setTileTransitions(transitions);
     photoPoolIndex.current = layout.length;
   };
 
-  // Update a single tile with smooth transition
-  const updateTile = useCallback((tileIndex) => {
+  // Update a set of tiles together
+  const updateTileSet = useCallback((setIndex) => {
     if (isPaused || photos.length === 0) return;
     
-    const nextPhoto = photos[photoPoolIndex.current % photos.length];
-    photoPoolIndex.current++;
+    const tileIndices = TILE_SETS[setIndex];
     
-    // Start transition - show next image
+    // Prepare next photos for each tile in the set
+    const nextPhotos = {};
+    tileIndices.forEach(tileIndex => {
+      nextPhotos[tileIndex] = photos[photoPoolIndex.current % photos.length];
+      photoPoolIndex.current++;
+    });
+    
+    // Start transition - mark tiles as transitioning and set next photos
+    setTransitioningTiles(new Set(tileIndices));
     setTilePhotos(prev => {
       const newTiles = [...prev];
-      if (newTiles[tileIndex]) {
-        newTiles[tileIndex] = {
-          ...newTiles[tileIndex],
-          next: nextPhoto,
-          isTransitioning: true,
-        };
-      }
+      tileIndices.forEach(tileIndex => {
+        if (newTiles[tileIndex]) {
+          newTiles[tileIndex] = {
+            ...newTiles[tileIndex],
+            next: nextPhotos[tileIndex],
+          };
+        }
+      });
       return newTiles;
     });
     
-    // Complete transition after animation (900ms)
+    // Complete transition after animation (1s)
     setTimeout(() => {
       setTilePhotos(prev => {
         const newTiles = [...prev];
-        if (newTiles[tileIndex] && newTiles[tileIndex].next) {
-          newTiles[tileIndex] = {
-            current: newTiles[tileIndex].next,
-            next: null,
-            isTransitioning: false,
-          };
-        }
+        tileIndices.forEach(tileIndex => {
+          if (newTiles[tileIndex] && newTiles[tileIndex].next) {
+            newTiles[tileIndex] = {
+              current: newTiles[tileIndex].next,
+              next: null,
+            };
+          }
+        });
         return newTiles;
       });
-    }, 900);
+      setTransitioningTiles(new Set());
+    }, 1000);
   }, [isPaused, photos]);
-
-  // Schedule tile updates with staggered timing
-  const scheduleTileUpdate = useCallback((tileIndex) => {
-    if (tileTimers.current[tileIndex]) {
-      clearTimeout(tileTimers.current[tileIndex]);
-    }
-    
-    // Minimum 3 seconds, max 6 seconds between updates
-    const delay = 3000 + Math.random() * 3000;
-    
-    tileTimers.current[tileIndex] = setTimeout(() => {
-      if (!isPaused) {
-        updateTile(tileIndex);
-      }
-      scheduleTileUpdate(tileIndex);
-    }, delay);
-  }, [isPaused, updateTile]);
 
   // Initial load
   useEffect(() => {
@@ -171,7 +167,6 @@ const CollageDisplay = () => {
     if (photos.length === 0) return;
     
     const pollInterval = getPollInterval(photos.length);
-    console.log(`Collage: Polling interval set to ${pollInterval / 1000}s for ${photos.length} photos`);
     
     if (pollTimer.current) {
       clearInterval(pollTimer.current);
@@ -188,28 +183,35 @@ const CollageDisplay = () => {
     };
   }, [photos.length, fetchDisplayData]);
 
-  // Start tile update timers after initialization
+  // Set-based update timer (5-10 seconds between sets)
   useEffect(() => {
     if (tilePhotos.length === 0 || isPaused) return;
     
-    // Clear all existing timers
-    Object.values(tileTimers.current).forEach(timer => clearTimeout(timer));
-    tileTimers.current = {};
-    
-    // Start updates for each tile with staggered initial delays
-    tilePhotos.forEach((_, index) => {
-      // Initial delay: stagger by 500ms + random 0-2s
-      const initialDelay = index * 500 + Math.random() * 2000;
+    const scheduleNextSet = () => {
+      // Random interval between 5-10 seconds
+      const interval = 5000 + Math.random() * 5000;
       
-      setTimeout(() => {
-        scheduleTileUpdate(index);
-      }, initialDelay);
-    });
+      setUpdateTimer.current = setTimeout(() => {
+        // Update current set
+        updateTileSet(currentSetIndex);
+        
+        // Move to next set
+        setCurrentSetIndex(prev => (prev + 1) % TILE_SETS.length);
+        
+        // Schedule next update
+        scheduleNextSet();
+      }, interval);
+    };
+    
+    // Start the cycle
+    scheduleNextSet();
     
     return () => {
-      Object.values(tileTimers.current).forEach(timer => clearTimeout(timer));
+      if (setUpdateTimer.current) {
+        clearTimeout(setUpdateTimer.current);
+      }
     };
-  }, [tilePhotos.length, isPaused, scheduleTileUpdate]);
+  }, [tilePhotos.length, isPaused, currentSetIndex, updateTileSet]);
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -229,26 +231,6 @@ const CollageDisplay = () => {
     hideControlsTimer.current = setTimeout(() => {
       setShowControls(false);
     }, 3000);
-  };
-
-  // Get transition styles for a tile
-  const getTileTransitionStyle = (tile, transitionType) => {
-    const baseStyle = {
-      transition: 'opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1), transform 0.9s cubic-bezier(0.4, 0, 0.2, 1)',
-    };
-    
-    if (!tile.isTransitioning) {
-      return { ...baseStyle, opacity: 1, transform: 'scale(1) translateY(0)' };
-    }
-    
-    switch (transitionType) {
-      case 'fade-zoom':
-        return { ...baseStyle, opacity: 0, transform: 'scale(1.1)' };
-      case 'slide-up':
-        return { ...baseStyle, opacity: 0, transform: 'translateY(20px)' };
-      default: // crossfade
-        return { ...baseStyle, opacity: 0, transform: 'scale(1)' };
-    }
   };
 
   if (loading) {
@@ -299,7 +281,7 @@ const CollageDisplay = () => {
           {/* Tiles */}
           {layout.map((tile, index) => {
             const tileData = tilePhotos[index];
-            const transitionType = tileTransitions[index] || 'crossfade';
+            const isTransitioning = transitioningTiles.has(index);
             
             if (!tileData?.current) return null;
             
@@ -321,11 +303,15 @@ const CollageDisplay = () => {
                     src={`${BACKEND_URL}${tileData.current.url}`}
                     alt=""
                     className="absolute inset-0 w-full h-full object-cover"
-                    style={getTileTransitionStyle(tileData, transitionType)}
+                    style={{
+                      opacity: isTransitioning ? 0 : 1,
+                      transform: isTransitioning ? 'scale(1.05)' : 'scale(1)',
+                      transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
                   />
                   
                   {/* Next image (during transition) */}
-                  {tileData.isTransitioning && tileData.next && (
+                  {isTransitioning && tileData.next && (
                     <img
                       src={`${BACKEND_URL}${tileData.next.url}`}
                       alt=""
@@ -333,7 +319,7 @@ const CollageDisplay = () => {
                       style={{
                         opacity: 1,
                         transform: 'scale(1)',
-                        transition: 'opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     />
                   )}
