@@ -1109,6 +1109,45 @@ const GalleryDetail = () => {
               <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
               View Public Gallery
             </button>
+            <div className="relative group">
+              <button
+                data-testid="display-mode-button"
+                className="border border-purple-300 bg-white hover:bg-purple-50 text-purple-700 h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
+              >
+                <Monitor className="w-4 h-4" strokeWidth={1.5} />
+                Display Mode
+                <ChevronDown className="w-3 h-3" />
+              </button>
+              <div className="absolute top-full left-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 min-w-[200px]">
+                <button
+                  onClick={() => window.open(`/display/${gallery?.share_link}?mode=slideshow`, '_blank')}
+                  className="w-full px-4 py-3 text-left text-sm hover:bg-zinc-50 flex items-center gap-3"
+                >
+                  <div className="w-8 h-8 bg-purple-100 rounded flex items-center justify-center">
+                    <Play className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Slideshow</div>
+                    <div className="text-xs text-zinc-500">Single image view</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => window.open(`/display/${gallery?.share_link}?mode=collage`, '_blank')}
+                  className="w-full px-4 py-3 text-left text-sm hover:bg-zinc-50 flex items-center gap-3 border-t border-zinc-100"
+                >
+                  <div className="w-8 h-8 bg-purple-100 rounded flex items-center justify-center">
+                    <Grid className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Live Collage</div>
+                    <div className="text-xs text-zinc-500">Dynamic tile grid</div>
+                  </div>
+                </button>
+                <div className="px-4 py-2 bg-zinc-50 text-xs text-zinc-500 border-t border-zinc-100">
+                  Tip: Add to URL: ?transition=fade-zoom
+                </div>
+              </div>
+            </div>
             <button
               data-testid="download-all-button"
               onClick={handleDownloadAll}
