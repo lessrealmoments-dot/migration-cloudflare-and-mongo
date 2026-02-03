@@ -113,6 +113,20 @@ const AdminDashboard = () => {
     auto_delete_enabled: true
   });
   const [savingUserFeatures, setSavingUserFeatures] = useState(false);
+  
+  // Billing & Subscription state
+  const [billingSettings, setBillingSettings] = useState({
+    billing_enforcement_enabled: false,
+    pricing: { standard_monthly: 1000, pro_monthly: 1500, extra_credit: 500 }
+  });
+  const [pendingPayments, setPendingPayments] = useState([]);
+  const [savingBilling, setSavingBilling] = useState(false);
+  // Override mode modal
+  const [showOverrideModal, setShowOverrideModal] = useState(null); // User ID
+  const [overrideMode, setOverrideMode] = useState('founders_circle');
+  const [overrideDuration, setOverrideDuration] = useState(12);
+  const [overrideReason, setOverrideReason] = useState('');
+  const [assigningOverride, setAssigningOverride] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
