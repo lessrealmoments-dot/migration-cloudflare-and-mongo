@@ -157,7 +157,7 @@ Build a photo-sharing application for event photographers with:
 6. **Codebase Refactoring (P2)**: Split server.py into modules (models, routes, utils)
 
 ## Access URLs
-- Preview: https://photo-pay-plans.preview.emergentagent.com
+- Preview: https://subimagepay.preview.emergentagent.com
 - Pricing: /pricing
 - Admin: /admin
 
