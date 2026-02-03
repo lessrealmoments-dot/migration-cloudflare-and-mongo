@@ -327,6 +327,7 @@ class TestPaymentStatusAndDispute:
     def test_payment_dispute_endpoint_exists(self):
         """Test POST /api/user/payment-dispute endpoint exists"""
         token = self.get_user_token()
+        user_id = "test-user-id"
         
         if not token:
             unique_email = f"test_dispute_{uuid.uuid4().hex[:8]}@example.com"
@@ -337,13 +338,16 @@ class TestPaymentStatusAndDispute:
             })
             if reg_response.status_code == 200:
                 token = reg_response.json().get("access_token")
+                user_id = reg_response.json().get("user", {}).get("id", "test-user-id")
             else:
                 pytest.skip("Could not create test user")
         
         # Try to submit a dispute (should fail if no rejected payment)
+        # Note: PaymentDispute model requires user_id field even though endpoint uses auth
         response = self.session.post(
             f"{BASE_URL}/api/user/payment-dispute",
             json={
+                "user_id": user_id,
                 "dispute_message": "Test dispute message",
                 "new_proof_url": "/api/files/test.jpg"
             },
