@@ -117,10 +117,16 @@ const AdminDashboard = () => {
   // Billing & Subscription state
   const [billingSettings, setBillingSettings] = useState({
     billing_enforcement_enabled: false,
-    pricing: { standard_monthly: 1000, pro_monthly: 1500, extra_credit: 500 }
+    pricing: { standard_monthly: 1000, pro_monthly: 1500, extra_credit: 500 },
+    payment_methods: {
+      gcash: { enabled: true, name: 'GCash', account_name: 'Less Real Moments', account_number: '09952568450', qr_code_url: null },
+      maya: { enabled: true, name: 'Maya', account_name: 'Less Real Moments', account_number: '09952568450', qr_code_url: null },
+      bank: { enabled: false, name: 'Bank Transfer', account_name: '', account_number: '', bank_name: '', qr_code_url: null }
+    }
   });
   const [pendingPayments, setPendingPayments] = useState([]);
   const [savingBilling, setSavingBilling] = useState(false);
+  const [uploadingQR, setUploadingQR] = useState(null); // Track which method is uploading QR
   // Override mode modal
   const [showOverrideModal, setShowOverrideModal] = useState(null); // User ID
   const [overrideMode, setOverrideMode] = useState('founders_circle');
