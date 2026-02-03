@@ -3984,7 +3984,7 @@ async def get_pending_payments(admin: dict = Depends(get_admin_user)):
 
 @api_router.post("/admin/approve-payment")
 async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_user)):
-    """Approve a user's payment and process any pending upgrade"""
+    """Approve a user's payment and process any pending upgrade or extra credits"""
     user = await db.users.find_one({"id": data.user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -3994,6 +3994,8 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
         "payment_approved_at": datetime.now(timezone.utc).isoformat(),
         "payment_approved_notes": data.notes
     }
+    
+    message_parts = ["Payment approved"]
     
     # If user has a pending upgrade request, apply it
     requested_plan = user.get("requested_plan")
@@ -4014,13 +4016,22 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
             "contributor_link": requested_plan == PLAN_PRO,
             "auto_delete_enabled": True
         }
+        message_parts.append(f"upgraded to {requested_plan}")
+    
+    # If user has requested extra credits, add them
+    requested_extra_credits = user.get("requested_extra_credits")
+    if requested_extra_credits and requested_extra_credits > 0:
+        current_extra = user.get("extra_credits", 0)
+        update_data["extra_credits"] = current_extra + requested_extra_credits
+        update_data["requested_extra_credits"] = None
+        message_parts.append(f"+{requested_extra_credits} extra credits added")
     
     await db.users.update_one(
         {"id": data.user_id},
         {"$set": update_data}
     )
     
-    return {"message": f"Payment approved{' and upgraded to ' + requested_plan if requested_plan else ''}"}
+    return {"message": ", ".join(message_parts)}
 
 @api_router.post("/upload-payment-proof")
 async def upload_payment_proof(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
