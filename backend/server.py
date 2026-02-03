@@ -4104,7 +4104,7 @@ async def upload_payment_proof(file: UploadFile = File(...), user: dict = Depend
     with open(file_path, "wb") as f:
         f.write(content)
     
-    return {"url": f"/uploads/payment_proofs/{filename}"}
+    return {"url": f"/api/files/payment_proofs/{filename}"}
 
 @api_router.get("/files/{file_type}/{filename}")
 async def serve_uploaded_file(file_type: str, filename: str):
