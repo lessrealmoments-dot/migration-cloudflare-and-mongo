@@ -273,7 +273,12 @@ const AdminDashboard = () => {
   const fetchBillingSettings = async () => {
     try {
       const response = await axios.get(`${API}/billing/settings`, getAuthHeader());
-      setBillingSettings(response.data);
+      // Merge with defaults to ensure payment_methods exists
+      setBillingSettings(prev => ({
+        ...prev,
+        ...response.data,
+        payment_methods: response.data.payment_methods || prev.payment_methods
+      }));
     } catch (error) {
       console.error('Failed to load billing settings');
     }
