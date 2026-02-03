@@ -91,6 +91,28 @@ Build a photo-sharing application for event photographers with:
 - Standard: 2 credits/month, 10GB storage, No Display Mode, No Contributor Links
 - Pro: 2 credits/month, 10GB storage, Display Mode + Contributor Links
 
+## Extra Credits Purchase Flow (NEW)
+
+### From Dashboard
+1. User sees "X event credits remaining" with "Need more? (₱500)" link
+2. Click opens Payment Methods modal
+3. Select GCash/Maya/Bank Transfer
+4. View account details + QR code (if uploaded by admin)
+5. Upload payment screenshot
+6. Submit request → Admin notification
+
+### From Gallery Limit Modal
+1. User tries to create gallery with 0 credits
+2. "Gallery Limit Reached" modal appears
+3. Shows "Buy Extra Credit (₱500)" button
+4. Same payment flow as above
+
+### Admin Payment Methods Config
+- Admin can enable/disable each method (GCash, Maya, Bank)
+- Edit account name, number, bank name
+- Upload QR code images for scanning
+- All changes saved in billing settings
+
 ## API Endpoints
 
 ### Public
