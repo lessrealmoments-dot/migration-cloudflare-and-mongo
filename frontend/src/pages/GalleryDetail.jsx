@@ -416,12 +416,24 @@ const GalleryDetail = () => {
       const response = await axios.get(`${API}/user/subscription`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setCanDownload(response.data.can_download);
+      // We'll check gallery-specific download lock in fetchGalleryData
+      // User-level can_download is for backwards compatibility
       if (!response.data.can_download) {
-        setDownloadDisabledReason('Your payment is pending approval. Downloads will be enabled once your payment is confirmed.');
+        // This is a fallback - gallery-specific check takes priority
       }
     } catch (error) {
       console.error('Failed to fetch subscription status');
+    }
+  };
+
+  // Check if downloads are locked for this specific gallery
+  const checkGalleryDownloadLock = (galleryData) => {
+    if (galleryData.download_locked_until_payment) {
+      setCanDownload(false);
+      setDownloadDisabledReason('Downloads for this gallery are locked. Your payment is pending approval - once confirmed, downloads will be enabled.');
+    } else {
+      setCanDownload(true);
+      setDownloadDisabledReason(null);
     }
   };
 
