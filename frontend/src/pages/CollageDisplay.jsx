@@ -259,12 +259,16 @@ const CollageDisplay = () => {
           width: 100%;
           height: 100%;
           transform-style: preserve-3d;
-        }
-        .cube-flipper.animating {
           transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
         }
-        .cube-flipper.flipped {
+        .cube-flipper.flip-to-back {
           transform: rotateY(180deg);
+        }
+        .cube-flipper.flip-to-front {
+          transform: rotateY(0deg);
+        }
+        .cube-flipper.no-transition {
+          transition: none !important;
         }
         .cube-face {
           position: absolute;
@@ -294,6 +298,13 @@ const CollageDisplay = () => {
             
             if (!tileData?.current) return null;
             
+            // Determine flip state
+            // When not flipping: show current position (based on showBackSide)
+            // When flipping: animate to opposite position
+            const flipClass = isFlipping 
+              ? (showBackSide ? 'flip-to-front' : 'flip-to-back')
+              : (showBackSide ? 'flip-to-back no-transition' : 'flip-to-front no-transition');
+            
             return (
               <div
                 key={index}
@@ -306,8 +317,8 @@ const CollageDisplay = () => {
                   padding: '2px'
                 }}
               >
-                <div className={`cube-flipper ${isFlipping ? 'animating flipped' : ''}`}>
-                  {/* Current image (front face) */}
+                <div className={`cube-flipper ${flipClass}`}>
+                  {/* Front face - shows current when not on back side */}
                   <div className="cube-face rounded-sm overflow-hidden bg-zinc-900">
                     <img
                       src={`${BACKEND_URL}${tileData.current.url}`}
@@ -316,11 +327,17 @@ const CollageDisplay = () => {
                     />
                   </div>
                   
-                  {/* Next image (back face) */}
+                  {/* Back face - shows next during flip */}
                   <div className="cube-face cube-face-back rounded-sm overflow-hidden bg-zinc-900">
-                    {tileData.next && (
+                    {tileData.next ? (
                       <img
                         src={`${BACKEND_URL}${tileData.next.url}`}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <img
+                        src={`${BACKEND_URL}${tileData.current.url}`}
                         alt=""
                         className="w-full h-full object-cover"
                       />
