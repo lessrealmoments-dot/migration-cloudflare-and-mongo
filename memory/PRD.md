@@ -1,362 +1,91 @@
-# PhotoShare - Product Requirements Document
+# PhotoShare - Event Photography Platform
 
 ## Original Problem Statement
-Build a website similar to Pic-time.com where photographers can create photo galleries and share them with guests via shareable links.
+Build a photo-sharing application for event photographers with features including:
+- Gallery management and photo uploads
+- Guest uploads with moderation
+- Custom branding (name, favicon)
+- Contributor upload links
+- Section organization and reordering
+- Display modes (Slideshow, Live Collage) for viewing stations
+- Per-user feature access controls for subscription management
 
-## Core Features
-- **Photographers**: Create accounts, manage galleries, upload photos
-- **Guests**: View galleries and upload photos via shareable links
-- **Admin**: Manage photographers, site settings, and analytics
-
----
-
-## Implemented Features (as of Feb 1, 2026)
+## Core Features Implemented
 
 ### Gallery Management
-- [x] Create galleries with titles, descriptions, passwords
-- [x] Set cover photos for galleries
-- [x] **Cover Photo Editor** - zoom/pan/crop functionality with touch support
-- [x] **QR Code Generator** - downloadable PNG for easy sharing
-- [x] **Album Embed** - Generate iframe embed code for external websites (NEW)
-- [x] Create and manage sections within galleries
-- [x] Editable event title and event date
-- [x] 15 gallery themes (elegant + fun)
-- [x] Share link expiration periods
-- [x] Guest upload time restrictions
-- [x] Password-protected "Download All"
-- [x] Delete gallery with double-confirmation
-- [x] Upload progress UI for photographers
+- Create and manage photo galleries
+- Multi-section organization
+- Drag-and-drop section reordering
+- Photo reordering within sections
+- Cover photo selection and cropping
 
-### Social Sharing (NEW - Feb 1, 2026)
-- [x] **Floating Share Panel** - appears on public galleries
-- [x] **Facebook Sharing** - opens share dialog
-- [x] **X (Twitter) Sharing** - opens tweet dialog
-- [x] **WhatsApp Sharing** - opens message dialog
-- [x] **Copy Link** - copies view-only URL to clipboard
-- [x] **View-Only Mode** - shared links disable guest uploads (?view=1)
+### Guest & Contributor Uploads
+- Guest upload with 10-photo batch limit
+- Photographer moderation (hide/unhide/delete)
+- Private contributor upload links per section
+- Contributor name credit in gallery
 
-### High Concurrency Optimization
-- [x] **Database Indexes** - Optimized indexes on users, galleries, photos collections
-- [x] **MongoDB Connection Pooling** - maxPoolSize: 100, minPoolSize: 10
-- [x] **Async File I/O** - Non-blocking file writes with aiofiles
-- [x] **Upload Concurrency Control** - Semaphore limiting 50 concurrent uploads
-- [x] System can handle 150-200 concurrent users uploading photos
+### Display Modes
+- **Slideshow**: Full-screen single-image rotation with fade transitions
+- **Live Collage**: 11-tile dynamic grid with 3D cube flip animation
+  - Configurable interval (3-15 seconds)
+  - All tiles update simultaneously
+  - Settings panel for customization
+  - Live polling for new photos
 
-### Photo Management
-- [x] Photographer photo uploads with progress tracking
-- [x] Guest photo uploads via share link
-- [x] **Guest Upload Limit** - Max 10 photos per upload batch (Feb 1, 2026)
-- [x] **Contributor Upload Links** - Section-specific upload links for external teams (Feb 2, 2026)
-  - Generate unique upload links for specific gallery sections
-  - Company name required with confirmation step
-  - No upload limit for contributors
-  - Gentle reminder: "Please upload only your best photos"
-  - Contributor name displayed under section title
-- [x] Duplicate upload prevention (server-side)
-- [x] Upload animations and progress indicators
-- [x] Full-screen lightbox viewer
-- [x] Guest photo moderation by photographer
-- [x] **Photo Reordering** - Drag & drop to rearrange photo sequence
-- [x] **Multi-Select Actions (Photographer Photos)**:
-  - Select/Select All photos
-  - Bulk Delete
-  - Bulk Move to Section
-  - Mark as Highlight (appears first)
-  - Hide from Guests
-  - Show Hidden Photos
-- [x] **Multi-Select Actions (Guest Photos)** - NEW Feb 1, 2026:
-  - Select/Select All guest photos
-  - Bulk Hide from public gallery
-  - Bulk Unhide (restore visibility)
-  - Bulk Delete with confirmation
-  - Visual selection feedback (ring highlight)
-  - Hidden indicator badges
+### Sharing Features
+- Public gallery links
+- QR code generation and download
+- Display mode links with Copy Link + QR popup
+- Embed code for websites
 
-### User Features
-- [x] Photographer registration/login (JWT)
-- [x] Profile editing (name, business name)
-- [x] Change password functionality
-- [x] Forgot password (with Resend API)
-- [x] Analytics dashboard showing views, photos, storage
+### Admin Panel
+- Photographer management
+- **Per-user feature toggles** (new)
+  - QR Share
+  - Online Gallery
+  - Display Mode
+  - Contributor Link
+  - Auto Delete (6 months)
+- Default feature settings for new users
+- Storage quota management
+- Gallery limit controls
+- User suspend/activate/delete
 
-### Admin Features
-- [x] Admin login and dashboard
-- [x] Manage photographer gallery limits
-- [x] Storage quota management (100MB to 10GB)
-- [x] Landing page content customization
-- [x] Landing page image uploads (up to 10 carousel images)
-- [x] **Brand Tagline** - separate field for "by Less Real Moments" style text (NEW)
-- [x] Site-wide analytics
-- [x] **Enhanced Admin Panel**:
-  - Search/filter photographers by name, email
-  - Sort by newest, storage used, name
-  - Suspend/Activate accounts
-  - Delete photographer (with all data)
-  - View photographer's galleries
-  - Activity logs tracking
-  - Admin settings management
-- [x] **Admin Gallery Review System**:
-  - Access photographer galleries in controlled admin view
-  - View and flag photos only (no edit/download)
-  - Bulk photo selection
-  - Single photo flagging via flag icon
-  - Flag preview with confirmation before finalizing
-  - Deselect photos in preview before confirming
-  - Flagged photos auto-hidden from public gallery
-  - Visual indicators for flagged photos (red overlay)
-  - Filter by All/Flagged/Unflagged
-  - Undo/restore flagged photos
+### Branding
+- Custom site name
+- Custom favicon upload
+- Consistent branding across all pages
 
-### Landing Page Improvements (NEW - Feb 1, 2026)
-- [x] **Admin Link Moved** - Now on left side of navigation (avoids Emergent logo)
-- [x] **Brand Layout** - Brand name centered with optional tagline below
-- [x] **Image Carousel** - Up to 10 images with auto-rotate and manual controls
-- [x] **No Image Flash** - Images load without showing placeholder first
+## Technical Stack
+- **Frontend**: React, Vite, Tailwind CSS, Shadcn/UI
+- **Backend**: FastAPI (Python)
+- **Database**: MongoDB with Motor async driver
+- **Libraries**: react-beautiful-dnd, qrcode.react
 
-### Auto-Delete System
-- [x] Galleries auto-delete after 6 months (180 days)
-- [x] Days until deletion shown in dashboard
-- [x] Background task for automated cleanup
+## Key Files
+- `/app/frontend/src/pages/CollageDisplay.jsx` - Live Collage with cube flip
+- `/app/frontend/src/pages/GalleryDetail.jsx` - Main gallery management
+- `/app/frontend/src/pages/AdminDashboard.jsx` - Admin with per-user features
+- `/app/frontend/src/hooks/useFeatureToggles.js` - User feature access hook
+- `/app/backend/server.py` - All API endpoints
 
-### Storage Quota System
-- [x] Default 500MB quota per photographer
-- [x] Storage tracking on upload/delete
-- [x] Quota enforcement (rejects uploads when exceeded)
-- [x] Storage bar in photographer dashboard
-- [x] Admin can adjust quotas per photographer
+## API Endpoints (Feature Toggles)
+- `GET /api/user/features` - Get logged-in user's features
+- `GET /api/admin/users/{user_id}/features` - Admin get user features
+- `PUT /api/admin/users/{user_id}/features` - Admin update user features
 
-### Gallery Themes (16 total)
-**Elegant:**
-- Classic Elegance, Romantic Blush, Modern Dark, Natural Earth, Ocean Breeze, Vintage Sepia, **Black & Gold** (Luxurious)
+## Completed This Session (Feb 2025)
+1. ✅ Live Collage cube flip animation - all tiles flip together
+2. ✅ Configurable interval slider (3-15 seconds)
+3. ✅ Display Mode dropdown with Copy Link + QR Code options
+4. ✅ Per-user feature toggles in Admin panel
+5. ✅ Feature availability checks in photographer dashboard
+6. ✅ User Features modal in Photographers table Actions column
 
-**Fun/Colorful:**
-- Party Vibes, Tropical Paradise, Golden Sunset, Neon Nights, Spring Garden, Lavender Dreams, Corporate Professional, Holiday Cheer, Ultra Minimal
-
-**Theme Selection UI:**
-- Color palette preview (4 swatches per theme)
-- Theme name and description
-- "Selected" indicator
-
-### Integrations
-- [x] **Google Drive Backup** - OAuth flow, auto-sync capability
-- [x] **Resend** - Password reset emails
-
----
-
-## Recent Updates (Feb 1, 2026)
-
-### Custom Favicon (NEW)
-- **Feature**: Admin can upload a custom favicon (browser tab icon) 
-- **Location**: Admin Dashboard > Landing Page > "Site Favicon (Browser Tab Icon)"
-- **Formats**: PNG, ICO, SVG, JPG, GIF supported
-- **Auto-apply**: Favicon updates immediately across the site after upload
-- **Backend**: `/api/admin/favicon` endpoint for upload
-
-### Dynamic Brand Name (NEW)
-- **Feature**: Brand name from admin settings now updates across ALL pages
-- **Fix**: Eliminated flash of default "PhotoShare" before config loads
-- **Pages updated**: LandingPage, Dashboard, GalleryDetail, CreateGallery, PublicGallery, ContributorUpload
-- **Implementation**: Created `useBrandConfig` hook with memory caching
-- **Files**: `/app/frontend/src/hooks/useBrandConfig.js`
-
-### Event Display Modes (NEW - Feb 3, 2026)
-- **Feature**: Two dedicated display modes for viewing stations and large screens
-- **URL**: `/display/{share_link}?mode=slideshow|collage`
-- **Version 1 - Slideshow Mode**:
-  - Full-screen single image view (16:9)
-  - Smooth transitions: crossfade, fade-zoom, slide, flip
-  - Auto-advancement with configurable interval (default 6 seconds)
-  - Preloads next 3 images for seamless transitions
-  - Controls: Play/Pause, Fullscreen, Progress bar
-  - Auto-hide controls after 3 seconds of inactivity
-- **Version 2 - Live Collage Mode**:
-  - Dynamic rectangular tile grid (10-15 tiles)
-  - Individual tiles update independently (3-7 second intervals)
-  - Staggered, randomized updates for organic motion
-  - Per-tile transitions: crossfade, fade-zoom, slide-up/down
-  - Optimized for large displays and viewing stations
-- **Common Features**:
-  - Live polling every 30 seconds for new photos
-  - No page refresh required when new photos added
-  - Event title and photographer branding
-  - Fullscreen API support
-  - Performance optimized for continuous display
-- **Access**: "Display Mode" button in gallery toolbar with dropdown
-- **Backend**: New endpoint `GET /api/display/{share_link}`
-- **Files**: `Display.jsx`, `SlideshowDisplay.jsx`, `CollageDisplay.jsx`
-
-### Contributor Upload Links (NEW - Feb 2, 2026)
-- **Feature**: Section-specific upload links for external teams/vendors
-- **Flow**: 
-  1. Photographer creates a section (e.g., "Event Coverage Team")
-  2. Generates a contributor link for that section
-  3. Shares link privately with the contributor
-  4. Contributor enters company name (with confirmation step)
-  5. Contributor uploads photos (no upload limit)
-  6. Photos appear in section with contributor name credited
-- **UI Elements**:
-  - "Generate Link" button when section is selected
-  - "Copy Link" / "Revoke" buttons for active links
-  - Green "Contributor" badge on sections with active links
-  - Dedicated upload portal at `/c/{contributorLink}`
-  - **Section drag-and-drop reordering** with grip handles
-- **Public Gallery Display**:
-  - Section title with "Photos by [Contributor Name]" subtitle
-  - Contributor photos displayed alongside photographer photos
-- **Backend Endpoints**:
-  - `POST /api/galleries/{id}/sections/{section_id}/contributor-link` - Generate link
-  - `DELETE /api/galleries/{id}/sections/{section_id}/contributor-link` - Revoke link
-  - `PUT /api/galleries/{id}/sections/reorder` - Reorder sections
-  - `GET /api/contributor/{link}` - Get upload info
-  - `POST /api/contributor/{link}/upload` - Upload photo
-- **Files Modified**: `server.py`, `GalleryDetail.jsx`, `PublicGallery.jsx`, `ContributorUpload.jsx` (new)
-
-### Guest Upload Limit (NEW)
-- **Feature**: Guests can upload max 10 photos at a time
-- **Frontend**: Validation in PublicGallery.jsx prevents selecting > 10 files
-- **UI**: Upload area shows "Max 10 photos at a time • JPEG, PNG, GIF, WebP"
-- **Error**: Toast message if limit exceeded
-
-### Multi-Select Guest Photos (NEW)
-- **Feature**: Photographers can select multiple guest photos for bulk actions
-- **Location**: Guest Uploads section in GalleryDetail.jsx
-- **Actions**: Hide, Unhide, Delete
-- **UI**: Select button, bulk action bar, checkboxes, ring highlight
-
----
-
-## Recent Bug Fixes (Jan 31, 2026)
-
-### P0 - Admin Single Photo Flagging (FIXED)
-- **Issue**: Clicking flag icon on a single photo only selected it instead of opening the flag modal
-- **Fix**: Added `handleSingleFlag` function and passed `onSingleFlag` prop to `AdminPhotoItem` component
-
-### P1 - Photo Reordering (FIXED)
-- **Issue**: Drag-and-drop reordering didn't visually update or persist
-- **Fix**: Fixed filtering logic in `handleDrop` to only include photographer photos, and added sorting by `order` field in display functions
-
----
-
-## Backlog / Future Tasks
-
-### P0 (Immediate)
-- None
-
-### P1 (High Priority)
-- Storage usage alerts/notifications when approaching quota
-- Display mode configuration in gallery settings (let photographer set default mode and transition)
-- ~~Backend refactoring (server.py is 2500+ lines - needs modularization)~~ → Guide created at `/app/backend/REFACTOR_GUIDE.md`
-
-### P2 (Medium Priority)
-- Gallery templates for quick creation
-- Bulk photo upload improvements
-- More detailed view tracking (unique visitors, time on page)
-
-### P3 (Low Priority)
-- Watermark options for photos
-- Publish Google OAuth app (remove "unverified app" warning)
-- More seasonal/event-based gallery themes
-- Frontend component refactoring (GalleryDetail, AdminDashboard)
-
----
-
-## Technical Notes
-
-### Backend Structure
-- Main API: `/app/backend/server.py` (~2900 lines, 61 endpoints)
-- Refactoring guide: `/app/backend/REFACTOR_GUIDE.md`
-- Recommended modular structure documented for future work
-
-### Code Quality
-- ESLint: Minor React hooks warnings (non-blocking)
-- Python lint: Clean (fixed comparison issues)
-- Health endpoint: `/api/health` returns `{"status": "healthy"}`
-
----
-
-## Technical Architecture
-
-### Backend
-- **Framework**: FastAPI
-- **Database**: MongoDB (Motor async driver)
-- **Auth**: JWT tokens
-- **File Storage**: Local `/uploads` directory
-- **Background Tasks**: asyncio tasks for auto-sync and auto-delete
-- **File I/O**: aiofiles for async operations
-- **Connection Pool**: 100 max connections, 10 min
-
-### Frontend
-- **Framework**: React 18
-- **Routing**: React Router
-- **Styling**: Tailwind CSS
-- **Components**: Shadcn/UI
-- **Icons**: Lucide React
-
-### Key Files
-- `/app/backend/server.py` - Main API (2500+ lines)
-- `/app/frontend/src/pages/Dashboard.jsx` - Photographer dashboard
-- `/app/frontend/src/pages/AdminDashboard.jsx` - Admin panel
-- `/app/frontend/src/pages/GalleryDetail.jsx` - Gallery management
-- `/app/frontend/src/components/CoverPhotoEditor.jsx` - Cover photo zoom/pan editor
-- `/app/frontend/src/themes.js` - 15 gallery themes
-
----
-
-## API Endpoints
-
-### Auth
-- `POST /api/auth/register` - Register photographer
-- `POST /api/auth/login` - Login
-- `GET /api/auth/me` - Get current user
-- `PUT /api/auth/profile` - Update profile
-- `PUT /api/auth/change-password` - Change password
-- `POST /api/auth/forgot-password` - Password reset
-
-### Galleries
-- `GET /api/galleries` - List user's galleries
-- `POST /api/galleries` - Create gallery
-- `GET /api/galleries/{id}` - Get gallery details
-- `PUT /api/galleries/{id}` - Update gallery
-- `DELETE /api/galleries/{id}` - Delete gallery
-
-### Cover Photo (NEW)
-- `POST /api/galleries/{id}/cover-photo` - Upload cover photo
-- `PUT /api/galleries/{id}/cover-photo-position` - Save zoom/pan settings
-- `GET /api/galleries/{id}/cover-photo-position` - Get position settings
-
-### Photos
-- `POST /api/galleries/{id}/photos` - Upload photo (optimized for concurrency)
-- `DELETE /api/photos/{id}` - Delete photo
-- `GET /api/photos/serve/{filename}` - Serve photo (with caching)
-
-### Public/Guest
-- `GET /api/public/gallery/{share_link}` - Get public gallery (includes cover_photo_position)
-- `POST /api/public/gallery/{share_link}/upload` - Guest upload (optimized)
-
-### Admin
-- `POST /api/admin/login` - Admin login
-- `GET /api/admin/photographers` - List photographers
-- `PUT /api/admin/photographers/{id}/gallery-limit` - Set gallery limit
-- `PUT /api/admin/photographers/{id}/storage-quota` - Set storage quota
-
----
-
-## Credentials
-
-### Admin
-- URL: `/admin`
-- Username: `admin`
-- Password: `Aa@58798546521325`
-
-### Test Photographer
-- Create via registration form at `/auth`
-
----
-
-## Known Issues
-- None currently blocking
-
-## Notes for Future Development
-- `server.py` should be refactored into modules (routes/, models/, services/)
-- Large frontend components should be split into smaller sub-components
-- React hooks dependency warnings in some components (non-blocking)
+## Access URLs
+- Preview: https://eventphoto-share.preview.emergentagent.com
+- Admin: /admin (credentials in .env)
+- Gallery: /gallery/{id}
+- Public: /g/{shareLink}
+- Display: /display/{shareLink}?mode=slideshow|collage
