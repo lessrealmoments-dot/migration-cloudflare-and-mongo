@@ -48,6 +48,7 @@ const CollageDisplay = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showBackSide, setShowBackSide] = useState(false); // Track which cube face is showing
   
   // Configurable interval (3-15 seconds)
   const urlInterval = searchParams.get('interval');
