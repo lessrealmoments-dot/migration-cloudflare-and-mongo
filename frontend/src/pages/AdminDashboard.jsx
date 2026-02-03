@@ -300,6 +300,40 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleUploadPaymentQR = async (method, file) => {
+    if (!file) return;
+    
+    setUploadingQR(method);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('method', method);
+      
+      const response = await axios.post(`${API}/admin/upload-payment-qr`, formData, {
+        headers: {
+          ...getAuthHeader().headers,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      setBillingSettings(prev => ({
+        ...prev,
+        payment_methods: {
+          ...prev.payment_methods,
+          [method]: {
+            ...prev.payment_methods[method],
+            qr_code_url: response.data.url
+          }
+        }
+      }));
+      toast.success('QR code uploaded');
+    } catch (error) {
+      toast.error('Failed to upload QR code');
+    } finally {
+      setUploadingQR(null);
+    }
+  };
+
   const handleApprovePayment = async (userId) => {
     try {
       await axios.post(`${API}/admin/approve-payment`, { user_id: userId }, getAuthHeader());
