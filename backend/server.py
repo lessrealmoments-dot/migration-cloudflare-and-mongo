@@ -940,11 +940,142 @@ class Transaction(BaseModel):
     created_at: str
     resolved_at: Optional[str] = None
 
+# ============================================
+# GLOBAL FEATURE TOGGLE MODELS
+# ============================================
+
+class GlobalFeatureToggles(BaseModel):
+    """Global feature toggles for all modes and plans - admin controlled"""
+    # Override Modes
+    founders_circle: dict = Field(default_factory=lambda: DEFAULT_MODE_FEATURES[MODE_FOUNDERS_CIRCLE].copy())
+    early_partner_beta: dict = Field(default_factory=lambda: DEFAULT_MODE_FEATURES[MODE_EARLY_PARTNER_BETA].copy())
+    comped_pro: dict = Field(default_factory=lambda: DEFAULT_MODE_FEATURES[MODE_COMPED_PRO].copy())
+    comped_standard: dict = Field(default_factory=lambda: DEFAULT_MODE_FEATURES[MODE_COMPED_STANDARD].copy())
+    # Payment Plans
+    free: dict = Field(default_factory=lambda: DEFAULT_PLAN_FEATURES[PLAN_FREE].copy())
+    standard: dict = Field(default_factory=lambda: DEFAULT_PLAN_FEATURES[PLAN_STANDARD].copy())
+    pro: dict = Field(default_factory=lambda: DEFAULT_PLAN_FEATURES[PLAN_PRO].copy())
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+
+# ============================================
+# AUTHORITY HIERARCHY HELPER FUNCTIONS
+# ============================================
+
+async def get_global_feature_toggles():
+    """Get global feature toggles from database or return defaults"""
+    toggles = await db.site_config.find_one({"type": "global_feature_toggles"}, {"_id": 0})
+    if not toggles:
+        return {
+            # Override Modes
+            MODE_FOUNDERS_CIRCLE: DEFAULT_MODE_FEATURES[MODE_FOUNDERS_CIRCLE].copy(),
+            MODE_EARLY_PARTNER_BETA: DEFAULT_MODE_FEATURES[MODE_EARLY_PARTNER_BETA].copy(),
+            MODE_COMPED_PRO: DEFAULT_MODE_FEATURES[MODE_COMPED_PRO].copy(),
+            MODE_COMPED_STANDARD: DEFAULT_MODE_FEATURES[MODE_COMPED_STANDARD].copy(),
+            # Payment Plans
+            PLAN_FREE: DEFAULT_PLAN_FEATURES[PLAN_FREE].copy(),
+            PLAN_STANDARD: DEFAULT_PLAN_FEATURES[PLAN_STANDARD].copy(),
+            PLAN_PRO: DEFAULT_PLAN_FEATURES[PLAN_PRO].copy()
+        }
+    return {
+        # Override Modes
+        MODE_FOUNDERS_CIRCLE: toggles.get(MODE_FOUNDERS_CIRCLE, DEFAULT_MODE_FEATURES[MODE_FOUNDERS_CIRCLE]),
+        MODE_EARLY_PARTNER_BETA: toggles.get(MODE_EARLY_PARTNER_BETA, DEFAULT_MODE_FEATURES[MODE_EARLY_PARTNER_BETA]),
+        MODE_COMPED_PRO: toggles.get(MODE_COMPED_PRO, DEFAULT_MODE_FEATURES[MODE_COMPED_PRO]),
+        MODE_COMPED_STANDARD: toggles.get(MODE_COMPED_STANDARD, DEFAULT_MODE_FEATURES[MODE_COMPED_STANDARD]),
+        # Payment Plans
+        PLAN_FREE: toggles.get(PLAN_FREE, DEFAULT_PLAN_FEATURES[PLAN_FREE]),
+        PLAN_STANDARD: toggles.get(PLAN_STANDARD, DEFAULT_PLAN_FEATURES[PLAN_STANDARD]),
+        PLAN_PRO: toggles.get(PLAN_PRO, DEFAULT_PLAN_FEATURES[PLAN_PRO])
+    }
+
+async def resolve_user_features(user: dict) -> dict:
+    """
+    Resolve user's effective features using AUTHORITY HIERARCHY:
+    1. Admin Override Mode (highest) - if active and not expired
+    2. Normal Payment/Subscription Plan
+    3. Payment Status
+    
+    Returns dict with all feature flags and metadata
+    """
+    global_toggles = await get_global_feature_toggles()
+    
+    # Get user info
+    override_mode = user.get("override_mode")
+    override_expires = user.get("override_expires")
+    plan = user.get("plan", PLAN_FREE)
+    payment_status = user.get("payment_status", PAYMENT_NONE)
+    billing_settings = await get_billing_settings()
+    billing_enabled = billing_settings.get("billing_enforcement_enabled", False)
+    
+    # Default result
+    result = {
+        "authority_source": None,  # What's providing the features
+        "effective_plan": plan,
+        "features": {},
+        "has_unlimited_credits": False,
+        "credits_available": user.get("event_credits", 0) + user.get("extra_credits", 0),
+        "can_download": True,
+        "override_active": False,
+        "override_mode": None,
+        "override_expires": None,
+        "payment_required": False
+    }
+    
+    # STEP 1: Check Admin Override Mode (HIGHEST AUTHORITY)
+    if override_mode and override_expires:
+        try:
+            expires_dt = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
+            if datetime.now(timezone.utc) < expires_dt:
+                # Override is active! Use override mode features
+                result["authority_source"] = "override_mode"
+                result["override_active"] = True
+                result["override_mode"] = override_mode
+                result["override_expires"] = override_expires
+                result["features"] = global_toggles.get(override_mode, DEFAULT_MODE_FEATURES.get(override_mode, {}))
+                
+                # Check unlimited credits from feature toggle
+                if result["features"].get("unlimited_token", False):
+                    result["has_unlimited_credits"] = True
+                    result["credits_available"] = 999
+                
+                # Override mode always allows downloads (ignores payment status)
+                result["can_download"] = True
+                result["payment_required"] = False
+                
+                # Determine effective plan based on override mode
+                if override_mode in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO]:
+                    result["effective_plan"] = PLAN_PRO
+                elif override_mode == MODE_COMPED_STANDARD:
+                    result["effective_plan"] = PLAN_STANDARD
+                
+                return result
+        except (ValueError, TypeError):
+            pass  # Override expired or invalid, continue to normal plan
+    
+    # STEP 2: Normal Payment/Subscription Plan
+    result["authority_source"] = "payment_plan"
+    result["effective_plan"] = plan
+    result["features"] = global_toggles.get(plan, DEFAULT_PLAN_FEATURES.get(plan, {}))
+    
+    # Check unlimited credits from feature toggle (unlikely for regular plans)
+    if result["features"].get("unlimited_token", False):
+        result["has_unlimited_credits"] = True
+        result["credits_available"] = 999
+    
+    # STEP 3: Payment Status Check (only if billing enforcement enabled)
+    if billing_enabled and plan != PLAN_FREE:
+        if payment_status == PAYMENT_PENDING:
+            result["can_download"] = False
+            result["payment_required"] = True
+        elif payment_status != PAYMENT_APPROVED:
+            result["payment_required"] = True
+    
+    return result
 
 # ============================================
 # SUBSCRIPTION HELPER FUNCTIONS
