@@ -7,6 +7,19 @@ import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Up
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Helper to get the correct URL for uploaded files
+const getFileUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('/api/files/')) {
+    return `${BACKEND_URL}${path}`;
+  }
+  if (path.startsWith('/uploads/')) {
+    const newPath = path.replace('/uploads/', '/api/files/');
+    return `${BACKEND_URL}${newPath}`;
+  }
+  return `${BACKEND_URL}${path}`;
+};
+
 // Admin contact info for feature unavailable messages
 const ADMIN_CONTACT = {
   phone: '09952568450',
