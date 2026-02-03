@@ -1772,10 +1772,6 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     override_mode = user.get("override_mode")
     payment_status = user.get("payment_status", PAYMENT_NONE)
     
-    # Debug logging
-    import logging
-    logging.info(f"Gallery create - User: {current_user['id']}, Plan: {effective_plan}, Credits: {effective_credits}, PaymentStatus: {payment_status}")
-    
     # Check if user is on Free plan (demo gallery)
     is_demo = effective_plan == PLAN_FREE
     
