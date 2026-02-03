@@ -4106,6 +4106,32 @@ async def upload_payment_proof(file: UploadFile = File(...), user: dict = Depend
     
     return {"url": f"/uploads/payment_proofs/{filename}"}
 
+@api_router.get("/files/{file_type}/{filename}")
+async def serve_uploaded_file(file_type: str, filename: str):
+    """Serve uploaded files (payment proofs, QR codes, etc.)"""
+    from fastapi.responses import FileResponse
+    
+    allowed_types = ["payment_proofs", "payment_qr"]
+    if file_type not in allowed_types:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    file_path = UPLOAD_DIR / file_type / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Determine content type
+    suffix = file_path.suffix.lower()
+    content_types = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp'
+    }
+    content_type = content_types.get(suffix, 'application/octet-stream')
+    
+    return FileResponse(file_path, media_type=content_type)
+
 @api_router.post("/admin/reject-payment")
 async def reject_payment(data: RejectPayment, admin: dict = Depends(get_admin_user)):
     """Reject a user's payment"""
