@@ -1018,6 +1018,102 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Override Mode Modal */}
+        {showOverrideModal && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="bg-zinc-800 rounded-lg max-w-md w-full p-6" data-testid="override-modal">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h3 className="text-xl font-medium text-white">Assign Override Mode</h3>
+                  <p className="text-sm text-zinc-400 mt-1">
+                    {photographers.find(p => p.id === showOverrideModal)?.name || 'User'}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowOverrideModal(null)} 
+                  className="p-2 hover:bg-zinc-700 rounded"
+                >
+                  <X className="w-5 h-5 text-zinc-400" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {/* Current Override Status */}
+                {photographers.find(p => p.id === showOverrideModal)?.override_mode && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                    <div className="text-amber-400 text-sm font-medium">
+                      Current: {MODE_LABELS[photographers.find(p => p.id === showOverrideModal)?.override_mode]}
+                    </div>
+                    <button
+                      onClick={() => { handleRemoveOverride(showOverrideModal); setShowOverrideModal(null); }}
+                      className="text-xs text-red-400 hover:underline mt-1"
+                    >
+                      Remove Override
+                    </button>
+                  </div>
+                )}
+                
+                {/* Mode Selection */}
+                <div>
+                  <label className="text-sm text-zinc-400 block mb-2">Override Mode</label>
+                  <select
+                    value={overrideMode}
+                    onChange={(e) => setOverrideMode(e.target.value)}
+                    className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2"
+                  >
+                    <option value="founders_circle">🌟 Founders Circle (Unlimited, Free)</option>
+                    <option value="early_partner_beta">🚀 Early Partner Beta (Pro, Free)</option>
+                    <option value="comped_pro">💜 Comped Pro</option>
+                    <option value="comped_standard">💙 Comped Standard</option>
+                  </select>
+                </div>
+                
+                {/* Duration */}
+                <div>
+                  <label className="text-sm text-zinc-400 block mb-2">Duration (1-24 months)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="24"
+                    value={overrideDuration}
+                    onChange={(e) => setOverrideDuration(Math.min(24, Math.max(1, parseInt(e.target.value) || 1)))}
+                    className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2"
+                  />
+                </div>
+                
+                {/* Reason */}
+                <div>
+                  <label className="text-sm text-zinc-400 block mb-2">Reason (Required)</label>
+                  <textarea
+                    value={overrideReason}
+                    onChange={(e) => setOverrideReason(e.target.value)}
+                    placeholder="e.g., Beta tester, VIP client, Partnership..."
+                    className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2 h-20 resize-none"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-700">
+                <button
+                  onClick={() => setShowOverrideModal(null)}
+                  className="px-4 py-2 bg-zinc-700 text-white rounded-lg hover:bg-zinc-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAssignOverride}
+                  disabled={assigningOverride || !overrideReason.trim()}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-500 disabled:opacity-50 flex items-center gap-2"
+                  data-testid="assign-override"
+                >
+                  <Crown className="w-4 h-4" />
+                  {assigningOverride ? 'Assigning...' : 'Assign Override'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Photographer Galleries Modal */}
         {showGalleriesModal && selectedPhotographer && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
