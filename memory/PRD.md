@@ -156,10 +156,46 @@ Build a photo-sharing application for event photographers with:
 5. **Analytics Dashboard (P1)**: Make photographer analytics fully functional (views, QR scans, downloads)
 6. **Codebase Refactoring (P2)**: Split server.py into modules (models, routes, utils)
 
+## Recent Updates (February 3, 2026)
+
+### Notification Bell for Photographers ✅
+- Bell icon in dashboard header shows unread notification count
+- Dropdown displays notifications with type icons (approved=green, rejected=red)
+- Mark individual or all notifications as read
+- Notifications created when admin approves/rejects payments
+
+### Payment Dispute & Resubmit ✅
+- Users with rejected payments see red banner with rejection reason
+- "Dispute & Resubmit" button (1 attempt allowed)
+- Dispute modal shows original proof, allows message + new proof upload
+- After 1 dispute attempt, must contact customer service
+
+### Admin Transaction History ✅
+- New "Transaction History" section in Billing tab
+- Table shows: date, client name/email, type, amount, status
+- "View Proof" button for each transaction with proof
+- "History" button opens modal showing all transactions for a specific client
+- Blue history button added to photographer row actions
+
+### API Endpoints Added
+- `GET /api/user/notifications` - Get user notifications
+- `GET /api/user/notifications/unread-count` - Get unread count
+- `PUT /api/user/notifications/{id}/read` - Mark notification as read
+- `PUT /api/user/notifications/read-all` - Mark all as read
+- `POST /api/user/payment-dispute` - Submit dispute with new proof
+- `GET /api/user/payment-status` - Get payment status with can_dispute flag
+- `GET /api/user/transactions` - Get user's transaction history
+- `GET /api/admin/transactions` - Get all transactions (admin)
+- `GET /api/admin/users/{id}/transactions` - Get user's transactions (admin)
+
+### Database Collections Added
+- `notifications` - User notifications with type, title, message, read status
+- `transactions` - Payment transaction history with proof URLs
+
 ## Access URLs
 - Preview: https://subimagepay.preview.emergentagent.com
 - Pricing: /pricing
 - Admin: /admin
 
 ## Last Updated
-February 3, 2026 - Subscription & Billing System fully implemented and tested
+February 3, 2026 - Added Notification Bell, Payment Dispute, Transaction History features
