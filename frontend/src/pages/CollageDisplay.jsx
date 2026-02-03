@@ -148,7 +148,7 @@ const CollageDisplay = () => {
       setShowBackSide(prev => !prev); // Toggle side
       setIsFlipping(false);
     }, 850);
-  }, [isPaused, photos, layout.length, isFlipping]);
+  }, [isPaused, photos, layout.length, isFlipping, showBackSide]);
 
   // Initial load
   useEffect(() => {
