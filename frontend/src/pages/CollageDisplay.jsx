@@ -173,35 +173,21 @@ const CollageDisplay = () => {
     };
   }, [photos.length, fetchDisplayData]);
 
-  // Set-based update timer (5-10 seconds between sets)
+  // Update timer - triggers ALL tiles update at configurable interval
   useEffect(() => {
     if (tilePhotos.length === 0 || isPaused) return;
     
-    const scheduleNextSet = () => {
-      // Random interval between 5-10 seconds
-      const interval = 5000 + Math.random() * 5000;
-      
-      setUpdateTimer.current = setTimeout(() => {
-        // Update current set
-        updateTileSet(currentSetIndex);
-        
-        // Move to next set
-        setCurrentSetIndex(prev => (prev + 1) % TILE_SETS.length);
-        
-        // Schedule next update
-        scheduleNextSet();
-      }, interval);
-    };
-    
-    // Start the cycle
-    scheduleNextSet();
+    // Set interval based on user preference (seconds to ms)
+    updateTimer.current = setInterval(() => {
+      updateAllTiles();
+    }, updateInterval * 1000);
     
     return () => {
-      if (setUpdateTimer.current) {
-        clearTimeout(setUpdateTimer.current);
+      if (updateTimer.current) {
+        clearInterval(updateTimer.current);
       }
     };
-  }, [tilePhotos.length, isPaused, currentSetIndex, updateTileSet]);
+  }, [tilePhotos.length, isPaused, updateInterval, updateAllTiles]);
 
   // Fullscreen handling
   const toggleFullscreen = () => {
