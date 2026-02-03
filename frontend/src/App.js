@@ -90,6 +90,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage user={user} />} />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth setUser={setUser} />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard user={user} setUser={setUser} /></ProtectedRoute>} />
           <Route path="/gallery/create" element={<ProtectedRoute><CreateGallery /></ProtectedRoute>} />
