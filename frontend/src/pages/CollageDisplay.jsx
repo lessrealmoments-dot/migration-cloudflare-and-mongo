@@ -114,9 +114,6 @@ const CollageDisplay = () => {
     photoPoolIndex.current = layout.length * 2;
   };
 
-  // Track which "side" we're showing (alternates between flips)
-  const [showBackSide, setShowBackSide] = useState(false);
-  
   // Update ALL tiles at once with cube flip transition
   const updateAllTiles = useCallback(() => {
     if (isPaused || photos.length === 0 || isFlipping) return;
