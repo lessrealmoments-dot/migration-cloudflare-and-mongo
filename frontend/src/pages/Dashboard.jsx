@@ -276,6 +276,7 @@ const Dashboard = ({ user, setUser }) => {
             <span className="text-sm text-zinc-600">
               Welcome, {user?.business_name || user?.name}
             </span>
+            <NotificationBell />
             <button
               data-testid="analytics-button"
               onClick={() => setShowAnalyticsModal(true)}
