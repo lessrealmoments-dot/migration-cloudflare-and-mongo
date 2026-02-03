@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, X, Crown, Zap, Star, ArrowRight, Sparkles, Shield, Clock, Upload, Users, QrCode, Monitor, Download, AlertCircle } from 'lucide-react';
+import { Check, X, Crown, Zap, Star, ArrowRight, Sparkles, Shield, Clock, Upload, Users, QrCode, Monitor, Download, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import useBrandConfig from '../hooks/useBrandConfig';
@@ -21,6 +21,9 @@ const PricingPage = () => {
   const [subscription, setSubscription] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(null); // Plan name
   const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [uploadingProof, setUploadingProof] = useState(false);
+  const [paymentProofUrl, setPaymentProofUrl] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchPricing();
@@ -72,21 +75,61 @@ const PricingPage = () => {
       return;
     }
     
+    // Reset payment proof when opening modal
+    setPaymentProofUrl(null);
     // Show upgrade modal
     setShowUpgradeModal(planName.toLowerCase());
   };
 
+  const handlePaymentProofUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+    
+    setUploadingProof(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/upload-payment-proof`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      setPaymentProofUrl(response.data.url);
+      toast.success('Payment proof uploaded!');
+    } catch (error) {
+      toast.error('Failed to upload payment proof');
+    } finally {
+      setUploadingProof(false);
+    }
+  };
+
   const handleUpgradeRequest = async () => {
+    if (!paymentProofUrl) {
+      toast.error('Please upload payment proof first');
+      return;
+    }
+    
     setUpgradeLoading(true);
     try {
       const token = localStorage.getItem('token');
       await axios.post(`${API}/user/upgrade-request`, {
-        requested_plan: showUpgradeModal
+        requested_plan: showUpgradeModal,
+        proof_url: paymentProofUrl
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Upgrade request submitted! Please submit payment proof.');
+      toast.success('Upgrade request with payment proof submitted! Awaiting admin approval.');
       setShowUpgradeModal(null);
+      setPaymentProofUrl(null);
       navigate('/dashboard');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to submit request');
