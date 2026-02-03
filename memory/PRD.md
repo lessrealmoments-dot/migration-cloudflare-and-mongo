@@ -7,119 +7,135 @@ Build a photo-sharing application for event photographers with:
 - Display modes (Slideshow, Live Collage)
 - **Complete subscription system with plans, credits, billing, and pricing page**
 
-## Subscription & Billing System
+## Subscription & Billing System (COMPLETED)
 
 ### Plans
-| Plan | Price | Credits/Month | Features |
-|------|-------|---------------|----------|
-| Free | ₱0 | 1 demo gallery | All features for 6 hours, then view-only |
-| Standard | ₱1,000/mo | 2 | Standard features (QR, Display, Guest uploads) |
-| Pro | ₱1,500/mo | 2 | All features including Contributor Links |
+| Plan | Price | Credits/Month | Storage | Features |
+|------|-------|---------------|---------|----------|
+| Free | ₱0 | 1 demo gallery | 500MB | All features, gallery expires in 6 hours |
+| Standard | ₱1,000/mo | 2 | 10GB | QR Share, Online Gallery, Guest uploads. NO Display Mode, NO Contributor Links |
+| Pro | ₱1,500/mo | 2 | 10GB | All Standard features + Display Mode (Slideshow + Collage) + Contributor Links |
 
 ### Override Modes (Admin Assigned)
-| Mode | Features | Credits | Fee |
-|------|----------|---------|-----|
-| Founders Circle | Full Pro | Unlimited | ₱0 |
-| Early Partner Beta | Full Pro | 2/month | ₱0 |
-| Comped Pro | Full Pro | 2/month | Based on plan |
-| Comped Standard | Standard | 2/month | Based on plan |
+| Mode | Effective Plan | Credits | Auto-Delete |
+|------|----------------|---------|-------------|
+| Founders Circle | Pro | Unlimited (999) | Never (100 years) |
+| Early Partner Beta | Pro | 2/month | 6 months |
+| Comped Pro | Pro | 2/month | 6 months |
+| Comped Standard | Standard | 2/month | 6 months |
 
 ### Key Rules
-- 1 credit = 1 event gallery (single-use)
+- 1 credit = 1 event gallery (single-use, deducted on creation)
 - Credits reset monthly (don't roll over)
 - Extra credits: ₱500/event (current cycle only)
-- Galleries auto-delete after 6 months
+- Gallery expiration:
+  - Free: 6 hours from creation
+  - Standard/Pro: 6 months from creation
+  - Founders: Never (100 years)
 - Gallery edit lock after 7 days
-- Demo galleries: 6-hour feature window, then view-only
+- Downloads locked while payment is pending
 
-### Payment Flow (Manual/Soft Launch)
-1. User submits payment proof (screenshot via GCash/PayMaya)
-2. Admin reviews in Billing tab and approves/rejects
-3. Downloads locked while payment pending
-4. Approved = downloads unlocked
+### Payment Flow (Manual/Soft Launch - IMPLEMENTED)
+1. User clicks Upgrade on Pricing page
+2. Modal shows payment instructions (GCash: 09952568450)
+3. User uploads payment screenshot within modal
+4. Request submitted with proof -> Admin notification banner appears
+5. Admin reviews in Billing tab -> View Proof, Approve, or Reject
+6. On approval: Plan upgraded, credits set, features unlocked
+7. Downloads locked until payment approved
 
-## Implemented Features
+## Feature Toggles by Plan
+| Feature | Free | Standard | Pro |
+|---------|------|----------|-----|
+| QR Share | ✅ | ✅ | ✅ |
+| Online Gallery | ✅ | ✅ | ✅ |
+| Guest Uploads | ✅ | ✅ | ✅ |
+| Display Mode | ✅ (6hr) | ❌ | ✅ |
+| Contributor Links | ✅ (6hr) | ❌ | ✅ |
 
-### Pricing Page (/pricing)
-- Three-tier plan comparison (Free, Standard ₱1,000, Pro ₱1,500)
-- Feature checklist for each plan
-- Extra credits section (₱500/credit)
-- Features grid (QR, Display Mode, Guest Uploads, etc.)
-- FAQ section
-- CTA to sign up
+## Implemented Features (This Session)
 
-### User Dashboard
-- Subscription card showing:
-  - Current plan with icon
-  - Override mode badge (if applicable)
-  - Credit balance (or "Unlimited")
-  - Payment status (Active/Pending)
-  - Link to pricing page
-- Payment proof upload modal
-- Download lock warning when payment pending
+### Credit System ✅
+- Credits deducted when creating galleries
+- Extra credits deducted first, then event_credits
+- "No credits remaining" error when exhausted
+- Free users limited to 1 demo gallery
 
-### Admin Panel - Billing Tab
-- Billing mode toggle (Manual/Live)
-- Pricing configuration (editable)
-- Pending payments queue with Approve/Reject
-- Plan reference cards
+### Download Gate ✅
+- Downloads disabled when payment_status = "pending"
+- Button shows "Download Disabled" with tooltip explanation
+- Re-enabled after admin approves payment
 
-### Admin Panel - Override Assignment
-- Crown button in Photographers table
-- Modal with mode selection, duration, reason
-- Remove override option
+### Upgrade Flow ✅
+- Pricing page shows 3-tier comparison
+- "Get Started"/"Go Pro" buttons open upgrade modal
+- Modal includes payment instructions + upload area
+- Payment proof required before submission
+- Redirects to dashboard after request
+
+### Admin Notifications ✅
+- Orange banner at top: "X pending upgrade requests with payment proof"
+- Shows user names in banner
+- "Review Now" button jumps to Billing tab
+- Red badge on Billing tab shows count
+
+### Admin Billing Tab ✅
+- Pending Payments section with cards
+- Each card shows: user name, email, requested plan, submitted date
+- "View Proof" opens payment screenshot
+- "Approve" and "Reject" buttons with confirmation
+- Plan Reference section shows features per tier
+
+### Plan Reference in Admin ✅
+- Free: 1 demo gallery, 500MB storage, Gallery expires in 6 hours
+- Standard: 2 credits/month, 10GB storage, No Display Mode, No Contributor Links
+- Pro: 2 credits/month, 10GB storage, Display Mode + Contributor Links
 
 ## API Endpoints
 
-### Billing
-- `GET /api/billing/pricing` - Public pricing
-- `GET /api/billing/settings` - Admin: billing config
-- `PUT /api/billing/settings` - Admin: update billing
+### Public
+- `GET /api/billing/pricing` - Get plan prices
 
-### User Subscription
-- `GET /api/user/subscription` - User's subscription info
-- `POST /api/user/payment-proof` - Submit payment screenshot
-- `POST /api/upload-payment-proof` - Upload proof image
+### User
+- `GET /api/user/subscription` - Get subscription info (plan, credits, features, can_download)
+- `POST /api/user/upgrade-request` - Submit upgrade with payment proof
+- `POST /api/upload-payment-proof` - Upload proof image file
 
 ### Admin
-- `GET /api/admin/pending-payments` - Pending approvals
-- `POST /api/admin/approve-payment` - Approve payment
+- `GET /api/admin/billing/settings` - Get billing config
+- `PUT /api/admin/billing/settings` - Update pricing
+- `GET /api/admin/pending-payments` - List pending payments
+- `POST /api/admin/approve-payment` - Approve payment (upgrades plan)
 - `POST /api/admin/reject-payment` - Reject payment
 - `POST /api/admin/assign-override` - Assign override mode
 - `POST /api/admin/remove-override` - Remove override
-- `PUT /api/admin/users/{id}/plan` - Change user plan
 
-## Current Founder
-- Email: lessrealmoments@gmail.com
-- Mode: Founders Circle
-- Expires: January 2028
-- Credits: Unlimited
+## Test Accounts
+- **Admin**: admin / Aa@58798546521325
+- **Founder**: lessrealmoments@gmail.com / (check .env)
+- **Comped Pro**: jovelyneahig@gmail.com / Aa@050772 (0 credits remaining)
+- **Free Pending**: testupgrade@example.com / Test123! (pending Standard upgrade)
 
 ## Routes
-- `/` - Landing page (with Pricing link)
+- `/` - Landing page
 - `/pricing` - Pricing & plans page
 - `/auth` - Login/Register
 - `/dashboard` - User dashboard with subscription card
-- `/admin/dashboard` - Admin with Billing tab
+- `/admin` - Admin login
+- `/admin/dashboard` - Admin panel with Billing tab
 
-## Completed This Session
-1. ✅ Subscription data model & API
-2. ✅ Credit consumption on gallery creation
-3. ✅ Override modes (4 types)
-4. ✅ Payment proof upload flow
-5. ✅ Admin billing tab
-6. ✅ Admin override assignment modal
-7. ✅ Pricing page with plans, features, FAQ
-8. ✅ User dashboard subscription card
-9. ✅ Download gate when payment pending
-
-## Next Steps
-- [ ] GCash/PayMaya live payment integration (when ready)
-- [ ] Email notifications for payment status
-- [ ] Automated billing when enabled
-- [ ] Invoice/receipt generation
+## Next Steps / Backlog
+1. **Payment Gateway Integration (P0)**: Integrate PayMongo for GCash/PayMaya automated payments
+2. **Enable Live Billing (P1)**: Implement automated renewals when billing_enforcement_enabled = true
+3. **Email Notifications (P2)**: Notify users on payment approval/rejection, plan changes, expiring overrides
+4. **Invoice Generation (P2)**: Generate downloadable invoices for payments
+5. **Analytics Dashboard (P1)**: Make photographer analytics fully functional (views, QR scans, downloads)
+6. **Codebase Refactoring (P2)**: Split server.py into modules (models, routes, utils)
 
 ## Access URLs
 - Preview: https://photo-pay-plans.preview.emergentagent.com
 - Pricing: /pricing
 - Admin: /admin
+
+## Last Updated
+February 3, 2026 - Subscription & Billing System fully implemented and tested
