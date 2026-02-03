@@ -6,6 +6,22 @@ import { X, Upload, Loader2, Check, CreditCard, Building2, Smartphone, QrCode } 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Helper to get the correct URL for uploaded files
+const getFileUrl = (path) => {
+  if (!path) return null;
+  // If path already starts with /api/files, use it directly
+  if (path.startsWith('/api/files/')) {
+    return `${BACKEND_URL}${path}`;
+  }
+  // Convert old /uploads/ paths to new /api/files/ format
+  if (path.startsWith('/uploads/')) {
+    const newPath = path.replace('/uploads/', '/api/files/');
+    return `${BACKEND_URL}${newPath}`;
+  }
+  // For any other path, assume it's relative to backend
+  return `${BACKEND_URL}${path}`;
+};
+
 const PaymentMethodsModal = ({ 
   isOpen, 
   onClose, 
