@@ -266,14 +266,16 @@ const PricingPage = () => {
                 </div>
                 
                 <button
-                  onClick={() => navigate('/auth')}
+                  onClick={() => handlePlanSelect(plan.name)}
                   className={`w-full py-3 rounded-xl font-medium mb-6 transition-colors ${
                     plan.popular 
                       ? 'bg-purple-600 text-white hover:bg-purple-700' 
                       : 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200'
-                  }`}
+                  } ${subscription?.effective_plan === plan.name.toLowerCase() ? 'opacity-50 cursor-default' : ''}`}
                 >
-                  {plan.cta}
+                  {subscription?.effective_plan === plan.name.toLowerCase() 
+                    ? 'Current Plan' 
+                    : plan.cta}
                 </button>
                 
                 <ul className="space-y-3">
