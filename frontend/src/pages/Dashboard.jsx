@@ -438,6 +438,40 @@ const Dashboard = ({ user, setUser }) => {
         </div>
       )}
 
+      {/* Payment Rejected Banner */}
+      {paymentStatus?.payment_rejected_at && (
+        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 pt-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="font-medium text-red-900">Payment Rejected</h4>
+                <p className="text-sm text-red-700 mt-1">
+                  <strong>Reason:</strong> {paymentStatus.payment_rejected_reason || 'No reason provided'}
+                </p>
+                {paymentStatus.can_dispute ? (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => setShowDisputeModal(true)}
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm font-medium"
+                      data-testid="dispute-payment-btn"
+                    >
+                      Dispute & Resubmit (1 attempt remaining)
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-2 text-sm text-red-800">
+                    You have used your dispute attempt. Please contact customer service at{' '}
+                    <a href="mailto:lessrealmoments@gmail.com" className="underline">lessrealmoments@gmail.com</a> or{' '}
+                    <a href="tel:09952568450" className="underline">09952568450</a>.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-12">
         <div className="mb-12 flex justify-between items-center">
           <div>
