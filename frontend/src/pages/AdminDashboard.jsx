@@ -1579,6 +1579,94 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
+
+            {/* Transaction History */}
+            <div className="bg-zinc-800 rounded-lg overflow-hidden">
+              <div className="px-6 py-4 border-b border-zinc-700">
+                <h3 className="text-lg font-medium text-white">Transaction History</h3>
+                <p className="text-sm text-zinc-400 mt-1">View all payment transactions and client history</p>
+              </div>
+              
+              {transactions.length === 0 ? (
+                <div className="p-8 text-center text-zinc-500">
+                  <Activity className="w-12 h-12 mx-auto mb-3 text-zinc-600" />
+                  No transactions yet
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-zinc-700/50">
+                      <tr>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-zinc-400">Date</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-zinc-400">Client</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-zinc-400">Type</th>
+                        <th className="text-center px-4 py-3 text-sm font-medium text-zinc-400">Amount</th>
+                        <th className="text-center px-4 py-3 text-sm font-medium text-zinc-400">Status</th>
+                        <th className="text-center px-4 py-3 text-sm font-medium text-zinc-400">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-700">
+                      {transactions.slice(0, 20).map((tx) => (
+                        <tr key={tx.id} className="hover:bg-zinc-700/30">
+                          <td className="px-4 py-3 text-sm text-zinc-300">
+                            {new Date(tx.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-sm text-white">{tx.user_name}</div>
+                            <div className="text-xs text-zinc-500">{tx.user_email}</div>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              tx.type === 'upgrade' ? 'bg-purple-500/20 text-purple-300' :
+                              tx.type === 'extra_credits' ? 'bg-blue-500/20 text-blue-300' :
+                              'bg-zinc-600 text-zinc-300'
+                            }`}>
+                              {tx.type === 'upgrade' ? `Upgrade to ${tx.plan}` :
+                               tx.type === 'extra_credits' ? `+${tx.extra_credits} Credit(s)` :
+                               tx.type}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="text-white font-medium">₱{tx.amount?.toLocaleString() || 0}</span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              tx.status === 'approved' ? 'bg-green-500/20 text-green-300' :
+                              tx.status === 'rejected' ? 'bg-red-500/20 text-red-300' :
+                              tx.status === 'disputed' ? 'bg-amber-500/20 text-amber-300' :
+                              'bg-zinc-600 text-zinc-300'
+                            }`}>
+                              {tx.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              {tx.payment_proof_url && (
+                                <button
+                                  onClick={() => window.open(getFileUrl(tx.payment_proof_url), '_blank')}
+                                  className="px-2 py-1 bg-zinc-700 text-zinc-300 rounded hover:bg-zinc-600 text-xs flex items-center gap-1"
+                                  title="View proof"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => fetchUserTransactions(tx.user_id, tx.user_name)}
+                                className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-500 text-xs flex items-center gap-1"
+                                title="View all transactions from this client"
+                              >
+                                <Activity className="w-3 h-3" />
+                                History
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
