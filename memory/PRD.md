@@ -159,6 +159,32 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 - **Implementation**: Created `useBrandConfig` hook with memory caching
 - **Files**: `/app/frontend/src/hooks/useBrandConfig.js`
 
+### Event Display Modes (NEW - Feb 3, 2026)
+- **Feature**: Two dedicated display modes for viewing stations and large screens
+- **URL**: `/display/{share_link}?mode=slideshow|collage`
+- **Version 1 - Slideshow Mode**:
+  - Full-screen single image view (16:9)
+  - Smooth transitions: crossfade, fade-zoom, slide, flip
+  - Auto-advancement with configurable interval (default 6 seconds)
+  - Preloads next 3 images for seamless transitions
+  - Controls: Play/Pause, Fullscreen, Progress bar
+  - Auto-hide controls after 3 seconds of inactivity
+- **Version 2 - Live Collage Mode**:
+  - Dynamic rectangular tile grid (10-15 tiles)
+  - Individual tiles update independently (3-7 second intervals)
+  - Staggered, randomized updates for organic motion
+  - Per-tile transitions: crossfade, fade-zoom, slide-up/down
+  - Optimized for large displays and viewing stations
+- **Common Features**:
+  - Live polling every 30 seconds for new photos
+  - No page refresh required when new photos added
+  - Event title and photographer branding
+  - Fullscreen API support
+  - Performance optimized for continuous display
+- **Access**: "Display Mode" button in gallery toolbar with dropdown
+- **Backend**: New endpoint `GET /api/display/{share_link}`
+- **Files**: `Display.jsx`, `SlideshowDisplay.jsx`, `CollageDisplay.jsx`
+
 ### Contributor Upload Links (NEW - Feb 2, 2026)
 - **Feature**: Section-specific upload links for external teams/vendors
 - **Flow**: 
