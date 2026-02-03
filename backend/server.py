@@ -1872,6 +1872,7 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         "is_demo": is_demo,
         "is_founder_gallery": is_founder,
         "demo_features_expire": demo_features_expire,
+        "download_locked_until_payment": download_locked_until_payment,
         "view_count": 0
     }
     
