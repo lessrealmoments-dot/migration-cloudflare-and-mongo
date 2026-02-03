@@ -253,10 +253,12 @@ const CollageDisplay = () => {
           position: relative;
           width: 100%;
           height: 100%;
-          transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
           transform-style: preserve-3d;
         }
-        .cube-flipper.flipping {
+        .cube-flipper.animating {
+          transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .cube-flipper.flipped {
           transform: rotateY(180deg);
         }
         .cube-face {
@@ -299,7 +301,7 @@ const CollageDisplay = () => {
                   padding: '2px'
                 }}
               >
-                <div className={`cube-flipper ${isFlipping ? 'flipping' : ''}`}>
+                <div className={`cube-flipper ${isFlipping ? 'animating flipped' : ''}`}>
                   {/* Current image (front face) */}
                   <div className="cube-face rounded-sm overflow-hidden bg-zinc-900">
                     <img
