@@ -1236,24 +1236,41 @@ const GalleryDetail = () => {
                 Display Mode
               </button>
             )}
-            <button
-              data-testid="download-all-button"
-              onClick={handleDownloadAll}
-              disabled={isPreparingDownload}
-              className="border border-green-300 bg-white hover:bg-green-50 text-green-700 h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2 disabled:opacity-70"
-            >
-              {isPreparingDownload ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Preparing...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" strokeWidth={1.5} />
-                  Download All
-                </>
-              )}
-            </button>
+            {!canDownload ? (
+              <div className="relative group">
+                <button
+                  data-testid="download-all-button"
+                  disabled
+                  className="border border-zinc-300 bg-zinc-100 text-zinc-400 h-10 px-6 rounded-sm cursor-not-allowed flex items-center gap-2"
+                  title={downloadDisabledReason}
+                >
+                  <Lock className="w-4 h-4" strokeWidth={1.5} />
+                  Download Disabled
+                </button>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  {downloadDisabledReason}
+                </div>
+              </div>
+            ) : (
+              <button
+                data-testid="download-all-button"
+                onClick={handleDownloadAll}
+                disabled={isPreparingDownload}
+                className="border border-green-300 bg-white hover:bg-green-50 text-green-700 h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2 disabled:opacity-70"
+              >
+                {isPreparingDownload ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Preparing...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" strokeWidth={1.5} />
+                    Download All
+                  </>
+                )}
+              </button>
+            )}
             <button
               data-testid="delete-gallery-button"
               onClick={handleDeleteGalleryStep1}
