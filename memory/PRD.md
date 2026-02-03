@@ -7,6 +7,47 @@ Build a photo-sharing application for event photographers with:
 - Display modes (Slideshow, Live Collage)
 - **Complete subscription system with plans, credits, billing, and pricing page**
 
+## Admin Override System (NEW - February 2026)
+
+### Authority Hierarchy (Strict Order)
+The system resolves access using this priority:
+1. **Admin Override Mode** (highest authority) - Always takes precedence if active and not expired
+2. **Normal Payment/Subscription Plan** - Applies when no override is active
+3. **Payment Status** - Only affects downloads if billing enforcement enabled
+
+### Global Feature Toggle System
+Admin-controlled features that can be independently toggled per package/mode:
+
+| Feature | Description |
+|---------|-------------|
+| Unlimited Token | Unlimited event credits (no limit on galleries) |
+| Copy Share Link | Copy shareable gallery links |
+| QR Code | Generate QR codes for gallery sharing |
+| View Public Gallery | Allow public gallery viewing |
+| Display Mode | Slideshow/Collage display modes |
+| Collaboration Link | Contributor upload links |
+
+### Default Features by Override Mode
+| Mode | Unlimited Token | Copy Share Link | QR Code | View Public | Display Mode | Collaboration |
+|------|----------------|-----------------|---------|-------------|--------------|---------------|
+| Founders Circle | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Early Partner Beta | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Comped Pro | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Comped Standard | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
+
+### Default Features by Payment Plan
+| Plan | Unlimited Token | Copy Share Link | QR Code | View Public | Display Mode | Collaboration |
+|------|----------------|-----------------|---------|-------------|--------------|---------------|
+| Free | ❌ | ✅ | ✅ | ✅ | ✅ (demo) | ✅ (demo) |
+| Standard | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Pro | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+### Admin Feature Toggle Page
+- Located in Admin Panel > Feature Toggles tab
+- Configure features for all 4 override modes and 3 payment plans
+- Save All Changes applies globally across the platform
+- Individual mode/plan toggles can be updated separately
+
 ## Subscription & Billing System (COMPLETED)
 
 ### Plans
