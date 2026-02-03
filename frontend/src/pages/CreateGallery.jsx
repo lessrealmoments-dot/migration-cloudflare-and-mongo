@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Plus, CreditCard } from 'lucide-react';
 import { themes } from '@/themes';
 import useBrandConfig from '../hooks/useBrandConfig';
+import PaymentMethodsModal from '../components/PaymentMethodsModal';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -25,6 +26,36 @@ const CreateGallery = () => {
   });
   const [loading, setLoading] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
+  const [limitMessage, setLimitMessage] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pricing, setPricing] = useState({ extra_credit: 500 });
+  const [subscription, setSubscription] = useState(null);
+
+  useEffect(() => {
+    fetchPricing();
+    fetchSubscription();
+  }, []);
+
+  const fetchPricing = async () => {
+    try {
+      const response = await axios.get(`${API}/billing/pricing`);
+      setPricing(response.data);
+    } catch (error) {
+      console.error('Failed to fetch pricing');
+    }
+  };
+
+  const fetchSubscription = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/user/subscription`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSubscription(response.data);
+    } catch (error) {
+      console.error('Failed to fetch subscription');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,13 +83,42 @@ const CreateGallery = () => {
       navigate(`/gallery/${response.data.id}`);
     } catch (error) {
       if (error.response?.status === 403) {
+        const detail = error.response?.data?.detail || '';
+        if (detail.includes('Demo gallery already created')) {
+          setLimitMessage('You have used your free demo gallery. Upgrade to Standard or Pro to create more galleries.');
+        } else if (detail.includes('No event credits')) {
+          setLimitMessage('You have run out of event credits. Purchase extra credits or wait for your next billing cycle.');
+        } else {
+          setLimitMessage(detail || 'Gallery limit reached. Please contact administrator.');
+        }
         setLimitReached(true);
-        toast.error('Gallery limit reached. Please contact administrator.');
       } else {
         toast.error(error.response?.data?.detail || 'Failed to create gallery');
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBuyCredits = () => {
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentProofSubmitted = async (proofUrl) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/user/extra-credits-request`, {
+        quantity: 1,
+        proof_url: proofUrl
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Extra credit request submitted! Admin will approve shortly.');
+      setShowPaymentModal(false);
+      setLimitReached(false);
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to submit request');
     }
   };
 
