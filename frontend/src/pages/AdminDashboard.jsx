@@ -722,124 +722,58 @@ const AdminDashboard = () => {
                           className="px-3 py-1 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-zinc-200 hover:text-white transition-colors"
                           data-testid={`view-galleries-${p.id}`}
                         >
-                          {p.active_galleries}/{p.galleries_created_total} galleries
+                          {p.active_galleries}/{p.galleries_created_total}
                         </button>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        {editingLimit === p.id ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => setNewLimit(Math.max(1, newLimit - 1))}
-                              className="w-8 h-8 bg-zinc-600 rounded flex items-center justify-center text-white hover:bg-zinc-500"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            <span className="w-10 text-center text-white font-medium">{newLimit}</span>
-                            <button
-                              onClick={() => setNewLimit(newLimit + 1)}
-                              className="w-8 h-8 bg-zinc-600 rounded flex items-center justify-center text-white hover:bg-zinc-500"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            p.galleries_created_total >= p.max_galleries
-                              ? 'bg-red-900/50 text-red-300'
-                              : 'bg-zinc-700 text-zinc-300'
-                          }`}>
-                            {p.max_galleries}
-                          </span>
-                        )}
+                        <div className="text-sm">
+                          <div className="text-zinc-300">{formatBytes(p.storage_used)}</div>
+                          <div className="text-zinc-500 text-xs">/ {formatBytes(p.storage_quota)}</div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        {editingStorage === p.id ? (
-                          <select
-                            value={newStorageQuota}
-                            onChange={(e) => setNewStorageQuota(parseInt(e.target.value))}
-                            className="bg-zinc-600 text-white rounded px-2 py-1 text-sm"
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => openUserFeatures(p.id)}
+                            className="p-2 bg-purple-600 rounded text-white hover:bg-purple-500"
+                            title="Edit features"
+                            data-testid={`features-btn-${p.id}`}
                           >
-                            {STORAGE_OPTIONS.map(opt => (
-                              <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <div className="text-sm">
-                            <div className="text-zinc-300">{formatBytes(p.storage_used)}</div>
-                            <div className="text-zinc-500 text-xs">/ {formatBytes(p.storage_quota)}</div>
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {editingLimit === p.id ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <button onClick={() => handleUpdateLimit(p.id)} className="p-2 bg-green-600 rounded text-white hover:bg-green-500" title="Save">
-                              <Save className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => setEditingLimit(null)} className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500" title="Cancel">
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : editingStorage === p.id ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <button onClick={() => handleUpdateStorageQuota(p.id)} className="p-2 bg-green-600 rounded text-white hover:bg-green-500" title="Save">
-                              <Save className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => setEditingStorage(null)} className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500" title="Cancel">
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => openUserFeatures(p.id)}
-                              className="p-2 bg-purple-600 rounded text-white hover:bg-purple-500"
-                              title="Edit features"
-                              data-testid={`features-btn-${p.id}`}
-                            >
-                              <ToggleRight className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => setShowOverrideModal(p.id)}
-                              className={`p-2 rounded text-white hover:opacity-80 ${
-                                p.override_mode ? 'bg-amber-600' : 'bg-zinc-600'
-                              }`}
-                              title={p.override_mode ? `Override: ${MODE_LABELS[p.override_mode]}` : 'Assign override mode'}
-                            >
-                              <Crown className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => { setEditingLimit(p.id); setNewLimit(p.max_galleries); }}
-                              className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
-                              title="Edit gallery limit"
-                            >
-                              <FolderOpen className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => { setEditingStorage(p.id); setNewStorageQuota(p.storage_quota || 500 * 1024 * 1024); }}
-                              className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
-                              title="Edit storage quota"
-                            >
-                              <HardDrive className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleSuspendUser(p.id, p.status)}
-                              className={`p-2 rounded text-white hover:opacity-80 ${
-                                p.status === 'suspended' ? 'bg-green-600' : 'bg-yellow-600'
-                              }`}
-                              title={p.status === 'suspended' ? 'Activate' : 'Suspend'}
-                            >
-                              {p.status === 'suspended' ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
-                            </button>
-                            <button
-                              onClick={() => setShowDeleteConfirm(p.id)}
-                              className="p-2 bg-red-600 rounded text-white hover:bg-red-500"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
+                            <ToggleRight className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setShowOverrideModal(p.id)}
+                            className={`p-2 rounded text-white hover:opacity-80 ${
+                              p.override_mode ? 'bg-amber-600' : 'bg-zinc-600'
+                            }`}
+                            title={p.override_mode ? `Override: ${MODE_LABELS[p.override_mode]}` : 'Assign override mode'}
+                          >
+                            <Crown className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => { setEditingStorage(p.id); setNewStorageQuota(p.storage_quota || 500 * 1024 * 1024); }}
+                            className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
+                            title="Edit storage quota"
+                          >
+                            <HardDrive className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleSuspendUser(p.id, p.status)}
+                            className={`p-2 rounded text-white hover:opacity-80 ${
+                              p.status === 'suspended' ? 'bg-green-600' : 'bg-yellow-600'
+                            }`}
+                            title={p.status === 'suspended' ? 'Activate' : 'Suspend'}
+                          >
+                            {p.status === 'suspended' ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => setShowDeleteConfirm(p.id)}
+                            className="p-2 bg-red-600 rounded text-white hover:bg-red-500"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
