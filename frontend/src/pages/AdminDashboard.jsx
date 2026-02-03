@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Upload, Loader2, BarChart3, HardDrive, Eye, FolderOpen, Search, UserX, UserCheck, Trash2, ExternalLink, Clock, Activity, ToggleLeft, ToggleRight, QrCode, Monitor, Link2, Trash, CreditCard, Crown, Star, Zap, DollarSign, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Upload, Loader2, BarChart3, HardDrive, Eye, FolderOpen, Search, UserX, UserCheck, Trash2, ExternalLink, Clock, Activity, ToggleLeft, ToggleRight, QrCode, Monitor, Link2, Trash, CreditCard, Crown, Star, Zap, DollarSign, CheckCircle, XCircle, AlertCircle, Sliders } from 'lucide-react';
+import FeatureTogglePage from './FeatureTogglePage';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
