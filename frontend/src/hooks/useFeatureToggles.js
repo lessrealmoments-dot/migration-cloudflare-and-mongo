@@ -36,21 +36,33 @@ const useFeatureToggles = () => {
       }
 
       try {
-        const response = await fetch(`${API}/public/feature-toggles`);
-        if (response.ok) {
-          const data = await response.json();
-          cachedToggles = {
-            qr_share: data.qr_share ?? true,
-            online_gallery: data.online_gallery ?? true,
-            display_mode: data.display_mode ?? true,
-            contributor_link: data.contributor_link ?? true,
-            auto_delete_enabled: data.auto_delete_enabled ?? true
-          };
-          cacheTimestamp = Date.now();
-          setToggles(cachedToggles);
+        // First try to get user-specific features (requires auth)
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await fetch(`${API}/user/features`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            cachedToggles = {
+              qr_share: data.qr_share ?? true,
+              online_gallery: data.online_gallery ?? true,
+              display_mode: data.display_mode ?? true,
+              contributor_link: data.contributor_link ?? true,
+              auto_delete_enabled: data.auto_delete_enabled ?? true
+            };
+            cacheTimestamp = Date.now();
+            setToggles(cachedToggles);
+            setLoading(false);
+            return;
+          }
         }
+        
+        // Fall back to public defaults if not authenticated or user features not set
+        setToggles(DEFAULT_TOGGLES);
       } catch (error) {
         console.error('Failed to fetch feature toggles:', error);
+        setToggles(DEFAULT_TOGGLES);
       } finally {
         setLoading(false);
       }
@@ -68,12 +80,19 @@ const useFeatureToggles = () => {
   const getUnavailableMessage = () => {
     return `FEATURE NOT AVAILABLE - Contact Admin: ${ADMIN_CONTACT.phone} / ${ADMIN_CONTACT.email}`;
   };
+  
+  // Function to clear cache (useful when user logs out or features change)
+  const clearCache = () => {
+    cachedToggles = null;
+    cacheTimestamp = null;
+  };
 
   return {
     toggles,
     loading,
     isFeatureEnabled,
     getUnavailableMessage,
+    clearCache,
     ADMIN_CONTACT
   };
 };
