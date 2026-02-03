@@ -94,6 +94,7 @@ const AdminDashboard = () => {
     fetchAnalytics();
     fetchActivityLogs();
     fetchAdminSettings();
+    fetchFeatureToggles();
   }, [navigate]);
 
   const getAuthHeader = () => ({
