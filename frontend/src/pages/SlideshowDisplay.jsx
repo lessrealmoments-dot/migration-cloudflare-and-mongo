@@ -1,36 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Maximize, Minimize, Settings, X, Play, Pause } from 'lucide-react';
+import { Maximize, Minimize, Pause, Play } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Transition styles
-const transitions = {
-  crossfade: {
-    enter: 'opacity-0',
-    enterActive: 'opacity-100 transition-opacity duration-1000 ease-in-out',
-    exit: 'opacity-100',
-    exitActive: 'opacity-0 transition-opacity duration-1000 ease-in-out'
-  },
-  'fade-zoom': {
-    enter: 'opacity-0 scale-105',
-    enterActive: 'opacity-100 scale-100 transition-all duration-1000 ease-in-out',
-    exit: 'opacity-100 scale-100',
-    exitActive: 'opacity-0 scale-95 transition-all duration-1000 ease-in-out'
-  },
-  slide: {
-    enter: 'opacity-0 translate-x-full',
-    enterActive: 'opacity-100 translate-x-0 transition-all duration-1000 ease-in-out',
-    exit: 'opacity-100 translate-x-0',
-    exitActive: 'opacity-0 -translate-x-full transition-all duration-1000 ease-in-out'
-  },
-  flip: {
-    enter: 'opacity-0 rotateY-90',
-    enterActive: 'opacity-100 rotateY-0 transition-all duration-1000 ease-in-out',
-    exit: 'opacity-100 rotateY-0',
-    exitActive: 'opacity-0 rotateY-90 transition-all duration-1000 ease-in-out'
-  }
+// Calculate poll interval based on photo count
+const getPollInterval = (photoCount) => {
+  if (photoCount < 10) return 15000;      // 15 seconds
+  if (photoCount < 20) return 30000;      // 30 seconds
+  if (photoCount < 30) return 60000;      // 1 minute
+  if (photoCount <= 50) return 120000;    // 2 minutes
+  return 180000;                           // 3 minutes for 50+
 };
 
 const SlideshowDisplay = () => {
@@ -42,19 +23,18 @@ const SlideshowDisplay = () => {
   const [displayData, setDisplayData] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [nextIndex, setNextIndex] = useState(1);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastPhotoCount, setLastPhotoCount] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState([false, false]); // Track if current and next images are loaded
   
   const containerRef = useRef(null);
   const hideControlsTimer = useRef(null);
   const transitionTimer = useRef(null);
   const pollTimer = useRef(null);
+  const lastPhotoCount = useRef(0);
 
   // Fetch display data
   const fetchDisplayData = useCallback(async (isPolling = false) => {
@@ -66,13 +46,12 @@ const SlideshowDisplay = () => {
       setDisplayData(data);
       
       // Only update photos if count changed (new photos added)
-      if (data.photos.length !== lastPhotoCount || !isPolling) {
+      if (data.photos.length !== lastPhotoCount.current || !isPolling) {
         setPhotos(data.photos);
-        setLastPhotoCount(data.photos.length);
+        lastPhotoCount.current = data.photos.length;
         
-        // If new photos added during display, keep showing but include new ones
-        if (isPolling && data.photos.length > lastPhotoCount) {
-          console.log(`New photos detected: ${data.photos.length - lastPhotoCount} added`);
+        if (isPolling && data.photos.length > lastPhotoCount.current) {
+          console.log(`New photos detected: ${data.photos.length - lastPhotoCount.current} added`);
         }
       }
       
@@ -83,41 +62,39 @@ const SlideshowDisplay = () => {
         setLoading(false);
       }
     }
-  }, [shareLink, lastPhotoCount]);
+  }, [shareLink]);
 
   // Initial load
   useEffect(() => {
     fetchDisplayData();
   }, [fetchDisplayData]);
 
-  // Poll for new photos every 30 seconds
+  // Dynamic poll interval based on photo count
   useEffect(() => {
+    if (photos.length === 0) return;
+    
+    const pollInterval = getPollInterval(photos.length);
+    console.log(`Polling interval set to ${pollInterval / 1000}s for ${photos.length} photos`);
+    
     pollTimer.current = setInterval(() => {
       fetchDisplayData(true);
-    }, 30000);
+    }, pollInterval);
     
     return () => clearInterval(pollTimer.current);
-  }, [fetchDisplayData]);
+  }, [photos.length, fetchDisplayData]);
 
-  // Auto-advance slideshow
+  // Auto-advance slideshow with smooth transition
   useEffect(() => {
-    if (isPaused || photos.length <= 1 || isTransitioning) return;
+    if (isPaused || photos.length <= 1) return;
     
     const interval = (overrideInterval ? parseInt(overrideInterval) : displayData?.display_interval) || 6;
     
     transitionTimer.current = setTimeout(() => {
-      setIsTransitioning(true);
-      setNextIndex((currentIndex + 1) % photos.length);
-      
-      // Complete transition after animation
-      setTimeout(() => {
-        setCurrentIndex((currentIndex + 1) % photos.length);
-        setIsTransitioning(false);
-      }, 1000);
+      setCurrentIndex((prev) => (prev + 1) % photos.length);
     }, interval * 1000);
     
     return () => clearTimeout(transitionTimer.current);
-  }, [currentIndex, isPaused, photos.length, isTransitioning, displayData?.display_interval, overrideInterval]);
+  }, [currentIndex, isPaused, photos.length, displayData?.display_interval, overrideInterval]);
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -145,7 +122,7 @@ const SlideshowDisplay = () => {
     };
   }, []);
 
-  // Preload next images
+  // Preload images
   useEffect(() => {
     if (photos.length === 0) return;
     
@@ -158,6 +135,28 @@ const SlideshowDisplay = () => {
   }, [currentIndex, photos]);
 
   const transition = overrideTransition || displayData?.display_transition || 'crossfade';
+
+  // Get transition CSS based on type
+  const getTransitionStyle = (type) => {
+    switch (type) {
+      case 'fade-zoom':
+        return {
+          transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        };
+      case 'slide':
+        return {
+          transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)',
+        };
+      case 'flip':
+        return {
+          transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)',
+        };
+      default: // crossfade
+        return {
+          transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        };
+    }
+  };
 
   if (loading) {
     return (
@@ -194,91 +193,88 @@ const SlideshowDisplay = () => {
       onClick={() => setIsPaused(!isPaused)}
       data-testid="slideshow-display"
     >
-      {/* Current Image */}
-      <div 
-        className={`absolute inset-0 flex items-center justify-center ${
-          isTransitioning ? 'z-0' : 'z-10'
-        }`}
-      >
-        <img
-          src={`${BACKEND_URL}${photos[currentIndex]?.url}`}
-          alt=""
-          className={`max-w-full max-h-full object-contain ${
-            isTransitioning 
-              ? `${transitions[transition]?.exitActive}` 
-              : 'opacity-100'
-          }`}
-          style={{ 
-            maxWidth: '100vw', 
-            maxHeight: '100vh',
-            transition: 'all 1s ease-in-out'
-          }}
-        />
+      {/* Image Container - Stack all images and fade between them */}
+      <div className="absolute inset-0">
+        {photos.map((photo, index) => {
+          const isActive = index === currentIndex;
+          const isPrev = index === (currentIndex - 1 + photos.length) % photos.length;
+          
+          return (
+            <div
+              key={photo.id}
+              className="absolute inset-0 flex items-center justify-center"
+              style={{
+                ...getTransitionStyle(transition),
+                opacity: isActive ? 1 : 0,
+                transform: transition === 'fade-zoom' 
+                  ? (isActive ? 'scale(1)' : 'scale(1.05)') 
+                  : transition === 'slide'
+                    ? (isActive ? 'translateX(0)' : (isPrev ? 'translateX(-100%)' : 'translateX(100%)'))
+                    : 'none',
+                zIndex: isActive ? 10 : (isPrev ? 5 : 1),
+                pointerEvents: 'none',
+              }}
+            >
+              <img
+                src={`${BACKEND_URL}${photo.url}`}
+                alt=""
+                className="max-w-full max-h-full object-contain"
+                style={{ 
+                  maxWidth: '100vw', 
+                  maxHeight: '100vh',
+                }}
+                loading={Math.abs(index - currentIndex) <= 2 ? 'eager' : 'lazy'}
+              />
+            </div>
+          );
+        })}
       </div>
-
-      {/* Next Image (for transition) */}
-      {isTransitioning && (
-        <div className="absolute inset-0 flex items-center justify-center z-20">
-          <img
-            src={`${BACKEND_URL}${photos[nextIndex]?.url}`}
-            alt=""
-            className={`max-w-full max-h-full object-contain ${transitions[transition]?.enterActive}`}
-            style={{ 
-              maxWidth: '100vw', 
-              maxHeight: '100vh',
-              transition: 'all 1s ease-in-out'
-            }}
-          />
-        </div>
-      )}
 
       {/* Controls Overlay */}
       <div 
-        className={`absolute inset-0 transition-opacity duration-300 ${
+        className={`absolute inset-0 z-50 transition-opacity duration-500 ${
           showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >
         {/* Top bar - Event info */}
-        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-6">
-          <h1 className="text-white text-2xl font-light">
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 via-black/30 to-transparent p-8 pb-20">
+          <h1 className="text-white text-3xl font-light tracking-wide">
             {displayData?.event_title || displayData?.title}
           </h1>
           {displayData?.photographer_name && (
-            <p className="text-white/70 text-sm mt-1">by {displayData.photographer_name}</p>
+            <p className="text-white/70 text-sm mt-2">by {displayData.photographer_name}</p>
           )}
         </div>
 
         {/* Bottom bar - Controls */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-8 pt-20">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <button
                 onClick={(e) => { e.stopPropagation(); setIsPaused(!isPaused); }}
-                className="text-white/80 hover:text-white p-2"
+                className="text-white/80 hover:text-white p-2 transition-colors"
                 data-testid="play-pause-btn"
               >
-                {isPaused ? <Play className="w-6 h-6" /> : <Pause className="w-6 h-6" />}
+                {isPaused ? <Play className="w-8 h-8" /> : <Pause className="w-8 h-8" />}
               </button>
-              <span className="text-white/60 text-sm">
+              <span className="text-white/80 text-lg font-light">
                 {currentIndex + 1} / {photos.length}
               </span>
             </div>
             
-            <div className="flex items-center gap-2">
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
-                className="text-white/80 hover:text-white p-2"
-                data-testid="fullscreen-btn"
-              >
-                {isFullscreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
-              </button>
-            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
+              className="text-white/80 hover:text-white p-2 transition-colors"
+              data-testid="fullscreen-btn"
+            >
+              {isFullscreen ? <Minimize className="w-8 h-8" /> : <Maximize className="w-8 h-8" />}
+            </button>
           </div>
           
           {/* Progress bar */}
-          <div className="mt-4 h-1 bg-white/20 rounded-full overflow-hidden">
+          <div className="mt-6 h-1 bg-white/20 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-white/60 transition-all duration-300"
+              className="h-full bg-white/70 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${((currentIndex + 1) / photos.length) * 100}%` }}
             />
           </div>
@@ -286,9 +282,9 @@ const SlideshowDisplay = () => {
 
         {/* Pause indicator */}
         {isPaused && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div className="bg-black/50 backdrop-blur-sm rounded-full p-6">
-              <Pause className="w-12 h-12 text-white" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+            <div className="bg-black/40 backdrop-blur-md rounded-full p-8">
+              <Pause className="w-16 h-16 text-white/90" />
             </div>
           </div>
         )}
