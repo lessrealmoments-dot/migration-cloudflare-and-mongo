@@ -1,91 +1,117 @@
 # PhotoShare - Event Photography Platform
 
 ## Original Problem Statement
-Build a photo-sharing application for event photographers with features including:
-- Gallery management and photo uploads
-- Guest uploads with moderation
-- Custom branding (name, favicon)
-- Contributor upload links
-- Section organization and reordering
-- Display modes (Slideshow, Live Collage) for viewing stations
-- Per-user feature access controls for subscription management
+Build a photo-sharing application for event photographers with:
+- Gallery management, photo uploads, guest uploads
+- Custom branding, contributor upload links
+- Display modes (Slideshow, Live Collage)
+- **Subscription system with plans, credits, and billing**
 
-## Core Features Implemented
+## Subscription & Billing System (NEW)
 
-### Gallery Management
-- Create and manage photo galleries
-- Multi-section organization
-- Drag-and-drop section reordering
-- Photo reordering within sections
-- Cover photo selection and cropping
+### Plans
+| Plan | Price | Credits/Month | Features |
+|------|-------|---------------|----------|
+| Free | ₱0 | 1 demo gallery | All features for 6 hours, then view-only |
+| Standard | ₱1,000/mo | 2 | Standard features |
+| Pro | ₱1,500/mo | 2 | Standard + Pro features |
 
-### Guest & Contributor Uploads
-- Guest upload with 10-photo batch limit
-- Photographer moderation (hide/unhide/delete)
-- Private contributor upload links per section
-- Contributor name credit in gallery
+### Override Modes (Admin Assigned)
+| Mode | Features | Credits | Fee |
+|------|----------|---------|-----|
+| Founders Circle | Full Pro | Unlimited | ₱0 |
+| Early Partner Beta | Full Pro | 2/month | ₱0 |
+| Comped Pro | Full Pro | 2/month | Based on plan |
+| Comped Standard | Standard | 2/month | Based on plan |
 
-### Display Modes
-- **Slideshow**: Full-screen single-image rotation with fade transitions
-- **Live Collage**: 11-tile dynamic grid with 3D cube flip animation
-  - Configurable interval (3-15 seconds)
-  - All tiles update simultaneously
-  - Settings panel for customization
-  - Live polling for new photos
+### Key Rules
+- 1 credit = 1 event gallery (single-use)
+- Credits reset monthly (don't roll over)
+- Extra credits: ₱500/event (current cycle only)
+- Galleries auto-delete after 6 months
+- Gallery edit lock after 7 days
+- Demo galleries: 6-hour feature window, then view-only
 
-### Sharing Features
-- Public gallery links
-- QR code generation and download
-- Display mode links with Copy Link + QR popup
-- Embed code for websites
+### Payment Flow (Manual/Soft Launch)
+1. User submits payment proof (screenshot)
+2. Admin reviews and approves/rejects
+3. Downloads locked while payment pending
+4. Approved = downloads unlocked
 
-### Admin Panel
-- Photographer management
-- **Per-user feature toggles** (new)
-  - QR Share
-  - Online Gallery
-  - Display Mode
-  - Contributor Link
-  - Auto Delete (6 months)
-- Default feature settings for new users
-- Storage quota management
-- Gallery limit controls
-- User suspend/activate/delete
+## Technical Implementation
 
-### Branding
-- Custom site name
-- Custom favicon upload
-- Consistent branding across all pages
+### Database Schema Updates
+```javascript
+// User subscription fields
+{
+  plan: "free" | "standard" | "pro",
+  billing_cycle_start: ISO date,
+  event_credits: number,
+  extra_credits: number,
+  payment_status: "none" | "pending" | "approved",
+  payment_proof_url: string,
+  override_mode: "founders_circle" | "early_partner_beta" | "comped_pro" | "comped_standard" | null,
+  override_expires: ISO date,
+  override_reason: string
+}
 
-## Technical Stack
-- **Frontend**: React, Vite, Tailwind CSS, Shadcn/UI
-- **Backend**: FastAPI (Python)
-- **Database**: MongoDB with Motor async driver
-- **Libraries**: react-beautiful-dnd, qrcode.react
+// Gallery fields
+{
+  is_demo: boolean,
+  demo_features_expire: ISO date,
+  edit_lock_date: ISO date (7 days after creation)
+}
 
-## Key Files
-- `/app/frontend/src/pages/CollageDisplay.jsx` - Live Collage with cube flip
-- `/app/frontend/src/pages/GalleryDetail.jsx` - Main gallery management
-- `/app/frontend/src/pages/AdminDashboard.jsx` - Admin with per-user features
-- `/app/frontend/src/hooks/useFeatureToggles.js` - User feature access hook
-- `/app/backend/server.py` - All API endpoints
+// Billing settings (site_config)
+{
+  billing_enforcement_enabled: boolean,
+  pricing: { standard_monthly, pro_monthly, extra_credit }
+}
+```
 
-## API Endpoints (Feature Toggles)
-- `GET /api/user/features` - Get logged-in user's features
-- `GET /api/admin/users/{user_id}/features` - Admin get user features
-- `PUT /api/admin/users/{user_id}/features` - Admin update user features
+### API Endpoints
+- `GET /api/billing/pricing` - Public pricing
+- `GET /api/billing/settings` - Admin: billing config
+- `PUT /api/billing/settings` - Admin: update billing
+- `GET /api/user/subscription` - User's subscription info
+- `POST /api/user/payment-proof` - Submit payment screenshot
+- `GET /api/admin/pending-payments` - Pending approvals
+- `POST /api/admin/approve-payment` - Approve payment
+- `POST /api/admin/reject-payment` - Reject payment
+- `POST /api/admin/assign-override` - Assign override mode
+- `POST /api/admin/remove-override` - Remove override
+- `PUT /api/admin/users/{id}/plan` - Change user plan
 
-## Completed This Session (Feb 2025)
-1. ✅ Live Collage cube flip animation - all tiles flip together
-2. ✅ Configurable interval slider (3-15 seconds)
-3. ✅ Display Mode dropdown with Copy Link + QR Code options
-4. ✅ Per-user feature toggles in Admin panel
-5. ✅ Feature availability checks in photographer dashboard
-6. ✅ User Features modal in Photographers table Actions column
+### Admin Panel Updates
+- **Billing tab**: Mode toggle, pricing config, pending payments
+- **Photographers tab**: Crown button for override mode assignment
+- **Override modal**: Mode, duration (1-24 months), reason
+
+## Current Founder
+- Email: lessrealmoments@gmail.com
+- Mode: Founders Circle
+- Expires: January 2028
+- Credits: Unlimited
+
+## Completed This Session
+1. ✅ Subscription data model
+2. ✅ Credit system (consume on gallery create)
+3. ✅ Override modes (4 types)
+4. ✅ Payment proof submission flow
+5. ✅ Admin billing tab
+6. ✅ Admin override assignment modal
+7. ✅ Pricing configuration
+8. ✅ Billing mode toggle (manual/live)
+
+## Next Steps
+- [ ] User dashboard: show plan, credits, payment status
+- [ ] Payment proof upload UI for users
+- [ ] Demo gallery 6-hour timer display
+- [ ] Edit lock warning in gallery detail
+- [ ] Download gate UI when payment pending
+- [ ] GCash/PayMaya integration (when ready)
 
 ## Access URLs
 - Preview: https://eventphoto-share.preview.emergentagent.com
-- Admin: /admin (credentials in .env)
-- Gallery: /gallery/{id}
-- Public: /g/{shareLink}
-- Display: /display/{shareLink}?mode=slideshow|collage
+- Admin: /admin
+- Billing API: /api/billing/*
