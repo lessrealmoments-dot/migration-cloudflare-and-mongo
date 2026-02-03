@@ -2,10 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Upload, Loader2, BarChart3, HardDrive, Eye, FolderOpen, Search, UserX, UserCheck, Trash2, ExternalLink, Clock, Activity } from 'lucide-react';
+import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Upload, Loader2, BarChart3, HardDrive, Eye, FolderOpen, Search, UserX, UserCheck, Trash2, ExternalLink, Clock, Activity, ToggleLeft, ToggleRight, QrCode, Monitor, Link2, Trash } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Admin contact info for feature unavailable messages
+const ADMIN_CONTACT = {
+  phone: '09952568450',
+  email: 'lessrealmoments@gmail.com'
+};
 
 // Helper to format bytes
 const formatBytes = (bytes) => {
