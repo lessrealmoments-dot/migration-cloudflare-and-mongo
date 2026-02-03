@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Upload, Loader2, BarChart3, HardDrive, Eye, FolderOpen, Search, UserX, UserCheck, Trash2, ExternalLink, Clock, Activity, ToggleLeft, ToggleRight, QrCode, Monitor, Link2, Trash } from 'lucide-react';
+import { Shield, Users, Settings, LogOut, Plus, Minus, Save, Image, Edit2, X, Upload, Loader2, BarChart3, HardDrive, Eye, FolderOpen, Search, UserX, UserCheck, Trash2, ExternalLink, Clock, Activity, ToggleLeft, ToggleRight, QrCode, Monitor, Link2, Trash, CreditCard, Crown, Star, Zap, DollarSign, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -11,6 +11,26 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const ADMIN_CONTACT = {
   phone: '09952568450',
   email: 'lessrealmoments@gmail.com'
+};
+
+// Plan and mode labels
+const PLAN_LABELS = {
+  free: 'Free',
+  standard: 'Standard',
+  pro: 'Pro'
+};
+
+const MODE_LABELS = {
+  founders_circle: 'Founders Circle',
+  early_partner_beta: 'Early Partner Beta',
+  comped_pro: 'Comped Pro',
+  comped_standard: 'Comped Standard'
+};
+
+const PAYMENT_STATUS_LABELS = {
+  none: 'None',
+  pending: 'Pending',
+  approved: 'Approved'
 };
 
 // Helper to format bytes
