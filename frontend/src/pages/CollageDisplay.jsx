@@ -41,17 +41,23 @@ const CollageDisplay = () => {
   const [displayData, setDisplayData] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [tilePhotos, setTilePhotos] = useState([]);
-  const [transitioningTiles, setTransitioningTiles] = useState(new Set());
+  const [isFlipping, setIsFlipping] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  
+  // Configurable interval (3-15 seconds)
+  const urlInterval = searchParams.get('interval');
+  const [updateInterval, setUpdateInterval] = useState(
+    urlInterval ? Math.max(MIN_INTERVAL, Math.min(MAX_INTERVAL, parseInt(urlInterval))) : DEFAULT_INTERVAL
+  );
   
   const containerRef = useRef(null);
   const hideControlsTimer = useRef(null);
-  const setUpdateTimer = useRef(null);
+  const updateTimer = useRef(null);
   const pollTimer = useRef(null);
   const photoPoolIndex = useRef(0);
   const lastPhotoCount = useRef(0);
