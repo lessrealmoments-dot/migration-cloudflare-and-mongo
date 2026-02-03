@@ -696,6 +696,58 @@ class PublicGallery(BaseModel):
     theme: str = "classic"
     photo_count: int = 0
 
+# ============================================
+# SUBSCRIPTION & BILLING MODELS
+# ============================================
+
+class SubscriptionInfo(BaseModel):
+    plan: str = PLAN_FREE
+    billing_cycle_start: Optional[str] = None
+    event_credits: int = 0
+    extra_credits: int = 0
+    payment_status: str = PAYMENT_NONE
+    payment_proof_url: Optional[str] = None
+    payment_submitted_at: Optional[str] = None
+    # Override mode
+    override_mode: Optional[str] = None
+    override_expires: Optional[str] = None
+    override_reason: Optional[str] = None
+    override_assigned_at: Optional[str] = None
+
+class AssignOverrideMode(BaseModel):
+    user_id: str
+    mode: str  # founders_circle, early_partner_beta, comped_pro, comped_standard
+    duration_months: int = Field(ge=1, le=24)  # 1-24 months max
+    reason: str
+
+class RemoveOverrideMode(BaseModel):
+    user_id: str
+    reason: str
+
+class UpdatePricing(BaseModel):
+    standard_monthly: Optional[int] = None
+    pro_monthly: Optional[int] = None
+    extra_credit: Optional[int] = None
+
+class PurchaseExtraCredits(BaseModel):
+    quantity: int = Field(ge=1, le=10)
+
+class PaymentProofSubmit(BaseModel):
+    proof_url: str  # URL to uploaded screenshot
+    notes: Optional[str] = None
+
+class ApprovePayment(BaseModel):
+    user_id: str
+    notes: Optional[str] = None
+
+class RejectPayment(BaseModel):
+    user_id: str
+    reason: str
+
+class BillingSettings(BaseModel):
+    billing_enforcement_enabled: bool = False
+    pricing: dict = Field(default_factory=lambda: DEFAULT_PRICING.copy())
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
