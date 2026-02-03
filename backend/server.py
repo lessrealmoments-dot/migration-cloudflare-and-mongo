@@ -3821,6 +3821,10 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
     
     effective_plan = get_effective_plan(db_user)
     effective_credits = get_effective_credits(db_user)
+    override_mode = db_user.get("override_mode")
+    
+    # For display: show actual remaining credits or "unlimited"
+    is_unlimited = effective_credits == 999 or override_mode == MODE_FOUNDERS_CIRCLE
     
     return {
         "plan": db_user.get("plan", PLAN_FREE),
@@ -3829,11 +3833,15 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
         "event_credits": db_user.get("event_credits", 0),
         "extra_credits": db_user.get("extra_credits", 0),
         "total_credits": effective_credits,
+        "is_unlimited_credits": is_unlimited,
+        "requested_plan": db_user.get("requested_plan"),  # Pending upgrade
         "payment_status": db_user.get("payment_status", PAYMENT_NONE),
         "payment_proof_url": db_user.get("payment_proof_url"),
-        "override_mode": db_user.get("override_mode"),
+        "override_mode": override_mode,
         "override_expires": db_user.get("override_expires"),
         "can_download": can_download(db_user),
+        "storage_quota": db_user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
+        "storage_used": db_user.get("storage_used", 0),
         "features_enabled": {
             "qr_share": is_feature_enabled_for_user(db_user, "qr_share"),
             "online_gallery": is_feature_enabled_for_user(db_user, "online_gallery"),
