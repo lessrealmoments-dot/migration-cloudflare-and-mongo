@@ -125,11 +125,12 @@ Build a photo-sharing application for event photographers with:
 - `POST /api/upload-payment-proof` - Upload proof image file
 
 ### Admin
-- `GET /api/admin/billing/settings` - Get billing config
-- `PUT /api/admin/billing/settings` - Update pricing
-- `GET /api/admin/pending-payments` - List pending payments
-- `POST /api/admin/approve-payment` - Approve payment (upgrades plan)
+- `GET /api/admin/billing/settings` - Get billing config (includes payment_methods)
+- `PUT /api/admin/billing/settings` - Update pricing and payment methods
+- `GET /api/admin/pending-payments` - List pending payments (upgrades + extra credits)
+- `POST /api/admin/approve-payment` - Approve payment (upgrades plan OR adds extra credits)
 - `POST /api/admin/reject-payment` - Reject payment
+- `POST /api/admin/upload-payment-qr` - Upload QR code image for payment method
 - `POST /api/admin/assign-override` - Assign override mode
 - `POST /api/admin/remove-override` - Remove override
 
