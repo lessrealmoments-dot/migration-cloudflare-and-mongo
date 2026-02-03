@@ -555,6 +555,29 @@ const AdminDashboard = () => {
         </div>
       </nav>
 
+      {/* Pending Payments Alert Banner */}
+      {pendingPayments.length > 0 && (
+        <div className="bg-amber-600 text-white px-6 py-3">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5" />
+              <span className="font-medium">
+                {pendingPayments.length} pending upgrade request{pendingPayments.length > 1 ? 's' : ''} with payment proof
+              </span>
+              <span className="text-amber-200">
+                - {pendingPayments.map(p => p.name || p.email).join(', ')}
+              </span>
+            </div>
+            <button
+              onClick={() => setActiveTab('billing')}
+              className="bg-amber-700 hover:bg-amber-800 px-4 py-1.5 rounded text-sm font-medium transition-colors"
+            >
+              Review Now
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="flex gap-4 mb-8 flex-wrap">
