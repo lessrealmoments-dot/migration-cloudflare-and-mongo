@@ -298,6 +298,8 @@ const AdminDashboard = () => {
     try {
       await axios.put(`${API}/billing/settings`, billingSettings, getAuthHeader());
       toast.success('Billing settings saved');
+      // Refresh settings after save
+      fetchBillingSettings();
     } catch (error) {
       toast.error('Failed to save billing settings');
     } finally {
