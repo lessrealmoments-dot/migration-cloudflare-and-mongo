@@ -76,16 +76,26 @@ if RESEND_API_KEY:
 # Default gallery limits
 DEFAULT_MAX_GALLERIES = 1  # 1 free trial gallery
 
-# Default storage quota (in bytes) - 500 MB
+# Default storage quota (in bytes) - 500 MB for Free
 DEFAULT_STORAGE_QUOTA = 500 * 1024 * 1024
 
-# Gallery auto-delete after 6 months (in days)
+# Plan-based storage quotas (in bytes)
+PLAN_STORAGE_QUOTAS = {
+    "free": 500 * 1024 * 1024,          # 500 MB
+    "standard": 10 * 1024 * 1024 * 1024, # 10 GB
+    "pro": 10 * 1024 * 1024 * 1024       # 10 GB
+}
+
+# Gallery auto-delete after 6 months (in days) - for paid plans
 GALLERY_EXPIRATION_DAYS = 180
+
+# Free/Demo gallery expiration (in hours) - 6 hours
+FREE_GALLERY_EXPIRATION_HOURS = 6
 
 # Gallery edit lock after 7 days from creation
 GALLERY_EDIT_LOCK_DAYS = 7
 
-# Demo gallery feature window (in hours)
+# Demo gallery feature window (in hours) - same as expiration for free
 DEMO_FEATURE_WINDOW_HOURS = 6
 
 # ============================================
