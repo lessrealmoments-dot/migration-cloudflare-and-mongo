@@ -73,6 +73,15 @@ const AdminDashboard = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [activityLogs, setActivityLogs] = useState([]);
   const [adminSettings, setAdminSettings] = useState(null);
+  // Feature toggles state
+  const [featureToggles, setFeatureToggles] = useState({
+    qr_share: true,
+    online_gallery: true,
+    display_mode: true,
+    contributor_link: true,
+    auto_delete_enabled: true
+  });
+  const [savingToggles, setSavingToggles] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
