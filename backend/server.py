@@ -3837,9 +3837,16 @@ async def update_billing_settings(data: BillingSettings, admin: dict = Depends(g
 
 @api_router.get("/billing/pricing")
 async def get_public_pricing():
-    """Get current pricing (public)"""
+    """Get current pricing and payment methods (public)"""
     settings = await get_billing_settings()
-    return settings["pricing"]
+    return {
+        **settings.get("pricing", DEFAULT_PRICING),
+        "payment_methods": settings.get("payment_methods", {
+            "gcash": {"enabled": True, "name": "GCash", "account_name": "Less Real Moments", "account_number": "09952568450"},
+            "maya": {"enabled": True, "name": "Maya", "account_name": "Less Real Moments", "account_number": "09952568450"},
+            "bank": {"enabled": False, "name": "Bank Transfer", "account_name": "", "account_number": "", "bank_name": ""}
+        })
+    }
 
 @api_router.get("/user/subscription")
 async def get_user_subscription(user: dict = Depends(get_current_user)):
