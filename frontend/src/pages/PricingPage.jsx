@@ -58,7 +58,8 @@ const PricingPage = () => {
   };
 
   const handlePlanSelect = (planName) => {
-    if (!user) {
+    const token = localStorage.getItem('token');
+    if (!token) {
       navigate('/auth');
       return;
     }
