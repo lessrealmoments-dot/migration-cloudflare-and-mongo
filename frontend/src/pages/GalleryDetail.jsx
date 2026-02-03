@@ -1271,6 +1271,83 @@ const GalleryDetail = () => {
           </div>
         )}
 
+        {/* Display Mode QR Modal */}
+        {showDisplayQR && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg max-w-sm w-full p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-medium">
+                  {displayQRMode === 'slideshow' ? 'Slideshow' : 'Live Collage'} QR Code
+                </h3>
+                <button 
+                  onClick={() => setShowDisplayQR(false)} 
+                  className="p-2 hover:bg-zinc-100 rounded-full"
+                  data-testid="close-display-qr-modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div ref={displayQrRef} className="flex justify-center p-4 bg-white border border-zinc-200 rounded-lg">
+                <QRCodeSVG 
+                  value={`${window.location.origin}/display/${gallery?.share_link}?mode=${displayQRMode}`}
+                  size={256}
+                  level="H"
+                  includeMargin={true}
+                />
+              </div>
+              
+              <p className="text-center text-sm text-zinc-500 mt-4 mb-2">
+                Scan to view {displayQRMode === 'slideshow' ? 'slideshow' : 'live collage'}
+              </p>
+              <p className="text-center text-xs text-zinc-400 mb-4">
+                {gallery?.title}
+              </p>
+              
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/display/${gallery?.share_link}?mode=${displayQRMode}`);
+                    toast.success('Link copied!');
+                  }}
+                  data-testid="copy-display-link-btn"
+                  className="flex-1 bg-zinc-100 text-zinc-900 py-3 rounded-lg hover:bg-zinc-200 font-medium flex items-center justify-center gap-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copy Link
+                </button>
+                <button
+                  onClick={() => {
+                    const svg = displayQrRef.current?.querySelector('svg');
+                    if (!svg) return;
+                    const svgData = new XMLSerializer().serializeToString(svg);
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+                    img.onload = () => {
+                      canvas.width = img.width;
+                      canvas.height = img.height;
+                      ctx.fillStyle = 'white';
+                      ctx.fillRect(0, 0, canvas.width, canvas.height);
+                      ctx.drawImage(img, 0, 0);
+                      const link = document.createElement('a');
+                      link.download = `${gallery?.title || 'gallery'}-${displayQRMode}-qr.png`;
+                      link.href = canvas.toDataURL('image/png');
+                      link.click();
+                    };
+                    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+                  }}
+                  data-testid="download-display-qr-btn"
+                  className="flex-1 bg-zinc-900 text-white py-3 rounded-lg hover:bg-zinc-800 font-medium flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-12">
           <h3 className="text-2xl font-normal mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
             Cover Photo
