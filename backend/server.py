@@ -107,11 +107,17 @@ PLAN_FREE = "free"
 PLAN_STANDARD = "standard"
 PLAN_PRO = "pro"
 
-# Override modes
+# Override modes (Higher authority than payment plans)
 MODE_FOUNDERS_CIRCLE = "founders_circle"
 MODE_EARLY_PARTNER_BETA = "early_partner_beta"
 MODE_COMPED_PRO = "comped_pro"
 MODE_COMPED_STANDARD = "comped_standard"
+
+# All override modes list
+ALL_OVERRIDE_MODES = [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO, MODE_COMPED_STANDARD]
+
+# All payment plans
+ALL_PAYMENT_PLANS = [PLAN_FREE, PLAN_STANDARD, PLAN_PRO]
 
 # Payment statuses
 PAYMENT_NONE = "none"
@@ -138,6 +144,81 @@ MODE_CREDITS = {
     MODE_EARLY_PARTNER_BETA: 2,
     MODE_COMPED_PRO: 2,
     MODE_COMPED_STANDARD: 2
+}
+
+# ============================================
+# FEATURE TOGGLE SYSTEM - ADMIN CONTROLLED
+# ============================================
+# Features that can be toggled per package/mode:
+# - unlimited_token: Unlimited event credits
+# - copy_share_link: Copy shareable gallery link
+# - qr_code: Generate QR code for gallery
+# - view_public_gallery: Allow public gallery viewing
+# - display_mode: Slideshow/Collage display modes
+# - collaboration_link: Contributor upload links
+
+# Default feature toggles per override mode
+DEFAULT_MODE_FEATURES = {
+    MODE_FOUNDERS_CIRCLE: {
+        "unlimited_token": True,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,
+        "collaboration_link": True
+    },
+    MODE_EARLY_PARTNER_BETA: {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,
+        "collaboration_link": True
+    },
+    MODE_COMPED_PRO: {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,
+        "collaboration_link": True
+    },
+    MODE_COMPED_STANDARD: {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": False,
+        "collaboration_link": False
+    }
+}
+
+# Default feature toggles per payment plan
+DEFAULT_PLAN_FEATURES = {
+    PLAN_FREE: {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,  # Demo only (6hr gallery)
+        "collaboration_link": True  # Demo only (6hr gallery)
+    },
+    PLAN_STANDARD: {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": False,
+        "collaboration_link": False
+    },
+    PLAN_PRO: {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,
+        "collaboration_link": True
+    }
 }
 
 # Standard features (available to Standard and above)
