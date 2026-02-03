@@ -775,6 +775,15 @@ const AdminDashboard = () => {
                               <ToggleRight className="w-4 h-4" />
                             </button>
                             <button
+                              onClick={() => setShowOverrideModal(p.id)}
+                              className={`p-2 rounded text-white hover:opacity-80 ${
+                                p.override_mode ? 'bg-amber-600' : 'bg-zinc-600'
+                              }`}
+                              title={p.override_mode ? `Override: ${MODE_LABELS[p.override_mode]}` : 'Assign override mode'}
+                            >
+                              <Crown className="w-4 h-4" />
+                            </button>
+                            <button
                               onClick={() => { setEditingLimit(p.id); setNewLimit(p.max_galleries); }}
                               className="p-2 bg-zinc-600 rounded text-white hover:bg-zinc-500"
                               title="Edit gallery limit"
