@@ -3939,6 +3939,40 @@ async def submit_upgrade_request(data: UpgradeRequest, user: dict = Depends(get_
     
     return {"message": message, "needs_payment_proof": data.proof_url is None}
 
+class ExtraCreditRequest(BaseModel):
+    quantity: int = 1
+    proof_url: str
+
+@api_router.post("/user/extra-credits-request")
+async def submit_extra_credits_request(data: ExtraCreditRequest, user: dict = Depends(get_current_user)):
+    """Submit a request for extra credits with payment proof"""
+    if data.quantity < 1 or data.quantity > 10:
+        raise HTTPException(status_code=400, detail="Quantity must be between 1 and 10")
+    
+    db_user = await db.users.find_one({"id": user["id"]})
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Set pending status with credit request info
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {
+            "payment_status": PAYMENT_PENDING,
+            "payment_proof_url": data.proof_url,
+            "payment_submitted_at": datetime.now(timezone.utc).isoformat(),
+            "requested_extra_credits": data.quantity
+        }}
+    )
+    
+    settings = await get_billing_settings()
+    total_cost = data.quantity * settings.get("pricing", {}).get("extra_credit", 500)
+    
+    return {
+        "message": f"Request for {data.quantity} extra credit(s) submitted. Total: ₱{total_cost}. Awaiting admin approval.",
+        "quantity": data.quantity,
+        "total_cost": total_cost
+    }
+
 @api_router.get("/admin/pending-payments")
 async def get_pending_payments(admin: dict = Depends(get_admin_user)):
     """Get all users with pending payments"""
