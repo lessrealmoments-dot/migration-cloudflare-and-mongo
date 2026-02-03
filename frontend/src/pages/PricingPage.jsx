@@ -65,21 +65,39 @@ const PricingPage = () => {
     }
     
     const currentPlan = subscription?.effective_plan || 'free';
+    const selectedPlan = planName.toLowerCase();
     
-    if (planName.toLowerCase() === currentPlan) {
+    if (selectedPlan === currentPlan) {
       toast.info('You are already on this plan');
       return;
     }
     
-    if (planName.toLowerCase() === 'free') {
-      toast.info('Contact admin to downgrade to Free plan');
+    // Determine if this is a downgrade
+    const planHierarchy = { 'free': 0, 'standard': 1, 'pro': 2 };
+    const isDowngrade = planHierarchy[selectedPlan] < planHierarchy[currentPlan];
+    
+    if (isDowngrade) {
+      // Show downgrade confirmation
+      const billingCycleStart = subscription?.billing_cycle_start;
+      let nextBillingDate = 'your next billing cycle';
+      if (billingCycleStart) {
+        const cycleStart = new Date(billingCycleStart);
+        cycleStart.setDate(cycleStart.getDate() + 30);
+        nextBillingDate = cycleStart.toLocaleDateString();
+      }
+      
+      if (selectedPlan === 'free') {
+        toast.info(`Downgrade to Free: Please contact admin. Your current features will remain until ${nextBillingDate}.`);
+      } else {
+        toast.info(`Downgrade to ${planName}: Your account will be downgraded on ${nextBillingDate}. Features like Display Mode and Contributor Links will be disabled then.`);
+      }
       return;
     }
     
     // Reset payment proof when opening modal
     setPaymentProofUrl(null);
     // Show upgrade modal
-    setShowUpgradeModal(planName.toLowerCase());
+    setShowUpgradeModal(selectedPlan);
   };
 
   const handlePaymentProofUpload = async (e) => {
