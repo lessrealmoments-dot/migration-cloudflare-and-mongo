@@ -3979,7 +3979,22 @@ async def assign_override_mode(data: AssignOverrideMode, admin: dict = Depends(g
     # Set credits based on mode
     credits = MODE_CREDITS.get(data.mode, 2)
     if credits == -1:
-        credits = 999  # Unlimited representation
+        credits = 999  # Unlimited representation for founders
+    
+    # Determine effective plan from override mode
+    effective_plan = PLAN_PRO if data.mode in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO] else PLAN_STANDARD
+    
+    # Get storage quota for the effective plan
+    storage_quota = PLAN_STORAGE_QUOTAS.get(effective_plan, DEFAULT_STORAGE_QUOTA)
+    
+    # Set feature toggles based on effective plan
+    feature_toggles = {
+        "qr_share": True,
+        "online_gallery": True,
+        "display_mode": effective_plan == PLAN_PRO,
+        "contributor_link": effective_plan == PLAN_PRO,
+        "auto_delete_enabled": data.mode != MODE_FOUNDERS_CIRCLE  # Founders don't auto-delete
+    }
     
     await db.users.update_one(
         {"id": data.user_id},
@@ -3990,7 +4005,9 @@ async def assign_override_mode(data: AssignOverrideMode, admin: dict = Depends(g
             "override_assigned_at": datetime.now(timezone.utc).isoformat(),
             "event_credits": credits,
             "billing_cycle_start": datetime.now(timezone.utc).isoformat(),
-            "payment_status": PAYMENT_APPROVED  # Override users don't need to pay
+            "payment_status": PAYMENT_APPROVED,  # Override users don't need to pay
+            "storage_quota": storage_quota,
+            "feature_toggles": feature_toggles
         }}
     )
     return {"message": f"Override mode '{data.mode}' assigned until {expires.date()}"}
