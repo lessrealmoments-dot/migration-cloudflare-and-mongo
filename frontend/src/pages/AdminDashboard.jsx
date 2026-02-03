@@ -1318,7 +1318,7 @@ const AdminDashboard = () => {
                   <ul className="text-sm text-zinc-400 space-y-1">
                     <li>• 1 demo gallery</li>
                     <li>• 500MB storage</li>
-                    <li>• 6-hour feature window</li>
+                    <li>• Gallery expires in 6 hours</li>
                   </ul>
                 </div>
                 <div className="border border-blue-500/30 rounded-lg p-4 bg-blue-500/5">
@@ -1330,7 +1330,10 @@ const AdminDashboard = () => {
                   </div>
                   <ul className="text-sm text-zinc-400 space-y-1">
                     <li>• 2 credits/month</li>
-                    <li>• All Standard features</li>
+                    <li>• 10GB storage</li>
+                    <li>• QR Share, Online Gallery</li>
+                    <li className="text-red-400">• No Display Mode</li>
+                    <li className="text-red-400">• No Contributor Links</li>
                     <li>• ₱{billingSettings.pricing?.standard_monthly}/mo</li>
                   </ul>
                 </div>
@@ -1343,7 +1346,9 @@ const AdminDashboard = () => {
                   </div>
                   <ul className="text-sm text-zinc-400 space-y-1">
                     <li>• 2 credits/month</li>
-                    <li>• All Pro features</li>
+                    <li>• 10GB storage</li>
+                    <li className="text-green-400">• Display Mode (Slideshow + Collage)</li>
+                    <li className="text-green-400">• Contributor Links</li>
                     <li>• ₱{billingSettings.pricing?.pro_monthly}/mo</li>
                   </ul>
                 </div>
