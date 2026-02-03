@@ -82,6 +82,17 @@ const AdminDashboard = () => {
     auto_delete_enabled: true
   });
   const [savingToggles, setSavingToggles] = useState(false);
+  
+  // Per-user feature toggles state
+  const [editingUserFeatures, setEditingUserFeatures] = useState(null); // User ID being edited
+  const [userFeatures, setUserFeatures] = useState({
+    qr_share: true,
+    online_gallery: true,
+    display_mode: true,
+    contributor_link: true,
+    auto_delete_enabled: true
+  });
+  const [savingUserFeatures, setSavingUserFeatures] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
