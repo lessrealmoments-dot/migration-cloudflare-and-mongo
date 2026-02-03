@@ -1798,10 +1798,13 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
             )
     else:
         # Paid/Override plans use credit system (except founders with unlimited)
+        logging.info(f"Checking credits: effective_credits={effective_credits}, payment_status={payment_status}")
         if effective_credits != 999 and effective_credits <= 0:
             # Check if user has pending payment - allow gallery creation but lock downloads
+            logging.info(f"Credits <= 0, checking payment status: {payment_status} == {PAYMENT_PENDING}")
             if payment_status == PAYMENT_PENDING:
                 download_locked_until_payment = True
+                logging.info("Setting download_locked_until_payment = True")
                 # Don't deduct credits - they're creating on credit
             else:
                 raise HTTPException(
