@@ -96,6 +96,8 @@ function App() {
           <Route path="/g/:shareLink" element={<PublicGallery />} />
           {/* Contributor Upload Route */}
           <Route path="/c/:contributorLink" element={<ContributorUpload />} />
+          {/* Display/Slideshow Routes */}
+          <Route path="/display/:shareLink" element={<Display />} />
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
