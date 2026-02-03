@@ -1093,8 +1093,14 @@ const GalleryDetail = () => {
             </button>
             <button
               data-testid="qr-code-button"
-              onClick={() => setShowQRCode(true)}
-              className="border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
+              onClick={() => {
+                if (isFeatureEnabled('qr_share')) {
+                  setShowQRCode(true);
+                } else {
+                  toast.error(getUnavailableMessage());
+                }
+              }}
+              className={`border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2 ${!isFeatureEnabled('qr_share') ? 'opacity-50' : ''}`}
             >
               <QrCode className="w-4 h-4" strokeWidth={1.5} />
               QR Code
@@ -1109,12 +1115,19 @@ const GalleryDetail = () => {
             </button>
             <button
               data-testid="open-share-link-button"
-              onClick={openShareLink}
-              className="border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
+              onClick={() => {
+                if (isFeatureEnabled('online_gallery')) {
+                  openShareLink();
+                } else {
+                  toast.error(getUnavailableMessage());
+                }
+              }}
+              className={`border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2 ${!isFeatureEnabled('online_gallery') ? 'opacity-50' : ''}`}
             >
               <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
               View Public Gallery
             </button>
+            {isFeatureEnabled('display_mode') ? (
             <div className="relative group">
               <button
                 data-testid="display-mode-button"
