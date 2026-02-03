@@ -3837,6 +3837,28 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
     )
     return {"message": "Payment approved"}
 
+@api_router.post("/upload-payment-proof")
+async def upload_payment_proof(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    """Upload payment proof screenshot"""
+    if not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Only image files allowed")
+    
+    # Create payment proofs directory
+    proofs_dir = Path("uploads/payment_proofs")
+    proofs_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Generate unique filename
+    file_ext = Path(file.filename).suffix or '.jpg'
+    filename = f"{user['id']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{file_ext}"
+    file_path = proofs_dir / filename
+    
+    # Save file
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    return {"url": f"/uploads/payment_proofs/{filename}"}
+
 @api_router.post("/admin/reject-payment")
 async def reject_payment(data: RejectPayment, admin: dict = Depends(get_admin_user)):
     """Reject a user's payment"""
