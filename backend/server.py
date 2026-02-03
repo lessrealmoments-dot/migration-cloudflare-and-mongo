@@ -2038,7 +2038,8 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         auto_delete_date=auto_delete_date,
         days_until_deletion=days_until_deletion,
         is_edit_locked=edit_info["is_locked"],
-        days_until_edit_lock=edit_info["days_until_lock"]
+        days_until_edit_lock=edit_info["days_until_lock"],
+        download_locked_until_payment=gallery.get("download_locked_until_payment", False)
     )
 
 @api_router.put("/galleries/{gallery_id}", response_model=Gallery)
