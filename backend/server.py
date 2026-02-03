@@ -3859,10 +3859,11 @@ async def submit_payment_proof(data: PaymentProofSubmit, user: dict = Depends(ge
 
 class UpgradeRequest(BaseModel):
     requested_plan: str
+    proof_url: Optional[str] = None  # Payment proof can be submitted with upgrade request
 
 @api_router.post("/user/upgrade-request")
 async def submit_upgrade_request(data: UpgradeRequest, user: dict = Depends(get_current_user)):
-    """Submit an upgrade request"""
+    """Submit an upgrade request with optional payment proof"""
     if data.requested_plan not in [PLAN_STANDARD, PLAN_PRO]:
         raise HTTPException(status_code=400, detail="Invalid plan")
     
@@ -3873,16 +3874,27 @@ async def submit_upgrade_request(data: UpgradeRequest, user: dict = Depends(get_
         raise HTTPException(status_code=400, detail="You are already on this plan")
     
     # Save upgrade request
+    update_data = {
+        "requested_plan": data.requested_plan,
+        "upgrade_requested_at": datetime.now(timezone.utc).isoformat(),
+    }
+    
+    # If payment proof is provided, set status to pending
+    if data.proof_url:
+        update_data["payment_status"] = PAYMENT_PENDING
+        update_data["payment_proof_url"] = data.proof_url
+        update_data["payment_submitted_at"] = datetime.now(timezone.utc).isoformat()
+        message = f"Upgrade to {data.requested_plan} requested with payment proof. Awaiting admin approval."
+    else:
+        update_data["payment_status"] = PAYMENT_NONE
+        message = f"Upgrade to {data.requested_plan} requested. Please submit payment proof."
+    
     await db.users.update_one(
         {"id": user["id"]},
-        {"$set": {
-            "requested_plan": data.requested_plan,
-            "upgrade_requested_at": datetime.now(timezone.utc).isoformat(),
-            "payment_status": PAYMENT_NONE  # Reset to prompt payment upload
-        }}
+        {"$set": update_data}
     )
     
-    return {"message": f"Upgrade to {data.requested_plan} requested. Please submit payment proof."}
+    return {"message": message, "needs_payment_proof": data.proof_url is None}
 
 @api_router.get("/admin/pending-payments")
 async def get_pending_payments(admin: dict = Depends(get_admin_user)):
