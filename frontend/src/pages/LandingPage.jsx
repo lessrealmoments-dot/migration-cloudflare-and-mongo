@@ -145,7 +145,13 @@ const LandingPage = ({ user }) => {
           </div>
           
           {/* Get Started button on right */}
-          <div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/pricing')}
+              className="text-sm text-zinc-600 hover:text-zinc-900 hidden md:block"
+            >
+              Pricing
+            </button>
             {user ? (
               <button
                 data-testid="nav-dashboard-button"
