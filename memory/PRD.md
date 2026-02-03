@@ -214,11 +214,11 @@ Build a website similar to Pic-time.com where photographers can create photo gal
 ## Backlog / Future Tasks
 
 ### P0 (Immediate)
-- Answer user's question about custom domains (platform guidance task)
+- None
 
 ### P1 (High Priority)
-- Sort/group photos by uploader (photographer vs guest) in admin view
 - Storage usage alerts/notifications when approaching quota
+- Display mode configuration in gallery settings (let photographer set default mode and transition)
 - ~~Backend refactoring (server.py is 2500+ lines - needs modularization)~~ → Guide created at `/app/backend/REFACTOR_GUIDE.md`
 
 ### P2 (Medium Priority)
