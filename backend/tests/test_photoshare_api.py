@@ -9,7 +9,7 @@ from datetime import datetime
 from io import BytesIO
 from PIL import Image
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://gallery-feature-qa.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://eventphoto-share.preview.emergentagent.com').rstrip('/')
 
 
 class TestAuthentication:
