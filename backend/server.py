@@ -3811,6 +3811,33 @@ async def submit_payment_proof(data: PaymentProofSubmit, user: dict = Depends(ge
     )
     return {"message": "Payment proof submitted. Awaiting admin approval."}
 
+class UpgradeRequest(BaseModel):
+    requested_plan: str
+
+@api_router.post("/user/upgrade-request")
+async def submit_upgrade_request(data: UpgradeRequest, user: dict = Depends(get_current_user)):
+    """Submit an upgrade request"""
+    if data.requested_plan not in [PLAN_STANDARD, PLAN_PRO]:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    
+    db_user = await db.users.find_one({"id": user["id"]})
+    current_plan = get_effective_plan(db_user)
+    
+    if current_plan == data.requested_plan:
+        raise HTTPException(status_code=400, detail="You are already on this plan")
+    
+    # Save upgrade request
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {
+            "requested_plan": data.requested_plan,
+            "upgrade_requested_at": datetime.now(timezone.utc).isoformat(),
+            "payment_status": PAYMENT_NONE  # Reset to prompt payment upload
+        }}
+    )
+    
+    return {"message": f"Upgrade to {data.requested_plan} requested. Please submit payment proof."}
+
 @api_router.get("/admin/pending-payments")
 async def get_pending_payments(admin: dict = Depends(get_admin_user)):
     """Get all users with pending payments"""
