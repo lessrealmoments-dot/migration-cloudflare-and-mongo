@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Plus, LogOut, Image as ImageIcon, Lock, User, X, Save, BarChart3, HardDrive, Clock, Eye, Key, CreditCard, Crown, Zap, Star, Upload, CheckCircle, AlertCircle, Download, ExternalLink } from 'lucide-react';
+import { Plus, LogOut, Image as ImageIcon, Lock, User, X, Save, BarChart3, HardDrive, Clock, Eye, Key, CreditCard, Crown, Zap, Star, Upload, CheckCircle, AlertCircle, Download, ExternalLink, ShoppingCart } from 'lucide-react';
 import useBrandConfig from '../hooks/useBrandConfig';
+import PaymentMethodsModal from '../components/PaymentMethodsModal';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -54,6 +55,8 @@ const Dashboard = ({ user, setUser }) => {
   // Subscription state
   const [subscription, setSubscription] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
+  const [pricing, setPricing] = useState({ extra_credit: 500 });
   const [paymentProof, setPaymentProof] = useState(null);
   const [uploadingProof, setUploadingProof] = useState(false);
   const paymentFileRef = useRef(null);
