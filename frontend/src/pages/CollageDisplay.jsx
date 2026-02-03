@@ -113,6 +113,9 @@ const CollageDisplay = () => {
     photoPoolIndex.current = layout.length * 2;
   };
 
+  // Track which "side" we're showing (alternates between flips)
+  const [showBackSide, setShowBackSide] = useState(false);
+  
   // Update ALL tiles at once with cube flip transition
   const updateAllTiles = useCallback(() => {
     if (isPaused || photos.length === 0 || isFlipping) return;
@@ -124,7 +127,7 @@ const CollageDisplay = () => {
       photoPoolIndex.current++;
     }
     
-    // Set next photos on all tiles
+    // Set next photos on the hidden face
     setTilePhotos(prev => {
       return prev.map((tile, index) => ({
         ...tile,
@@ -132,12 +135,11 @@ const CollageDisplay = () => {
       }));
     });
     
-    // Trigger flip animation (with 'animating' class for transition)
+    // Trigger flip animation
     setIsFlipping(true);
     
-    // After flip animation completes (800ms):
-    // 1. Swap images (next becomes current)
-    // 2. Reset flip state (removes classes, cube snaps back to 0deg without animation)
+    // After flip animation completes:
+    // Move next to current and toggle which side we show
     setTimeout(() => {
       setTilePhotos(prev => {
         return prev.map((tile) => ({
@@ -145,10 +147,8 @@ const CollageDisplay = () => {
           next: null,
         }));
       });
-      // Small delay to let the DOM update with new images before removing flip
-      requestAnimationFrame(() => {
-        setIsFlipping(false);
-      });
+      setShowBackSide(prev => !prev); // Toggle side
+      setIsFlipping(false);
     }, 850);
   }, [isPaused, photos, layout.length, isFlipping]);
 
