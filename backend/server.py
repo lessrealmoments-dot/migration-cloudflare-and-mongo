@@ -4073,6 +4073,28 @@ async def reject_payment(data: RejectPayment, admin: dict = Depends(get_admin_us
     )
     return {"message": "Payment rejected"}
 
+@api_router.post("/admin/upload-payment-qr")
+async def upload_payment_qr(file: UploadFile = File(...), method: str = Form(...), admin: dict = Depends(get_admin_user)):
+    """Upload QR code image for a payment method"""
+    if method not in ["gcash", "maya", "bank"]:
+        raise HTTPException(status_code=400, detail="Invalid payment method")
+    
+    # Create directory if not exists
+    qr_dir = Path("uploads/payment_qr")
+    qr_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Generate filename with method name
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'png'
+    filename = f"{method}_qr_{uuid.uuid4().hex[:8]}.{ext}"
+    file_path = qr_dir / filename
+    
+    # Save file
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    return {"url": f"/uploads/payment_qr/{filename}"}
+
 @api_router.post("/admin/assign-override")
 async def assign_override_mode(data: AssignOverrideMode, admin: dict = Depends(get_admin_user)):
     """Assign an override mode to a user"""
