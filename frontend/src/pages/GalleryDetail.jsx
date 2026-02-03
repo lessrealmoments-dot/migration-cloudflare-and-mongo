@@ -565,6 +565,9 @@ const GalleryDetail = () => {
       setPhotos(photosRes.data);
       setSections(sectionsRes.data);
       setCoverPhotoPosition(positionRes.data);
+      
+      // Check gallery-specific download lock
+      checkGalleryDownloadLock(galleryRes.data);
     } catch (error) {
       toast.error('Failed to load gallery');
       navigate('/dashboard');
