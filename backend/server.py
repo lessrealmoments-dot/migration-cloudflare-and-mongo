@@ -754,6 +754,165 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
+# ============================================
+# SUBSCRIPTION HELPER FUNCTIONS
+# ============================================
+
+def get_effective_plan(user: dict) -> str:
+    """Get user's effective plan considering override modes"""
+    override_mode = user.get("override_mode")
+    override_expires = user.get("override_expires")
+    
+    # Check if override is active and not expired
+    if override_mode and override_expires:
+        try:
+            expires = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
+            if expires > datetime.now(timezone.utc):
+                # Map override modes to effective plans
+                if override_mode in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO]:
+                    return PLAN_PRO
+                elif override_mode == MODE_COMPED_STANDARD:
+                    return PLAN_STANDARD
+        except:
+            pass
+    
+    return user.get("plan", PLAN_FREE)
+
+def get_effective_credits(user: dict) -> int:
+    """Get user's available credits (base + extra)"""
+    override_mode = user.get("override_mode")
+    override_expires = user.get("override_expires")
+    
+    # Check if override is active
+    if override_mode and override_expires:
+        try:
+            expires = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
+            if expires > datetime.now(timezone.utc):
+                mode_credits = MODE_CREDITS.get(override_mode, 0)
+                if mode_credits == -1:  # Unlimited
+                    return 999
+                return mode_credits + user.get("extra_credits", 0)
+        except:
+            pass
+    
+    base_credits = user.get("event_credits", 0)
+    extra_credits = user.get("extra_credits", 0)
+    return base_credits + extra_credits
+
+def is_feature_enabled_for_user(user: dict, feature: str) -> bool:
+    """Check if a feature is enabled for the user based on their plan"""
+    effective_plan = get_effective_plan(user)
+    
+    # Check user-specific feature toggles first
+    user_toggles = user.get("feature_toggles", {})
+    if feature in user_toggles:
+        if not user_toggles[feature]:
+            return False
+    
+    # Standard features available to Standard and Pro
+    if feature in STANDARD_FEATURES:
+        return effective_plan in [PLAN_STANDARD, PLAN_PRO]
+    
+    # Pro features only for Pro
+    if feature in PRO_FEATURES:
+        return effective_plan == PLAN_PRO
+    
+    return True  # Default allow for unlisted features
+
+def can_download(user: dict) -> bool:
+    """Check if user can download (payment not pending)"""
+    payment_status = user.get("payment_status", PAYMENT_NONE)
+    return payment_status != PAYMENT_PENDING
+
+def is_gallery_locked(gallery: dict) -> bool:
+    """Check if gallery is past edit window (7 days)"""
+    created_at = gallery.get("created_at")
+    if not created_at:
+        return False
+    try:
+        created = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+        lock_date = created + timedelta(days=GALLERY_EDIT_LOCK_DAYS)
+        return datetime.now(timezone.utc) > lock_date
+    except:
+        return False
+
+def is_demo_expired(gallery: dict) -> bool:
+    """Check if demo gallery's feature window has expired (6 hours)"""
+    if not gallery.get("is_demo"):
+        return False
+    created_at = gallery.get("created_at")
+    if not created_at:
+        return False
+    try:
+        created = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+        expiry = created + timedelta(hours=DEMO_FEATURE_WINDOW_HOURS)
+        return datetime.now(timezone.utc) > expiry
+    except:
+        return False
+
+async def get_billing_settings() -> dict:
+    """Get current billing settings from database"""
+    settings = await db.site_config.find_one({"type": "billing_settings"}, {"_id": 0})
+    if not settings:
+        return {
+            "billing_enforcement_enabled": False,
+            "pricing": DEFAULT_PRICING.copy()
+        }
+    return {
+        "billing_enforcement_enabled": settings.get("billing_enforcement_enabled", False),
+        "pricing": settings.get("pricing", DEFAULT_PRICING.copy())
+    }
+
+async def reset_user_credits_if_needed(user_id: str):
+    """Reset user credits if billing cycle has passed"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        return
+    
+    billing_start = user.get("billing_cycle_start")
+    if not billing_start:
+        # Initialize billing cycle
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {
+                "billing_cycle_start": datetime.now(timezone.utc).isoformat(),
+                "event_credits": PLAN_CREDITS.get(user.get("plan", PLAN_FREE), 0),
+                "extra_credits": 0
+            }}
+        )
+        return
+    
+    try:
+        start = datetime.fromisoformat(billing_start.replace('Z', '+00:00'))
+        # Check if a month has passed
+        if datetime.now(timezone.utc) >= start + timedelta(days=30):
+            plan = user.get("plan", PLAN_FREE)
+            new_credits = PLAN_CREDITS.get(plan, 0)
+            
+            # Check override mode
+            override_mode = user.get("override_mode")
+            override_expires = user.get("override_expires")
+            if override_mode and override_expires:
+                try:
+                    expires = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
+                    if expires > datetime.now(timezone.utc):
+                        new_credits = MODE_CREDITS.get(override_mode, new_credits)
+                        if new_credits == -1:
+                            new_credits = 999  # Unlimited
+                except:
+                    pass
+            
+            await db.users.update_one(
+                {"id": user_id},
+                {"$set": {
+                    "billing_cycle_start": datetime.now(timezone.utc).isoformat(),
+                    "event_credits": new_credits,
+                    "extra_credits": 0  # Extra credits don't roll over
+                }}
+            )
+    except:
+        pass
+
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
