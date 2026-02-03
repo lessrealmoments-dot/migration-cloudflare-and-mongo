@@ -537,6 +537,10 @@ class GalleryCreate(BaseModel):
     guest_upload_enabled_days: int = 3
     download_all_password: Optional[str] = None
     theme: str = "classic"
+    # Display settings
+    display_mode: str = "slideshow"  # "slideshow" or "collage"
+    display_transition: str = "crossfade"  # "crossfade", "fade-zoom", "slide", "flip"
+    display_interval: int = 6  # seconds between transitions (slideshow mode)
 
 class Gallery(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -554,6 +558,10 @@ class Gallery(BaseModel):
     guest_upload_enabled: bool = True
     has_download_all_password: bool = False
     theme: str = "classic"
+    # Display settings
+    display_mode: str = "slideshow"
+    display_transition: str = "crossfade"
+    display_interval: int = 6
     created_at: str
     photo_count: int = 0
     auto_delete_date: Optional[str] = None  # When gallery will be auto-deleted
