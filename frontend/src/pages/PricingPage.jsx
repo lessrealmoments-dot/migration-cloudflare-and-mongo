@@ -156,8 +156,8 @@ const PricingPage = () => {
       features: [
         { text: '1 Demo Gallery', included: true },
         { text: '500MB Storage', included: true },
-        { text: 'All features for 6 hours', included: true },
-        { text: 'View-only after demo period', included: true },
+        { text: 'Gallery expires in 6 hours', included: true, warning: true },
+        { text: 'All features during demo', included: true },
         { text: 'QR Code Sharing', included: false },
         { text: 'Display Mode', included: false },
         { text: 'Contributor Links', included: false },
@@ -173,13 +173,13 @@ const PricingPage = () => {
       color: 'blue',
       features: [
         { text: '2 Event Credits/month', included: true },
-        { text: '500MB Storage per gallery', included: true },
+        { text: '10GB Storage', included: true },
         { text: 'QR Code Sharing', included: true },
         { text: 'Online Gallery Access', included: true },
-        { text: 'Display Mode (Slideshow)', included: true },
         { text: 'Guest Uploads', included: true },
+        { text: '6-month gallery retention', included: true },
+        { text: 'Display Mode', included: false },
         { text: 'Contributor Links', included: false },
-        { text: 'Supplier Sections', included: false },
       ],
       cta: 'Get Started',
       popular: false
