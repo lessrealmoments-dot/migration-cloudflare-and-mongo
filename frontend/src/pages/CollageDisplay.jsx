@@ -243,6 +243,33 @@ const CollageDisplay = () => {
       onMouseMove={handleMouseMove}
       data-testid="collage-display"
     >
+      {/* CSS for 3D Cube Flip */}
+      <style>{`
+        .cube-container {
+          perspective: 1000px;
+          transform-style: preserve-3d;
+        }
+        .cube-flipper {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
+          transform-style: preserve-3d;
+        }
+        .cube-flipper.flipping {
+          transform: rotateY(180deg);
+        }
+        .cube-face {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          backface-visibility: hidden;
+        }
+        .cube-face-back {
+          transform: rotateY(180deg);
+        }
+      `}</style>
+      
       {/* 16:9 Container */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div 
@@ -257,14 +284,13 @@ const CollageDisplay = () => {
           {/* Tiles */}
           {layout.map((tile, index) => {
             const tileData = tilePhotos[index];
-            const isTransitioning = transitioningTiles.has(index);
             
             if (!tileData?.current) return null;
             
             return (
               <div
                 key={index}
-                className="absolute overflow-hidden"
+                className="absolute cube-container"
                 style={{
                   left: `${tile.x}%`,
                   top: `${tile.y}%`,
@@ -273,32 +299,26 @@ const CollageDisplay = () => {
                   padding: '2px'
                 }}
               >
-                <div className="relative w-full h-full overflow-hidden rounded-sm bg-zinc-900">
-                  {/* Current image */}
-                  <img
-                    src={`${BACKEND_URL}${tileData.current.url}`}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
-                    style={{
-                      opacity: isTransitioning ? 0 : 1,
-                      transform: isTransitioning ? 'scale(1.05)' : 'scale(1)',
-                      transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                    }}
-                  />
-                  
-                  {/* Next image (during transition) */}
-                  {isTransitioning && tileData.next && (
+                <div className={`cube-flipper ${isFlipping ? 'flipping' : ''}`}>
+                  {/* Current image (front face) */}
+                  <div className="cube-face rounded-sm overflow-hidden bg-zinc-900">
                     <img
-                      src={`${BACKEND_URL}${tileData.next.url}`}
+                      src={`${BACKEND_URL}${tileData.current.url}`}
                       alt=""
-                      className="absolute inset-0 w-full h-full object-cover"
-                      style={{
-                        opacity: 1,
-                        transform: 'scale(1)',
-                        transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                      }}
+                      className="w-full h-full object-cover"
                     />
-                  )}
+                  </div>
+                  
+                  {/* Next image (back face) */}
+                  <div className="cube-face cube-face-back rounded-sm overflow-hidden bg-zinc-900">
+                    {tileData.next && (
+                      <img
+                        src={`${BACKEND_URL}${tileData.next.url}`}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             );
