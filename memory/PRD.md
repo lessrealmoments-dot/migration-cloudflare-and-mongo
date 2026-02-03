@@ -121,6 +121,7 @@ Build a photo-sharing application for event photographers with:
 ### User
 - `GET /api/user/subscription` - Get subscription info (plan, credits, features, can_download)
 - `POST /api/user/upgrade-request` - Submit upgrade with payment proof
+- `POST /api/user/extra-credits-request` - Request extra credits with payment proof
 - `POST /api/upload-payment-proof` - Upload proof image file
 
 ### Admin
