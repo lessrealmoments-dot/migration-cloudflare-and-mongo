@@ -3849,20 +3849,31 @@ async def get_pending_payments(admin: dict = Depends(get_admin_user)):
 
 @api_router.post("/admin/approve-payment")
 async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_user)):
-    """Approve a user's payment"""
+    """Approve a user's payment and process any pending upgrade"""
     user = await db.users.find_one({"id": data.user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    update_data = {
+        "payment_status": PAYMENT_APPROVED,
+        "payment_approved_at": datetime.now(timezone.utc).isoformat(),
+        "payment_approved_notes": data.notes
+    }
+    
+    # If user has a pending upgrade request, apply it
+    requested_plan = user.get("requested_plan")
+    if requested_plan:
+        update_data["plan"] = requested_plan
+        update_data["requested_plan"] = None
+        update_data["event_credits"] = PLAN_CREDITS.get(requested_plan, 2)
+        update_data["billing_cycle_start"] = datetime.now(timezone.utc).isoformat()
+    
     await db.users.update_one(
         {"id": data.user_id},
-        {"$set": {
-            "payment_status": PAYMENT_APPROVED,
-            "payment_approved_at": datetime.now(timezone.utc).isoformat(),
-            "payment_approved_notes": data.notes
-        }}
+        {"$set": update_data}
     )
-    return {"message": "Payment approved"}
+    
+    return {"message": f"Payment approved{' and upgraded to ' + requested_plan if requested_plan else ''}"}
 
 @api_router.post("/upload-payment-proof")
 async def upload_payment_proof(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
