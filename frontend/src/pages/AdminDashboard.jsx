@@ -152,6 +152,33 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchFeatureToggles = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/feature-toggles`, getAuthHeader());
+      setFeatureToggles({
+        qr_share: response.data.qr_share ?? true,
+        online_gallery: response.data.online_gallery ?? true,
+        display_mode: response.data.display_mode ?? true,
+        contributor_link: response.data.contributor_link ?? true,
+        auto_delete_enabled: response.data.auto_delete_enabled ?? true
+      });
+    } catch (error) {
+      console.error('Failed to load feature toggles');
+    }
+  };
+
+  const handleSaveFeatureToggles = async () => {
+    setSavingToggles(true);
+    try {
+      await axios.put(`${API}/admin/feature-toggles`, featureToggles, getAuthHeader());
+      toast.success('Feature toggles saved');
+    } catch (error) {
+      toast.error('Failed to save feature toggles');
+    } finally {
+      setSavingToggles(false);
+    }
+  };
+
   const fetchPhotographerGalleries = async (userId) => {
     try {
       const response = await axios.get(`${API}/admin/photographers/${userId}/galleries`, getAuthHeader());
