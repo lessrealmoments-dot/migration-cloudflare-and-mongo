@@ -877,6 +877,14 @@ const AdminDashboard = () => {
                             {p.status === 'suspended' ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
                           </button>
                           <button
+                            onClick={() => fetchUserTransactions(p.id, p.name)}
+                            className="p-2 bg-blue-600 rounded text-white hover:bg-blue-500"
+                            title="View Transaction History"
+                            data-testid={`transactions-btn-${p.id}`}
+                          >
+                            <Activity className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => setShowDeleteConfirm(p.id)}
                             className="p-2 bg-red-600 rounded text-white hover:bg-red-500"
                             title="Delete"
