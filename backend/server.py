@@ -3687,6 +3687,234 @@ async def auto_delete_expired_galleries():
         # Check daily
         await asyncio.sleep(24 * 60 * 60)
 
+# ============================================
+# BILLING & SUBSCRIPTION ENDPOINTS
+# ============================================
+
+@api_router.get("/billing/settings")
+async def get_billing_settings_endpoint(admin: dict = Depends(get_admin_user)):
+    """Get billing settings (admin only)"""
+    return await get_billing_settings()
+
+@api_router.put("/billing/settings")
+async def update_billing_settings(data: BillingSettings, admin: dict = Depends(get_admin_user)):
+    """Update billing settings (admin only)"""
+    await db.site_config.update_one(
+        {"type": "billing_settings"},
+        {"$set": {
+            "type": "billing_settings",
+            "billing_enforcement_enabled": data.billing_enforcement_enabled,
+            "pricing": data.pricing
+        }},
+        upsert=True
+    )
+    return {"message": "Billing settings updated", "settings": data.model_dump()}
+
+@api_router.get("/billing/pricing")
+async def get_public_pricing():
+    """Get current pricing (public)"""
+    settings = await get_billing_settings()
+    return settings["pricing"]
+
+@api_router.get("/user/subscription")
+async def get_user_subscription(user: dict = Depends(get_current_user)):
+    """Get current user's subscription info"""
+    db_user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check and reset credits if billing cycle passed
+    await reset_user_credits_if_needed(user["id"])
+    
+    # Refresh user data
+    db_user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
+    
+    effective_plan = get_effective_plan(db_user)
+    effective_credits = get_effective_credits(db_user)
+    
+    return {
+        "plan": db_user.get("plan", PLAN_FREE),
+        "effective_plan": effective_plan,
+        "billing_cycle_start": db_user.get("billing_cycle_start"),
+        "event_credits": db_user.get("event_credits", 0),
+        "extra_credits": db_user.get("extra_credits", 0),
+        "total_credits": effective_credits,
+        "payment_status": db_user.get("payment_status", PAYMENT_NONE),
+        "payment_proof_url": db_user.get("payment_proof_url"),
+        "override_mode": db_user.get("override_mode"),
+        "override_expires": db_user.get("override_expires"),
+        "can_download": can_download(db_user),
+        "features_enabled": {
+            "qr_share": is_feature_enabled_for_user(db_user, "qr_share"),
+            "online_gallery": is_feature_enabled_for_user(db_user, "online_gallery"),
+            "display_mode": is_feature_enabled_for_user(db_user, "display_mode"),
+            "contributor_link": is_feature_enabled_for_user(db_user, "contributor_link"),
+            "guest_uploads": is_feature_enabled_for_user(db_user, "guest_uploads"),
+        }
+    }
+
+@api_router.post("/user/payment-proof")
+async def submit_payment_proof(data: PaymentProofSubmit, user: dict = Depends(get_current_user)):
+    """Submit payment proof (screenshot)"""
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {
+            "payment_status": PAYMENT_PENDING,
+            "payment_proof_url": data.proof_url,
+            "payment_proof_notes": data.notes,
+            "payment_submitted_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    return {"message": "Payment proof submitted. Awaiting admin approval."}
+
+@api_router.get("/admin/pending-payments")
+async def get_pending_payments(admin: dict = Depends(get_admin_user)):
+    """Get all users with pending payments"""
+    users = await db.users.find(
+        {"payment_status": PAYMENT_PENDING},
+        {"_id": 0, "password": 0}
+    ).to_list(None)
+    return users
+
+@api_router.post("/admin/approve-payment")
+async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_user)):
+    """Approve a user's payment"""
+    user = await db.users.find_one({"id": data.user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": data.user_id},
+        {"$set": {
+            "payment_status": PAYMENT_APPROVED,
+            "payment_approved_at": datetime.now(timezone.utc).isoformat(),
+            "payment_approved_notes": data.notes
+        }}
+    )
+    return {"message": "Payment approved"}
+
+@api_router.post("/admin/reject-payment")
+async def reject_payment(data: RejectPayment, admin: dict = Depends(get_admin_user)):
+    """Reject a user's payment"""
+    user = await db.users.find_one({"id": data.user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": data.user_id},
+        {"$set": {
+            "payment_status": PAYMENT_NONE,
+            "payment_rejected_at": datetime.now(timezone.utc).isoformat(),
+            "payment_rejected_reason": data.reason,
+            "payment_proof_url": None
+        }}
+    )
+    return {"message": "Payment rejected"}
+
+@api_router.post("/admin/assign-override")
+async def assign_override_mode(data: AssignOverrideMode, admin: dict = Depends(get_admin_user)):
+    """Assign an override mode to a user"""
+    user = await db.users.find_one({"id": data.user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if data.mode not in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO, MODE_COMPED_STANDARD]:
+        raise HTTPException(status_code=400, detail="Invalid override mode")
+    
+    if data.duration_months < 1 or data.duration_months > 24:
+        raise HTTPException(status_code=400, detail="Duration must be between 1 and 24 months")
+    
+    expires = datetime.now(timezone.utc) + timedelta(days=data.duration_months * 30)
+    
+    # Set credits based on mode
+    credits = MODE_CREDITS.get(data.mode, 2)
+    if credits == -1:
+        credits = 999  # Unlimited representation
+    
+    await db.users.update_one(
+        {"id": data.user_id},
+        {"$set": {
+            "override_mode": data.mode,
+            "override_expires": expires.isoformat(),
+            "override_reason": data.reason,
+            "override_assigned_at": datetime.now(timezone.utc).isoformat(),
+            "event_credits": credits,
+            "billing_cycle_start": datetime.now(timezone.utc).isoformat(),
+            "payment_status": PAYMENT_APPROVED  # Override users don't need to pay
+        }}
+    )
+    return {"message": f"Override mode '{data.mode}' assigned until {expires.date()}"}
+
+@api_router.post("/admin/remove-override")
+async def remove_override_mode(data: RemoveOverrideMode, admin: dict = Depends(get_admin_user)):
+    """Remove override mode from a user"""
+    user = await db.users.find_one({"id": data.user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    plan = user.get("plan", PLAN_FREE)
+    credits = PLAN_CREDITS.get(plan, 0)
+    
+    await db.users.update_one(
+        {"id": data.user_id},
+        {"$set": {
+            "override_mode": None,
+            "override_expires": None,
+            "override_reason": None,
+            "override_removed_at": datetime.now(timezone.utc).isoformat(),
+            "override_removal_reason": data.reason,
+            "event_credits": credits
+        }}
+    )
+    return {"message": "Override mode removed"}
+
+@api_router.get("/admin/users/{user_id}/subscription")
+async def get_user_subscription_admin(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Get a user's subscription details (admin)"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "id": user["id"],
+        "email": user.get("email"),
+        "name": user.get("name"),
+        "plan": user.get("plan", PLAN_FREE),
+        "effective_plan": get_effective_plan(user),
+        "billing_cycle_start": user.get("billing_cycle_start"),
+        "event_credits": user.get("event_credits", 0),
+        "extra_credits": user.get("extra_credits", 0),
+        "total_credits": get_effective_credits(user),
+        "payment_status": user.get("payment_status", PAYMENT_NONE),
+        "payment_proof_url": user.get("payment_proof_url"),
+        "override_mode": user.get("override_mode"),
+        "override_expires": user.get("override_expires"),
+        "override_reason": user.get("override_reason"),
+        "galleries_created": user.get("galleries_created_total", 0)
+    }
+
+@api_router.put("/admin/users/{user_id}/plan")
+async def update_user_plan(user_id: str, plan: str = Body(..., embed=True), admin: dict = Depends(get_admin_user)):
+    """Update a user's subscription plan (admin)"""
+    if plan not in [PLAN_FREE, PLAN_STANDARD, PLAN_PRO]:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    credits = PLAN_CREDITS.get(plan, 0)
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "plan": plan,
+            "event_credits": credits,
+            "billing_cycle_start": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    return {"message": f"User plan updated to {plan}"}
+
 app.include_router(api_router)
 
 app.add_middleware(
