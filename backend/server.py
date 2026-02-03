@@ -1745,7 +1745,7 @@ class FeatureToggle(BaseModel):
 
 @api_router.get("/admin/feature-toggles")
 async def get_feature_toggles(admin: dict = Depends(get_admin_user)):
-    """Get feature toggle settings"""
+    """Get feature toggle settings (legacy - for backward compatibility)"""
     toggles = await db.site_config.find_one({"type": "feature_toggles"}, {"_id": 0})
     if not toggles:
         toggles = {
@@ -1760,7 +1760,7 @@ async def get_feature_toggles(admin: dict = Depends(get_admin_user)):
 
 @api_router.put("/admin/feature-toggles")
 async def update_feature_toggles(data: FeatureToggle, admin: dict = Depends(get_admin_user)):
-    """Update feature toggle settings"""
+    """Update feature toggle settings (legacy)"""
     toggle_doc = data.model_dump()
     toggle_doc["type"] = "feature_toggles"
     
@@ -1788,7 +1788,122 @@ async def get_public_feature_toggles():
     return {k: v for k, v in toggles.items() if k != "type"}
 
 # ============================================
-# Per-User Feature Toggles
+# GLOBAL FEATURE TOGGLE SYSTEM (NEW)
+# Admin-controlled features per package/mode
+# ============================================
+
+@api_router.get("/admin/global-feature-toggles")
+async def get_admin_global_feature_toggles(admin: dict = Depends(get_admin_user)):
+    """
+    Get global feature toggles for all override modes and payment plans.
+    Admin can configure which features are available for each mode/plan.
+    """
+    toggles = await get_global_feature_toggles()
+    return {
+        "override_modes": {
+            MODE_FOUNDERS_CIRCLE: {
+                "label": "Founders Circle",
+                "features": toggles.get(MODE_FOUNDERS_CIRCLE, DEFAULT_MODE_FEATURES[MODE_FOUNDERS_CIRCLE])
+            },
+            MODE_EARLY_PARTNER_BETA: {
+                "label": "Early Partner Beta",
+                "features": toggles.get(MODE_EARLY_PARTNER_BETA, DEFAULT_MODE_FEATURES[MODE_EARLY_PARTNER_BETA])
+            },
+            MODE_COMPED_PRO: {
+                "label": "Comped Pro",
+                "features": toggles.get(MODE_COMPED_PRO, DEFAULT_MODE_FEATURES[MODE_COMPED_PRO])
+            },
+            MODE_COMPED_STANDARD: {
+                "label": "Comped Standard",
+                "features": toggles.get(MODE_COMPED_STANDARD, DEFAULT_MODE_FEATURES[MODE_COMPED_STANDARD])
+            }
+        },
+        "payment_plans": {
+            PLAN_FREE: {
+                "label": "Free",
+                "features": toggles.get(PLAN_FREE, DEFAULT_PLAN_FEATURES[PLAN_FREE])
+            },
+            PLAN_STANDARD: {
+                "label": "Standard",
+                "features": toggles.get(PLAN_STANDARD, DEFAULT_PLAN_FEATURES[PLAN_STANDARD])
+            },
+            PLAN_PRO: {
+                "label": "Pro",
+                "features": toggles.get(PLAN_PRO, DEFAULT_PLAN_FEATURES[PLAN_PRO])
+            }
+        },
+        "feature_definitions": {
+            "unlimited_token": "Unlimited event credits (no limit on galleries)",
+            "copy_share_link": "Copy shareable gallery link",
+            "qr_code": "Generate QR code for gallery",
+            "view_public_gallery": "Allow public gallery viewing",
+            "display_mode": "Slideshow/Collage display modes",
+            "collaboration_link": "Contributor upload links"
+        }
+    }
+
+@api_router.put("/admin/global-feature-toggles")
+async def update_admin_global_feature_toggles(data: GlobalFeatureToggles, admin: dict = Depends(get_admin_user)):
+    """
+    Update global feature toggles for all override modes and payment plans.
+    This applies universally across the entire platform.
+    """
+    toggle_doc = {
+        "type": "global_feature_toggles",
+        # Override Modes
+        MODE_FOUNDERS_CIRCLE: data.founders_circle,
+        MODE_EARLY_PARTNER_BETA: data.early_partner_beta,
+        MODE_COMPED_PRO: data.comped_pro,
+        MODE_COMPED_STANDARD: data.comped_standard,
+        # Payment Plans
+        PLAN_FREE: data.free,
+        PLAN_STANDARD: data.standard,
+        PLAN_PRO: data.pro,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.site_config.update_one(
+        {"type": "global_feature_toggles"},
+        {"$set": toggle_doc},
+        upsert=True
+    )
+    
+    return {"message": "Global feature toggles updated successfully", "toggles": toggle_doc}
+
+@api_router.put("/admin/global-feature-toggles/{mode_or_plan}")
+async def update_single_mode_features(
+    mode_or_plan: str,
+    features: dict,
+    admin: dict = Depends(get_admin_user)
+):
+    """
+    Update features for a single mode or plan.
+    mode_or_plan: one of founders_circle, early_partner_beta, comped_pro, comped_standard, free, standard, pro
+    """
+    valid_keys = ALL_OVERRIDE_MODES + ALL_PAYMENT_PLANS
+    if mode_or_plan not in valid_keys:
+        raise HTTPException(status_code=400, detail=f"Invalid mode/plan. Must be one of: {valid_keys}")
+    
+    # Validate feature keys
+    valid_features = ["unlimited_token", "copy_share_link", "qr_code", "view_public_gallery", "display_mode", "collaboration_link"]
+    for key in features.keys():
+        if key not in valid_features:
+            raise HTTPException(status_code=400, detail=f"Invalid feature key: {key}. Valid keys: {valid_features}")
+    
+    # Update only the specified mode/plan
+    await db.site_config.update_one(
+        {"type": "global_feature_toggles"},
+        {"$set": {
+            mode_or_plan: features,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    return {"message": f"Features updated for {mode_or_plan}", "features": features}
+
+# ============================================
+# Per-User Feature Toggles (Resolved via Authority Hierarchy)
 # ============================================
 
 class UserFeatureToggle(BaseModel):
@@ -1800,24 +1915,30 @@ class UserFeatureToggle(BaseModel):
 
 @api_router.get("/admin/users/{user_id}/features")
 async def get_user_feature_toggles(user_id: str, admin: dict = Depends(get_admin_user)):
-    """Get feature toggles for a specific user"""
+    """Get feature toggles for a specific user (resolved via authority hierarchy)"""
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Return user's feature toggles or defaults
-    features = user.get("feature_toggles", {
-        "qr_share": True,
-        "online_gallery": True,
-        "display_mode": True,
-        "contributor_link": True,
-        "auto_delete_enabled": True
-    })
-    return features
+    # Resolve features using authority hierarchy
+    resolved = await resolve_user_features(user)
+    return {
+        "user_id": user_id,
+        "authority_source": resolved["authority_source"],
+        "effective_plan": resolved["effective_plan"],
+        "override_active": resolved["override_active"],
+        "override_mode": resolved["override_mode"],
+        "override_expires": resolved["override_expires"],
+        "has_unlimited_credits": resolved["has_unlimited_credits"],
+        "credits_available": resolved["credits_available"],
+        "can_download": resolved["can_download"],
+        "payment_required": resolved["payment_required"],
+        "features": resolved["features"]
+    }
 
 @api_router.put("/admin/users/{user_id}/features")
 async def update_user_feature_toggles(user_id: str, data: UserFeatureToggle, admin: dict = Depends(get_admin_user)):
-    """Update feature toggles for a specific user"""
+    """Update feature toggles for a specific user (legacy - kept for compatibility)"""
     user = await db.users.find_one({"id": user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -1833,20 +1954,32 @@ async def update_user_feature_toggles(user_id: str, data: UserFeatureToggle, adm
 
 @api_router.get("/user/features")
 async def get_current_user_features(user: dict = Depends(get_current_user)):
-    """Get feature toggles for the currently logged-in user"""
+    """
+    Get feature toggles for the currently logged-in user.
+    Resolved using AUTHORITY HIERARCHY:
+    1. Admin Override Mode (highest)
+    2. Normal Payment Plan
+    3. Payment Status
+    """
     db_user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Return user's feature toggles or defaults
-    features = db_user.get("feature_toggles", {
-        "qr_share": True,
-        "online_gallery": True,
-        "display_mode": True,
-        "contributor_link": True,
-        "auto_delete_enabled": True
-    })
-    return features
+    # Resolve features using authority hierarchy
+    resolved = await resolve_user_features(db_user)
+    return {
+        "authority_source": resolved["authority_source"],
+        "effective_plan": resolved["effective_plan"],
+        "override_active": resolved["override_active"],
+        "override_mode": resolved["override_mode"],
+        "override_expires": resolved["override_expires"],
+        "has_unlimited_credits": resolved["has_unlimited_credits"],
+        "credits_available": resolved["credits_available"],
+        "can_download": resolved["can_download"],
+        "payment_required": resolved["payment_required"],
+        "features": resolved["features"]
+    }
+
 
 @api_router.get("/admin/galleries/{gallery_id}")
 async def admin_get_gallery(gallery_id: str, admin: dict = Depends(get_admin_user)):
