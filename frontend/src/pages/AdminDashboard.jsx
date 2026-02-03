@@ -263,6 +263,96 @@ const AdminDashboard = () => {
     }
   };
 
+  // Billing & Subscription functions
+  const fetchBillingSettings = async () => {
+    try {
+      const response = await axios.get(`${API}/billing/settings`, getAuthHeader());
+      setBillingSettings(response.data);
+    } catch (error) {
+      console.error('Failed to load billing settings');
+    }
+  };
+
+  const fetchPendingPayments = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/pending-payments`, getAuthHeader());
+      setPendingPayments(response.data);
+    } catch (error) {
+      console.error('Failed to load pending payments');
+    }
+  };
+
+  const handleSaveBillingSettings = async () => {
+    setSavingBilling(true);
+    try {
+      await axios.put(`${API}/billing/settings`, billingSettings, getAuthHeader());
+      toast.success('Billing settings saved');
+    } catch (error) {
+      toast.error('Failed to save billing settings');
+    } finally {
+      setSavingBilling(false);
+    }
+  };
+
+  const handleApprovePayment = async (userId) => {
+    try {
+      await axios.post(`${API}/admin/approve-payment`, { user_id: userId }, getAuthHeader());
+      toast.success('Payment approved');
+      fetchPendingPayments();
+      fetchPhotographers();
+    } catch (error) {
+      toast.error('Failed to approve payment');
+    }
+  };
+
+  const handleRejectPayment = async (userId, reason) => {
+    try {
+      await axios.post(`${API}/admin/reject-payment`, { user_id: userId, reason }, getAuthHeader());
+      toast.success('Payment rejected');
+      fetchPendingPayments();
+      fetchPhotographers();
+    } catch (error) {
+      toast.error('Failed to reject payment');
+    }
+  };
+
+  const handleAssignOverride = async () => {
+    if (!overrideReason.trim()) {
+      toast.error('Please provide a reason');
+      return;
+    }
+    setAssigningOverride(true);
+    try {
+      await axios.post(`${API}/admin/assign-override`, {
+        user_id: showOverrideModal,
+        mode: overrideMode,
+        duration_months: overrideDuration,
+        reason: overrideReason
+      }, getAuthHeader());
+      toast.success(`Override mode assigned`);
+      setShowOverrideModal(null);
+      setOverrideReason('');
+      fetchPhotographers();
+    } catch (error) {
+      toast.error('Failed to assign override');
+    } finally {
+      setAssigningOverride(false);
+    }
+  };
+
+  const handleRemoveOverride = async (userId) => {
+    try {
+      await axios.post(`${API}/admin/remove-override`, {
+        user_id: userId,
+        reason: 'Admin removed override'
+      }, getAuthHeader());
+      toast.success('Override removed');
+      fetchPhotographers();
+    } catch (error) {
+      toast.error('Failed to remove override');
+    }
+  };
+
   const fetchPhotographerGalleries = async (userId) => {
     try {
       const response = await axios.get(`${API}/admin/photographers/${userId}/galleries`, getAuthHeader());
