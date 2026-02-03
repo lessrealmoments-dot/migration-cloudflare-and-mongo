@@ -105,6 +105,18 @@ const Dashboard = ({ user, setUser }) => {
     }
   };
 
+  const fetchPaymentStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/user/payment-status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPaymentStatus(response.data);
+    } catch (error) {
+      console.error('Failed to fetch payment status');
+    }
+  };
+
   const handleBuyCredits = async (proofUrl) => {
     try {
       const token = localStorage.getItem('token');
