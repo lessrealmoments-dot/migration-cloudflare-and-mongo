@@ -800,6 +800,56 @@ class BillingSettings(BaseModel):
         }
     })
 
+# ============================================
+# NOTIFICATION SYSTEM MODELS
+# ============================================
+
+class Notification(BaseModel):
+    id: str
+    user_id: str
+    type: str  # "payment_approved", "payment_rejected", "plan_changed", "credits_added"
+    title: str
+    message: str
+    read: bool = False
+    created_at: str
+    metadata: Optional[dict] = None
+
+class NotificationCreate(BaseModel):
+    user_id: str
+    type: str
+    title: str
+    message: str
+    metadata: Optional[dict] = None
+
+# ============================================
+# PAYMENT DISPUTE MODELS
+# ============================================
+
+class PaymentDispute(BaseModel):
+    user_id: str
+    dispute_message: str
+    new_proof_url: str
+
+# ============================================
+# TRANSACTION HISTORY MODELS
+# ============================================
+
+class Transaction(BaseModel):
+    id: str
+    user_id: str
+    type: str  # "subscription", "upgrade", "extra_credits"
+    amount: int
+    plan: Optional[str] = None
+    extra_credits: Optional[int] = None
+    status: str  # "pending", "approved", "rejected", "disputed"
+    payment_proof_url: Optional[str] = None
+    admin_notes: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    dispute_message: Optional[str] = None
+    dispute_proof_url: Optional[str] = None
+    created_at: str
+    resolved_at: Optional[str] = None
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
