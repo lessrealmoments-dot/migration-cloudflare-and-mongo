@@ -464,7 +464,7 @@ const AdminDashboard = () => {
             data-testid="features-tab"
           >
             <ToggleRight className="w-5 h-5" strokeWidth={1.5} />
-            Features
+            Default Features
           </button>
           <button
             onClick={() => setActiveTab('landing')}
