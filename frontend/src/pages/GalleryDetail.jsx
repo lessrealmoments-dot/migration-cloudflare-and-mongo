@@ -407,7 +407,23 @@ const GalleryDetail = () => {
   useEffect(() => {
     fetchGalleryData();
     fetchGoogleDriveStatus();
+    fetchSubscriptionStatus();
   }, [id]);
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/user/subscription`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCanDownload(response.data.can_download);
+      if (!response.data.can_download) {
+        setDownloadDisabledReason('Your payment is pending approval. Downloads will be enabled once your payment is confirmed.');
+      }
+    } catch (error) {
+      console.error('Failed to fetch subscription status');
+    }
+  };
 
   const fetchGoogleDriveStatus = async () => {
     try {
