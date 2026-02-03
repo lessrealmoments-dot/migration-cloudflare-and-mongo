@@ -64,6 +64,10 @@ const GalleryDetail = () => {
   // QR Code state
   const [showQRCode, setShowQRCode] = useState(false);
   const qrRef = useRef(null);
+  // Display Mode QR state
+  const [showDisplayQR, setShowDisplayQR] = useState(false);
+  const [displayQRMode, setDisplayQRMode] = useState('slideshow');
+  const displayQrRef = useRef(null);
   // Embed code state
   const [showEmbedModal, setShowEmbedModal] = useState(false);
   // Multi-select state
