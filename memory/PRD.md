@@ -5,16 +5,16 @@ Build a photo-sharing application for event photographers with:
 - Gallery management, photo uploads, guest uploads
 - Custom branding, contributor upload links
 - Display modes (Slideshow, Live Collage)
-- **Subscription system with plans, credits, and billing**
+- **Complete subscription system with plans, credits, billing, and pricing page**
 
-## Subscription & Billing System (NEW)
+## Subscription & Billing System
 
 ### Plans
 | Plan | Price | Credits/Month | Features |
 |------|-------|---------------|----------|
 | Free | ₱0 | 1 demo gallery | All features for 6 hours, then view-only |
-| Standard | ₱1,000/mo | 2 | Standard features |
-| Pro | ₱1,500/mo | 2 | Standard + Pro features |
+| Standard | ₱1,000/mo | 2 | Standard features (QR, Display, Guest uploads) |
+| Pro | ₱1,500/mo | 2 | All features including Contributor Links |
 
 ### Override Modes (Admin Assigned)
 | Mode | Features | Credits | Fee |
@@ -33,48 +33,55 @@ Build a photo-sharing application for event photographers with:
 - Demo galleries: 6-hour feature window, then view-only
 
 ### Payment Flow (Manual/Soft Launch)
-1. User submits payment proof (screenshot)
-2. Admin reviews and approves/rejects
+1. User submits payment proof (screenshot via GCash/PayMaya)
+2. Admin reviews in Billing tab and approves/rejects
 3. Downloads locked while payment pending
 4. Approved = downloads unlocked
 
-## Technical Implementation
+## Implemented Features
 
-### Database Schema Updates
-```javascript
-// User subscription fields
-{
-  plan: "free" | "standard" | "pro",
-  billing_cycle_start: ISO date,
-  event_credits: number,
-  extra_credits: number,
-  payment_status: "none" | "pending" | "approved",
-  payment_proof_url: string,
-  override_mode: "founders_circle" | "early_partner_beta" | "comped_pro" | "comped_standard" | null,
-  override_expires: ISO date,
-  override_reason: string
-}
+### Pricing Page (/pricing)
+- Three-tier plan comparison (Free, Standard ₱1,000, Pro ₱1,500)
+- Feature checklist for each plan
+- Extra credits section (₱500/credit)
+- Features grid (QR, Display Mode, Guest Uploads, etc.)
+- FAQ section
+- CTA to sign up
 
-// Gallery fields
-{
-  is_demo: boolean,
-  demo_features_expire: ISO date,
-  edit_lock_date: ISO date (7 days after creation)
-}
+### User Dashboard
+- Subscription card showing:
+  - Current plan with icon
+  - Override mode badge (if applicable)
+  - Credit balance (or "Unlimited")
+  - Payment status (Active/Pending)
+  - Link to pricing page
+- Payment proof upload modal
+- Download lock warning when payment pending
 
-// Billing settings (site_config)
-{
-  billing_enforcement_enabled: boolean,
-  pricing: { standard_monthly, pro_monthly, extra_credit }
-}
-```
+### Admin Panel - Billing Tab
+- Billing mode toggle (Manual/Live)
+- Pricing configuration (editable)
+- Pending payments queue with Approve/Reject
+- Plan reference cards
 
-### API Endpoints
+### Admin Panel - Override Assignment
+- Crown button in Photographers table
+- Modal with mode selection, duration, reason
+- Remove override option
+
+## API Endpoints
+
+### Billing
 - `GET /api/billing/pricing` - Public pricing
 - `GET /api/billing/settings` - Admin: billing config
 - `PUT /api/billing/settings` - Admin: update billing
+
+### User Subscription
 - `GET /api/user/subscription` - User's subscription info
 - `POST /api/user/payment-proof` - Submit payment screenshot
+- `POST /api/upload-payment-proof` - Upload proof image
+
+### Admin
 - `GET /api/admin/pending-payments` - Pending approvals
 - `POST /api/admin/approve-payment` - Approve payment
 - `POST /api/admin/reject-payment` - Reject payment
@@ -82,36 +89,37 @@ Build a photo-sharing application for event photographers with:
 - `POST /api/admin/remove-override` - Remove override
 - `PUT /api/admin/users/{id}/plan` - Change user plan
 
-### Admin Panel Updates
-- **Billing tab**: Mode toggle, pricing config, pending payments
-- **Photographers tab**: Crown button for override mode assignment
-- **Override modal**: Mode, duration (1-24 months), reason
-
 ## Current Founder
 - Email: lessrealmoments@gmail.com
 - Mode: Founders Circle
 - Expires: January 2028
 - Credits: Unlimited
 
+## Routes
+- `/` - Landing page (with Pricing link)
+- `/pricing` - Pricing & plans page
+- `/auth` - Login/Register
+- `/dashboard` - User dashboard with subscription card
+- `/admin/dashboard` - Admin with Billing tab
+
 ## Completed This Session
-1. ✅ Subscription data model
-2. ✅ Credit system (consume on gallery create)
+1. ✅ Subscription data model & API
+2. ✅ Credit consumption on gallery creation
 3. ✅ Override modes (4 types)
-4. ✅ Payment proof submission flow
+4. ✅ Payment proof upload flow
 5. ✅ Admin billing tab
 6. ✅ Admin override assignment modal
-7. ✅ Pricing configuration
-8. ✅ Billing mode toggle (manual/live)
+7. ✅ Pricing page with plans, features, FAQ
+8. ✅ User dashboard subscription card
+9. ✅ Download gate when payment pending
 
 ## Next Steps
-- [ ] User dashboard: show plan, credits, payment status
-- [ ] Payment proof upload UI for users
-- [ ] Demo gallery 6-hour timer display
-- [ ] Edit lock warning in gallery detail
-- [ ] Download gate UI when payment pending
-- [ ] GCash/PayMaya integration (when ready)
+- [ ] GCash/PayMaya live payment integration (when ready)
+- [ ] Email notifications for payment status
+- [ ] Automated billing when enabled
+- [ ] Invoice/receipt generation
 
 ## Access URLs
 - Preview: https://eventphoto-share.preview.emergentagent.com
+- Pricing: /pricing
 - Admin: /admin
-- Billing API: /api/billing/*
