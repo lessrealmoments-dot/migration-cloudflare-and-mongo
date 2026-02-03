@@ -990,9 +990,9 @@ const AdminDashboard = () => {
         {activeTab === 'features' && (
           <div className="bg-zinc-800 rounded-lg">
             <div className="px-6 py-4 border-b border-zinc-700">
-              <h2 className="text-lg font-medium text-white">Feature Management</h2>
+              <h2 className="text-lg font-medium text-white">Default Feature Settings</h2>
               <p className="text-sm text-zinc-500 mt-1">
-                Enable or disable features for your platform. Disabled features will show a contact message to users.
+                Set default features for new photographers. Use the purple toggle button in Photographers tab to customize per-user.
               </p>
             </div>
             
