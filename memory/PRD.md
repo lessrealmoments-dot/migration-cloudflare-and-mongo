@@ -120,6 +120,6 @@ Build a photo-sharing application for event photographers with:
 - [ ] Invoice/receipt generation
 
 ## Access URLs
-- Preview: https://eventphoto-share.preview.emergentagent.com
+- Preview: https://photo-pay-plans.preview.emergentagent.com
 - Pricing: /pricing
 - Admin: /admin

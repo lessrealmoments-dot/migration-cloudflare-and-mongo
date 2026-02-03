@@ -1,80 +1,92 @@
-<analysis>**original_problem_statement**: The user wants to add and refine several features for a photo-sharing application designed for event photographers.
+<analysis>**original_problem_statement**: The user wants to build a comprehensive subscription and billing system for a photo-sharing application. The system is based on a detailed specification document provided by the user, outlining user roles, plans, features, a credit system for creating galleries, manual override modes for admins, and a phased rollout starting with manual billing.
 
-The initial requests were:
-1.  **Guest Upload Limit**: Limit guest uploads to a maximum of 10 photos per batch.
-2.  **Guest Photo Moderation**: Allow photographers to multi-select guest photos to hide or delete them.
-3.  **Visual Polish**: Improve the look of the upload areas to be more professional.
+This follows earlier work on the application which included features like guest upload limits, photo moderation, contributor links, section reordering, and live display modes (Slideshow and Collage).
 
-Subsequently, the user added the following feature requests and bug reports:
-*   **Custom Favicon**: Ability to upload a custom site favicon from the admin panel.
-*   **Brand Name Consistency**: Fix an issue where the old brand name PhotoShare flashes briefly before the custom name loads and ensure the custom name is used consistently across all pages.
-*   **Contributor Upload Links**: A major feature to allow photographers to generate private, section-specific upload links for collaborators (e.g., a second photographer). Contributors must provide their company name, and their name should be credited under the section title in the gallery.
-*   **Bug Fix (Contributor Photos)**: Contributor-uploaded photos were not appearing in the gallery.
-*   **Section Reordering**: Allow photographers to re-order the sections within a gallery via drag-and-drop.
-*   **Slideshow/Display Mode**: Create a real-time, auto-updating slideshow/display view for galleries, optimized for viewing stations. This should have two versions:
-    *   **Version 1**: A clean, full-screen, single-image slideshow.
-    *   **Version 2**: A dynamic, multi-image live collage grid.
-*   **Display Mode Refinements**:
-    *   Improve the smoothness of Version 1's transitions.
-    *   Adjust the update speed and polling logic for Version 2.
-    *   Change the Version 2 (collage) update behavior from individual random tiles to updating in sets for a more cohesive look.
+**PRODUCT REQUIREMENTS** (based on the user's latest detailed specification):
+1.  **Subscription Tiers**: Free, Standard (₱1,000/mo), and Pro (₱1,500/mo) with distinct feature sets. Prices must be configurable by the admin.
+2.  **Event Credit System**: Users receive a monthly quota of Event Credits to create galleries (1 credit = 1 gallery). Unused credits expire monthly. Extra credits can be purchased.
+3.  **Admin Override Modes**: Admins can manually assign special, time-limited plans to users (e.g., Founders Circle, Early Partner Beta).
+4.  **Billing Enforcement Toggle**: A global switch to move from Manual Billing (soft launch, proof upload) to Live Billing (automated payments). The initial implementation is for manual billing.
+5.  **Manual Payment Workflow**: Users on manual billing can submit payment proof (e.g., a screenshot) to have their plan activated or renewed by an admin.
+6.  **Payment Pending Gate**: While a payment is pending approval, downloads must be disabled for the user.
+7.  **Gallery Lifecycle**: Galleries are editable for 7 days and are automatically deleted 6 months after creation.
+8.  **Pricing Page**: A public-facing page detailing the plans and features.
+9.  **Upgrade Flow**: A seamless process for users to request a plan upgrade.
+10. **Analytics**: The photographer's analytics dashboard should be functional and track key metrics.
+11. **Admin UI**: The admin dashboard needs to be updated to manage all new subscription entities: photographer plans, credits, payment status, pricing, and override modes.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The project is a functional photo-sharing web application built with a React frontend and a FastAPI backend using MongoDB.
-
-The following features were successfully implemented in this session:
-- A 10-photo limit for guest uploads.
-- Multi-select actions (Hide, Unhide, Delete) for photographers to manage guest photos.
-- A custom favicon uploader in the admin panel.
-- A  hook that ensures the site's brand name is loaded dynamically and displayed consistently, fixing the initial flash issue.
-- A complete workflow for contributor uploads, allowing photographers to generate private links for sections, and collaborators to upload photos through a dedicated, branded portal.
-- A bug fix ensuring contributor photos are correctly displayed in both the photographer's gallery management view and the public gallery.
-- Drag-and-drop reordering for gallery sections.
-- Two new display modes (Slideshow and Live Collage) with dedicated URLs, live-polling for new photos, and improved transitions based on user feedback.
+The application is a full-stack React/FastAPI app with a MongoDB database. A significant portion of the subscription and billing system has been implemented:
+*   **Backend**: The  file has been updated with Pydantic models and API endpoints for plans, event credits, override modes, pricing configuration, payment proof uploads, and upgrade requests.
+*   **Database**: The user  has been successfully configured with the Founders Circle override mode. Default billing settings are initialized in the database.
+*   **Admin Panel**: A Billing tab has been added where the admin can configure pricing, manage the billing mode, and view/approve pending payments. The main photographers' table has been updated to display each user's plan, credit balance, and payment status. Modals for assigning override modes and editing user features are functional.
+*   **User Dashboard**: A subscription card now displays the user's current plan (including special overrides), credit status, and payment status.
+*   **Pricing Page**: A new, public-facing  page has been created, showing the different plans and their features.
+*   **Bug Fixes**: An issue with analytics view tracking has been resolved, and a bug preventing the admin panel from correctly displaying override modes was fixed. The user upgrade flow was partially implemented with a modal to request an upgrade.
 
 **Last working item**:
-    - Last item agent was working: The agent was about to refine the Live Collage display mode (Version 2). The user reported that individual tiles updating randomly looked weird and requested that the collage update in sets of images every 5-10 seconds.
-    - Status: NOT STARTED
-    - Agent Testing Done: N
-    - Which testing method agent to use? Frontend testing agent
+    - Last item agent was working: The agent addressed three user-reported issues:
+        1.  **Broken Upgrade Flow**: Updated the pricing page to show an Upgrade Request modal for logged-in users instead of just navigating away.
+        2.  **Analytics Not Updating**: Fixed the gallery view-count tracking by adding a missing API call in the  component.
+        3.  **Admin UI Polish**: Updated the admin photographers' table to display subscription information (plan, credits, payment status). A bug where the admin view didn't correctly display override modes (like Founders Circle) was also identified and fixed.
+    - Status: IN PROGRESS (The fixes were implemented, but the overall subscription feature is not complete).
+    - Agent Testing Done: Y (Verified fixes via screenshots and API calls).
+    - Which testing method agent to use? Frontend testing agent to perform a full regression and test the new user flows (upgrade request -> admin approval).
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Live Collage updates are not cohesive (P0)
+  - Issue 1: Incomplete Photographer Analytics Dashboard (P1)
 
   Issues Detail:
   - Issue 1: 
-     - Description: The current Live Collage display updates individual image tiles at random, staggered intervals. The user finds this visually chaotic and has requested that images update in batches or sets every 5-10 seconds.
-     - Attempted fixes: None yet. This is a new request based on the last implementation.
+     - Description: The user reported that the photographer-side analytics dashboard is useless and doesn't update, even after a fix for the view count. This implies the dashboard needs to be made fully functional, tracking more than just views (e.g., QR scans, downloads) and displaying the data correctly.
+     - Attempted fixes: The view count tracking was fixed by adding an API call to . No other work has been done.
      - Next debug checklist: 
-       - Edit .
-       - Modify the  logic that currently handles individual tile updates.
-       - Implement a new state management strategy to group the  array into batches (e.g., an array of arrays).
-       - Use a  hook to iterate through the batches every 5-10 seconds.
-       - Within each interval, trigger the update/transition for all images within the current batch simultaneously.
-     - Why fix this issue and what will be achieved with the fix? This will meet the user's aesthetic requirements for the Live Collage, making it look more deliberate and professional for event displays.
+       - Review  and the associated analytics components.
+       - Examine the backend analytics endpoint  in  to see what data it's supposed to return.
+       - Implement tracking for other key metrics like QR code scans and photo downloads where those actions occur.
+       - Ensure the frontend component correctly fetches and displays all the data from the analytics endpoint.
+     - Why fix this issue and what will be achieved with the fix? This will provide value to photographers by giving them insights into their gallery's performance, making the platform more sticky.
      - Status:  NOT STARTED
-     - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? Frontend
+     - Is recurring issue? Y
+     - Should Test frontend/backend/both after fix? Both
      - Blocked on other issue: None
 
 **In progress Task List**:
-- None
+  - Task 1: Complete Subscription & Billing System (P0)
+
+ Task Detail:
+  - Task 1: 
+     - Where to resume: The backend logic and admin UI are mostly in place for a *manual* billing system. The next steps are to complete the user-facing flows.
+       1.  **Implement Download Gate**: Modify  and  to disable download buttons if the user's  is pending. A message should inform the user why downloads are disabled.
+       2.  **Finalize Upgrade Flow**: The backend now supports upgrade requests and plan changes upon payment approval. The frontend in  needs to be checked to ensure the Approve button correctly upgrades the user's plan.
+       3.  **Implement Extra Credit Purchase Flow**: Add a UI for users to request the purchase of extra event credits.
+     - What will be achieved with this? A fully functional manual subscription system that matches the user's detailed specification, allowing for a soft launch.
+     - Status:  IN PROGRESS
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on something: None.
 
 **Upcoming and Future Tasks**
-- None identified. The agent should focus on the pending issue before seeking new tasks.
+*   **Upcoming Tasks:**
+    *   **Payment Gateway Integration (P0)**: Integrate a payment provider like PayMongo or Stripe to automate payments, as requested by the user. This will involve using the  subagent.
+*   **Future Tasks:**
+    *   **Enable Live Billing Mode (P1)**: Implement the logic to handle automated renewals and subscriptions when  is set to . This will likely involve webhooks from the payment provider.
+    *   **Email Notifications (P2)**: Implement email notifications for key events like payment approval, plan changes, and expiring overrides.
+    *   **Invoice Generation (P2)**: Add the ability to generate and download invoices for payments.
 
 **Completed work in this session**
-- **Guest Upload Limit**: Implemented a 10-photo batch limit for guests. ()
-- **Guest Photo Multi-Select**: Added controls for photographers to Hide, Unhide, and Delete guest photos. ()
-- **Custom Favicon**: Added favicon upload to the admin panel and dynamic display. (, )
-- **Brand Name Consistency**: Created  hook to fix UI flashes and ensure the brand name is consistent across all pages.
-- **Contributor Section Uploads**: Built the feature for generating private upload links for gallery sections, including a dedicated contributor upload portal. (, )
-- **Contributor Photos Display Bug Fix**: Corrected the logic to ensure contributor photos are visible in galleries. (, )
-- **Section Reordering**: Implemented drag-and-drop for photographers to reorder gallery sections. ()
-- **Slideshow & Collage Display Modes**: Created two live-updating display modes with refined transitions and dynamic polling logic. (, )
+- **Live Collage Animation Fix**: Corrected a double flip bug in the cube animation by implementing a more robust front/back image swapping logic in .
+- **Per-User Feature Toggles**: Migrated from global feature toggles to per-photographer controls, accessible via a Features button in the admin photographers' table in .
+- **Subscription System (Phases 1-2)**:
+    - **Backend**: Implemented models and API endpoints for plans, credits, pricing, overrides, and manual payment proof submission in .
+    - **Admin UI**: Created the Billing tab in  for pricing/payment management and an Override Mode modal for users.
+    - **User UI**: Added a subscription status card to  and created a full  page.
+- **Bug Fixes**:
+    - **Upgrade Flow**: Created the initial Upgrade Request flow from the .
+    - **Analytics View Count**: Fixed view tracking in .
+    - **Admin Data Display**: Fixed a bug where the admin panel did not correctly display a user's active override mode.
 
 **Earlier issues found/mentioned but not fixed**
 - None.
@@ -86,77 +98,82 @@ The following features were successfully implemented in this session:
 
 
 **Key Technical Concepts**
-- **Frontend**: React, Vite, Tailwind CSS, , 
-- **Backend**: Python, FastAPI
-- **Database**: MongoDB with Beanie ODM
-- **Real-time updates**: Client-side polling using  to fetch new data.
-- **State Management**: React hooks (, , ) and custom hooks ().
+- **Frontend**: React, Vite, Tailwind CSS, .
+- **Backend**: Python, FastAPI.
+- **Database**: MongoDB.
+- **System Architecture**: A monolithic backend () and large, stateful frontend components (). The system now includes complex permission logic based on a user's plan, override status, and payment status.
+- **Billing Model**: A manual, admin-driven billing system designed for a soft launch, with the ability to switch to a live, automated system later.
 
 **key DB schema**
-- **Gallery**: , , , .
-- **Photo**: , , , , , .
-- **Section**: , , , .
-- **LandingPageConfig**: , , .
+- **User**: Extended with , , , , , .
+- **BillingSettings** (Singleton Document): , .
+- **PaymentProof**: , , , , .
 
 **changes in tech stack**
-- Added  library for drag-and-drop functionality.
+- No changes to the core technologies.
 
 **All files of reference**
-- **Created**:
-    - : To provide branding configuration consistently across the app.
-    - : The dedicated upload page for collaborators.
-    - , , : The components for the new display modes.
 - **Heavily Modified**:
-    - : To add UI for guest photo moderation, section reordering, and contributor link management.
-    - : To add new endpoints for all the implemented features.
-    - : To extend the database schema for the new features.
+    - : Major additions for the entire subscription and billing system.
+    - : Major additions for the Billing tab, user table updates, and new modals.
+    - : Added the user-facing subscription card.
+    - : Created and implemented the upgrade request flow.
+    - : Added analytics tracking logic.
 
 **Areas that need refactoring**:
-- The  component has grown significantly and now manages state and logic for photographer photos, guest photos, sections, contributor links, and various UI modes. It is a candidate for being broken down into smaller, more focused child components.
+- **CRITICAL**:  has become a single-file monolith containing models, business logic, and over 40 API endpoints. It urgently needs to be broken down into a structured project with separate files for models, routers (e.g., , ), and utility functions.
+-  is extremely large. The logic for each tab (Photographers, Billing, Analytics) should be extracted into its own child components to improve readability and maintainability.
 
 **key api endpoints**
-- : Updates the order of sections.
-- : Creates a contributor upload link for a section.
-- : Handles file uploads from a contributor.
-- : Fetches gallery photos and settings for the display modes.
-- : Uploads the site favicon.
+- : Manage global pricing and billing mode.
+- : Assign a special plan to a user.
+- : Approve a user's uploaded payment proof.
+- : Endpoint for users to upload their payment receipt.
+- : Endpoint for users to request a plan upgrade.
+- : Fetches subscription details for the logged-in user.
+- : Increments the view count for a public gallery.
 
 **Critical Info for New Agent**
-- The user is very detail-oriented, especially regarding UI/UX and professional aesthetics. Pay close attention to feedback on animations, timing, and layout.
-- The  hook is the definitive source for branding info (name, favicon). Use it to avoid inconsistencies.
-- A previous session had an issue where the agent connected to the wrong database ( instead of ). If data seems to be missing, verify the database connection first.
-- The current and only pending task is to refine the Live Collage display. Address this before proposing new features.
+- The user's primary focus is the full implementation of the **Subscription & Billing System** based on their detailed spec. Adhere to this spec closely.
+- The system is currently in **manual billing mode**. All work should support this mode first before considering automation.
+- The next crucial feature after completing the manual flow is integrating a real payment provider like **PayMongo** for GCash/PayMaya.
+- The codebase, especially  and , is in dire need of refactoring. This should be proposed to the user as a necessary step for future scalability and maintainability.
 
 **documents and test reports created in this job**
-- : This file has been consistently updated to document completed features.
+- : Has been updated to reflect the new subscription system requirements and progress.
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1.  **User:** Requested a viewing station slideshow feature with live updates. (Completed)
-2.  **Agent:** Confirmed feasibility and proposed an implementation. (Completed)
-3.  **User:** Provided detailed specs for two versions: a single-image slideshow and a live collage. (Completed)
-4.  **Agent:** Acknowledged spec and began implementation. (Completed)
-5.  **User:** Reported that slideshow transitions were not smooth and collage tiles updated too fast; suggested new polling logic. (Completed)
-6.  **Agent:** Acknowledged and implemented fixes. (Completed)
-7.  **Agent:** Confirmed via screenshots that improvements were made. (Completed)
-8.  **User:** Provided final feedback on the collage: it looks so weird that it changes so fast, suggesting updates should happen per set every 5-10 seconds. (**Pending - This is the current high-priority task.**)
-9.  **Agent:** Acknowledged the request to update the collage in sets. (Work has not started)
+1.  **User**: Provided a comprehensive specification for a new subscription, billing, and pricing system. (Implemented in phases)
+2.  **Agent**: Acknowledged the spec and proposed a phased implementation plan. (Confirmed)
+3.  **User**: Clarified implementation details for the first phase (e.g., set current user as Founder, start with manual billing). (Implemented)
+4.  **Agent**: Implemented Phase 1 (Backend and Admin UI) and summarized progress. (Completed)
+5.  **User**: Requested continuation to the next phase and the creation of a pricing page. (Implemented)
+6.  **Agent**: Implemented Phase 2 (User Dashboard UI, Pricing Page) and summarized progress. (Completed)
+7.  **User**: Reported three issues: 1) The upgrade flow on the pricing page was broken. 2) Photographer analytics were not working. 3) The admin page needed updating to show new subscription data. (Work started)
+8.  **Agent**: Acknowledged the issues and began implementing fixes. (In progress)
+9.  **Agent**: Fixed the analytics view count, updated the pricing page upgrade flow, and updated the admin photographers table. Discovered and fixed a subsequent bug where the admin view didn't show override modes correctly. (Completed)
+10. **Agent**: Tested the fixes via screenshots, confirming the admin panel and pricing page upgrade modal were working as intended. (Completed)
 
 **Project Health Check:**
-- **Broken**: No features are broken. The pending task is a refinement of an existing feature.
-- **Mocked**: None.
+- **Broken**:
+    - The photographer analytics dashboard is not fully functional.
+    - The end-to-end upgrade flow is incomplete (user requests upgrade, but the payment/approval loop is not fully tested).
+- **Mocked**:
+    - The entire payment system is mocked with a manual upload proof and wait for approval workflow.
 
 **3rd Party Integrations**
-- None.
+- **Upcoming**: User has expressed interest in **GCash/PayMaya**, for which the agent has suggested **PayMongo** as a potential integration solution. No other 3rd party integrations are active.
 
 **Testing status**
-- **Testing agent used after significant changes**: YES
+- **Testing agent used after significant changes**: YES, but not since the most recent set of fixes. A new run is recommended.
 - **Troubleshoot agent used after agent stuck in loop**: NO
 - **Test files created**: None.
-- **Known regressions**: None.
+- **Known regressions**: The photographer analytics dashboard is still not working to the user's satisfaction, despite a partial fix.
 
 **Credentials to test flow:**
-- **Admin**:  / 
-- **Photographer**:  /  or  (used for contributor feature testing).
+- **Admin**:  / (password from )
+- **Founder Account**:  / 
+- **Test User (Free Plan)**:  / 
 
 **What agent forgot to execute**
-- Nothing. The agent has been diligent in tracking and implementing user requests. The current task is a direct result of the user's latest feedback.</analysis>
+- The agent has not yet implemented the Download Gate feature from the user's spec, which should prevent users with a  payment status from downloading photos.</analysis>
