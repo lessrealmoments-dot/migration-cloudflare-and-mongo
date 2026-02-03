@@ -1380,7 +1380,7 @@ const AdminDashboard = () => {
                           <div className="flex items-center gap-3">
                             {method.qr_code_url ? (
                               <img 
-                                src={`${BACKEND_URL}${method.qr_code_url}`}
+                                src={getFileUrl(method.qr_code_url)}
                                 alt={`${method.name} QR`}
                                 className="w-16 h-16 object-contain bg-white rounded"
                               />
