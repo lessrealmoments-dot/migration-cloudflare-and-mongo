@@ -8,6 +8,19 @@ import useBrandConfig from '../hooks/useBrandConfig';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Helper to get the correct URL for uploaded files
+const getFileUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('/api/files/')) {
+    return `${BACKEND_URL}${path}`;
+  }
+  if (path.startsWith('/uploads/')) {
+    const newPath = path.replace('/uploads/', '/api/files/');
+    return `${BACKEND_URL}${newPath}`;
+  }
+  return `${BACKEND_URL}${path}`;
+};
+
 const PricingPage = () => {
   const navigate = useNavigate();
   const brandConfig = useBrandConfig();
