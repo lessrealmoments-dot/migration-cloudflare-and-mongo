@@ -105,59 +105,47 @@ const CollageDisplay = () => {
     for (let i = 0; i < layout.length; i++) {
       tiles.push({
         current: photoList[i % photoList.length],
-        next: null,
+        next: photoList[(i + layout.length) % photoList.length], // Preload next
       });
     }
     
     setTilePhotos(tiles);
-    photoPoolIndex.current = layout.length;
+    photoPoolIndex.current = layout.length * 2;
   };
 
-  // Update a set of tiles together
-  const updateTileSet = useCallback((setIndex) => {
+  // Update ALL tiles at once with cube flip transition
+  const updateAllTiles = useCallback(() => {
     if (isPaused || photos.length === 0) return;
     
-    const tileIndices = TILE_SETS[setIndex];
-    
-    // Prepare next photos for each tile in the set
-    const nextPhotos = {};
-    tileIndices.forEach(tileIndex => {
-      nextPhotos[tileIndex] = photos[photoPoolIndex.current % photos.length];
+    // Prepare next photos for ALL tiles
+    const nextPhotos = [];
+    for (let i = 0; i < layout.length; i++) {
+      nextPhotos.push(photos[photoPoolIndex.current % photos.length]);
       photoPoolIndex.current++;
-    });
+    }
     
-    // Start transition - mark tiles as transitioning and set next photos
-    setTransitioningTiles(new Set(tileIndices));
+    // Set next photos on all tiles
     setTilePhotos(prev => {
-      const newTiles = [...prev];
-      tileIndices.forEach(tileIndex => {
-        if (newTiles[tileIndex]) {
-          newTiles[tileIndex] = {
-            ...newTiles[tileIndex],
-            next: nextPhotos[tileIndex],
-          };
-        }
-      });
-      return newTiles;
+      return prev.map((tile, index) => ({
+        ...tile,
+        next: nextPhotos[index],
+      }));
     });
     
-    // Complete transition after animation (1s)
+    // Trigger flip animation
+    setIsFlipping(true);
+    
+    // After flip animation completes (800ms), swap current/next
     setTimeout(() => {
       setTilePhotos(prev => {
-        const newTiles = [...prev];
-        tileIndices.forEach(tileIndex => {
-          if (newTiles[tileIndex] && newTiles[tileIndex].next) {
-            newTiles[tileIndex] = {
-              current: newTiles[tileIndex].next,
-              next: null,
-            };
-          }
-        });
-        return newTiles;
+        return prev.map((tile) => ({
+          current: tile.next || tile.current,
+          next: null,
+        }));
       });
-      setTransitioningTiles(new Set());
-    }, 1000);
-  }, [isPaused, photos]);
+      setIsFlipping(false);
+    }, 800);
+  }, [isPaused, photos, layout.length]);
 
   // Initial load
   useEffect(() => {
