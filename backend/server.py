@@ -908,15 +908,23 @@ def is_demo_expired(gallery: dict) -> bool:
 
 async def get_billing_settings() -> dict:
     """Get current billing settings from database"""
+    default_payment_methods = {
+        "gcash": {"enabled": True, "name": "GCash", "account_name": "Less Real Moments", "account_number": "09952568450", "qr_code_url": None},
+        "maya": {"enabled": True, "name": "Maya", "account_name": "Less Real Moments", "account_number": "09952568450", "qr_code_url": None},
+        "bank": {"enabled": False, "name": "Bank Transfer", "account_name": "", "account_number": "", "bank_name": "", "qr_code_url": None}
+    }
+    
     settings = await db.site_config.find_one({"type": "billing_settings"}, {"_id": 0})
     if not settings:
         return {
             "billing_enforcement_enabled": False,
-            "pricing": DEFAULT_PRICING.copy()
+            "pricing": DEFAULT_PRICING.copy(),
+            "payment_methods": default_payment_methods
         }
     return {
         "billing_enforcement_enabled": settings.get("billing_enforcement_enabled", False),
-        "pricing": settings.get("pricing", DEFAULT_PRICING.copy())
+        "pricing": settings.get("pricing", DEFAULT_PRICING.copy()),
+        "payment_methods": settings.get("payment_methods", default_payment_methods)
     }
 
 async def reset_user_credits_if_needed(user_id: str):
