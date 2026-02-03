@@ -65,6 +65,7 @@ const Dashboard = ({ user, setUser }) => {
     fetchGalleries();
     fetchAnalytics();
     fetchSubscription();
+    fetchPricing();
   }, []);
 
   useEffect(() => {
@@ -76,6 +77,15 @@ const Dashboard = ({ user, setUser }) => {
     }
   }, [user]);
 
+  const fetchPricing = async () => {
+    try {
+      const response = await axios.get(`${API}/billing/pricing`);
+      setPricing(response.data);
+    } catch (error) {
+      console.error('Failed to fetch pricing');
+    }
+  };
+
   const fetchSubscription = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -85,6 +95,23 @@ const Dashboard = ({ user, setUser }) => {
       setSubscription(response.data);
     } catch (error) {
       console.error('Failed to fetch subscription');
+    }
+  };
+
+  const handleBuyCredits = async (proofUrl) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/user/extra-credits-request`, {
+        quantity: 1,
+        proof_url: proofUrl
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Extra credit request submitted! Admin will approve shortly.');
+      setShowBuyCreditsModal(false);
+      fetchSubscription();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to submit request');
     }
   };
 
