@@ -85,6 +85,57 @@ GALLERY_EXPIRATION_DAYS = 180
 # Gallery edit lock after 7 days from creation
 GALLERY_EDIT_LOCK_DAYS = 7
 
+# Demo gallery feature window (in hours)
+DEMO_FEATURE_WINDOW_HOURS = 6
+
+# ============================================
+# SUBSCRIPTION & BILLING SYSTEM
+# ============================================
+
+# Plan types
+PLAN_FREE = "free"
+PLAN_STANDARD = "standard"
+PLAN_PRO = "pro"
+
+# Override modes
+MODE_FOUNDERS_CIRCLE = "founders_circle"
+MODE_EARLY_PARTNER_BETA = "early_partner_beta"
+MODE_COMPED_PRO = "comped_pro"
+MODE_COMPED_STANDARD = "comped_standard"
+
+# Payment statuses
+PAYMENT_NONE = "none"
+PAYMENT_PENDING = "pending"
+PAYMENT_APPROVED = "approved"
+
+# Default pricing (in PHP)
+DEFAULT_PRICING = {
+    "standard_monthly": 1000,
+    "pro_monthly": 1500,
+    "extra_credit": 500
+}
+
+# Credits per plan per billing cycle
+PLAN_CREDITS = {
+    PLAN_FREE: 0,      # Demo only, 1 demo gallery
+    PLAN_STANDARD: 2,
+    PLAN_PRO: 2
+}
+
+# Mode credits (override)
+MODE_CREDITS = {
+    MODE_FOUNDERS_CIRCLE: -1,  # -1 = unlimited
+    MODE_EARLY_PARTNER_BETA: 2,
+    MODE_COMPED_PRO: 2,
+    MODE_COMPED_STANDARD: 2
+}
+
+# Standard features (available to Standard and above)
+STANDARD_FEATURES = ["qr_share", "online_gallery", "display_mode", "owner_uploads", "guest_uploads"]
+
+# Pro features (available to Pro only)
+PRO_FEATURES = ["contributor_link", "supplier_sections", "supplier_attribution", "photographer_moderation"]
+
 # Image optimization settings
 THUMBNAIL_SIZES = {
     'small': (300, 300),    # For grid thumbnails
