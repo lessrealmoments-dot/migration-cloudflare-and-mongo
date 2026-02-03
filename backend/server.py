@@ -3832,13 +3832,18 @@ async def get_billing_settings_endpoint(admin: dict = Depends(get_admin_user)):
 @api_router.put("/billing/settings")
 async def update_billing_settings(data: BillingSettings, admin: dict = Depends(get_admin_user)):
     """Update billing settings (admin only)"""
+    update_data = {
+        "type": "billing_settings",
+        "billing_enforcement_enabled": data.billing_enforcement_enabled,
+        "pricing": data.pricing
+    }
+    # Include payment_methods if provided
+    if data.payment_methods:
+        update_data["payment_methods"] = data.payment_methods
+    
     await db.site_config.update_one(
         {"type": "billing_settings"},
-        {"$set": {
-            "type": "billing_settings",
-            "billing_enforcement_enabled": data.billing_enforcement_enabled,
-            "pricing": data.pricing
-        }},
+        {"$set": update_data},
         upsert=True
     )
     return {"message": "Billing settings updated", "settings": data.model_dump()}
