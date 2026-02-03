@@ -146,6 +146,12 @@ const AdminDashboard = () => {
   const [overrideDuration, setOverrideDuration] = useState(12);
   const [overrideReason, setOverrideReason] = useState('');
   const [assigningOverride, setAssigningOverride] = useState(false);
+  
+  // Transaction history
+  const [transactions, setTransactions] = useState([]);
+  const [selectedUserTransactions, setSelectedUserTransactions] = useState(null);
+  const [userTransactions, setUserTransactions] = useState([]);
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -161,6 +167,7 @@ const AdminDashboard = () => {
     fetchFeatureToggles();
     fetchBillingSettings();
     fetchPendingPayments();
+    fetchTransactions();
   }, [navigate]);
 
   const getAuthHeader = () => ({
