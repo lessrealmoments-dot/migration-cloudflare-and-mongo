@@ -2105,6 +2105,93 @@ const AdminDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* User Transaction History Modal */}
+      {showTransactionModal && selectedUserTransactions && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-800 rounded-lg max-w-3xl w-full max-h-[80vh] overflow-hidden">
+            <div className="p-6 border-b border-zinc-700 flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-medium text-white">Transaction History</h3>
+                <p className="text-sm text-zinc-400">{selectedUserTransactions.name}</p>
+              </div>
+              <button 
+                onClick={() => setShowTransactionModal(false)} 
+                className="p-2 hover:bg-zinc-700 rounded"
+              >
+                <X className="w-5 h-5 text-zinc-400" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              {userTransactions.length === 0 ? (
+                <p className="text-zinc-500 text-center py-8">No transactions found</p>
+              ) : (
+                <div className="space-y-4">
+                  {userTransactions.map((tx) => (
+                    <div key={tx.id} className={`rounded-lg p-4 border ${
+                      tx.status === 'approved' ? 'border-green-500/30 bg-green-500/5' :
+                      tx.status === 'rejected' ? 'border-red-500/30 bg-red-500/5' :
+                      'border-zinc-700 bg-zinc-700/30'
+                    }`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              tx.type === 'upgrade' ? 'bg-purple-500/20 text-purple-300' :
+                              tx.type === 'extra_credits' ? 'bg-blue-500/20 text-blue-300' :
+                              'bg-zinc-600 text-zinc-300'
+                            }`}>
+                              {tx.type === 'upgrade' ? `Upgrade to ${tx.plan?.toUpperCase()}` :
+                               tx.type === 'extra_credits' ? `+${tx.extra_credits} Credit(s)` :
+                               tx.type}
+                            </span>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              tx.status === 'approved' ? 'bg-green-500/20 text-green-300' :
+                              tx.status === 'rejected' ? 'bg-red-500/20 text-red-300' :
+                              'bg-zinc-600 text-zinc-300'
+                            }`}>
+                              {tx.status}
+                            </span>
+                          </div>
+                          <div className="mt-2 text-sm text-zinc-400">
+                            <span className="text-white font-medium">₱{tx.amount?.toLocaleString() || 0}</span>
+                            <span className="mx-2">•</span>
+                            <span>{new Date(tx.created_at).toLocaleString()}</span>
+                          </div>
+                          {tx.rejection_reason && (
+                            <p className="mt-2 text-sm text-red-400">
+                              Rejection reason: {tx.rejection_reason}
+                            </p>
+                          )}
+                          {tx.admin_notes && (
+                            <p className="mt-2 text-sm text-zinc-400">
+                              Admin notes: {tx.admin_notes}
+                            </p>
+                          )}
+                          {tx.dispute_message && (
+                            <p className="mt-2 text-sm text-amber-400">
+                              Dispute: {tx.dispute_message}
+                            </p>
+                          )}
+                        </div>
+                        {tx.payment_proof_url && (
+                          <button
+                            onClick={() => window.open(getFileUrl(tx.payment_proof_url), '_blank')}
+                            className="px-3 py-1.5 bg-zinc-700 text-zinc-300 rounded hover:bg-zinc-600 text-sm flex items-center gap-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View Proof
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
