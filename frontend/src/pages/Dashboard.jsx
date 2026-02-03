@@ -351,11 +351,22 @@ const Dashboard = ({ user, setUser }) => {
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-zinc-500">
+                  <div className="text-sm text-zinc-500 flex items-center gap-3">
                     {subscription.total_credits === 999 ? (
                       <span className="text-green-600 font-medium">Unlimited Credits</span>
                     ) : (
-                      <span>{subscription.total_credits} event credits remaining</span>
+                      <>
+                        <span>{subscription.total_credits} event credits remaining</span>
+                        {subscription.effective_plan !== 'free' && subscription.payment_status !== 'pending' && (
+                          <button
+                            onClick={() => setShowBuyCreditsModal(true)}
+                            className="text-xs text-purple-600 hover:text-purple-700 hover:underline flex items-center gap-1"
+                          >
+                            <ShoppingCart className="w-3 h-3" />
+                            Need more? (₱{pricing?.extra_credit || 500})
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
