@@ -4129,10 +4129,19 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
     update_data = {
         "payment_status": PAYMENT_APPROVED,
         "payment_approved_at": datetime.now(timezone.utc).isoformat(),
-        "payment_approved_notes": data.notes
+        "payment_approved_notes": data.notes,
+        "payment_dispute_count": 0  # Reset dispute count on approval
     }
     
     message_parts = ["Payment approved"]
+    notification_title = "Payment Approved"
+    notification_msg_parts = ["Your payment has been approved!"]
+    
+    # Get pricing for transaction record
+    billing_settings = await get_billing_settings()
+    pricing = billing_settings.get("pricing", DEFAULT_PRICING)
+    tx_amount = 0
+    tx_type = "subscription"
     
     # If user has a pending upgrade request, apply it
     requested_plan = user.get("requested_plan")
@@ -4164,6 +4173,9 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
             "auto_delete_enabled": True
         }
         message_parts.append(f"upgraded to {requested_plan}")
+        notification_msg_parts.append(f"Your plan has been upgraded to {requested_plan.capitalize()}.")
+        tx_type = "upgrade"
+        tx_amount = pricing.get(f"{requested_plan}_monthly", 0)
     
     # If user has requested extra credits, add them
     requested_extra_credits = user.get("requested_extra_credits")
@@ -4172,6 +4184,9 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
         update_data["extra_credits"] = current_extra + requested_extra_credits
         update_data["requested_extra_credits"] = None
         message_parts.append(f"+{requested_extra_credits} extra credits added")
+        notification_msg_parts.append(f"You received {requested_extra_credits} extra credit(s).")
+        tx_type = "extra_credits"
+        tx_amount = pricing.get("extra_credit", 500) * requested_extra_credits
     
     await db.users.update_one(
         {"id": data.user_id},
@@ -4185,6 +4200,32 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
     )
     if result.modified_count > 0:
         message_parts.append(f"{result.modified_count} gallery downloads unlocked")
+        notification_msg_parts.append(f"Downloads on {result.modified_count} gallery(ies) have been unlocked.")
+    
+    # Create notification for user
+    await create_notification(
+        user_id=data.user_id,
+        notification_type="payment_approved",
+        title=notification_title,
+        message=" ".join(notification_msg_parts),
+        metadata={
+            "plan": requested_plan,
+            "extra_credits": requested_extra_credits
+        }
+    )
+    
+    # Create transaction record
+    await create_transaction(
+        user_id=data.user_id,
+        tx_type=tx_type,
+        amount=tx_amount,
+        status="approved",
+        plan=requested_plan,
+        extra_credits=requested_extra_credits,
+        payment_proof_url=user.get("payment_proof_url"),
+        admin_notes=data.notes,
+        resolved_at=datetime.now(timezone.utc).isoformat()
+    )
     
     return {"message": ", ".join(message_parts)}
 
