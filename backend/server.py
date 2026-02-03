@@ -1769,12 +1769,16 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     effective_plan = get_effective_plan(user)
     effective_credits = get_effective_credits(user)
     override_mode = user.get("override_mode")
+    payment_status = user.get("payment_status", PAYMENT_NONE)
     
     # Check if user is on Free plan (demo gallery)
     is_demo = effective_plan == PLAN_FREE
     
     # Check if user is a founder (unlimited credits, no expiration)
     is_founder = override_mode == MODE_FOUNDERS_CIRCLE
+    
+    # Track if this gallery was created with pending payment (downloads will be disabled)
+    download_locked_until_payment = False
     
     if is_demo:
         # Free users get 1 demo gallery total
@@ -1790,23 +1794,28 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     else:
         # Paid/Override plans use credit system (except founders with unlimited)
         if effective_credits != 999 and effective_credits <= 0:
-            raise HTTPException(
-                status_code=403,
-                detail="No event credits remaining. Purchase extra credits or wait for next billing cycle."
-            )
-        
-        # Deduct credit (skip for founders with unlimited)
-        if effective_credits != 999:
-            if user.get("extra_credits", 0) > 0:
-                await db.users.update_one(
-                    {"id": current_user["id"]},
-                    {"$inc": {"extra_credits": -1}}
-                )
+            # Check if user has pending payment - allow gallery creation but lock downloads
+            if payment_status == PAYMENT_PENDING:
+                download_locked_until_payment = True
+                # Don't deduct credits - they're creating on credit
             else:
-                await db.users.update_one(
-                    {"id": current_user["id"]},
-                    {"$inc": {"event_credits": -1}}
+                raise HTTPException(
+                    status_code=403,
+                    detail="No event credits remaining. Purchase extra credits or wait for next billing cycle."
                 )
+        else:
+            # Deduct credit (skip for founders with unlimited)
+            if effective_credits != 999:
+                if user.get("extra_credits", 0) > 0:
+                    await db.users.update_one(
+                        {"id": current_user["id"]},
+                        {"$inc": {"extra_credits": -1}}
+                    )
+                else:
+                    await db.users.update_one(
+                        {"id": current_user["id"]},
+                        {"$inc": {"event_credits": -1}}
+                    )
     
     gallery_id = str(uuid.uuid4())
     share_link = str(uuid.uuid4())[:8]
