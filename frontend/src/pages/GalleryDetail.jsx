@@ -11,6 +11,7 @@ import CoverPhotoEditor from '@/components/CoverPhotoEditor';
 import EmbedCodeModal from '@/components/EmbedCodeModal';
 import { QRCodeSVG } from 'qrcode.react';
 import useBrandConfig from '../hooks/useBrandConfig';
+import useFeatureToggles from '../hooks/useFeatureToggles';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
