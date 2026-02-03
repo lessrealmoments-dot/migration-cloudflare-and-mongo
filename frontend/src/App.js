@@ -9,6 +9,7 @@ import GalleryDetail from '@/pages/GalleryDetail';
 import PublicGallery from '@/pages/PublicGallery';
 import ContributorUpload from '@/pages/ContributorUpload';
 import Display from '@/pages/Display';
+import PricingPage from '@/pages/PricingPage';
 import AdminLogin from '@/pages/AdminLogin';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AdminGalleryReview from '@/pages/AdminGalleryReview';
