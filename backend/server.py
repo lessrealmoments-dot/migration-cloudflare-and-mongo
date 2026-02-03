@@ -554,6 +554,14 @@ class PhotographerAdmin(BaseModel):
     storage_used: int = 0
     status: str = "active"
     created_at: str
+    # Subscription fields
+    plan: str = PLAN_FREE
+    event_credits: int = 0
+    extra_credits: int = 0
+    payment_status: str = PAYMENT_NONE
+    override_mode: Optional[str] = None
+    override_expires: Optional[str] = None
+    requested_plan: Optional[str] = None
 
 class UpdateGalleryLimit(BaseModel):
     max_galleries: int
