@@ -573,6 +573,12 @@ async def create_database_indexes():
         await db.transactions.create_index("user_id")
         await db.transactions.create_index([("user_id", 1), ("created_at", -1)])
         
+        # Analytics events collection indexes
+        await db.analytics_events.create_index("id", unique=True)
+        await db.analytics_events.create_index("gallery_id")
+        await db.analytics_events.create_index("photographer_id")
+        await db.analytics_events.create_index([("photographer_id", 1), ("event_type", 1), ("created_at", -1)])
+        
         logger.info("Database indexes created successfully")
     except Exception as e:
         logger.error(f"Error creating indexes (may already exist): {e}")
