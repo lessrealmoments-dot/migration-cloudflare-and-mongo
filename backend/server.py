@@ -4813,7 +4813,7 @@ async def serve_uploaded_file(file_type: str, filename: str):
     return FileResponse(file_path, media_type=content_type)
 
 @api_router.post("/admin/reject-payment")
-async def reject_payment(data: RejectPayment, admin: dict = Depends(get_admin_user)):
+async def reject_payment(data: RejectPayment, background_tasks: BackgroundTasks, admin: dict = Depends(get_admin_user)):
     """Reject a user's payment"""
     user = await db.users.find_one({"id": data.user_id})
     if not user:
@@ -4874,6 +4874,13 @@ async def reject_payment(data: RejectPayment, admin: dict = Depends(get_admin_us
         rejection_reason=data.reason,
         resolved_at=datetime.now(timezone.utc).isoformat()
     )
+    
+    # Send rejection email to customer
+    subject, html = get_email_template("customer_payment_rejected", {
+        "name": user.get("name", "there"),
+        "reason": data.reason
+    })
+    background_tasks.add_task(send_email, user.get("email"), subject, html)
     
     return {"message": "Payment rejected"}
 
