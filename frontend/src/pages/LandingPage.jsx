@@ -11,6 +11,7 @@ const LandingPage = ({ user }) => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [configLoaded, setConfigLoaded] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [config, setConfig] = useState({
     hero_title: 'Share Your Photography, Beautifully',
     hero_subtitle: 'Create stunning galleries, share with clients, and let them upload their own photos. The professional way to showcase and collaborate.',
