@@ -38,7 +38,8 @@ const MODE_LABELS = {
   founders_circle: 'Founders Circle',
   early_partner_beta: 'Early Partner Beta',
   comped_pro: 'Comped Pro',
-  comped_standard: 'Comped Standard'
+  comped_standard: 'Comped Standard',
+  enterprise_access: 'Enterprise Access'
 };
 
 const PAYMENT_STATUS_LABELS = {
