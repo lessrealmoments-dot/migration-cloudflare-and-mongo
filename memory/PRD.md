@@ -197,10 +197,12 @@ Admin-controlled features that can be independently toggled per package/mode:
 - `/admin/dashboard` - Admin panel with Billing tab
 
 ## Next Steps / Backlog
-1. **Payment Gateway Integration (P0)**: Integrate PayMongo for GCash/PayMaya automated payments
+1. **Payment Gateway Integration (P0)**: Integrate PayMongo or Stripe for automated payments
 2. **Enable Live Billing (P1)**: Implement automated renewals when billing_enforcement_enabled = true
 3. **Invoice Generation (P2)**: Generate downloadable invoices for payments
-4. **Codebase Refactoring (P2)**: Split server.py into modules (models, routes, utils)
+4. ~~**Codebase Refactoring (P2)**: Split server.py into modules~~ ✅ Phase 1 Complete
+   - Phase 2: Extract routes to APIRouter modules
+   - Phase 3: Add tests and dependency injection
 
 ## Recent Updates (February 4, 2026)
 
