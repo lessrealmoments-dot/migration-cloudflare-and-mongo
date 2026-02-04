@@ -4334,36 +4334,28 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
     # Refresh user data
     db_user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
     
-    effective_plan = get_effective_plan(db_user)
-    effective_credits = get_effective_credits(db_user)
+    # Use authority hierarchy to resolve features
+    resolved = await resolve_user_features(db_user)
     override_mode = db_user.get("override_mode")
-    
-    # For display: show actual remaining credits or "unlimited"
-    is_unlimited = effective_credits == 999 or override_mode == MODE_FOUNDERS_CIRCLE
     
     return {
         "plan": db_user.get("plan", PLAN_FREE),
-        "effective_plan": effective_plan,
+        "effective_plan": resolved["effective_plan"],
         "billing_cycle_start": db_user.get("billing_cycle_start"),
         "event_credits": db_user.get("event_credits", 0),
         "extra_credits": db_user.get("extra_credits", 0),
-        "total_credits": effective_credits,
-        "is_unlimited_credits": is_unlimited,
+        "total_credits": resolved["credits_available"],
+        "is_unlimited_credits": resolved["has_unlimited_credits"],
         "requested_plan": db_user.get("requested_plan"),  # Pending upgrade
         "payment_status": db_user.get("payment_status", PAYMENT_NONE),
         "payment_proof_url": db_user.get("payment_proof_url"),
         "override_mode": override_mode,
         "override_expires": db_user.get("override_expires"),
-        "can_download": can_download(db_user),
+        "can_download": resolved["can_download"],
         "storage_quota": db_user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
         "storage_used": db_user.get("storage_used", 0),
-        "features_enabled": {
-            "qr_share": is_feature_enabled_for_user(db_user, "qr_share"),
-            "online_gallery": is_feature_enabled_for_user(db_user, "online_gallery"),
-            "display_mode": is_feature_enabled_for_user(db_user, "display_mode"),
-            "contributor_link": is_feature_enabled_for_user(db_user, "contributor_link"),
-            "guest_uploads": is_feature_enabled_for_user(db_user, "guest_uploads"),
-        }
+        "features_enabled": resolved["features"],
+        "authority_source": resolved["authority_source"]
     }
 
 @api_router.post("/user/payment-proof")
