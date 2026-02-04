@@ -366,14 +366,15 @@ const Dashboard = ({ user, setUser }) => {
 
       {/* Storage Quota Bar */}
       {analytics && (
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 pt-6">
-          <div className="bg-white border border-zinc-200 rounded-sm p-4">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 md:px-12 pt-4 sm:pt-6">
+          <div className="bg-white border border-zinc-200 rounded-sm p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-sm text-zinc-600">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-zinc-600">
                 <HardDrive className="w-4 h-4" strokeWidth={1.5} />
-                Storage Used
+                <span className="hidden sm:inline">Storage Used</span>
+                <span className="sm:hidden">Storage</span>
               </div>
-              <span className="text-sm font-medium">
+              <span className="text-xs sm:text-sm font-medium">
                 {formatBytes(analytics.storage_used)} / {formatBytes(analytics.storage_quota)}
               </span>
             </div>
@@ -400,26 +401,26 @@ const Dashboard = ({ user, setUser }) => {
 
       {/* Subscription Card */}
       {subscription && (
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 pt-4">
-          <div className="bg-white border border-zinc-200 rounded-sm p-4">
-            <div className="flex items-center justify-between">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 md:px-12 pt-3 sm:pt-4">
+          <div className="bg-white border border-zinc-200 rounded-sm p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               {/* Plan Info */}
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center ${
                   subscription.effective_plan === 'pro' ? 'bg-purple-100' :
                   subscription.effective_plan === 'standard' ? 'bg-blue-100' : 'bg-zinc-100'
                 }`}>
                   {subscription.effective_plan === 'pro' ? (
-                    <Crown className="w-6 h-6 text-purple-600" />
+                    <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
                   ) : subscription.effective_plan === 'standard' ? (
-                    <Zap className="w-6 h-6 text-blue-600" />
+                    <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                   ) : (
-                    <Star className="w-6 h-6 text-zinc-600" />
+                    <Star className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-600" />
                   )}
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-lg">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-base sm:text-lg">
                       {PLAN_CONFIG[subscription.effective_plan]?.label || 'Free'} Plan
                     </span>
                     {subscription.override_mode && (
@@ -427,7 +428,6 @@ const Dashboard = ({ user, setUser }) => {
                         {MODE_LABELS[subscription.override_mode]}
                       </span>
                     )}
-                  </div>
                   <div className="text-sm text-zinc-500 flex items-center gap-3">
                     {subscription.total_credits === 999 ? (
                       <span className="text-green-600 font-medium">Unlimited Credits</span>
