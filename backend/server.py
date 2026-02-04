@@ -192,6 +192,14 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": False,
         "collaboration_link": False
+    },
+    MODE_ENTERPRISE_ACCESS: {
+        "unlimited_token": True,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,
+        "collaboration_link": True
     }
 }
 
