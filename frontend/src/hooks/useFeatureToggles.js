@@ -17,13 +17,8 @@ const FEATURE_MAP = {
   'contributor_link': 'collaboration_link'
 };
 
-const DEFAULT_TOGGLES = {
-  qr_share: true,
-  online_gallery: true,
-  display_mode: true,
-  contributor_link: true,
-  auto_delete_enabled: true
-};
+// Default to null until features are loaded - prevents showing features before auth
+const DEFAULT_TOGGLES = null;
 
 // Cache the toggles to avoid repeated API calls
 let cachedToggles = null;
@@ -31,7 +26,7 @@ let cacheTimestamp = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const useFeatureToggles = () => {
-  const [toggles, setToggles] = useState(cachedToggles || DEFAULT_TOGGLES);
+  const [toggles, setToggles] = useState(cachedToggles);
   const [loading, setLoading] = useState(!cachedToggles);
 
   useEffect(() => {
@@ -58,8 +53,8 @@ const useFeatureToggles = () => {
               // Map new feature names to old names for backward compatibility
               qr_share: features.qr_code ?? true,
               online_gallery: features.view_public_gallery ?? true,
-              display_mode: features.display_mode ?? true,
-              contributor_link: features.collaboration_link ?? true,
+              display_mode: features.display_mode ?? false,  // Default to false for safety
+              contributor_link: features.collaboration_link ?? false,  // Default to false for safety
               auto_delete_enabled: true,
               // Also include new feature names
               unlimited_token: features.unlimited_token ?? false,
@@ -68,7 +63,8 @@ const useFeatureToggles = () => {
               _authority_source: data.authority_source,
               _effective_plan: data.effective_plan,
               _override_active: data.override_active,
-              _override_mode: data.override_mode
+              _override_mode: data.override_mode,
+              _loaded: true
             };
             cacheTimestamp = Date.now();
             setToggles(cachedToggles);
@@ -77,11 +73,29 @@ const useFeatureToggles = () => {
           }
         }
         
-        // Fall back to public defaults if not authenticated or user features not set
-        setToggles(DEFAULT_TOGGLES);
+        // Fall back to restrictive defaults if not authenticated
+        const restrictiveDefaults = {
+          qr_share: true,
+          online_gallery: true,
+          display_mode: false,  // Restricted by default
+          contributor_link: false,  // Restricted by default
+          auto_delete_enabled: true,
+          unlimited_token: false,
+          copy_share_link: true,
+          _loaded: true
+        };
+        setToggles(restrictiveDefaults);
       } catch (error) {
         console.error('Failed to fetch feature toggles:', error);
-        setToggles(DEFAULT_TOGGLES);
+        // On error, use restrictive defaults
+        setToggles({
+          qr_share: true,
+          online_gallery: true,
+          display_mode: false,
+          contributor_link: false,
+          auto_delete_enabled: true,
+          _loaded: true
+        });
       } finally {
         setLoading(false);
       }
@@ -91,8 +105,16 @@ const useFeatureToggles = () => {
   }, []);
 
   // Helper function to check if a feature is enabled
+  // Returns false if toggles haven't loaded yet (safer default)
   const isFeatureEnabled = (featureName) => {
-    return toggles[featureName] !== false;
+    if (!toggles || !toggles._loaded) {
+      // Features not loaded yet - return false for restricted features
+      if (featureName === 'display_mode' || featureName === 'contributor_link') {
+        return false;
+      }
+      return true; // Basic features like qr_share are generally available
+    }
+    return toggles[featureName] === true;
   };
 
   // Helper to get the unavailable message
