@@ -401,38 +401,38 @@ const LandingPage = ({ user }) => {
         </div>
       </section>
 
-      <section className="max-w-screen-2xl mx-auto px-6 md:px-12 py-24 md:py-32">
-        <div className="bg-zinc-50/50 rounded-sm p-12 md:p-20 text-center">
+      <section className="max-w-screen-2xl mx-auto px-4 sm:px-6 md:px-12 py-16 sm:py-20 md:py-24 lg:py-32">
+        <div className="bg-zinc-50/50 rounded-sm p-8 sm:p-12 md:p-20 text-center">
           <h2
-            className="text-4xl md:text-5xl font-normal tracking-tight mb-6"
+            className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight mb-4 sm:mb-6"
             style={{ fontFamily: 'Playfair Display, serif' }}
           >
             Ready to share your work?
           </h2>
-          <p className="text-lg md:text-xl font-light leading-relaxed text-zinc-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl font-light leading-relaxed text-zinc-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
             Join photographers who trust {config.brand_name || 'us'} for their client galleries.
           </p>
           <button
             data-testid="cta-get-started-button"
             onClick={() => navigate('/auth')}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-12 rounded-sm font-medium tracking-wide transition-all duration-300 text-lg"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 h-11 sm:h-12 px-8 sm:px-12 rounded-sm font-medium tracking-wide transition-all duration-300 text-base sm:text-lg"
           >
             Get Started Free
           </button>
         </div>
       </section>
 
-      <footer className="border-t border-zinc-200 py-12">
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 flex justify-between items-center text-sm text-zinc-500">
+      <footer className="border-t border-zinc-200 py-8 sm:py-12">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 md:px-12 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-zinc-500">
           <a 
             href="/admin" 
-            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+            className="text-zinc-400 hover:text-zinc-600 transition-colors order-2 sm:order-1"
             data-testid="admin-link"
           >
             Admin
           </a>
-          <p>© 2024 {config.brand_name}. Built for photographers.</p>
-          <div className="w-12"></div> {/* Spacer for balance */}
+          <p className="order-1 sm:order-2 text-center">© 2024 {config.brand_name}. Built for photographers.</p>
+          <div className="hidden sm:block w-12 order-3"></div> {/* Spacer for balance on desktop */}
         </div>
       </footer>
     </div>
