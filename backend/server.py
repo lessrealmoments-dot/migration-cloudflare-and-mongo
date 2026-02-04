@@ -4231,14 +4231,22 @@ class GalleryAnalytics(BaseModel):
     guest_photos: int = 0
     created_at: str
     days_until_deletion: Optional[int] = None
+    qr_scans: int = 0
+    download_count: int = 0
 
 class PhotographerAnalytics(BaseModel):
     total_galleries: int = 0
     total_photos: int = 0
     total_views: int = 0
+    total_qr_scans: int = 0
+    total_downloads: int = 0
     storage_used: int = 0
     storage_quota: int = DEFAULT_STORAGE_QUOTA
     galleries: List[GalleryAnalytics] = []
+    # Time-based stats
+    views_today: int = 0
+    views_this_week: int = 0
+    views_this_month: int = 0
 
 class AdminAnalytics(BaseModel):
     total_photographers: int = 0
@@ -4288,6 +4296,8 @@ async def get_photographer_analytics(current_user: dict = Depends(get_current_us
     gallery_analytics = []
     total_photos = 0
     total_views = 0
+    total_qr_scans = 0
+    total_downloads = 0
     
     for g in galleries:
         days_remaining = calculate_days_until_deletion(g.get("auto_delete_date"))
@@ -4299,18 +4309,54 @@ async def get_photographer_analytics(current_user: dict = Depends(get_current_us
             photographer_photos=g.get("photographer_photos", 0),
             guest_photos=g.get("guest_photos", 0),
             created_at=g["created_at"],
-            days_until_deletion=days_remaining
+            days_until_deletion=days_remaining,
+            qr_scans=g.get("qr_scan_count", 0),
+            download_count=g.get("download_count", 0)
         ))
         total_photos += g.get("total_photos", 0)
         total_views += g.get("view_count", 0)
+        total_qr_scans += g.get("qr_scan_count", 0)
+        total_downloads += g.get("download_count", 0)
+    
+    # Sort galleries by views (most popular first)
+    gallery_analytics.sort(key=lambda x: x.view_count, reverse=True)
+    
+    # Get time-based view stats from analytics_events collection
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - timedelta(days=today_start.weekday())
+    month_start = today_start.replace(day=1)
+    
+    views_today = await db.analytics_events.count_documents({
+        "photographer_id": user_id,
+        "event_type": "view",
+        "created_at": {"$gte": today_start.isoformat()}
+    })
+    
+    views_this_week = await db.analytics_events.count_documents({
+        "photographer_id": user_id,
+        "event_type": "view",
+        "created_at": {"$gte": week_start.isoformat()}
+    })
+    
+    views_this_month = await db.analytics_events.count_documents({
+        "photographer_id": user_id,
+        "event_type": "view",
+        "created_at": {"$gte": month_start.isoformat()}
+    })
     
     return PhotographerAnalytics(
         total_galleries=len(galleries),
         total_photos=total_photos,
         total_views=total_views,
+        total_qr_scans=total_qr_scans,
+        total_downloads=total_downloads,
         storage_used=current_user.get("storage_used", 0),
         storage_quota=current_user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
-        galleries=gallery_analytics
+        galleries=gallery_analytics,
+        views_today=views_today,
+        views_this_week=views_this_week,
+        views_this_month=views_this_month
     )
 
 @api_router.get("/admin/analytics", response_model=AdminAnalytics)
