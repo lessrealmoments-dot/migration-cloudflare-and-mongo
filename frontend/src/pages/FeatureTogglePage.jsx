@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { 
-  Shield, Crown, Star, Users, Zap, 
+  Shield, Crown, Star, Users, Zap, Building2,
   Link2, QrCode, Eye, Layout, Share2, 
   Infinity, Save, RefreshCw, Info,
   ChevronDown, ChevronUp, Check, X
