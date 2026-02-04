@@ -364,11 +364,11 @@ const PricingPage = () => {
               { icon: Sparkles, title: 'Custom Branding', desc: 'Your brand, your galleries' },
             ].map((feature, idx) => (
               <div key={idx} className="text-center">
-                <div className="w-12 h-12 bg-zinc-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <feature.icon className="w-6 h-6 text-zinc-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-zinc-100 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                  <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-600" />
                 </div>
-                <h4 className="font-medium mb-1">{feature.title}</h4>
-                <p className="text-sm text-zinc-500">{feature.desc}</p>
+                <h4 className="font-medium mb-1 text-sm sm:text-base">{feature.title}</h4>
+                <p className="text-xs sm:text-sm text-zinc-500">{feature.desc}</p>
               </div>
             ))}
           </div>
@@ -376,16 +376,16 @@ const PricingPage = () => {
       </div>
 
       {/* FAQ */}
-      <div className="py-16">
-        <div className="max-w-3xl mx-auto px-6">
-          <h2 className="text-2xl font-semibold text-center mb-12" style={{ fontFamily: 'Playfair Display, serif' }}>
+      <div className="py-12 sm:py-16">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <h2 className="text-xl sm:text-2xl font-semibold text-center mb-8 sm:mb-12" style={{ fontFamily: 'Playfair Display, serif' }}>
             Frequently Asked Questions
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {faqs.map((faq, idx) => (
-              <div key={idx} className="bg-white border border-zinc-200 rounded-xl p-5">
-                <h4 className="font-medium mb-2">{faq.q}</h4>
-                <p className="text-sm text-zinc-600">{faq.a}</p>
+              <div key={idx} className="bg-white border border-zinc-200 rounded-xl p-4 sm:p-5">
+                <h4 className="font-medium mb-2 text-sm sm:text-base">{faq.q}</h4>
+                <p className="text-xs sm:text-sm text-zinc-600">{faq.a}</p>
               </div>
             ))}
           </div>
@@ -393,17 +393,17 @@ const PricingPage = () => {
       </div>
 
       {/* CTA */}
-      <div className="bg-zinc-900 text-white py-16">
-        <div className="max-w-4xl mx-auto text-center px-6">
-          <h2 className="text-3xl font-medium mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
+      <div className="bg-zinc-900 text-white py-12 sm:py-16">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6">
+          <h2 className="text-2xl sm:text-3xl font-medium mb-3 sm:mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
             Ready to get started?
           </h2>
-          <p className="text-zinc-400 mb-8">
+          <p className="text-zinc-400 mb-6 sm:mb-8 text-sm sm:text-base">
             Try for free, no credit card required.
           </p>
           <button
             onClick={() => navigate('/auth')}
-            className="bg-white text-zinc-900 px-8 py-3 rounded-xl font-medium hover:bg-zinc-100 inline-flex items-center gap-2"
+            className="bg-white text-zinc-900 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-medium hover:bg-zinc-100 inline-flex items-center gap-2 text-sm sm:text-base"
           >
             Create Your First Gallery
             <ArrowRight className="w-4 h-4" />
@@ -412,14 +412,14 @@ const PricingPage = () => {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200 bg-white py-8">
-        <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
-          <p className="text-sm text-zinc-500">
+      <footer className="border-t border-zinc-200 bg-white py-6 sm:py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-xs sm:text-sm text-zinc-500 text-center sm:text-left">
             © 2025 {brandConfig.brand_name || 'PhotoShare'}. All rights reserved.
           </p>
-          <div className="flex items-center gap-6">
-            <a href="/" className="text-sm text-zinc-600 hover:text-zinc-900">Home</a>
-            <a href="/auth" className="text-sm text-zinc-600 hover:text-zinc-900">Sign Up</a>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <a href="/" className="text-xs sm:text-sm text-zinc-600 hover:text-zinc-900">Home</a>
+            <a href="/auth" className="text-xs sm:text-sm text-zinc-600 hover:text-zinc-900">Sign Up</a>
           </div>
         </div>
       </footer>
