@@ -2241,8 +2241,8 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
                 detail="Demo gallery already created. Upgrade to Standard or Pro for more galleries."
             )
     else:
-        # Paid/Override plans use credit system (except founders with unlimited)
-        if effective_credits != 999 and effective_credits <= 0:
+        # Paid/Override plans use credit system (except those with unlimited_token enabled)
+        if not has_unlimited_credits and credits_available <= 0:
             # Check if user has pending payment - allow gallery creation but lock downloads
             if payment_status == PAYMENT_PENDING:
                 download_locked_until_payment = True
@@ -2252,19 +2252,18 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
                     status_code=403,
                     detail="No event credits remaining. Purchase extra credits or wait for next billing cycle."
                 )
-        else:
-            # Deduct credit (skip for founders with unlimited)
-            if effective_credits != 999:
-                if user.get("extra_credits", 0) > 0:
-                    await db.users.update_one(
-                        {"id": current_user["id"]},
-                        {"$inc": {"extra_credits": -1}}
-                    )
-                else:
-                    await db.users.update_one(
-                        {"id": current_user["id"]},
-                        {"$inc": {"event_credits": -1}}
-                    )
+        elif not has_unlimited_credits:
+            # Deduct credit (skip for users with unlimited_token)
+            if user.get("extra_credits", 0) > 0:
+                await db.users.update_one(
+                    {"id": current_user["id"]},
+                    {"$inc": {"extra_credits": -1}}
+                )
+            else:
+                await db.users.update_one(
+                    {"id": current_user["id"]},
+                    {"$inc": {"event_credits": -1}}
+                )
     
     gallery_id = str(uuid.uuid4())
     share_link = str(uuid.uuid4())[:8]
