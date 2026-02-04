@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Plus, LogOut, Image as ImageIcon, Lock, User, X, Save, BarChart3, HardDrive, Clock, Eye, Key, CreditCard, Crown, Zap, Star, Upload, CheckCircle, AlertCircle, Download, ExternalLink, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { Plus, LogOut, Image as ImageIcon, Lock, User, X, Save, BarChart3, HardDrive, Clock, Eye, Key, CreditCard, Crown, Zap, Star, Upload, CheckCircle, AlertCircle, Download, ExternalLink, ShoppingCart, AlertTriangle, QrCode } from 'lucide-react';
 import useBrandConfig from '../hooks/useBrandConfig';
 import PaymentMethodsModal from '../components/PaymentMethodsModal';
 import NotificationBell from '../components/NotificationBell';
