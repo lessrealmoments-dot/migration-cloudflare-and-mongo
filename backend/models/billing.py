@@ -3,11 +3,83 @@ Billing and subscription-related Pydantic models
 """
 from pydantic import BaseModel, Field
 from typing import Optional
-from core.config import (
-    PLAN_FREE, PAYMENT_NONE, DEFAULT_PRICING,
-    MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO, MODE_COMPED_STANDARD,
-    DEFAULT_MODE_FEATURES, DEFAULT_PLAN_FEATURES
-)
+
+# Constants (duplicated from config to avoid circular imports)
+PLAN_FREE = "free"
+PAYMENT_NONE = "none"
+
+DEFAULT_PRICING = {
+    "standard_monthly": 1000,
+    "pro_monthly": 1500,
+    "extra_credit": 500
+}
+
+MODE_FOUNDERS_CIRCLE = "founders_circle"
+MODE_EARLY_PARTNER_BETA = "early_partner_beta"
+MODE_COMPED_PRO = "comped_pro"
+MODE_COMPED_STANDARD = "comped_standard"
+
+DEFAULT_MODE_FEATURES = {
+    MODE_FOUNDERS_CIRCLE: {
+        "unlimited_token": True,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,
+        "collaboration_link": True
+    },
+    MODE_EARLY_PARTNER_BETA: {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,
+        "collaboration_link": True
+    },
+    MODE_COMPED_PRO: {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,
+        "collaboration_link": True
+    },
+    MODE_COMPED_STANDARD: {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": False,
+        "collaboration_link": False
+    }
+}
+
+DEFAULT_PLAN_FEATURES = {
+    "free": {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,
+        "collaboration_link": True
+    },
+    "standard": {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": False,
+        "collaboration_link": False
+    },
+    "pro": {
+        "unlimited_token": False,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,
+        "collaboration_link": True
+    }
+}
 
 
 class SubscriptionInfo(BaseModel):
