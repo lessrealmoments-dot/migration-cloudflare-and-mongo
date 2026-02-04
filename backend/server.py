@@ -2024,6 +2024,7 @@ async def update_admin_global_feature_toggles(data: GlobalFeatureToggles, admin:
         MODE_EARLY_PARTNER_BETA: data.early_partner_beta,
         MODE_COMPED_PRO: data.comped_pro,
         MODE_COMPED_STANDARD: data.comped_standard,
+        MODE_ENTERPRISE_ACCESS: data.enterprise_access,
         # Payment Plans
         PLAN_FREE: data.free,
         PLAN_STANDARD: data.standard,
