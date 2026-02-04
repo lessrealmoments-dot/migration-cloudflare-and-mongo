@@ -926,6 +926,7 @@ const AdminDashboard = () => {
                     <option value="early_partner_beta">🚀 Early Partner Beta (Pro, Free)</option>
                     <option value="comped_pro">💜 Comped Pro</option>
                     <option value="comped_standard">💙 Comped Standard</option>
+                    <option value="enterprise_access">🏢 Enterprise Access (Trial for Major Clients)</option>
                   </select>
                 </div>
                 
