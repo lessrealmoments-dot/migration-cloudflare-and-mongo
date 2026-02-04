@@ -9,6 +9,14 @@ const ADMIN_CONTACT = {
   email: 'lessrealmoments@gmail.com'
 };
 
+// Map old feature names to new global toggle names
+const FEATURE_MAP = {
+  'qr_share': 'qr_code',
+  'online_gallery': 'view_public_gallery',
+  'display_mode': 'display_mode',
+  'contributor_link': 'collaboration_link'
+};
+
 const DEFAULT_TOGGLES = {
   qr_share: true,
   online_gallery: true,
@@ -44,12 +52,23 @@ const useFeatureToggles = () => {
           });
           if (response.ok) {
             const data = await response.json();
+            // Use the new authority hierarchy resolved features
+            const features = data.features || {};
             cachedToggles = {
-              qr_share: data.qr_share ?? true,
-              online_gallery: data.online_gallery ?? true,
-              display_mode: data.display_mode ?? true,
-              contributor_link: data.contributor_link ?? true,
-              auto_delete_enabled: data.auto_delete_enabled ?? true
+              // Map new feature names to old names for backward compatibility
+              qr_share: features.qr_code ?? true,
+              online_gallery: features.view_public_gallery ?? true,
+              display_mode: features.display_mode ?? true,
+              contributor_link: features.collaboration_link ?? true,
+              auto_delete_enabled: true,
+              // Also include new feature names
+              unlimited_token: features.unlimited_token ?? false,
+              copy_share_link: features.copy_share_link ?? true,
+              // Store authority source for debugging
+              _authority_source: data.authority_source,
+              _effective_plan: data.effective_plan,
+              _override_active: data.override_active,
+              _override_mode: data.override_mode
             };
             cacheTimestamp = Date.now();
             setToggles(cachedToggles);
