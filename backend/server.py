@@ -1078,6 +1078,142 @@ async def resolve_user_features(user: dict) -> dict:
     return result
 
 # ============================================
+# EMAIL NOTIFICATION SERVICE
+# ============================================
+
+# Initialize Resend
+resend.api_key = os.environ.get("RESEND_API_KEY")
+SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "lessrealmoments@gmail.com")
+
+async def send_email(to_email: str, subject: str, html_content: str):
+    """Send email using Resend API (non-blocking)"""
+    if not resend.api_key:
+        logger.warning("RESEND_API_KEY not configured, skipping email")
+        return None
+    
+    try:
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [to_email],
+            "subject": subject,
+            "html": html_content
+        }
+        result = await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Email sent to {to_email}: {subject}")
+        return result
+    except Exception as e:
+        logger.error(f"Failed to send email to {to_email}: {str(e)}")
+        return None
+
+# Email Templates
+def get_email_template(template_type: str, data: dict) -> tuple:
+    """Get email subject and HTML content for different notification types"""
+    
+    brand_name = "Less Real Moments"
+    
+    if template_type == "admin_new_account":
+        subject = f"🎉 New Account Created - {data.get('name', 'Unknown')}"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #7c3aed;">New Photographer Account</h2>
+            <p>A new photographer has registered on {brand_name}:</p>
+            <div style="background: #f4f4f5; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <p><strong>Name:</strong> {data.get('name', 'N/A')}</p>
+                <p><strong>Email:</strong> {data.get('email', 'N/A')}</p>
+                <p><strong>Business:</strong> {data.get('business_name', 'N/A')}</p>
+                <p><strong>Registered:</strong> {data.get('created_at', 'N/A')}</p>
+            </div>
+            <p style="color: #71717a; font-size: 12px;">This is an automated notification from {brand_name}.</p>
+        </div>
+        """
+        return subject, html
+    
+    elif template_type == "admin_payment_submitted":
+        subject = f"💳 Payment Proof Submitted - {data.get('name', 'Unknown')}"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #7c3aed;">New Payment Awaiting Review</h2>
+            <p>A photographer has submitted payment proof:</p>
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #f59e0b;">
+                <p><strong>Name:</strong> {data.get('name', 'N/A')}</p>
+                <p><strong>Email:</strong> {data.get('email', 'N/A')}</p>
+                <p><strong>Request Type:</strong> {data.get('request_type', 'Upgrade')}</p>
+                <p><strong>Plan/Credits:</strong> {data.get('plan_or_credits', 'N/A')}</p>
+            </div>
+            <p><a href="{data.get('admin_url', '#')}" style="display: inline-block; background: #7c3aed; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Review Payment</a></p>
+            <p style="color: #71717a; font-size: 12px;">Please review this payment in the admin dashboard.</p>
+        </div>
+        """
+        return subject, html
+    
+    elif template_type == "customer_payment_pending":
+        subject = f"⏳ Payment Received - Awaiting Approval"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #7c3aed;">Payment Submitted Successfully!</h2>
+            <p>Hi {data.get('name', 'there')},</p>
+            <p>We've received your payment proof and it's now being reviewed by our team.</p>
+            <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #3b82f6;">
+                <p><strong>Request:</strong> {data.get('request_type', 'Plan Upgrade')}</p>
+                <p><strong>Status:</strong> Pending Review</p>
+            </div>
+            <p>You'll receive another email once your payment has been processed. This usually takes less than 24 hours.</p>
+            <p>Thank you for choosing {brand_name}!</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #71717a; font-size: 12px;">Questions? Contact us at {ADMIN_EMAIL}</p>
+        </div>
+        """
+        return subject, html
+    
+    elif template_type == "customer_payment_approved":
+        subject = f"✅ Payment Approved - You're All Set!"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #22c55e;">Payment Approved! 🎉</h2>
+            <p>Hi {data.get('name', 'there')},</p>
+            <p>Great news! Your payment has been approved and your account has been updated.</p>
+            <div style="background: #dcfce7; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #22c55e;">
+                <p><strong>Plan:</strong> {data.get('plan', 'N/A')}</p>
+                <p><strong>Credits:</strong> {data.get('credits', 'N/A')}</p>
+                <p><strong>Status:</strong> Active</p>
+            </div>
+            <p>You now have full access to all your plan features. Start creating amazing galleries!</p>
+            <p><a href="{data.get('dashboard_url', '#')}" style="display: inline-block; background: #7c3aed; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Dashboard</a></p>
+            <p>Thank you for being part of {brand_name}!</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #71717a; font-size: 12px;">Questions? Contact us at {ADMIN_EMAIL}</p>
+        </div>
+        """
+        return subject, html
+    
+    elif template_type == "customer_payment_rejected":
+        subject = f"❌ Payment Review Update"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #ef4444;">Payment Could Not Be Verified</h2>
+            <p>Hi {data.get('name', 'there')},</p>
+            <p>Unfortunately, we were unable to verify your recent payment submission.</p>
+            <div style="background: #fef2f2; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ef4444;">
+                <p><strong>Reason:</strong> {data.get('reason', 'Payment details could not be verified')}</p>
+            </div>
+            <p><strong>What you can do:</strong></p>
+            <ul>
+                <li>Double-check your payment was sent to the correct account</li>
+                <li>Ensure the screenshot clearly shows the transaction details</li>
+                <li>You have <strong>1 attempt</strong> to dispute and resubmit from your dashboard</li>
+            </ul>
+            <p>If you need assistance, please contact us:</p>
+            <p>📧 {ADMIN_EMAIL}<br>📱 09952568450</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #71717a; font-size: 12px;">This is an automated message from {brand_name}.</p>
+        </div>
+        """
+        return subject, html
+    
+    return "Notification", "<p>You have a notification from Less Real Moments.</p>"
+
+# ============================================
 # SUBSCRIPTION HELPER FUNCTIONS
 # ============================================
 
