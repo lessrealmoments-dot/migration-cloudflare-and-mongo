@@ -15,6 +15,10 @@ DEFAULT_MAX_GALLERIES = 1
 # Default storage quota (in bytes) - 500 MB for Free
 DEFAULT_STORAGE_QUOTA = 500 * 1024 * 1024
 
+# JWT config (values set at runtime)
+ALGORITHM = 'HS256'
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+
 # Plan-based storage quotas (in bytes)
 PLAN_STORAGE_QUOTAS = {
     "free": 500 * 1024 * 1024,
