@@ -242,43 +242,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const openUserFeatures = async (userId) => {
-    try {
-      const response = await axios.get(`${API}/admin/users/${userId}/features`, getAuthHeader());
-      setUserFeatures({
-        qr_share: response.data.qr_share ?? true,
-        online_gallery: response.data.online_gallery ?? true,
-        display_mode: response.data.display_mode ?? true,
-        contributor_link: response.data.contributor_link ?? true,
-        auto_delete_enabled: response.data.auto_delete_enabled ?? true
-      });
-      setEditingUserFeatures(userId);
-    } catch (error) {
-      // If no features set yet, use defaults
-      setUserFeatures({
-        qr_share: true,
-        online_gallery: true,
-        display_mode: true,
-        contributor_link: true,
-        auto_delete_enabled: true
-      });
-      setEditingUserFeatures(userId);
-    }
-  };
-
-  const handleSaveUserFeatures = async () => {
-    setSavingUserFeatures(true);
-    try {
-      await axios.put(`${API}/admin/users/${editingUserFeatures}/features`, userFeatures, getAuthHeader());
-      toast.success('User features saved');
-      setEditingUserFeatures(null);
-    } catch (error) {
-      toast.error('Failed to save user features');
-    } finally {
-      setSavingUserFeatures(false);
-    }
-  };
-
   // Billing & Subscription functions
   const fetchBillingSettings = async () => {
     try {
