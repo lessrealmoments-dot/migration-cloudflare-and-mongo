@@ -1,44 +1,13 @@
 """
 Application configuration and constants
+Note: Environment-dependent config is loaded at runtime in server.py
+This module contains constants only.
 """
-import os
-from pathlib import Path
-from dotenv import load_dotenv
 import logging
-import asyncio
-import resend
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-ROOT_DIR = Path(__file__).parent.parent
-load_dotenv(ROOT_DIR / '.env')
-
-# Upload directories
-UPLOAD_DIR = ROOT_DIR / 'uploads'
-UPLOAD_DIR.mkdir(exist_ok=True)
-THUMBNAILS_DIR = UPLOAD_DIR / 'thumbnails'
-THUMBNAILS_DIR.mkdir(exist_ok=True)
-
-# Concurrency control for uploads
-MAX_CONCURRENT_UPLOADS = 50
-upload_semaphore = asyncio.Semaphore(MAX_CONCURRENT_UPLOADS)
-
-# JWT configuration
-SECRET_KEY = os.environ['JWT_SECRET_KEY']
-ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
-
-# Admin credentials
-ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
-
-# Email configuration
-RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
-if RESEND_API_KEY:
-    resend.api_key = RESEND_API_KEY
 
 # Default gallery limits
 DEFAULT_MAX_GALLERIES = 1
