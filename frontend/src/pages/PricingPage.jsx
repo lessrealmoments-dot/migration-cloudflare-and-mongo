@@ -220,24 +220,24 @@ const PricingPage = () => {
     <div className="min-h-screen bg-zinc-50">
       {/* Navigation */}
       <nav className="border-b border-zinc-200 bg-white">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
           <h1
-            className="text-xl font-medium cursor-pointer"
+            className="text-lg sm:text-xl font-medium cursor-pointer"
             style={{ fontFamily: 'Playfair Display, serif' }}
             onClick={() => navigate('/')}
           >
             {brandConfig.brand_name || 'PhotoShare'}
           </h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={() => navigate('/auth')}
-              className="text-sm text-zinc-600 hover:text-zinc-900"
+              className="text-sm text-zinc-600 hover:text-zinc-900 hidden sm:block"
             >
               Sign In
             </button>
             <button
               onClick={() => navigate('/auth')}
-              className="bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800"
+              className="bg-zinc-900 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800"
             >
               Get Started
             </button>
@@ -246,24 +246,24 @@ const PricingPage = () => {
       </nav>
 
       {/* Hero */}
-      <div className="bg-gradient-to-b from-white to-zinc-50 pt-16 pb-12">
-        <div className="max-w-4xl mx-auto text-center px-6">
-          <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
+      <div className="bg-gradient-to-b from-white to-zinc-50 pt-10 sm:pt-16 pb-8 sm:pb-12">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6">
+          <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium mb-4 sm:mb-6">
             <Sparkles className="w-4 h-4" />
             Simple, transparent pricing
           </div>
-          <h1 className="text-4xl md:text-5xl font-medium mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-medium mb-3 sm:mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
             Choose the plan that fits your needs
           </h1>
-          <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto">
             Start free, upgrade when you're ready. No hidden fees, no surprises.
           </p>
         </div>
       </div>
 
       {/* Pricing Cards */}
-      <div className="max-w-6xl mx-auto px-6 pb-16">
-        <div className="grid md:grid-cols-3 gap-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-12 sm:pb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {plans.map((plan) => {
             const Icon = plan.icon;
             const colorClasses = {
