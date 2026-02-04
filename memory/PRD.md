@@ -274,7 +274,18 @@ Integrated with **Resend** email service.
 - Admin: /admin
 
 ## Last Updated
-February 4, 2026 - Mobile responsiveness improvements, backend refactoring (Phase 1)
+February 4, 2026 - Fixed critical gallery creation bug, removed confusing per-user toggles, mobile improvements
+
+### Bug Fixes ✅ (COMPLETED)
+**Critical: Gallery Creation Bug Fixed**
+- Fixed `NameError: name 'is_founder' is not defined` in `/app/backend/server.py`
+- Users with unlimited tokens (Founders Circle) and Pro users with credits can now create galleries
+- Tested with both `lessrealmoments@gmail.com` (Founders) and `tester1@gmail.com` (Pro)
+
+**Admin UI Cleanup: Removed Per-User Feature Toggle**
+- Removed the confusing per-user feature toggle button (purple toggle) from admin dashboard
+- Features are now controlled ONLY via the global Feature Toggles page by plan/mode
+- This eliminates confusion about which toggles apply to each user
 
 ### Mobile Responsiveness Improvements ✅ (COMPLETED)
 Comprehensive mobile-first UI updates across key pages:
