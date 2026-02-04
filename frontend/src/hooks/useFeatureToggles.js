@@ -9,28 +9,27 @@ const ADMIN_CONTACT = {
   email: 'lessrealmoments@gmail.com'
 };
 
-// Map old feature names to new global toggle names
-const FEATURE_MAP = {
-  'qr_share': 'qr_code',
-  'online_gallery': 'view_public_gallery',
-  'display_mode': 'display_mode',
-  'contributor_link': 'collaboration_link'
-};
-
-// Default to null until features are loaded - prevents showing features before auth
-const DEFAULT_TOGGLES = null;
-
 // Cache the toggles to avoid repeated API calls
 let cachedToggles = null;
 let cacheTimestamp = null;
+let cachedToken = null;  // Track which token the cache is for
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const useFeatureToggles = () => {
-  const [toggles, setToggles] = useState(cachedToggles);
-  const [loading, setLoading] = useState(!cachedToggles);
+  const [toggles, setToggles] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchToggles = async () => {
+      const token = localStorage.getItem('token');
+      
+      // Invalidate cache if token changed (user logged in/out or switched accounts)
+      if (cachedToken !== token) {
+        cachedToggles = null;
+        cacheTimestamp = null;
+        cachedToken = token;
+      }
+      
       // Use cache if available and not expired
       if (cachedToggles && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
         setToggles(cachedToggles);
@@ -39,8 +38,7 @@ const useFeatureToggles = () => {
       }
 
       try {
-        // First try to get user-specific features (requires auth)
-        const token = localStorage.getItem('token');
+        // Get user-specific features (requires auth)
         if (token) {
           const response = await fetch(`${API}/user/features`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -51,14 +49,14 @@ const useFeatureToggles = () => {
             const features = data.features || {};
             cachedToggles = {
               // Map new feature names to old names for backward compatibility
-              qr_share: features.qr_code ?? true,
-              online_gallery: features.view_public_gallery ?? true,
-              display_mode: features.display_mode ?? false,  // Default to false for safety
-              contributor_link: features.collaboration_link ?? false,  // Default to false for safety
+              qr_share: features.qr_code === true,
+              online_gallery: features.view_public_gallery === true,
+              display_mode: features.display_mode === true,
+              contributor_link: features.collaboration_link === true,
               auto_delete_enabled: true,
               // Also include new feature names
-              unlimited_token: features.unlimited_token ?? false,
-              copy_share_link: features.copy_share_link ?? true,
+              unlimited_token: features.unlimited_token === true,
+              copy_share_link: features.copy_share_link === true,
               // Store authority source for debugging
               _authority_source: data.authority_source,
               _effective_plan: data.effective_plan,
@@ -67,8 +65,10 @@ const useFeatureToggles = () => {
               _loaded: true
             };
             cacheTimestamp = Date.now();
+            cachedToken = token;
             setToggles(cachedToggles);
             setLoading(false);
+            console.log('[FeatureToggles] Loaded for plan:', data.effective_plan, 'display_mode:', features.display_mode);
             return;
           }
         }
@@ -84,18 +84,21 @@ const useFeatureToggles = () => {
           copy_share_link: true,
           _loaded: true
         };
+        cachedToggles = restrictiveDefaults;
+        cacheTimestamp = Date.now();
         setToggles(restrictiveDefaults);
       } catch (error) {
         console.error('Failed to fetch feature toggles:', error);
         // On error, use restrictive defaults
-        setToggles({
+        const errorDefaults = {
           qr_share: true,
           online_gallery: true,
           display_mode: false,
           contributor_link: false,
           auto_delete_enabled: true,
           _loaded: true
-        });
+        };
+        setToggles(errorDefaults);
       } finally {
         setLoading(false);
       }
@@ -126,6 +129,7 @@ const useFeatureToggles = () => {
   const clearCache = () => {
     cachedToggles = null;
     cacheTimestamp = null;
+    cachedToken = null;
   };
 
   return {
