@@ -4,6 +4,7 @@ import { Check, X, Crown, Zap, Star, ArrowRight, Sparkles, Shield, Clock, Upload
 import { toast } from 'sonner';
 import axios from 'axios';
 import useBrandConfig from '../hooks/useBrandConfig';
+import PaymentMethodsModal from '../components/PaymentMethodsModal';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -34,9 +35,6 @@ const PricingPage = () => {
   const [subscription, setSubscription] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(null); // Plan name
   const [upgradeLoading, setUpgradeLoading] = useState(false);
-  const [uploadingProof, setUploadingProof] = useState(false);
-  const [paymentProofUrl, setPaymentProofUrl] = useState(null);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchPricing();
