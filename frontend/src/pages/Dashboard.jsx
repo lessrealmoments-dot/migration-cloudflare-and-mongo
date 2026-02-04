@@ -266,7 +266,7 @@ const Dashboard = ({ user, setUser }) => {
 
   return (
     <div className="min-h-screen bg-zinc-50/30">
-      <nav className="border-b border-zinc-200 bg-white">
+      <nav className="border-b border-zinc-200 bg-white sticky top-0 z-50">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 md:px-12 py-4 sm:py-6 flex justify-between items-center">
           <h1
             className="text-xl sm:text-2xl font-medium cursor-pointer"
