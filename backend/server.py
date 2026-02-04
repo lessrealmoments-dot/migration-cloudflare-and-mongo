@@ -2215,16 +2215,16 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     await reset_user_credits_if_needed(current_user["id"])
     user = await db.users.find_one({"id": current_user["id"]})
     
-    effective_plan = get_effective_plan(user)
-    effective_credits = get_effective_credits(user)
+    # Use authority hierarchy to resolve features and credits
+    resolved_features = await resolve_user_features(user)
+    effective_plan = resolved_features["effective_plan"]
+    has_unlimited_credits = resolved_features["has_unlimited_credits"]
+    credits_available = resolved_features["credits_available"]
     override_mode = user.get("override_mode")
     payment_status = user.get("payment_status", PAYMENT_NONE)
     
     # Check if user is on Free plan (demo gallery)
     is_demo = effective_plan == PLAN_FREE
-    
-    # Check if user is a founder (unlimited credits, no expiration)
-    is_founder = override_mode == MODE_FOUNDERS_CIRCLE
     
     # Track if this gallery was created with pending payment (downloads will be disabled)
     download_locked_until_payment = False
