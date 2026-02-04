@@ -428,6 +428,7 @@ const Dashboard = ({ user, setUser }) => {
                         {MODE_LABELS[subscription.override_mode]}
                       </span>
                     )}
+                  </div>
                   <div className="text-sm text-zinc-500 flex items-center gap-3">
                     {subscription.total_credits === 999 ? (
                       <span className="text-green-600 font-medium">Unlimited Credits</span>
