@@ -44,6 +44,9 @@ const GalleryDetail = () => {
   const [newSectionName, setNewSectionName] = useState('');
   const [showSectionForm, setShowSectionForm] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
+  // Section rename state
+  const [editingSectionId, setEditingSectionId] = useState(null);
+  const [editingSectionName, setEditingSectionName] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [editFormData, setEditFormData] = useState({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
