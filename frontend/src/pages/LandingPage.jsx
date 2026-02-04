@@ -109,7 +109,7 @@ const LandingPage = ({ user }) => {
   return (
     <div className="min-h-screen bg-white relative">
       <nav className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-6 flex justify-between items-center">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 md:px-12 py-4 sm:py-6 flex justify-between items-center">
           {/* Brand name on left - premium look */}
           <div className="text-left">
             {/* Smart brand name parsing - if contains " by " and no tagline, split it */}
@@ -127,14 +127,14 @@ const LandingPage = ({ user }) => {
               return (
                 <>
                   <h1 
-                    className="text-2xl md:text-3xl font-medium tracking-tight"
+                    className="text-xl sm:text-2xl md:text-3xl font-medium tracking-tight"
                     style={{ fontFamily: 'Playfair Display, serif' }}
                   >
                     {brandMain}
                   </h1>
                   {tagline && (
                     <p 
-                      className="text-[10px] md:text-xs text-zinc-400 mt-0.5 tracking-widest uppercase"
+                      className="text-[9px] sm:text-[10px] md:text-xs text-zinc-400 mt-0.5 tracking-widest uppercase"
                       style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.12em' }}
                     >
                       {tagline}
@@ -145,11 +145,11 @@ const LandingPage = ({ user }) => {
             })()}
           </div>
           
-          {/* Get Started button on right */}
-          <div className="flex items-center gap-4">
+          {/* Desktop Navigation */}
+          <div className="hidden sm:flex items-center gap-4">
             <button
               onClick={() => navigate('/pricing')}
-              className="text-sm text-zinc-600 hover:text-zinc-900 hidden md:block"
+              className="text-sm text-zinc-600 hover:text-zinc-900"
             >
               Pricing
             </button>
@@ -171,7 +171,65 @@ const LandingPage = ({ user }) => {
               </button>
             )}
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="sm:hidden p-2 hover:bg-zinc-100 rounded-sm transition-colors"
+            data-testid="mobile-menu-button"
+          >
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
+          </button>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="sm:hidden border-t border-zinc-200 bg-white"
+            >
+              <div className="px-4 py-4 space-y-3">
+                <button
+                  onClick={() => {
+                    navigate('/pricing');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left py-3 px-4 text-zinc-700 hover:bg-zinc-50 rounded-sm transition-colors font-medium"
+                >
+                  Pricing
+                </button>
+                {user ? (
+                  <button
+                    onClick={() => {
+                      navigate('/dashboard');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-3 px-4 rounded-sm font-medium transition-colors"
+                  >
+                    Dashboard
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      navigate('/auth');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-3 px-4 rounded-sm font-medium transition-colors"
+                  >
+                    Get Started
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       <section className="max-w-screen-2xl mx-auto px-6 md:px-12 py-24 md:py-32">
