@@ -276,29 +276,29 @@ const PricingPage = () => {
             return (
               <div
                 key={plan.name}
-                className={`bg-white rounded-2xl border-2 ${plan.popular ? 'border-purple-400 shadow-lg shadow-purple-100' : 'border-zinc-200'} p-6 relative`}
+                className={`bg-white rounded-2xl border-2 ${plan.popular ? 'border-purple-400 shadow-lg shadow-purple-100 sm:scale-105' : 'border-zinc-200'} p-4 sm:p-6 relative`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600 text-white px-4 py-1 rounded-full text-xs font-medium">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600 text-white px-3 sm:px-4 py-1 rounded-full text-xs font-medium whitespace-nowrap">
                     Most Popular
                   </div>
                 )}
                 
-                <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center mb-4`}>
-                  <Icon className={`w-6 h-6 ${colors.text}`} />
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 ${colors.bg} rounded-xl flex items-center justify-center mb-3 sm:mb-4`}>
+                  <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${colors.text}`} />
                 </div>
                 
-                <h3 className="text-xl font-semibold mb-1">{plan.name}</h3>
-                <p className="text-sm text-zinc-500 mb-4">{plan.description}</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-1">{plan.name}</h3>
+                <p className="text-xs sm:text-sm text-zinc-500 mb-3 sm:mb-4">{plan.description}</p>
                 
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">{formatPrice(plan.price)}</span>
-                  {plan.price > 0 && <span className="text-zinc-500">/month</span>}
+                <div className="mb-4 sm:mb-6">
+                  <span className="text-3xl sm:text-4xl font-bold">{formatPrice(plan.price)}</span>
+                  {plan.price > 0 && <span className="text-zinc-500 text-sm">/month</span>}
                 </div>
                 
                 <button
                   onClick={() => handlePlanSelect(plan.name)}
-                  className={`w-full py-3 rounded-xl font-medium mb-6 transition-colors ${
+                  className={`w-full py-2.5 sm:py-3 rounded-xl font-medium mb-4 sm:mb-6 transition-colors text-sm sm:text-base ${
                     plan.popular 
                       ? 'bg-purple-600 text-white hover:bg-purple-700' 
                       : 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200'
@@ -309,15 +309,15 @@ const PricingPage = () => {
                     : plan.cta}
                 </button>
                 
-                <ul className="space-y-3">
+                <ul className="space-y-2 sm:space-y-3">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
+                    <li key={idx} className="flex items-start gap-2 sm:gap-3">
                       {feature.included ? (
-                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 flex-shrink-0 mt-0.5" />
                       ) : (
-                        <X className="w-5 h-5 text-zinc-300 flex-shrink-0 mt-0.5" />
+                        <X className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-300 flex-shrink-0 mt-0.5" />
                       )}
-                      <span className={feature.included ? 'text-zinc-700' : 'text-zinc-400'}>
+                      <span className={`text-sm ${feature.included ? 'text-zinc-700' : 'text-zinc-400'}`}>
                         {feature.text}
                       </span>
                     </li>
@@ -329,30 +329,30 @@ const PricingPage = () => {
         </div>
 
         {/* Extra Credits */}
-        <div className="mt-8 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-amber-600" />
+        <div className="mt-6 sm:mt-8 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
             </div>
             <div>
-              <h4 className="font-semibold text-lg">Need more events?</h4>
-              <p className="text-zinc-600">Purchase extra Event Credits anytime</p>
+              <h4 className="font-semibold text-base sm:text-lg">Need more events?</h4>
+              <p className="text-sm text-zinc-600">Purchase extra Event Credits anytime</p>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-amber-700">{formatPrice(pricing.extra_credit)}</div>
-            <div className="text-sm text-zinc-500">per Event Credit</div>
+          <div className="text-left sm:text-right">
+            <div className="text-xl sm:text-2xl font-bold text-amber-700">{formatPrice(pricing.extra_credit)}</div>
+            <div className="text-xs sm:text-sm text-zinc-500">per Event Credit</div>
           </div>
         </div>
       </div>
 
       {/* Features Grid */}
-      <div className="bg-white border-y border-zinc-200 py-16">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-2xl font-semibold text-center mb-12" style={{ fontFamily: 'Playfair Display, serif' }}>
+      <div className="bg-white border-y border-zinc-200 py-12 sm:py-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <h2 className="text-xl sm:text-2xl font-semibold text-center mb-8 sm:mb-12" style={{ fontFamily: 'Playfair Display, serif' }}>
             Everything you need to share your events
           </h2>
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             {[
               { icon: QrCode, title: 'QR Code Sharing', desc: 'Generate QR codes for easy gallery access at events' },
               { icon: Monitor, title: 'Display Mode', desc: 'Slideshow and Live Collage for viewing stations' },
