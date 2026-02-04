@@ -1247,7 +1247,7 @@ def get_effective_plan(user: dict) -> str:
             expires = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
             if expires > datetime.now(timezone.utc):
                 # Map override modes to effective plans
-                if override_mode in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO]:
+                if override_mode in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO, MODE_ENTERPRISE_ACCESS]:
                     return PLAN_PRO
                 elif override_mode == MODE_COMPED_STANDARD:
                     return PLAN_STANDARD
