@@ -778,7 +778,7 @@ const Dashboard = ({ user, setUser }) => {
       {/* Analytics Modal */}
       {showAnalyticsModal && analytics && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" data-testid="analytics-modal">
+          <div className="bg-white rounded-sm p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto" data-testid="analytics-modal">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
                 Your Analytics
@@ -791,8 +791,8 @@ const Dashboard = ({ user, setUser }) => {
               </button>
             </div>
 
-            {/* Summary Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {/* Summary Stats - Row 1 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div className="bg-zinc-50 rounded-sm p-4 text-center">
                 <div className="text-3xl font-bold text-zinc-900">{analytics.total_galleries}</div>
                 <div className="text-sm text-zinc-500">Galleries</div>
@@ -808,6 +808,26 @@ const Dashboard = ({ user, setUser }) => {
               <div className="bg-zinc-50 rounded-sm p-4 text-center">
                 <div className="text-3xl font-bold text-zinc-900">{formatBytes(analytics.storage_used)}</div>
                 <div className="text-sm text-zinc-500">Storage Used</div>
+              </div>
+            </div>
+
+            {/* Summary Stats - Row 2 (New metrics) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-purple-50 rounded-sm p-4 text-center border border-purple-100">
+                <div className="text-3xl font-bold text-purple-700">{analytics.total_qr_scans || 0}</div>
+                <div className="text-sm text-purple-600">QR Scans</div>
+              </div>
+              <div className="bg-blue-50 rounded-sm p-4 text-center border border-blue-100">
+                <div className="text-3xl font-bold text-blue-700">{analytics.total_downloads || 0}</div>
+                <div className="text-sm text-blue-600">Downloads</div>
+              </div>
+              <div className="bg-green-50 rounded-sm p-4 text-center border border-green-100">
+                <div className="text-3xl font-bold text-green-700">{analytics.views_today || 0}</div>
+                <div className="text-sm text-green-600">Views Today</div>
+              </div>
+              <div className="bg-amber-50 rounded-sm p-4 text-center border border-amber-100">
+                <div className="text-3xl font-bold text-amber-700">{analytics.views_this_week || 0}</div>
+                <div className="text-sm text-amber-600">Views This Week</div>
               </div>
             </div>
 
@@ -843,9 +863,19 @@ const Dashboard = ({ user, setUser }) => {
                       <h5 className="font-medium">{g.gallery_title}</h5>
                       <p className="text-xs text-zinc-500">Created {new Date(g.created_at).toLocaleDateString()}</p>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-zinc-600">
-                      <Eye className="w-4 h-4" strokeWidth={1.5} />
-                      {g.view_count} views
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="flex items-center gap-1 text-zinc-600">
+                        <Eye className="w-4 h-4" strokeWidth={1.5} />
+                        {g.view_count}
+                      </span>
+                      <span className="flex items-center gap-1 text-purple-600">
+                        <QrCode className="w-4 h-4" strokeWidth={1.5} />
+                        {g.qr_scans || 0}
+                      </span>
+                      <span className="flex items-center gap-1 text-blue-600">
+                        <Download className="w-4 h-4" strokeWidth={1.5} />
+                        {g.download_count || 0}
+                      </span>
                     </div>
                   </div>
                   <div className="flex gap-4 text-sm text-zinc-600">
