@@ -2449,6 +2449,9 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     if is_demo:
         demo_features_expire = (created_at + timedelta(hours=DEMO_FEATURE_WINDOW_HOURS)).isoformat()
     
+    # Check if this is a founder gallery (has unlimited token via override mode)
+    is_founder = has_unlimited_credits and override_mode == MODE_FOUNDERS_CIRCLE
+    
     gallery_doc = {
         "id": gallery_id,
         "photographer_id": current_user["id"],
