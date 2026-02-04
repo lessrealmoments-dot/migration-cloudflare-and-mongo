@@ -272,4 +272,12 @@ Integrated with **Resend** email service.
 - Admin: /admin
 
 ## Last Updated
-February 3, 2026 - Added Notification Bell, Payment Dispute, Transaction History features
+February 4, 2026 - Fixed PricingPage.jsx runtime error, unified payment modals for consistent UX
+
+### Payment Modal Unification ✅ (COMPLETED)
+- Replaced hardcoded upgrade modal in PricingPage.jsx with reusable PaymentMethodsModal
+- Consistent payment experience across:
+  - Plan upgrades from Pricing page
+  - Extra credit purchases from Dashboard
+- Modal dynamically loads payment methods from admin configuration
+- Fixed missing imports (X, Upload from lucide-react) that caused blank page
