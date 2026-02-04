@@ -1981,6 +1981,10 @@ async def get_admin_global_feature_toggles(admin: dict = Depends(get_admin_user)
             MODE_COMPED_STANDARD: {
                 "label": "Comped Standard",
                 "features": toggles.get(MODE_COMPED_STANDARD, DEFAULT_MODE_FEATURES[MODE_COMPED_STANDARD])
+            },
+            MODE_ENTERPRISE_ACCESS: {
+                "label": "Enterprise Access",
+                "features": toggles.get(MODE_ENTERPRISE_ACCESS, DEFAULT_MODE_FEATURES[MODE_ENTERPRISE_ACCESS])
             }
         },
         "payment_plans": {
