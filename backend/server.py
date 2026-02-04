@@ -2861,6 +2861,33 @@ async def delete_section(gallery_id: str, section_id: str, current_user: dict = 
     
     return {"message": "Section deleted"}
 
+@api_router.put("/galleries/{gallery_id}/sections/{section_id}")
+async def rename_section(gallery_id: str, section_id: str, data: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    """Rename a section within a gallery"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    new_name = data.get("name")
+    if not new_name or not new_name.strip():
+        raise HTTPException(status_code=400, detail="Section name is required")
+    
+    sections = gallery.get("sections", [])
+    section_found = False
+    
+    for section in sections:
+        if section["id"] == section_id:
+            section["name"] = new_name.strip()
+            section_found = True
+            break
+    
+    if not section_found:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    return {"message": "Section renamed", "name": new_name.strip()}
+
 @api_router.put("/galleries/{gallery_id}/sections/reorder")
 async def reorder_sections(gallery_id: str, data: dict = Body(...), current_user: dict = Depends(get_current_user)):
     """Reorder sections within a gallery"""
