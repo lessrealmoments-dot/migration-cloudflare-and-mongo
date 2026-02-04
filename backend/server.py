@@ -1067,7 +1067,7 @@ async def resolve_user_features(user: dict) -> dict:
                 result["payment_required"] = False
                 
                 # Determine effective plan based on override mode
-                if override_mode in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO]:
+                if override_mode in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO, MODE_ENTERPRISE_ACCESS]:
                     result["effective_plan"] = PLAN_PRO
                 elif override_mode == MODE_COMPED_STANDARD:
                     result["effective_plan"] = PLAN_STANDARD
