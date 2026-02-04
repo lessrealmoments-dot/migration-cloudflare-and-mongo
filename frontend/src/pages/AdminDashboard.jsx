@@ -117,17 +117,6 @@ const AdminDashboard = () => {
   });
   const [savingToggles, setSavingToggles] = useState(false);
   
-  // Per-user feature toggles state
-  const [editingUserFeatures, setEditingUserFeatures] = useState(null); // User ID being edited
-  const [userFeatures, setUserFeatures] = useState({
-    qr_share: true,
-    online_gallery: true,
-    display_mode: true,
-    contributor_link: true,
-    auto_delete_enabled: true
-  });
-  const [savingUserFeatures, setSavingUserFeatures] = useState(false);
-  
   // Billing & Subscription state
   const [billingSettings, setBillingSettings] = useState({
     billing_enforcement_enabled: false,
