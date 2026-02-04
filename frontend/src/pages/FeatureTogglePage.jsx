@@ -70,6 +70,12 @@ const MODE_INFO = {
     description: 'Complimentary Standard access',
     icon: Users,
     color: 'green'
+  },
+  enterprise_access: {
+    label: 'Enterprise Access',
+    description: 'Trial access for major clients (1-2 months)',
+    icon: Building2,
+    color: 'cyan'
   }
 };
 
