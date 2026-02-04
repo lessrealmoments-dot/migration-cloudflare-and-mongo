@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, X, Crown, Zap, Star, ArrowRight, Sparkles, Shield, Clock, Upload, Users, QrCode, Monitor, Download, AlertCircle, Loader2 } from 'lucide-react';
+import { Check, Crown, Zap, Star, ArrowRight, Sparkles, Shield, Clock, Users, QrCode, Monitor, Download, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import useBrandConfig from '../hooks/useBrandConfig';
