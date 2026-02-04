@@ -1714,24 +1714,65 @@ const GalleryDetail = () => {
                 onDrop={(e) => handleSectionDrop(e, section)}
                 onDragEnd={() => setDraggedSection(null)}
               >
-                <button
-                  data-testid={`section-${section.id}-button`}
-                  onClick={() => setSelectedSection(section.id)}
-                  className={`w-full h-12 rounded-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                    selectedSection === section.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'border border-zinc-200 hover:bg-zinc-50'
-                  }`}
-                >
-                  <GripVertical className="w-4 h-4 opacity-50" />
-                  {section.name}
-                </button>
-                <button
-                  onClick={() => handleDeleteSection(section.id)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                >
-                  <X className="w-3 h-3" strokeWidth={2} />
-                </button>
+                {editingSectionId === section.id ? (
+                  <div className="flex items-center gap-2 w-full">
+                    <input
+                      type="text"
+                      value={editingSectionName}
+                      onChange={(e) => setEditingSectionName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleRenameSection(section.id, editingSectionName);
+                        if (e.key === 'Escape') { setEditingSectionId(null); setEditingSectionName(''); }
+                      }}
+                      className="flex-1 h-10 px-3 border border-zinc-300 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      autoFocus
+                      data-testid={`section-rename-input-${section.id}`}
+                    />
+                    <button
+                      onClick={() => handleRenameSection(section.id, editingSectionName)}
+                      className="p-2 bg-green-500 text-white rounded-sm hover:bg-green-600"
+                      title="Save"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => { setEditingSectionId(null); setEditingSectionName(''); }}
+                      className="p-2 bg-zinc-200 text-zinc-600 rounded-sm hover:bg-zinc-300"
+                      title="Cancel"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      data-testid={`section-${section.id}-button`}
+                      onClick={() => setSelectedSection(section.id)}
+                      className={`w-full h-12 rounded-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
+                        selectedSection === section.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'border border-zinc-200 hover:bg-zinc-50'
+                      }`}
+                    >
+                      <GripVertical className="w-4 h-4 opacity-50" />
+                      {section.name}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); startEditingSection(section); }}
+                      className="absolute -top-2 -left-2 bg-blue-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      title="Rename section"
+                    >
+                      <Edit2 className="w-3 h-3" strokeWidth={2} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSection(section.id)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      title="Delete section"
+                    >
+                      <X className="w-3 h-3" strokeWidth={2} />
+                    </button>
+                  </>
+                )}
                 {/* Contributor link indicator */}
                 {section.contributor_link && (
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-green-500 text-white px-2 py-0.5 rounded-full text-xs flex items-center gap-1">
