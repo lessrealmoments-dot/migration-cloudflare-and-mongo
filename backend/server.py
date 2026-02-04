@@ -2284,8 +2284,8 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     # Set auto-delete date based on plan
     # Free/Demo: 6 hours
     # Paid plans: 6 months
-    # Founders: Never (set to 100 years)
-    if is_founder:
+    # Unlimited token users: Never (set to 100 years)
+    if has_unlimited_credits:
         auto_delete_date = (created_at + timedelta(days=36500)).isoformat()  # ~100 years
     elif is_demo:
         auto_delete_date = (created_at + timedelta(hours=FREE_GALLERY_EXPIRATION_HOURS)).isoformat()
