@@ -199,12 +199,38 @@ Admin-controlled features that can be independently toggled per package/mode:
 ## Next Steps / Backlog
 1. **Payment Gateway Integration (P0)**: Integrate PayMongo for GCash/PayMaya automated payments
 2. **Enable Live Billing (P1)**: Implement automated renewals when billing_enforcement_enabled = true
-3. **Email Notifications (P2)**: Notify users on payment approval/rejection, plan changes, expiring overrides
-4. **Invoice Generation (P2)**: Generate downloadable invoices for payments
-5. **Analytics Dashboard (P1)**: Make photographer analytics fully functional (views, QR scans, downloads)
-6. **Codebase Refactoring (P2)**: Split server.py into modules (models, routes, utils)
+3. **Invoice Generation (P2)**: Generate downloadable invoices for payments
+4. **Codebase Refactoring (P2)**: Split server.py into modules (models, routes, utils)
 
-## Recent Updates (February 3, 2026)
+## Recent Updates (February 4, 2026)
+
+### Photographer Analytics Dashboard ✅ (COMPLETED)
+- **Summary Stats**: Galleries, Photos, Total Views, Storage Used
+- **New Metrics**: QR Scans, Downloads, Views Today, Views This Week
+- **Per-Gallery Stats**: Each gallery shows Views, QR Scans, Downloads
+- **Time-based Tracking**: Views tracked for today, week, month
+- **Storage Progress**: Visual progress bar with quota usage
+
+### Email Notifications ✅ (COMPLETED)
+Integrated with **Resend** email service.
+
+**Admin Notifications (to lessrealmoments@gmail.com):**
+- 🎉 New account created (name, email, business)
+- 💳 Payment proof submitted (upgrade or extra credits)
+
+**Customer Notifications:**
+- ⏳ Payment waiting for approval
+- ✅ Payment approved (with plan/credits info)
+- ❌ Payment rejected (with reason and dispute instructions)
+
+### Analytics Tracking API Endpoints
+- `POST /api/analytics/track-qr-scan/{gallery_id}` - Track QR scan
+- `POST /api/analytics/track-download/{gallery_id}` - Track download
+- `POST /api/analytics/track-view/{gallery_id}` - Track gallery view
+
+---
+
+## Previous Updates (February 3, 2026)
 
 ### Notification Bell for Photographers ✅
 - Bell icon in dashboard header shows unread notification count
