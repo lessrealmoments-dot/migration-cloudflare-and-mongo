@@ -5072,7 +5072,7 @@ async def assign_override_mode(data: AssignOverrideMode, admin: dict = Depends(g
         credits = 999  # Unlimited representation for founders
     
     # Determine effective plan from override mode
-    effective_plan = PLAN_PRO if data.mode in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO] else PLAN_STANDARD
+    effective_plan = PLAN_PRO if data.mode in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO, MODE_ENTERPRISE_ACCESS] else PLAN_STANDARD
     
     # Get storage quota for the effective plan
     storage_quota = PLAN_STORAGE_QUOTAS.get(effective_plan, DEFAULT_STORAGE_QUOTA)
