@@ -232,30 +232,30 @@ const LandingPage = ({ user }) => {
         </AnimatePresence>
       </nav>
 
-      <section className="max-w-screen-2xl mx-auto px-6 md:px-12 py-24 md:py-32">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+      <section className="max-w-screen-2xl mx-auto px-4 sm:px-6 md:px-12 py-12 sm:py-16 md:py-24 lg:py-32">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="md:col-span-6"
+            className="lg:col-span-6 text-center lg:text-left"
           >
-            <p className="text-xs uppercase tracking-[0.2em] font-medium text-muted-foreground mb-6">
+            <p className="text-xs uppercase tracking-[0.2em] font-medium text-muted-foreground mb-4 sm:mb-6">
               Professional Photo Sharing
             </p>
             <h1
-              className="text-5xl md:text-7xl font-medium tracking-tight leading-tight mb-6"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-medium tracking-tight leading-tight mb-4 sm:mb-6"
               style={{ fontFamily: 'Playfair Display, serif' }}
             >
               {renderHeroTitle()}
             </h1>
-            <p className="text-lg md:text-xl font-light leading-relaxed text-zinc-600 mb-12 max-w-xl">
+            <p className="text-base sm:text-lg md:text-xl font-light leading-relaxed text-zinc-600 mb-8 sm:mb-12 max-w-xl mx-auto lg:mx-0">
               {config.hero_subtitle}
             </p>
             <button
               data-testid="hero-get-started-button"
               onClick={() => navigate(user ? '/dashboard' : '/auth')}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-12 rounded-sm font-medium tracking-wide transition-all duration-300 text-lg"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 h-11 sm:h-12 px-8 sm:px-12 rounded-sm font-medium tracking-wide transition-all duration-300 text-base sm:text-lg"
             >
               {user ? 'Go to Dashboard' : 'Get Started'}
             </button>
@@ -265,7 +265,7 @@ const LandingPage = ({ user }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="md:col-span-6"
+            className="lg:col-span-6 order-first lg:order-last"
           >
             {/* Image Carousel */}
             {heroImages.length > 0 ? (
