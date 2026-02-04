@@ -267,15 +267,17 @@ const Dashboard = ({ user, setUser }) => {
   return (
     <div className="min-h-screen bg-zinc-50/30">
       <nav className="border-b border-zinc-200 bg-white">
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-6 flex justify-between items-center">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 md:px-12 py-4 sm:py-6 flex justify-between items-center">
           <h1
-            className="text-2xl font-medium cursor-pointer"
+            className="text-xl sm:text-2xl font-medium cursor-pointer"
             style={{ fontFamily: 'Playfair Display, serif' }}
             onClick={() => navigate('/')}
           >
             {brandConfig.brand_name || 'PhotoShare'}
           </h1>
-          <div className="flex items-center gap-4">
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-4">
             <span className="text-sm text-zinc-600">
               Welcome, {user?.business_name || user?.name}
             </span>
@@ -307,7 +309,59 @@ const Dashboard = ({ user, setUser }) => {
               Logout
             </button>
           </div>
+
+          {/* Mobile Navigation Icons */}
+          <div className="flex md:hidden items-center gap-2">
+            <NotificationBell />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 hover:bg-zinc-100 rounded-sm transition-colors"
+              data-testid="mobile-menu-button"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-zinc-200 bg-white px-4 py-3 space-y-1">
+            <div className="py-2 px-3 text-sm text-zinc-600 border-b border-zinc-100 mb-2">
+              Welcome, {user?.business_name || user?.name}
+            </div>
+            <button
+              onClick={() => {
+                setShowAnalyticsModal(true);
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center gap-3 py-3 px-3 text-zinc-700 hover:bg-zinc-50 rounded-sm transition-colors"
+            >
+              <BarChart3 className="w-5 h-5" strokeWidth={1.5} />
+              Analytics
+            </button>
+            <button
+              onClick={() => {
+                setShowProfileModal(true);
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center gap-3 py-3 px-3 text-zinc-700 hover:bg-zinc-50 rounded-sm transition-colors"
+            >
+              <User className="w-5 h-5" strokeWidth={1.5} />
+              Profile
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 py-3 px-3 text-red-600 hover:bg-red-50 rounded-sm transition-colors"
+            >
+              <LogOut className="w-5 h-5" strokeWidth={1.5} />
+              Logout
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* Storage Quota Bar */}
