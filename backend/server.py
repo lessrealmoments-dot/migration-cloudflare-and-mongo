@@ -4637,7 +4637,7 @@ async def get_pending_payments(admin: dict = Depends(get_admin_user)):
     return users
 
 @api_router.post("/admin/approve-payment")
-async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_user)):
+async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTasks, admin: dict = Depends(get_admin_user)):
     """Approve a user's payment and process any pending upgrade or extra credits"""
     user = await db.users.find_one({"id": data.user_id})
     if not user:
@@ -4659,6 +4659,10 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
     pricing = billing_settings.get("pricing", DEFAULT_PRICING)
     tx_amount = 0
     tx_type = "subscription"
+    
+    # For email
+    email_plan = None
+    email_credits = None
     
     # If user has a pending upgrade request, apply it
     requested_plan = user.get("requested_plan")
@@ -4693,6 +4697,8 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
         notification_msg_parts.append(f"Your plan has been upgraded to {requested_plan.capitalize()}.")
         tx_type = "upgrade"
         tx_amount = pricing.get(f"{requested_plan}_monthly", 0)
+        email_plan = requested_plan.capitalize()
+        email_credits = update_data.get("event_credits", PLAN_CREDITS.get(requested_plan, 2))
     
     # If user has requested extra credits, add them
     requested_extra_credits = user.get("requested_extra_credits")
@@ -4704,6 +4710,9 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
         notification_msg_parts.append(f"You received {requested_extra_credits} extra credit(s).")
         tx_type = "extra_credits"
         tx_amount = pricing.get("extra_credit", 500) * requested_extra_credits
+        email_credits = f"+{requested_extra_credits} extra"
+        if not email_plan:
+            email_plan = get_effective_plan(user).capitalize()
     
     await db.users.update_one(
         {"id": data.user_id},
@@ -4743,6 +4752,15 @@ async def approve_payment(data: ApprovePayment, admin: dict = Depends(get_admin_
         admin_notes=data.notes,
         resolved_at=datetime.now(timezone.utc).isoformat()
     )
+    
+    # Send approval email to customer
+    subject, html = get_email_template("customer_payment_approved", {
+        "name": user.get("name", "there"),
+        "plan": email_plan or "Active",
+        "credits": email_credits or "Updated",
+        "dashboard_url": f"{os.environ.get('FRONTEND_URL', 'https://subimagepay.preview.emergentagent.com')}/dashboard"
+    })
+    background_tasks.add_task(send_email, user.get("email"), subject, html)
     
     return {"message": ", ".join(message_parts)}
 
