@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Upload, Lock, Share2, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Camera, Upload, Lock, Share2, Image as ImageIcon, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
