@@ -3,7 +3,12 @@ User-related Pydantic models
 """
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import Optional
-from core.config import DEFAULT_MAX_GALLERIES, DEFAULT_STORAGE_QUOTA, PLAN_FREE, PAYMENT_NONE
+
+# Import constants directly to avoid circular imports
+DEFAULT_MAX_GALLERIES = 1
+DEFAULT_STORAGE_QUOTA = 500 * 1024 * 1024
+PLAN_FREE = "free"
+PAYMENT_NONE = "none"
 
 
 class UserRegister(BaseModel):
