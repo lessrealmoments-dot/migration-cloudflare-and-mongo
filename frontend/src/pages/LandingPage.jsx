@@ -331,19 +331,19 @@ const LandingPage = ({ user }) => {
         </div>
       </section>
 
-      <section className="bg-zinc-50/30 py-24 md:py-32">
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12">
-          <p className="text-xs uppercase tracking-[0.2em] font-medium text-muted-foreground mb-6 text-center">
+      <section className="bg-zinc-50/30 py-16 sm:py-20 md:py-24 lg:py-32">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 md:px-12">
+          <p className="text-xs uppercase tracking-[0.2em] font-medium text-muted-foreground mb-4 sm:mb-6 text-center">
             Features
           </p>
           <h2
-            className="text-4xl md:text-5xl font-normal tracking-tight text-center mb-20"
+            className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight text-center mb-12 sm:mb-16 md:mb-20"
             style={{ fontFamily: 'Playfair Display, serif' }}
           >
             Everything you need
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
