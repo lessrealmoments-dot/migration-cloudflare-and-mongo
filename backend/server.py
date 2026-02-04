@@ -144,7 +144,8 @@ MODE_CREDITS = {
     MODE_FOUNDERS_CIRCLE: -1,  # -1 = unlimited
     MODE_EARLY_PARTNER_BETA: 2,
     MODE_COMPED_PRO: 2,
-    MODE_COMPED_STANDARD: 2
+    MODE_COMPED_STANDARD: 2,
+    MODE_ENTERPRISE_ACCESS: -1  # -1 = unlimited
 }
 
 # ============================================
