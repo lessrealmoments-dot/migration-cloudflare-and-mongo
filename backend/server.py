@@ -4523,7 +4523,7 @@ class UpgradeRequest(BaseModel):
     proof_url: Optional[str] = None  # Payment proof can be submitted with upgrade request
 
 @api_router.post("/user/upgrade-request")
-async def submit_upgrade_request(data: UpgradeRequest, user: dict = Depends(get_current_user)):
+async def submit_upgrade_request(data: UpgradeRequest, background_tasks: BackgroundTasks, user: dict = Depends(get_current_user)):
     """Submit an upgrade request with optional payment proof"""
     if data.requested_plan not in [PLAN_STANDARD, PLAN_PRO]:
         raise HTTPException(status_code=400, detail="Invalid plan")
@@ -4546,6 +4546,24 @@ async def submit_upgrade_request(data: UpgradeRequest, user: dict = Depends(get_
         update_data["payment_proof_url"] = data.proof_url
         update_data["payment_submitted_at"] = datetime.now(timezone.utc).isoformat()
         message = f"Upgrade to {data.requested_plan} requested with payment proof. Awaiting admin approval."
+        
+        # Send email notifications
+        # To Admin
+        admin_subject, admin_html = get_email_template("admin_payment_submitted", {
+            "name": db_user.get("name", "Unknown"),
+            "email": db_user.get("email", "Unknown"),
+            "request_type": "Plan Upgrade",
+            "plan_or_credits": f"Upgrade to {data.requested_plan.capitalize()}",
+            "admin_url": f"{os.environ.get('FRONTEND_URL', 'https://subimagepay.preview.emergentagent.com')}/admin/dashboard"
+        })
+        background_tasks.add_task(send_email, ADMIN_EMAIL, admin_subject, admin_html)
+        
+        # To Customer
+        customer_subject, customer_html = get_email_template("customer_payment_pending", {
+            "name": db_user.get("name", "there"),
+            "request_type": f"Upgrade to {data.requested_plan.capitalize()} Plan"
+        })
+        background_tasks.add_task(send_email, db_user.get("email"), customer_subject, customer_html)
     else:
         update_data["payment_status"] = PAYMENT_NONE
         message = f"Upgrade to {data.requested_plan} requested. Please submit payment proof."
@@ -4562,7 +4580,7 @@ class ExtraCreditRequest(BaseModel):
     proof_url: str
 
 @api_router.post("/user/extra-credits-request")
-async def submit_extra_credits_request(data: ExtraCreditRequest, user: dict = Depends(get_current_user)):
+async def submit_extra_credits_request(data: ExtraCreditRequest, background_tasks: BackgroundTasks, user: dict = Depends(get_current_user)):
     """Submit a request for extra credits with payment proof"""
     if data.quantity < 1 or data.quantity > 10:
         raise HTTPException(status_code=400, detail="Quantity must be between 1 and 10")
@@ -4584,6 +4602,24 @@ async def submit_extra_credits_request(data: ExtraCreditRequest, user: dict = De
     
     settings = await get_billing_settings()
     total_cost = data.quantity * settings.get("pricing", {}).get("extra_credit", 500)
+    
+    # Send email notifications
+    # To Admin
+    admin_subject, admin_html = get_email_template("admin_payment_submitted", {
+        "name": db_user.get("name", "Unknown"),
+        "email": db_user.get("email", "Unknown"),
+        "request_type": "Extra Credits Purchase",
+        "plan_or_credits": f"{data.quantity} Extra Credit(s) - ₱{total_cost}",
+        "admin_url": f"{os.environ.get('FRONTEND_URL', 'https://subimagepay.preview.emergentagent.com')}/admin/dashboard"
+    })
+    background_tasks.add_task(send_email, ADMIN_EMAIL, admin_subject, admin_html)
+    
+    # To Customer
+    customer_subject, customer_html = get_email_template("customer_payment_pending", {
+        "name": db_user.get("name", "there"),
+        "request_type": f"Purchase {data.quantity} Extra Credit(s) - ₱{total_cost}"
+    })
+    background_tasks.add_task(send_email, db_user.get("email"), customer_subject, customer_html)
     
     return {
         "message": f"Request for {data.quantity} extra credit(s) submitted. Total: ₱{total_cost}. Awaiting admin approval.",
