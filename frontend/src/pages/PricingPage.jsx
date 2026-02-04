@@ -423,130 +423,21 @@ const PricingPage = () => {
           </div>
         </div>
       </footer>
-      {/* Upgrade Modal */}
-      {showUpgradeModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-semibold mb-2">
-              Upgrade to {showUpgradeModal === 'standard' ? 'Standard' : 'Pro'}
-            </h3>
-            <p className="text-zinc-600 mb-4">
-              Complete your upgrade by uploading payment proof:
-            </p>
-            
-            {/* Show credit bonus message for Standard to Pro upgrade */}
-            {subscription?.effective_plan === 'standard' && showUpgradeModal === 'pro' && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
-                <p className="text-sm text-green-800">
-                  <strong>Upgrade Bonus:</strong> Your current {subscription?.total_credits || 0} credit(s) will be kept, plus you'll get 2 additional Pro credits!
-                </p>
-              </div>
-            )}
-            
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
-              <h4 className="font-medium text-blue-900 mb-3">Payment Instructions</h4>
-              <ol className="text-sm text-blue-800 space-y-2">
-                <li className="flex gap-2">
-                  <span className="font-bold">1.</span>
-                  <span>Send {formatPrice(showUpgradeModal === 'standard' ? pricing.standard_monthly : pricing.pro_monthly)} via GCash or PayMaya</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold">2.</span>
-                  <span>Take a screenshot of the confirmation</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold">3.</span>
-                  <span>Upload the screenshot below</span>
-                </li>
-              </ol>
-              <div className="mt-4 pt-3 border-t border-blue-200">
-                <p className="text-sm font-medium text-blue-900">GCash/PayMaya Number:</p>
-                <p className="text-xl font-bold text-blue-900">09952568450</p>
-                <p className="text-xs text-blue-700">Less Real Moments</p>
-              </div>
-            </div>
-            
-            {/* Payment Proof Upload */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-zinc-700 mb-2">
-                Upload Payment Screenshot *
-              </label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePaymentProofUpload}
-                className="hidden"
-              />
-              {paymentProofUrl ? (
-                <div className="border-2 border-green-300 bg-green-50 rounded-xl p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-green-700">
-                      <Check className="w-5 h-5" />
-                      <span className="text-sm font-medium">Payment proof uploaded!</span>
-                    </div>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-sm text-green-600 hover:underline"
-                    >
-                      Change
-                    </button>
-                  </div>
-                  <img 
-                    src={getFileUrl(paymentProofUrl)} 
-                    alt="Payment proof" 
-                    className="mt-3 w-full h-32 object-cover rounded-lg"
-                  />
-                </div>
-              ) : (
-                <div
-                  onClick={() => !uploadingProof && fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-zinc-300 rounded-xl p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/50 transition-colors"
-                >
-                  {uploadingProof ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
-                      <span className="text-sm text-zinc-600">Uploading...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
-                      <p className="text-sm font-medium text-zinc-700">Click to upload payment screenshot</p>
-                      <p className="text-xs text-zinc-500 mt-1">PNG, JPG up to 5MB</p>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6">
-              <div className="flex gap-2 items-start">
-                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-800">
-                  Your upgrade will be activated once payment is verified (usually within 24 hours).
-                  Admin will be notified of your request.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setShowUpgradeModal(null); setPaymentProofUrl(null); }}
-                className="flex-1 py-3 rounded-xl font-medium bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpgradeRequest}
-                disabled={upgradeLoading || !paymentProofUrl}
-                className="flex-1 py-3 rounded-xl font-medium bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {upgradeLoading ? 'Submitting...' : 'Submit Upgrade Request'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
+      {/* Upgrade Modal - Using PaymentMethodsModal for consistent UI */}
+      <PaymentMethodsModal
+        isOpen={!!showUpgradeModal}
+        onClose={() => setShowUpgradeModal(null)}
+        onPaymentProofUploaded={handleUpgradeWithProof}
+        title={`Upgrade to ${showUpgradeModal === 'standard' ? 'Standard' : 'Pro'}`}
+        subtitle={
+          subscription?.effective_plan === 'standard' && showUpgradeModal === 'pro'
+            ? `Your current ${subscription?.total_credits || 0} credit(s) will be kept, plus you'll get 2 additional Pro credits!`
+            : "Complete your upgrade by uploading payment proof"
+        }
+        amount={showUpgradeModal === 'standard' ? pricing.standard_monthly : pricing.pro_monthly}
+        itemDescription={`${showUpgradeModal === 'standard' ? 'Standard' : 'Pro'} Plan (Monthly)`}
+      />
     </div>
   );
 };
