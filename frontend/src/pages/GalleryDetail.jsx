@@ -828,6 +828,34 @@ const GalleryDetail = () => {
     }
   };
 
+  const handleRenameSection = async (sectionId, newName) => {
+    if (!newName || !newName.trim()) {
+      toast.error('Section name is required');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/galleries/${id}/sections/${sectionId}`, 
+        { name: newName.trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSections(sections.map(s => 
+        s.id === sectionId ? { ...s, name: newName.trim() } : s
+      ));
+      setEditingSectionId(null);
+      setEditingSectionName('');
+      toast.success('Section renamed');
+    } catch (error) {
+      toast.error('Failed to rename section');
+    }
+  };
+
+  const startEditingSection = (section) => {
+    setEditingSectionId(section.id);
+    setEditingSectionName(section.name);
+  };
+
   // Download All functionality
   const handleDownloadAll = async () => {
     if (isPreparingDownload) return; // Prevent double-click
