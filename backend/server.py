@@ -5058,7 +5058,7 @@ async def assign_override_mode(data: AssignOverrideMode, admin: dict = Depends(g
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    if data.mode not in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO, MODE_COMPED_STANDARD]:
+    if data.mode not in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO, MODE_COMPED_STANDARD, MODE_ENTERPRISE_ACCESS]:
         raise HTTPException(status_code=400, detail="Invalid override mode")
     
     if data.duration_months < 1 or data.duration_months > 24:
