@@ -1472,13 +1472,14 @@ async def health_check():
     return {"status": "healthy", "service": "photoshare-api"}
 
 @api_router.post("/auth/register", response_model=Token)
-async def register(user_data: UserRegister):
+async def register(user_data: UserRegister, background_tasks: BackgroundTasks):
     existing = await db.users.find_one({"email": user_data.email}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
     user_id = str(uuid.uuid4())
     hashed_pw = hash_password(user_data.password)
+    created_at = datetime.now(timezone.utc).isoformat()
     
     user_doc = {
         "id": user_id,
@@ -1490,10 +1491,19 @@ async def register(user_data: UserRegister):
         "galleries_created_total": 0,
         "storage_quota": DEFAULT_STORAGE_QUOTA,
         "storage_used": 0,
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "created_at": created_at
     }
     
     await db.users.insert_one(user_doc)
+    
+    # Send email notification to admin about new account
+    subject, html = get_email_template("admin_new_account", {
+        "name": user_data.name,
+        "email": user_data.email,
+        "business_name": user_data.business_name or "Not specified",
+        "created_at": created_at
+    })
+    background_tasks.add_task(send_email, ADMIN_EMAIL, subject, html)
     
     access_token = create_access_token({"sub": user_id})
     user = User(
