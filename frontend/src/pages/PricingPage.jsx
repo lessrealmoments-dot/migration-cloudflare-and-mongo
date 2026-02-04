@@ -105,66 +105,24 @@ const PricingPage = () => {
       return;
     }
     
-    // Reset payment proof when opening modal
-    setPaymentProofUrl(null);
-    // Show upgrade modal
+    // Show upgrade modal with PaymentMethodsModal
     setShowUpgradeModal(selectedPlan);
   };
 
-  const handlePaymentProofUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
-      return;
-    }
-    
-    setUploadingProof(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API}/upload-payment-proof`, formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      setPaymentProofUrl(response.data.url);
-      toast.success('Payment proof uploaded!');
-    } catch (error) {
-      toast.error('Failed to upload payment proof');
-    } finally {
-      setUploadingProof(false);
-    }
-  };
-
-  const handleUpgradeRequest = async () => {
-    if (!paymentProofUrl) {
-      toast.error('Please upload payment proof first');
-      return;
-    }
-    
-    setUpgradeLoading(true);
+  const handleUpgradeWithProof = async (proofUrl) => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(`${API}/user/upgrade-request`, {
         requested_plan: showUpgradeModal,
-        proof_url: paymentProofUrl
+        proof_url: proofUrl
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Upgrade request with payment proof submitted! Awaiting admin approval.');
+      toast.success('Upgrade request submitted! Awaiting admin approval.');
       setShowUpgradeModal(null);
-      setPaymentProofUrl(null);
       navigate('/dashboard');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to submit request');
-    } finally {
-      setUpgradeLoading(false);
     }
   };
 
