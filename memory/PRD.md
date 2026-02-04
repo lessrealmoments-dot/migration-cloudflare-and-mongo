@@ -274,7 +274,20 @@ Integrated with **Resend** email service.
 - Admin: /admin
 
 ## Last Updated
-February 4, 2026 - Fixed critical gallery creation bug, removed confusing per-user toggles, mobile improvements
+February 4, 2026 - Added section rename, Enterprise Access override mode, bug fixes
+
+### New Features ✅ (COMPLETED)
+
+**1. Section Rename**
+- Users can now rename gallery sections by hovering and clicking the blue edit icon
+- Inline editing with Enter to save, Escape to cancel
+- Backend endpoint: `PUT /api/galleries/{gallery_id}/sections/{section_id}`
+
+**2. Enterprise Access Override Mode**
+- New admin override mode for major clients testing the product (1-2 months trial)
+- Includes unlimited event credits by default
+- Admin can toggle individual features via Global Feature Toggles
+- Available in: Admin Override dropdown, Feature Toggles page
 
 ### Bug Fixes ✅ (COMPLETED)
 **Critical: Gallery Creation Bug Fixed**
