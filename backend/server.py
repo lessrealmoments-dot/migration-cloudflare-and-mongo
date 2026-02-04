@@ -4500,6 +4500,83 @@ async def update_billing_settings(data: BillingSettings, admin: dict = Depends(g
     )
     return {"message": "Billing settings updated", "settings": data.model_dump()}
 
+# ============================================
+# ANALYTICS TRACKING ENDPOINTS
+# ============================================
+
+@api_router.post("/analytics/track-qr-scan/{gallery_id}")
+async def track_qr_scan(gallery_id: str):
+    """Track a QR code scan for a gallery"""
+    gallery = await db.galleries.find_one({"id": gallery_id})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Increment QR scan count
+    await db.galleries.update_one(
+        {"id": gallery_id},
+        {"$inc": {"qr_scan_count": 1}}
+    )
+    
+    # Log analytics event
+    await db.analytics_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "gallery_id": gallery_id,
+        "photographer_id": gallery.get("photographer_id"),
+        "event_type": "qr_scan",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "QR scan tracked"}
+
+@api_router.post("/analytics/track-download/{gallery_id}")
+async def track_download(gallery_id: str, photo_id: Optional[str] = None):
+    """Track a download from a gallery"""
+    gallery = await db.galleries.find_one({"id": gallery_id})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Increment download count
+    await db.galleries.update_one(
+        {"id": gallery_id},
+        {"$inc": {"download_count": 1}}
+    )
+    
+    # Log analytics event
+    await db.analytics_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "gallery_id": gallery_id,
+        "photographer_id": gallery.get("photographer_id"),
+        "photo_id": photo_id,
+        "event_type": "download",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "Download tracked"}
+
+@api_router.post("/analytics/track-view/{gallery_id}")
+async def track_gallery_view(gallery_id: str):
+    """Track a gallery view"""
+    gallery = await db.galleries.find_one({"id": gallery_id})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Increment view count
+    await db.galleries.update_one(
+        {"id": gallery_id},
+        {"$inc": {"view_count": 1}}
+    )
+    
+    # Log analytics event
+    await db.analytics_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "gallery_id": gallery_id,
+        "photographer_id": gallery.get("photographer_id"),
+        "event_type": "view",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "View tracked"}
+
 @api_router.get("/billing/pricing")
 async def get_public_pricing():
     """Get current pricing and payment methods (public)"""
