@@ -156,6 +156,7 @@ const FeatureTogglePage = () => {
         early_partner_beta: toggles.override_modes.early_partner_beta.features,
         comped_pro: toggles.override_modes.comped_pro.features,
         comped_standard: toggles.override_modes.comped_standard.features,
+        enterprise_access: toggles.override_modes.enterprise_access.features,
         // Payment Plans
         free: toggles.payment_plans.free.features,
         standard: toggles.payment_plans.standard.features,
