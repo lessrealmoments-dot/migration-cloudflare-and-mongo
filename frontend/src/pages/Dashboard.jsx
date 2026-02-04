@@ -66,6 +66,9 @@ const Dashboard = ({ user, setUser }) => {
   // Payment status and dispute state
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [showDisputeModal, setShowDisputeModal] = useState(false);
+  
+  // Mobile menu state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetchGalleries();
