@@ -298,52 +298,79 @@ const CollageDisplay = () => {
   }, [photos, isReady, layout.length, getPhotoUrl, preloadNextSets]);
 
   const transitionToNext = useCallback(async () => {
-    if (isPaused || photosRef.current.length === 0 || isTransitioning) return;
+    if (isPaused || photosRef.current.length === 0) return;
     
-    if (preloadedSetsRef.current.length === 0) {
-      console.log('[Collage] Waiting for preload...');
-      await preloadNextSets();
-      
-      if (preloadedSetsRef.current.length === 0) {
-        const emergencySet = generateTileSet();
-        const urls = emergencySet.map(p => getPhotoUrl(p));
-        await imagePreloader.preloadAll(urls);
-        preloadedSetsRef.current.push({ photos: emergencySet, index: photoPoolIndex.current - layout.length });
-      }
+    // Use ref to prevent race conditions with isTransitioning state
+    if (isTransitioningRef.current) {
+      console.log('[Collage] Skipping - transition in progress');
+      return;
     }
     
-    const nextSetData = preloadedSetsRef.current.shift();
-    if (!nextSetData) return;
-    
-    const nextSet = nextSetData.photos;
-    
-    const urls = nextSet.map(p => getPhotoUrl(p));
-    const allReady = urls.every(url => imagePreloader.isLoaded(url));
-    
-    if (!allReady) {
-      await imagePreloader.preloadAll(urls);
-    }
-    
+    isTransitioningRef.current = true;
     setIsTransitioning(true);
     
-    const targetLayer = activeLayer === 'A' ? 'B' : 'A';
-    
-    if (targetLayer === 'A') {
-      setLayerA(nextSet);
-    } else {
-      setLayerB(nextSet);
+    try {
+      // Ensure we have preloaded sets
+      if (preloadedSetsRef.current.length === 0) {
+        console.log('[Collage] Preloading next sets...');
+        await preloadNextSets();
+        
+        // If still empty, generate emergency set
+        if (preloadedSetsRef.current.length === 0) {
+          console.log('[Collage] Generating emergency set');
+          const emergencySet = generateTileSet();
+          if (emergencySet.length > 0) {
+            const urls = emergencySet.map(p => getPhotoUrl(p));
+            await imagePreloader.preloadAll(urls);
+            preloadedSetsRef.current.push({ photos: emergencySet, index: photoPoolIndex.current - layoutRef.current.length });
+          }
+        }
+      }
+      
+      const nextSetData = preloadedSetsRef.current.shift();
+      if (!nextSetData || nextSetData.photos.length === 0) {
+        console.log('[Collage] No next set available, will retry');
+        isTransitioningRef.current = false;
+        setIsTransitioning(false);
+        return;
+      }
+      
+      const nextSet = nextSetData.photos;
+      
+      // Ensure all images are loaded
+      const urls = nextSet.map(p => getPhotoUrl(p));
+      const allReady = urls.every(url => imagePreloader.isLoaded(url));
+      
+      if (!allReady) {
+        await imagePreloader.preloadAll(urls);
+      }
+      
+      const targetLayer = activeLayer === 'A' ? 'B' : 'A';
+      
+      if (targetLayer === 'A') {
+        setLayerA(nextSet);
+      } else {
+        setLayerB(nextSet);
+      }
+      
+      await new Promise(r => setTimeout(r, 50));
+      
+      setActiveLayer(targetLayer);
+      
+      // Schedule preload of next sets after transition completes
+      setTimeout(() => {
+        isTransitioningRef.current = false;
+        setIsTransitioning(false);
+        preloadNextSets();
+      }, TRANSITION_DURATION);
+      
+    } catch (err) {
+      console.error('[Collage] Transition error:', err);
+      isTransitioningRef.current = false;
+      setIsTransitioning(false);
     }
     
-    await new Promise(r => setTimeout(r, 50));
-    
-    setActiveLayer(targetLayer);
-    
-    setTimeout(() => {
-      setIsTransitioning(false);
-      preloadNextSets();
-    }, TRANSITION_DURATION);
-    
-  }, [isPaused, isTransitioning, activeLayer, generateTileSet, getPhotoUrl, preloadNextSets, layout.length]);
+  }, [isPaused, activeLayer, generateTileSet, getPhotoUrl, preloadNextSets]);
 
   useEffect(() => {
     if (photos.length === 0) return;
