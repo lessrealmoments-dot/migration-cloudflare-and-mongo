@@ -14,37 +14,35 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// Professional magazine-style layout - 17 tiles perfectly fitted
-// Inspired by TurboCollage with gaps and varied tile sizes - Full coverage
+// Professional magazine-style layout - 15 tiles with organic arrangement
+// Inspired by TurboCollage - more varied and artistic layout
 const TILE_LAYOUT = [
-  // Column 1 (x: 0-16)
-  { x: 0, y: 0, w: 16, h: 50 },        // Top-left tall
-  { x: 0, y: 50, w: 16, h: 50 },       // Bottom-left tall
+  // Left section
+  { x: 0, y: 0, w: 18, h: 58 },        // Large portrait left
+  { x: 0, y: 58, w: 18, h: 42 },       // Bottom left
   
-  // Column 2 (x: 16-32)
-  { x: 16, y: 0, w: 16, h: 33 },       // Top
-  { x: 16, y: 33, w: 16, h: 34 },      // Middle  
-  { x: 16, y: 67, w: 16, h: 33 },      // Bottom
+  // Center-left section  
+  { x: 18, y: 0, w: 15, h: 35 },       // Top
+  { x: 18, y: 35, w: 15, h: 30 },      // Middle
+  { x: 18, y: 65, w: 15, h: 35 },      // Bottom
   
-  // Column 3 (x: 32-48)
-  { x: 32, y: 0, w: 16, h: 40 },       // Top
-  { x: 32, y: 40, w: 16, h: 30 },      // Middle
-  { x: 32, y: 70, w: 16, h: 30 },      // Bottom
+  // Center section
+  { x: 33, y: 0, w: 17, h: 42 },       // Top center
+  { x: 33, y: 42, w: 17, h: 28 },      // Middle center
+  { x: 33, y: 70, w: 17, h: 30 },      // Bottom center
   
-  // Column 4 (x: 48-66)
-  { x: 48, y: 0, w: 18, h: 35 },       // Top
-  { x: 48, y: 35, w: 18, h: 35 },      // Middle
-  { x: 48, y: 70, w: 18, h: 30 },      // Bottom
+  // Center-right section
+  { x: 50, y: 0, w: 16, h: 38 },       // Top
+  { x: 50, y: 38, w: 16, h: 32 },      // Middle
+  { x: 50, y: 70, w: 16, h: 30 },      // Bottom
   
-  // Column 5 (x: 66-82)
-  { x: 66, y: 0, w: 16, h: 45 },       // Top tall
-  { x: 66, y: 45, w: 16, h: 28 },      // Middle
-  { x: 66, y: 73, w: 16, h: 27 },      // Bottom
+  // Right section
+  { x: 66, y: 0, w: 17, h: 48 },       // Top tall
+  { x: 66, y: 48, w: 17, h: 52 },      // Bottom tall
   
-  // Column 6 (x: 82-100)
-  { x: 82, y: 0, w: 18, h: 55 },       // Top extra tall
-  { x: 82, y: 55, w: 18, h: 22 },      // Middle
-  { x: 82, y: 77, w: 18, h: 23 },      // Bottom
+  // Far right section
+  { x: 83, y: 0, w: 17, h: 55 },       // Top extra tall
+  { x: 83, y: 55, w: 17, h: 45 },      // Bottom
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
