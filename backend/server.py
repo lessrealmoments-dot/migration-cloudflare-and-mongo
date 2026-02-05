@@ -1657,6 +1657,7 @@ async def forgot_password(data: ForgotPassword):
                 """
             }
             await asyncio.to_thread(resend.Emails.send, params)
+            logging.info(f"Password reset email sent to {data.email}")
         except Exception as e:
             logging.error(f"Failed to send email: {e}")
             raise HTTPException(status_code=500, detail="Failed to send email. Please try again later.")
