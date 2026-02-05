@@ -93,6 +93,11 @@ const GalleryDetail = () => {
   const [guestBulkActionLoading, setGuestBulkActionLoading] = useState(false);
   // Section drag reorder state
   const [draggedSection, setDraggedSection] = useState(null);
+  // Collage preset state
+  const [collagePresets, setCollagePresets] = useState([]);
+  const [showCollagePresetPicker, setShowCollagePresetPicker] = useState(false);
+  const [selectedCollagePreset, setSelectedCollagePreset] = useState(null);
+  const [savingPreset, setSavingPreset] = useState(false);
 
   // Section drag handlers
   const handleSectionDragStart = (e, section) => {
