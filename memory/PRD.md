@@ -274,7 +274,29 @@ Integrated with **Resend** email service.
 - Admin: /admin
 
 ## Last Updated
-February 4, 2026 - Added section rename, Enterprise Access override mode, bug fixes
+February 4, 2026 - Live Event Display improvements, section rename, Enterprise Access override mode
+
+### Live Event Display Modes ✅ (COMPLETED - February 4, 2026)
+
+**CollageDisplay.jsx - Rewritten for smooth live event experience:**
+- 11-tile mosaic layout with 16:9 aspect ratio
+- Individual tile crossfade transitions (1.2s opacity animation)
+- No gaps between tiles (edge-to-edge photos)
+- Image preloading with caching (preloads next batch before transition)
+- Auto-polling for new photos (10s-45s based on photo count)
+- Controls: Pause/Play, Settings panel with interval slider (3-15s), Fullscreen
+- **Fixed**: Removed white border/cluttering issue from previous 3D cube-flip animation
+
+**SlideshowDisplay.jsx - Optimized for smooth transitions:**
+- Single photo display with smooth fade transitions (700ms)
+- Image preloading (next 5 photos)
+- Progress bar showing position in gallery
+- Auto-advance with configurable interval
+- Click to pause/play
+
+**Test Gallery**: Ruby and Sapphire's Birthday (share_link: a189497a)
+- Access: `/display/a189497a?mode=collage` or `?mode=slideshow`
+- 53 photos, verified smooth transitions
 
 ### New Features ✅ (COMPLETED)
 
