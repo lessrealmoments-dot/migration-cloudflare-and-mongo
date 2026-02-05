@@ -14,7 +14,7 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// TurboCollage exact style - 12 tiles matching reference
+// TurboCollage exact style - 14 tiles matching reference
 // Large hero top-left, tall portrait far-right, varied middle section
 const TILE_LAYOUT = [
   // LEFT SIDE - Large hero
@@ -24,26 +24,26 @@ const TILE_LAYOUT = [
   { x: 30, y: 0, w: 18, h: 50 },       // Tall portrait center-left
   
   // TOP CENTER - Two small tiles
-  { x: 48, y: 0, w: 10, h: 25 },       // Small square top
-  { x: 58, y: 0, w: 10, h: 25 },       // Small square top
+  { x: 48, y: 0, w: 10, h: 25 },       // Small square top-left
+  { x: 58, y: 0, w: 10, h: 25 },       // Small square top-right
   
-  // CENTER - Medium tiles
+  // CENTER - Medium tile
   { x: 48, y: 25, w: 20, h: 25 },      // Medium landscape center
   
-  // RIGHT SIDE - Tall portrait + medium
+  // RIGHT SIDE - Medium tiles stacked
   { x: 68, y: 0, w: 15, h: 35 },       // Medium portrait top-right
   { x: 68, y: 35, w: 15, h: 35 },      // Medium portrait center-right
   
   // FAR RIGHT - Extra tall portrait  
   { x: 83, y: 0, w: 17, h: 70 },       // TALL portrait far-right (feature)
   
-  // BOTTOM ROW
+  // BOTTOM ROW - Full width coverage
   { x: 0, y: 50, w: 18, h: 50 },       // Medium square bottom-left
   { x: 18, y: 50, w: 22, h: 50 },      // Large landscape bottom-center-left
   { x: 40, y: 50, w: 16, h: 50 },      // Medium portrait bottom-center
   { x: 56, y: 50, w: 12, h: 50 },      // Medium bottom-center-right
-  { x: 68, y: 70, w: 15, h: 30 },      // Medium bottom-right
-  { x: 83, y: 70, w: 17, h: 30 },      // Medium bottom far-right
+  { x: 68, y: 70, w: 15, h: 30 },      // Small bottom-right
+  { x: 83, y: 70, w: 17, h: 30 },      // Small bottom far-right
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
