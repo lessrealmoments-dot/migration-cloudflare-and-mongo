@@ -433,45 +433,44 @@ const CollagePresetBuilder = () => {
         let newY = p.y;
         
         // Canvas is 16:9, so we need to account for this when maintaining visual ratios
-        // A 1% width = 16 visual units, a 1% height = 9 visual units
-        // So to convert: visualRatio = (width% * 16) / (height% * 9)
         const canvasAspect = 16 / 9;
         
-        // Calculate new dimensions based on handle
+        // Calculate new dimensions based on handle with smart snapping
         if (resizeHandle.includes('e')) {
-          newWidth = snapToGridValue(coords.x - p.x);
+          const snapResult = smartSnap(coords.x, 'x', p.id, true);
+          newWidth = snapResult.value - p.x;
+          newGuides.vertical = [...newGuides.vertical, ...snapResult.guides];
         }
         if (resizeHandle.includes('s')) {
-          newHeight = snapToGridValue(coords.y - p.y);
+          const snapResult = smartSnap(coords.y, 'y', p.id, true);
+          newHeight = snapResult.value - p.y;
+          newGuides.horizontal = [...newGuides.horizontal, ...snapResult.guides];
         }
         if (resizeHandle.includes('w')) {
-          const newLeft = snapToGridValue(coords.x);
+          const snapResult = smartSnap(coords.x, 'x', p.id, true);
+          const newLeft = snapResult.value;
           newWidth = p.x + p.width - newLeft;
           newX = newLeft;
+          newGuides.vertical = [...newGuides.vertical, ...snapResult.guides];
         }
         if (resizeHandle.includes('n')) {
-          const newTop = snapToGridValue(coords.y);
+          const snapResult = smartSnap(coords.y, 'y', p.id, true);
+          const newTop = snapResult.value;
           newHeight = p.y + p.height - newTop;
           newY = newTop;
+          newGuides.horizontal = [...newGuides.horizontal, ...snapResult.guides];
         }
         
         // Maintain aspect ratio only if not custom
-        // Account for canvas aspect ratio: visual ratio = target ratio
-        // (width% * 16) / (height% * 9) = targetRatio
-        // height% = (width% * 16) / (targetRatio * 9)
-        // height% = width% * canvasAspect / targetRatio
         if (ratioInfo && ratioInfo.widthRatio && ratioInfo.heightRatio) {
           const targetRatio = ratioInfo.widthRatio / ratioInfo.heightRatio;
           
-          // Determine primary axis based on handle direction
           const isHorizontalHandle = resizeHandle === 'e' || resizeHandle === 'w';
           const isVerticalHandle = resizeHandle === 'n' || resizeHandle === 's';
           
           if (isHorizontalHandle || resizeHandle.length === 2) {
-            // Width is primary - calculate height to maintain visual ratio
             newHeight = (newWidth * canvasAspect) / targetRatio;
           } else if (isVerticalHandle) {
-            // Height is primary - calculate width to maintain visual ratio
             newWidth = (newHeight * targetRatio) / canvasAspect;
           }
         }
@@ -491,6 +490,9 @@ const CollagePresetBuilder = () => {
       
       return p;
     }));
+    
+    // Update snap guides
+    setSnapGuides(newGuides);
   };
 
   // Mouse up
@@ -498,6 +500,7 @@ const CollagePresetBuilder = () => {
     setIsDragging(false);
     setIsResizing(false);
     setResizeHandle(null);
+    setSnapGuides({ horizontal: [], vertical: [] }); // Clear guides
   };
 
   // Change placeholder layer
