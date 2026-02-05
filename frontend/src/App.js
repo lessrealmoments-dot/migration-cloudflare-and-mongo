@@ -105,6 +105,7 @@ function App() {
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
           <Route path="/admin/gallery/:galleryId" element={<AdminProtectedRoute><AdminGalleryReview /></AdminProtectedRoute>} />
+          <Route path="/admin/collage-presets" element={<AdminProtectedRoute><CollagePresetBuilder /></AdminProtectedRoute>} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors />
