@@ -14,30 +14,29 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// EDITORIAL MOSAIC COLLAGE - Premium Gallery Layout
-// 60% Landscape (3:2) | 30% Portrait (2:3) | 10% Square (1:1)
-// 12 tiles: 7 landscape, 4 portrait, 1 square - No overlaps, no gaps
-const TILE_LAYOUT = [
-  // === TOP SECTION ===
-  { x: 0, y: 0, w: 38, h: 50 },      // HERO Landscape (extended to fill gap)
-  { x: 38, y: 0, w: 22, h: 50 },     // Portrait (tall)
-  { x: 60, y: 0, w: 22, h: 26 },     // Landscape (medium)
-  { x: 82, y: 0, w: 18, h: 18 },     // Square (filler)
-  { x: 82, y: 18, w: 18, h: 32 },    // Portrait (medium)
-  { x: 60, y: 26, w: 22, h: 24 },    // Landscape (medium)
-  
-  // === MIDDLE SECTION ===
-  { x: 0, y: 50, w: 20, h: 28 },     // Portrait (adjusted)
-  { x: 20, y: 50, w: 40, h: 28 },    // Landscape (wide)
-  { x: 60, y: 50, w: 40, h: 30 },    // HERO Landscape (large)
-  
-  // === BOTTOM SECTION ===
-  { x: 0, y: 78, w: 30, h: 22 },     // Landscape (wide)
-  { x: 30, y: 78, w: 30, h: 22 },    // Landscape (medium)
-  { x: 60, y: 80, w: 40, h: 20 },    // Landscape (wide)
+// Default fallback layout if no preset is configured
+const DEFAULT_TILE_LAYOUT = [
+  { id: '1', x: 0, y: 0, width: 38, height: 50, ratio: '3:2', z_index: 0 },
+  { id: '2', x: 38, y: 0, width: 22, height: 50, ratio: '2:3', z_index: 0 },
+  { id: '3', x: 60, y: 0, width: 22, height: 26, ratio: '3:2', z_index: 0 },
+  { id: '4', x: 82, y: 0, width: 18, height: 18, ratio: '1:1', z_index: 0 },
+  { id: '5', x: 82, y: 18, width: 18, height: 32, ratio: '2:3', z_index: 0 },
+  { id: '6', x: 60, y: 26, width: 22, height: 24, ratio: '3:2', z_index: 0 },
+  { id: '7', x: 0, y: 50, width: 20, height: 28, ratio: '2:3', z_index: 0 },
+  { id: '8', x: 20, y: 50, width: 40, height: 28, ratio: '3:2', z_index: 0 },
+  { id: '9', x: 60, y: 50, width: 40, height: 30, ratio: '3:2', z_index: 0 },
+  { id: '10', x: 0, y: 78, width: 30, height: 22, ratio: '3:2', z_index: 0 },
+  { id: '11', x: 30, y: 78, width: 30, height: 22, ratio: '3:2', z_index: 0 },
+  { id: '12', x: 60, y: 80, width: 40, height: 20, ratio: '3:2', z_index: 0 },
 ];
 
-const TILE_GAP = 3; // Gap between tiles in pixels
+const DEFAULT_SETTINGS = {
+  gap: 3,
+  border_thickness: 0,
+  border_color: '#000000',
+  border_opacity: 1.0,
+  background_color: '#000000'
+};
 
 const DEFAULT_INTERVAL = 7;
 const MIN_INTERVAL = 3;
