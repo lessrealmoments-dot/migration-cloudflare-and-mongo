@@ -2545,7 +2545,8 @@ async def duplicate_collage_preset(preset_id: str, admin: dict = Depends(get_adm
     }
     
     await db.collage_presets.insert_one(new_preset)
-    del new_preset["_id"] if "_id" in new_preset else None
+    if "_id" in new_preset:
+        del new_preset["_id"]
     
     return new_preset
 
