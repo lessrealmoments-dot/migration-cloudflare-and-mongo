@@ -279,6 +279,63 @@ const CollagePresetBuilder = () => {
     return Math.round(value / gridSize) * gridSize;
   };
 
+  // Smart snap - considers grid, other tiles' edges, and gaps
+  const smartSnap = (value, axis, placeholderId, isEdge = false) => {
+    const SNAP_THRESHOLD = 2; // Snap within 2% proximity
+    const gap = settings.gap || 0;
+    let snappedValue = value;
+    let guides = [];
+    
+    // First try edge snapping to other tiles
+    if (snapToEdges) {
+      const otherPlaceholders = placeholders.filter(p => p.id !== placeholderId);
+      
+      for (const other of otherPlaceholders) {
+        // Get edges of other placeholder
+        const edges = axis === 'x' 
+          ? [other.x, other.x + other.width] // left, right edges
+          : [other.y, other.y + other.height]; // top, bottom edges
+        
+        for (const edge of edges) {
+          // Snap to edge with gap
+          const edgeWithGap = edge + gap;
+          const edgeMinusGap = edge - gap;
+          
+          // Check if close to edge (for placing next to)
+          if (Math.abs(value - edgeWithGap) < SNAP_THRESHOLD) {
+            snappedValue = edgeWithGap;
+            guides.push(edge);
+          } else if (Math.abs(value - edgeMinusGap) < SNAP_THRESHOLD && isEdge) {
+            // For resizing, snap to edge minus gap
+            snappedValue = edgeMinusGap;
+            guides.push(edge);
+          } else if (Math.abs(value - edge) < SNAP_THRESHOLD) {
+            // Direct edge alignment
+            snappedValue = edge;
+            guides.push(edge);
+          }
+        }
+      }
+      
+      // Also snap to canvas edges (0 and 100)
+      if (Math.abs(value) < SNAP_THRESHOLD) {
+        snappedValue = 0;
+        guides.push(0);
+      }
+      if (Math.abs(value - 100) < SNAP_THRESHOLD) {
+        snappedValue = 100;
+        guides.push(100);
+      }
+    }
+    
+    // If no edge snap, fall back to grid
+    if (guides.length === 0 && snapToGrid) {
+      snappedValue = Math.round(value / gridSize) * gridSize;
+    }
+    
+    return { value: snappedValue, guides };
+  };
+
   // Get canvas coordinates from mouse event
   const getCanvasCoords = (e) => {
     if (!canvasRef.current) return { x: 0, y: 0 };
