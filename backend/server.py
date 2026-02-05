@@ -2461,7 +2461,8 @@ async def create_collage_preset(
     }
     
     await db.collage_presets.insert_one(preset)
-    del preset["_id"] if "_id" in preset else None
+    if "_id" in preset:
+        del preset["_id"]
     
     return preset
 
