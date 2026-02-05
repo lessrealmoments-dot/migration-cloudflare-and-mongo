@@ -717,19 +717,29 @@ const CollagePresetBuilder = () => {
                 <div
                   key={preset.id}
                   onClick={() => loadPreset(preset)}
-                  className={`p-3 rounded-lg cursor-pointer mb-2 transition-colors ${
+                  className={`group p-3 rounded-lg cursor-pointer mb-2 transition-colors ${
                     selectedPresetId === preset.id
                       ? 'bg-blue-600/20 border border-blue-500'
                       : 'bg-neutral-800 hover:bg-neutral-700 border border-transparent'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-sm truncate">{preset.name}</span>
-                    {preset.is_default && (
-                      <span className="text-xs bg-green-600/20 text-green-400 px-2 py-0.5 rounded">
-                        Default
-                      </span>
-                    )}
+                    <span className="font-medium text-sm truncate flex-1">{preset.name}</span>
+                    <div className="flex items-center gap-1">
+                      {preset.is_default && (
+                        <span className="text-xs bg-green-600/20 text-green-400 px-2 py-0.5 rounded">
+                          Default
+                        </span>
+                      )}
+                      {/* Delete button - always visible */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deletePreset(preset.id); }}
+                        className="p-1.5 hover:bg-red-600 rounded text-neutral-400 hover:text-white transition-colors"
+                        title="Delete Preset"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-neutral-400">
                     <LayoutGrid className="w-3 h-3" />
@@ -745,19 +755,20 @@ const CollagePresetBuilder = () => {
                     </div>
                   )}
                   
-                  {/* Actions */}
+                  {/* Duplicate button on hover */}
                   <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => { e.stopPropagation(); duplicatePreset(preset.id); }}
-                      className="p-1 hover:bg-neutral-600 rounded"
+                      className="p-1 hover:bg-neutral-600 rounded flex items-center gap-1 text-xs text-neutral-400"
                       title="Duplicate"
                     >
                       <Copy className="w-3 h-3" />
+                      <span>Duplicate</span>
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deletePreset(preset.id); }}
-                      className="p-1 hover:bg-red-600 rounded"
-                      title="Delete"
+                  </div>
+                </div>
+              ))
+            )}
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
