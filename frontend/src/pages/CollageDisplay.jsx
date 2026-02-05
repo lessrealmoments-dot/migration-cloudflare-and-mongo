@@ -14,31 +14,37 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// Professional magazine-style layout - 17 tiles with varied sizes
+// Professional magazine-style layout - 17 tiles perfectly fitted
 // Inspired by TurboCollage with gaps and varied tile sizes - Full coverage
 const TILE_LAYOUT = [
-  // Top row - varied heights
-  { x: 0, y: 0, w: 16, h: 52 },        // Tall left
-  { x: 16, y: 0, w: 14, h: 30 },       // Medium top-left
-  { x: 30, y: 0, w: 14, h: 26 },       // Small top
-  { x: 44, y: 0, w: 16, h: 35 },       // Medium top-center
-  { x: 60, y: 0, w: 14, h: 30 },       // Medium top-right
-  { x: 74, y: 0, w: 13, h: 42 },       // Tall right
-  { x: 87, y: 0, w: 13, h: 52 },       // Extra tall far right
+  // Column 1 (x: 0-16)
+  { x: 0, y: 0, w: 16, h: 50 },        // Top-left tall
+  { x: 0, y: 50, w: 16, h: 50 },       // Bottom-left tall
   
-  // Middle row
-  { x: 16, y: 30, w: 14, h: 26 },      // Below top-left
-  { x: 30, y: 26, w: 14, h: 30 },      // Below small top
-  { x: 44, y: 35, w: 16, h: 25 },      // Below top-center
-  { x: 60, y: 30, w: 14, h: 30 },      // Below top-right
-  { x: 74, y: 42, w: 13, h: 28 },      // Below tall right
+  // Column 2 (x: 16-32)
+  { x: 16, y: 0, w: 16, h: 33 },       // Top
+  { x: 16, y: 33, w: 16, h: 34 },      // Middle  
+  { x: 16, y: 67, w: 16, h: 33 },      // Bottom
   
-  // Bottom row - full width coverage
-  { x: 0, y: 52, w: 18, h: 48 },       // Large bottom-left
-  { x: 18, y: 56, w: 18, h: 44 },      // Wide bottom-center-left
-  { x: 36, y: 56, w: 17, h: 44 },      // Medium bottom-center
-  { x: 53, y: 60, w: 21, h: 40 },      // Wide bottom-center-right
-  { x: 74, y: 70, w: 26, h: 30 },      // Wide bottom-right
+  // Column 3 (x: 32-48)
+  { x: 32, y: 0, w: 16, h: 40 },       // Top
+  { x: 32, y: 40, w: 16, h: 30 },      // Middle
+  { x: 32, y: 70, w: 16, h: 30 },      // Bottom
+  
+  // Column 4 (x: 48-66)
+  { x: 48, y: 0, w: 18, h: 35 },       // Top
+  { x: 48, y: 35, w: 18, h: 35 },      // Middle
+  { x: 48, y: 70, w: 18, h: 30 },      // Bottom
+  
+  // Column 5 (x: 66-82)
+  { x: 66, y: 0, w: 16, h: 45 },       // Top tall
+  { x: 66, y: 45, w: 16, h: 28 },      // Middle
+  { x: 66, y: 73, w: 16, h: 27 },      // Bottom
+  
+  // Column 6 (x: 82-100)
+  { x: 82, y: 0, w: 18, h: 55 },       // Top extra tall
+  { x: 82, y: 55, w: 18, h: 22 },      // Middle
+  { x: 82, y: 77, w: 18, h: 23 },      // Bottom
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
