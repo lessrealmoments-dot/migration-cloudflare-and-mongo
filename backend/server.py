@@ -5301,7 +5301,13 @@ async def serve_uploaded_file(file_type: str, filename: str):
     
     file_path = UPLOAD_DIR / file_type / filename
     if not file_path.exists():
+        logger.warning(f"File not found: {file_path}")
         raise HTTPException(status_code=404, detail="File not found")
+    
+    # Check if file is valid (not empty/corrupted)
+    if file_path.stat().st_size == 0:
+        logger.warning(f"Empty file found: {file_path}")
+        raise HTTPException(status_code=404, detail="File is corrupted")
     
     # Determine content type
     suffix = file_path.suffix.lower()
@@ -5312,9 +5318,17 @@ async def serve_uploaded_file(file_type: str, filename: str):
         '.gif': 'image/gif',
         '.webp': 'image/webp'
     }
-    content_type = content_types.get(suffix, 'application/octet-stream')
+    content_type = content_types.get(suffix, 'image/jpeg')
     
-    return FileResponse(file_path, media_type=content_type)
+    # Add cache headers for better performance
+    return FileResponse(
+        file_path, 
+        media_type=content_type,
+        headers={
+            "Cache-Control": "public, max-age=31536000",  # Cache for 1 year
+            "X-Content-Type-Options": "nosniff"
+        }
+    )
 
 @api_router.post("/admin/reject-payment")
 async def reject_payment(data: RejectPayment, background_tasks: BackgroundTasks, admin: dict = Depends(get_admin_user)):
