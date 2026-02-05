@@ -1089,9 +1089,14 @@ const CollagePresetBuilder = () => {
                       onChange={(e) => {
                         const width = Number(e.target.value);
                         const ratioInfo = RATIO_PRESETS[selectedPlaceholder.ratio];
-                        const height = ratioInfo 
-                          ? (width * ratioInfo.heightRatio) / ratioInfo.widthRatio
-                          : selectedPlaceholder.height;
+                        const canvasAspect = 16 / 9;
+                        let height;
+                        if (ratioInfo && ratioInfo.widthRatio && ratioInfo.heightRatio) {
+                          const targetRatio = ratioInfo.widthRatio / ratioInfo.heightRatio;
+                          height = (width * canvasAspect) / targetRatio;
+                        } else {
+                          height = selectedPlaceholder.height;
+                        }
                         setPlaceholders(placeholders.map(p =>
                           p.id === selectedPlaceholder.id ? { ...p, width, height } : p
                         ));
