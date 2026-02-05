@@ -160,7 +160,8 @@ const CollageDisplay = () => {
 
   const generateTileSet = useCallback((startIndex = null) => {
     const currentPhotos = photosRef.current;
-    if (currentPhotos.length === 0) return [];
+    const currentLayout = layoutRef.current;
+    if (currentPhotos.length === 0 || currentLayout.length === 0) return [];
     
     let index = startIndex !== null ? startIndex : photoPoolIndex.current;
     
@@ -176,17 +177,17 @@ const CollageDisplay = () => {
     
     const tiles = [];
     
-    for (let i = 0; i < layout.length; i++) {
+    for (let i = 0; i < currentLayout.length; i++) {
       const photo = currentPhotos[(index + i) % currentPhotos.length];
       tiles.push(photo);
     }
     
     if (startIndex === null) {
-      photoPoolIndex.current += layout.length;
+      photoPoolIndex.current += currentLayout.length;
     }
     
     return tiles;
-  }, [layout.length]);
+  }, []);
 
   const preloadNextSets = useCallback(async () => {
     if (isPreloadingRef.current || photosRef.current.length === 0) return;
