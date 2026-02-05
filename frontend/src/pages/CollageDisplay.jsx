@@ -127,6 +127,7 @@ const CollageDisplay = () => {
   
   const preloadedSetsRef = useRef([]);
   const isPreloadingRef = useRef(false);
+  const isTransitioningRef = useRef(false);
   
   const urlInterval = searchParams.get('interval');
   const [updateInterval, setUpdateInterval] = useState(
