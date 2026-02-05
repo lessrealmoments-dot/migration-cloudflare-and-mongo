@@ -5,16 +5,16 @@ import { Maximize, Minimize, Pause, Play, Settings, Camera } from 'lucide-react'
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Calculate poll interval based on photo count
+// Poll interval based on photo count
 const getPollInterval = (photoCount) => {
-  if (photoCount < 10) return 10000;       // 10 seconds
-  if (photoCount < 20) return 15000;       // 15 seconds
-  if (photoCount < 30) return 20000;       // 20 seconds
-  if (photoCount <= 50) return 30000;      // 30 seconds
-  return 45000;                            // 45 seconds for 50+
+  if (photoCount < 10) return 10000;
+  if (photoCount < 20) return 15000;
+  if (photoCount < 30) return 20000;
+  if (photoCount <= 50) return 30000;
+  return 45000;
 };
 
-// Tile layout configuration for 16:9 aspect ratio - 11 tiles
+// Tile layout for 16:9 - 11 tiles
 const TILE_LAYOUT = [
   { x: 0, y: 0, w: 25, h: 50 },
   { x: 25, y: 0, w: 25, h: 33.33 },
@@ -29,12 +29,11 @@ const TILE_LAYOUT = [
   { x: 33.33, y: 50, w: 16.67, h: 16.66 },
 ];
 
-// Default interval settings
 const DEFAULT_INTERVAL = 7;
 const MIN_INTERVAL = 3;
 const MAX_INTERVAL = 15;
 
-// Preload an image
+// Preload image
 const preloadImage = (src) => {
   return new Promise((resolve) => {
     const img = new Image();
@@ -50,16 +49,19 @@ const CollageDisplay = () => {
   
   const [displayData, setDisplayData] = useState(null);
   const [photos, setPhotos] = useState([]);
-  const [tilePhotos, setTilePhotos] = useState([]);
-  const [isFlipping, setIsFlipping] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showBackSide, setShowBackSide] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  
+  // Two sets of tiles for crossfade transition
+  const [currentSet, setCurrentSet] = useState([]);
+  const [nextSet, setNextSet] = useState([]);
+  const [showNextSet, setShowNextSet] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   
   const urlInterval = searchParams.get('interval');
   const [updateInterval, setUpdateInterval] = useState(
@@ -77,41 +79,48 @@ const CollageDisplay = () => {
 
   const layout = TILE_LAYOUT;
 
-  // Update ref when photos change
   useEffect(() => {
     photosRef.current = photos;
   }, [photos]);
 
-  // Get photo URL - use thumbnail for collage tiles (faster loading)
+  // Get photo URL - prefer thumbnail for tiles
   const getPhotoUrl = useCallback((photo) => {
     if (!photo) return '';
-    // Prefer medium thumbnail for collage tiles
     if (photo.thumbnail_medium_url) {
       return `${BACKEND_URL}${photo.thumbnail_medium_url}`;
     }
     return `${BACKEND_URL}${photo.url}`;
   }, []);
 
-  // Preload next batch of photos
-  const preloadNextBatch = useCallback(async (fromIndex, count = 11) => {
+  // Generate a set of photos for tiles
+  const generateTileSet = useCallback(() => {
+    const currentPhotos = photosRef.current;
+    if (currentPhotos.length === 0) return [];
+    
+    const tiles = [];
+    for (let i = 0; i < layout.length; i++) {
+      const photo = currentPhotos[photoPoolIndex.current % currentPhotos.length];
+      tiles.push(photo);
+      photoPoolIndex.current++;
+    }
+    return tiles;
+  }, [layout.length]);
+
+  // Preload next batch
+  const preloadNextBatch = useCallback(async () => {
     const currentPhotos = photosRef.current;
     if (currentPhotos.length === 0) return;
     
-    const toPreload = [];
-    for (let i = 0; i < count; i++) {
-      const idx = (fromIndex + i) % currentPhotos.length;
+    const startIdx = photoPoolIndex.current;
+    for (let i = 0; i < layout.length; i++) {
+      const idx = (startIdx + i) % currentPhotos.length;
       const photo = currentPhotos[idx];
       if (photo && !preloadedSet.current.has(photo.id)) {
-        toPreload.push(photo);
         preloadedSet.current.add(photo.id);
+        preloadImage(getPhotoUrl(photo));
       }
     }
-    
-    // Preload in parallel without blocking
-    toPreload.forEach(photo => {
-      preloadImage(getPhotoUrl(photo));
-    });
-  }, [getPhotoUrl]);
+  }, [layout.length, getPhotoUrl]);
 
   // Fetch display data
   const fetchDisplayData = useCallback(async (isPolling = false) => {
@@ -127,20 +136,17 @@ const CollageDisplay = () => {
       
       if (newPhotoCount !== previousCount || !isPolling) {
         if (isPolling && newPhotoCount > previousCount) {
-          // New photos - add to queue
           const existingIds = new Set(photosRef.current.map(p => p.id));
           const newPhotos = data.photos.filter(p => !existingIds.has(p.id));
-          
           if (newPhotos.length > 0) {
-            console.log(`[Live] ${newPhotos.length} new photo(s) added to queue`);
+            console.log(`[Live] ${newPhotos.length} new photo(s) added`);
             setPhotos(prev => [...prev, ...newPhotos]);
           }
         } else {
-          // Initial load - shuffle
+          // Shuffle on initial load
           const shuffled = [...data.photos].sort(() => Math.random() - 0.5);
           setPhotos(shuffled);
         }
-        
         lastPhotoCount.current = newPhotoCount;
       }
       
@@ -153,100 +159,84 @@ const CollageDisplay = () => {
     }
   }, [shareLink]);
 
-  // Initialize tiles with photos
-  const initializeTiles = useCallback(async (photoList) => {
-    const tiles = [];
-    const photosToPreload = [];
-    
-    for (let i = 0; i < layout.length; i++) {
-      const photo = photoList[i % photoList.length];
-      tiles.push({
-        current: photo,
-        next: null,
-      });
-      if (photo && !preloadedSet.current.has(photo.id)) {
-        photosToPreload.push(photo);
-        preloadedSet.current.add(photo.id);
-      }
-    }
-    
-    // Preload initial tiles
-    await Promise.all(photosToPreload.map(photo => preloadImage(getPhotoUrl(photo))));
-    
-    setTilePhotos(tiles);
-    photoPoolIndex.current = layout.length;
-    setIsReady(true);
-  }, [layout.length, getPhotoUrl]);
-
-  // Update ALL tiles at once with cube flip
-  const updateAllTiles = useCallback(() => {
-    if (isPaused || photosRef.current.length === 0 || isFlipping) return;
-    
-    // Get next batch of photos
-    const nextPhotos = [];
-    for (let i = 0; i < layout.length; i++) {
-      nextPhotos.push(photosRef.current[photoPoolIndex.current % photosRef.current.length]);
-      photoPoolIndex.current++;
-    }
-    
-    // Preload the batch after this one (5 sets ahead = 55 photos)
-    preloadNextBatch(photoPoolIndex.current, layout.length);
-    
-    // Set next photos on hidden face
-    setTilePhotos(prev => prev.map((tile, index) => ({
-      ...tile,
-      next: nextPhotos[index],
-    })));
-    
-    // Trigger flip
-    setIsFlipping(true);
-    
-    // Complete flip after animation
-    setTimeout(() => {
-      setTilePhotos(prev => prev.map((tile) => ({
-        current: tile.next || tile.current,
-        next: null,
-      })));
-      setShowBackSide(prev => !prev);
-      setIsFlipping(false);
-    }, 850);
-  }, [isPaused, isFlipping, layout.length, preloadNextBatch]);
-
   // Initial load
   useEffect(() => {
     fetchDisplayData();
-  }, []);
+  }, [fetchDisplayData]);
 
-  // Initialize tiles when photos are loaded
+  // Initialize tiles when photos load
   useEffect(() => {
-    if (photos.length > 0 && tilePhotos.length === 0) {
-      initializeTiles(photos);
-    }
-  }, [photos, tilePhotos.length, initializeTiles]);
+    if (photos.length === 0 || isReady) return;
+    
+    const initialize = async () => {
+      // Preload first batch
+      const initialSet = [];
+      for (let i = 0; i < Math.min(layout.length, photos.length); i++) {
+        initialSet.push(photos[i]);
+        preloadedSet.current.add(photos[i].id);
+      }
+      
+      await Promise.all(initialSet.map(p => preloadImage(getPhotoUrl(p))));
+      
+      photoPoolIndex.current = layout.length;
+      setCurrentSet(initialSet);
+      
+      // Preload next batch
+      preloadNextBatch();
+      
+      setIsReady(true);
+    };
+    
+    initialize();
+  }, [photos, isReady, layout.length, getPhotoUrl, preloadNextBatch]);
+
+  // Transition to next set
+  const transitionToNext = useCallback(async () => {
+    if (isPaused || photosRef.current.length === 0 || isTransitioning) return;
+    
+    setIsTransitioning(true);
+    
+    // Generate next set
+    const newSet = generateTileSet();
+    setNextSet(newSet);
+    
+    // Small delay then start crossfade
+    await new Promise(r => setTimeout(r, 50));
+    setShowNextSet(true);
+    
+    // After transition completes, swap sets
+    setTimeout(() => {
+      setCurrentSet(newSet);
+      setNextSet([]);
+      setShowNextSet(false);
+      setIsTransitioning(false);
+      
+      // Preload next batch
+      preloadNextBatch();
+    }, 1000); // Match CSS transition duration
+  }, [isPaused, isTransitioning, generateTileSet, preloadNextBatch]);
 
   // Poll for new photos
   useEffect(() => {
     if (photos.length === 0) return;
     
-    const pollInterval = getPollInterval(photos.length);
-    
     pollTimer.current = setInterval(() => {
       fetchDisplayData(true);
-    }, pollInterval);
+    }, getPollInterval(photos.length));
     
     return () => clearInterval(pollTimer.current);
   }, [photos.length, fetchDisplayData]);
 
-  // Update timer
+  // Auto-update timer
   useEffect(() => {
-    if (tilePhotos.length === 0 || isPaused || !isReady) return;
+    if (!isReady || isPaused) return;
     
-    updateTimer.current = setInterval(updateAllTiles, updateInterval * 1000);
+    updateTimer.current = setInterval(transitionToNext, updateInterval * 1000);
     
     return () => clearInterval(updateTimer.current);
-  }, [tilePhotos.length, isPaused, updateInterval, updateAllTiles, isReady]);
+  }, [isReady, isPaused, updateInterval, transitionToNext]);
 
-  // Fullscreen handling
+  // Fullscreen
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen();
@@ -257,16 +247,13 @@ const CollageDisplay = () => {
     }
   };
 
-  // Hide controls after inactivity
+  // Hide controls
   const handleMouseMove = () => {
     setShowControls(true);
     clearTimeout(hideControlsTimer.current);
-    hideControlsTimer.current = setTimeout(() => {
-      setShowControls(false);
-    }, 3000);
+    hideControlsTimer.current = setTimeout(() => setShowControls(false), 3000);
   };
 
-  // Loading state
   if (initialLoading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
@@ -286,7 +273,6 @@ const CollageDisplay = () => {
     );
   }
 
-  // Empty gallery - waiting for uploads
   if (photos.length === 0) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center" data-testid="waiting-screen">
@@ -304,7 +290,6 @@ const CollageDisplay = () => {
     );
   }
 
-  // Preparing initial photos
   if (!isReady) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center" data-testid="preparing-screen">
@@ -319,6 +304,40 @@ const CollageDisplay = () => {
     );
   }
 
+  // Render tile grid
+  const renderTileGrid = (tiles, opacity = 1, zIndex = 1) => (
+    <div 
+      className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+      style={{ opacity, zIndex }}
+    >
+      {layout.map((tile, index) => {
+        const photo = tiles[index];
+        if (!photo) return null;
+        
+        return (
+          <div
+            key={`${index}-${photo.id}`}
+            className="absolute overflow-hidden"
+            style={{
+              left: `${tile.x}%`,
+              top: `${tile.y}%`,
+              width: `${tile.w}%`,
+              height: `${tile.h}%`,
+              padding: '2px'
+            }}
+          >
+            <img
+              src={getPhotoUrl(photo)}
+              alt=""
+              className="w-full h-full object-cover rounded-sm"
+              draggable={false}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div 
       ref={containerRef}
@@ -326,43 +345,10 @@ const CollageDisplay = () => {
       onMouseMove={handleMouseMove}
       data-testid="collage-display"
     >
-      {/* CSS for 3D Cube Flip */}
-      <style>{`
-        .cube-container {
-          perspective: 1000px;
-          transform-style: preserve-3d;
-        }
-        .cube-flipper {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          transform-style: preserve-3d;
-          transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
-        }
-        .cube-flipper.flip-to-back {
-          transform: rotateY(180deg);
-        }
-        .cube-flipper.flip-to-front {
-          transform: rotateY(0deg);
-        }
-        .cube-flipper.no-transition {
-          transition: none !important;
-        }
-        .cube-face {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          backface-visibility: hidden;
-        }
-        .cube-face-back {
-          transform: rotateY(180deg);
-        }
-      `}</style>
-      
       {/* 16:9 Container */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div 
-          className="relative bg-black"
+          className="relative bg-black overflow-hidden"
           style={{
             width: '100vw',
             height: 'calc(100vw * 9 / 16)',
@@ -370,59 +356,21 @@ const CollageDisplay = () => {
             maxWidth: 'calc(100vh * 16 / 9)'
           }}
         >
-          {/* Tiles */}
-          {layout.map((tile, index) => {
-            const tileData = tilePhotos[index];
-            if (!tileData?.current) return null;
-            
-            const flipClass = isFlipping 
-              ? (showBackSide ? 'flip-to-front' : 'flip-to-back')
-              : (showBackSide ? 'flip-to-back no-transition' : 'flip-to-front no-transition');
-            
-            return (
-              <div
-                key={index}
-                className="absolute cube-container"
-                style={{
-                  left: `${tile.x}%`,
-                  top: `${tile.y}%`,
-                  width: `${tile.w}%`,
-                  height: `${tile.h}%`,
-                  padding: '2px'
-                }}
-              >
-                <div className={`cube-flipper ${flipClass}`}>
-                  {/* Front face */}
-                  <div className="cube-face rounded-sm overflow-hidden bg-zinc-900">
-                    <img
-                      src={getPhotoUrl(tileData.current)}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  
-                  {/* Back face */}
-                  <div className="cube-face cube-face-back rounded-sm overflow-hidden bg-zinc-900">
-                    <img
-                      src={getPhotoUrl(tileData.next || tileData.current)}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {/* Current set (always visible) */}
+          {renderTileGrid(currentSet, 1, 1)}
+          
+          {/* Next set (fades in during transition) */}
+          {nextSet.length > 0 && renderTileGrid(nextSet, showNextSet ? 1 : 0, 2)}
         </div>
       </div>
 
-      {/* Controls Overlay */}
+      {/* Controls */}
       <div 
         className={`absolute inset-0 z-50 transition-opacity duration-500 pointer-events-none ${
           showControls ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        {/* Top bar */}
+        {/* Top */}
         <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 to-transparent p-8 pb-24">
           <h1 className="text-white text-3xl font-light tracking-wide">
             {displayData?.event_title || displayData?.title}
@@ -432,37 +380,32 @@ const CollageDisplay = () => {
           )}
         </div>
 
-        {/* Bottom bar */}
+        {/* Bottom */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-8 pt-24 pointer-events-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <button
                 onClick={() => setIsPaused(!isPaused)}
                 className="text-white/70 hover:text-white p-2 transition-colors"
-                data-testid="play-pause-btn"
               >
                 {isPaused ? <Play className="w-8 h-8" /> : <Pause className="w-8 h-8" />}
               </button>
               <span className="text-white/70 text-lg font-light">
                 {photos.length} photos
               </span>
-              <span className="text-white/40 text-sm">
-                • {updateInterval}s
-              </span>
+              <span className="text-white/40 text-sm">• {updateInterval}s</span>
             </div>
             
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setShowSettings(!showSettings)}
                 className="text-white/70 hover:text-white p-2 transition-colors"
-                data-testid="settings-btn"
               >
                 <Settings className="w-7 h-7" />
               </button>
               <button
                 onClick={toggleFullscreen}
                 className="text-white/70 hover:text-white p-2 transition-colors"
-                data-testid="fullscreen-btn"
               >
                 {isFullscreen ? <Minimize className="w-8 h-8" /> : <Maximize className="w-8 h-8" />}
               </button>
@@ -471,12 +414,9 @@ const CollageDisplay = () => {
         </div>
       </div>
 
-      {/* Settings Panel */}
+      {/* Settings */}
       {showSettings && showControls && (
-        <div 
-          className="absolute bottom-24 right-8 z-50 bg-black/70 backdrop-blur-md rounded-lg p-6 pointer-events-auto"
-          data-testid="settings-panel"
-        >
+        <div className="absolute bottom-24 right-8 z-50 bg-black/70 backdrop-blur-md rounded-lg p-6 pointer-events-auto">
           <h3 className="text-white font-medium mb-4">Display Settings</h3>
           <div>
             <label className="text-white/60 text-sm block mb-2">
@@ -489,7 +429,6 @@ const CollageDisplay = () => {
               value={updateInterval}
               onChange={(e) => setUpdateInterval(parseInt(e.target.value))}
               className="w-48 accent-white"
-              data-testid="interval-slider"
             />
             <div className="flex justify-between text-white/40 text-xs mt-1">
               <span>{MIN_INTERVAL}s</span>
