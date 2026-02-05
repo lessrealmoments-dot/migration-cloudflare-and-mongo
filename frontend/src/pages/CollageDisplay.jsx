@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Maximize, Minimize, Pause, Play, Settings } from 'lucide-react';
+import { Maximize, Minimize, Pause, Play, Settings, Loader2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -34,6 +34,16 @@ const DEFAULT_INTERVAL = 7; // seconds
 const MIN_INTERVAL = 3;
 const MAX_INTERVAL = 15;
 
+// Preload an image and return a promise
+const preloadImage = (src) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(src);
+    img.onerror = () => reject(new Error(`Failed to load: ${src}`));
+    img.src = src;
+  });
+};
+
 const CollageDisplay = () => {
   const { shareLink } = useParams();
   const [searchParams] = useSearchParams();
@@ -48,7 +58,11 @@ const CollageDisplay = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showBackSide, setShowBackSide] = useState(false); // Track which cube face is showing
+  const [showBackSide, setShowBackSide] = useState(false);
+  
+  // Track loaded images
+  const [loadedImages, setLoadedImages] = useState({});
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   
   // Configurable interval (3-15 seconds)
   const urlInterval = searchParams.get('interval');
@@ -62,8 +76,42 @@ const CollageDisplay = () => {
   const pollTimer = useRef(null);
   const photoPoolIndex = useRef(0);
   const lastPhotoCount = useRef(0);
+  const preloadQueue = useRef(new Set());
 
   const layout = TILE_LAYOUT;
+
+  // Get photo URL
+  const getPhotoUrl = useCallback((photo) => {
+    if (!photo) return '';
+    // For collage, prefer medium thumbnail for faster loading
+    if (photo.thumbnail_medium_url) {
+      return `${BACKEND_URL}${photo.thumbnail_medium_url}`;
+    }
+    return `${BACKEND_URL}${photo.url}`;
+  }, []);
+
+  // Preload a batch of photos
+  const preloadBatch = useCallback(async (photoList) => {
+    const toPreload = photoList.filter(photo => {
+      const url = getPhotoUrl(photo);
+      return photo && !loadedImages[photo.id] && !preloadQueue.current.has(url);
+    });
+
+    await Promise.all(
+      toPreload.map(async (photo) => {
+        const url = getPhotoUrl(photo);
+        preloadQueue.current.add(url);
+        try {
+          await preloadImage(url);
+          setLoadedImages(prev => ({ ...prev, [photo.id]: true }));
+        } catch (err) {
+          console.warn(`Failed to preload: ${url}`);
+        } finally {
+          preloadQueue.current.delete(url);
+        }
+      })
+    );
+  }, [getPhotoUrl, loadedImages]);
 
   // Fetch display data
   const fetchDisplayData = useCallback(async (isPolling = false) => {
@@ -100,22 +148,29 @@ const CollageDisplay = () => {
   }, [shareLink, tilePhotos.length]);
 
   // Initialize tiles with photos
-  const initializeTiles = (photoList) => {
+  const initializeTiles = async (photoList) => {
     const tiles = [];
+    const photosToPreload = [];
     
     for (let i = 0; i < layout.length; i++) {
+      const photo = photoList[i % photoList.length];
       tiles.push({
-        current: photoList[i % photoList.length],
-        next: photoList[(i + layout.length) % photoList.length], // Preload next
+        current: photo,
+        next: photoList[(i + layout.length) % photoList.length],
       });
+      photosToPreload.push(photo);
     }
     
+    // Preload initial photos before showing
+    await preloadBatch(photosToPreload);
+    
     setTilePhotos(tiles);
+    setInitialLoadComplete(true);
     photoPoolIndex.current = layout.length * 2;
   };
 
   // Update ALL tiles at once with cube flip transition
-  const updateAllTiles = useCallback(() => {
+  const updateAllTiles = useCallback(async () => {
     if (isPaused || photos.length === 0 || isFlipping) return;
     
     // Prepare next photos for ALL tiles
@@ -125,6 +180,9 @@ const CollageDisplay = () => {
       photoPoolIndex.current++;
     }
     
+    // Preload next batch before flipping
+    await preloadBatch(nextPhotos);
+    
     // Set next photos on the hidden face
     setTilePhotos(prev => {
       return prev.map((tile, index) => ({
@@ -133,11 +191,13 @@ const CollageDisplay = () => {
       }));
     });
     
+    // Small delay to ensure images are set
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
     // Trigger flip animation
     setIsFlipping(true);
     
-    // After flip animation completes:
-    // Move next to current and toggle which side we show
+    // After flip animation completes
     setTimeout(() => {
       setTilePhotos(prev => {
         return prev.map((tile) => ({
@@ -145,10 +205,10 @@ const CollageDisplay = () => {
           next: null,
         }));
       });
-      setShowBackSide(prev => !prev); // Toggle side
+      setShowBackSide(prev => !prev);
       setIsFlipping(false);
     }, 850);
-  }, [isPaused, photos, layout.length, isFlipping]);
+  }, [isPaused, photos, layout.length, isFlipping, preloadBatch]);
 
   // Initial load
   useEffect(() => {
@@ -178,9 +238,8 @@ const CollageDisplay = () => {
 
   // Update timer - triggers ALL tiles update at configurable interval
   useEffect(() => {
-    if (tilePhotos.length === 0 || isPaused) return;
+    if (tilePhotos.length === 0 || isPaused || !initialLoadComplete) return;
     
-    // Set interval based on user preference (seconds to ms)
     updateTimer.current = setInterval(() => {
       updateAllTiles();
     }, updateInterval * 1000);
@@ -190,7 +249,7 @@ const CollageDisplay = () => {
         clearInterval(updateTimer.current);
       }
     };
-  }, [tilePhotos.length, isPaused, updateInterval, updateAllTiles]);
+  }, [tilePhotos.length, isPaused, updateInterval, updateAllTiles, initialLoadComplete]);
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -215,7 +274,10 @@ const CollageDisplay = () => {
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading display...</div>
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-white animate-spin mx-auto mb-4" />
+          <div className="text-white text-xl">Loading display...</div>
+        </div>
       </div>
     );
   }
@@ -238,6 +300,24 @@ const CollageDisplay = () => {
       </div>
     );
   }
+
+  // Show loading screen while initial photos load
+  if (!initialLoadComplete) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-white animate-spin mx-auto mb-4" />
+          <div className="text-white text-xl">Preparing photos...</div>
+          <div className="text-white/50 text-sm mt-2">
+            {Object.values(loadedImages).filter(Boolean).length} / {Math.min(photos.length, layout.length)} loaded
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate loading progress
+  const loadedCount = Object.values(loadedImages).filter(Boolean).length;
 
   return (
     <div 
@@ -277,6 +357,15 @@ const CollageDisplay = () => {
         .cube-face-back {
           transform: rotateY(180deg);
         }
+        .tile-image {
+          transition: opacity 0.3s ease-in-out;
+        }
+        .tile-image.loading {
+          opacity: 0.5;
+        }
+        .tile-image.loaded {
+          opacity: 1;
+        }
       `}</style>
       
       {/* 16:9 Container */}
@@ -296,12 +385,12 @@ const CollageDisplay = () => {
             
             if (!tileData?.current) return null;
             
-            // Determine flip state
-            // When not flipping: show current position (based on showBackSide)
-            // When flipping: animate to opposite position
             const flipClass = isFlipping 
               ? (showBackSide ? 'flip-to-front' : 'flip-to-back')
               : (showBackSide ? 'flip-to-back no-transition' : 'flip-to-front no-transition');
+            
+            const currentLoaded = loadedImages[tileData.current?.id];
+            const nextLoaded = tileData.next ? loadedImages[tileData.next?.id] : true;
             
             return (
               <div
@@ -316,28 +405,38 @@ const CollageDisplay = () => {
                 }}
               >
                 <div className={`cube-flipper ${flipClass}`}>
-                  {/* Front face - shows current when not on back side */}
+                  {/* Front face */}
                   <div className="cube-face rounded-sm overflow-hidden bg-zinc-900">
                     <img
-                      src={`${BACKEND_URL}${tileData.current.url}`}
+                      src={getPhotoUrl(tileData.current)}
                       alt=""
-                      className="w-full h-full object-cover"
+                      className={`tile-image w-full h-full object-cover ${currentLoaded ? 'loaded' : 'loading'}`}
+                      onLoad={() => {
+                        if (!loadedImages[tileData.current?.id]) {
+                          setLoadedImages(prev => ({ ...prev, [tileData.current.id]: true }));
+                        }
+                      }}
                     />
                   </div>
                   
-                  {/* Back face - shows next during flip */}
+                  {/* Back face */}
                   <div className="cube-face cube-face-back rounded-sm overflow-hidden bg-zinc-900">
                     {tileData.next ? (
                       <img
-                        src={`${BACKEND_URL}${tileData.next.url}`}
+                        src={getPhotoUrl(tileData.next)}
                         alt=""
-                        className="w-full h-full object-cover"
+                        className={`tile-image w-full h-full object-cover ${nextLoaded ? 'loaded' : 'loading'}`}
+                        onLoad={() => {
+                          if (!loadedImages[tileData.next?.id]) {
+                            setLoadedImages(prev => ({ ...prev, [tileData.next.id]: true }));
+                          }
+                        }}
                       />
                     ) : (
                       <img
-                        src={`${BACKEND_URL}${tileData.current.url}`}
+                        src={getPhotoUrl(tileData.current)}
                         alt=""
-                        className="w-full h-full object-cover"
+                        className="tile-image w-full h-full object-cover loaded"
                       />
                     )}
                   </div>
@@ -381,6 +480,12 @@ const CollageDisplay = () => {
               <span className="text-white/50 text-sm">
                 • {updateInterval}s interval
               </span>
+              {loadedCount < photos.length && (
+                <span className="text-white/40 text-sm flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {loadedCount}/{photos.length}
+                </span>
+              )}
             </div>
             
             <div className="flex items-center gap-4">
