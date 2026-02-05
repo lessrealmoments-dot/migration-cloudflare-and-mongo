@@ -274,7 +274,59 @@ Integrated with **Resend** email service.
 - Admin: /admin
 
 ## Last Updated
-February 4, 2026 - Live Event Display improvements, section rename, Enterprise Access override mode
+February 5, 2026 - Collage Layout Preset Builder, Photographer Preset Picker
+
+### Collage Layout Preset Builder ✅ (COMPLETED - February 5, 2026)
+
+**Admin-Only Preset Builder** (`/admin/collage-presets`):
+- Visual canvas for designing mosaic collage layouts
+- 16:9 aspect ratio canvas matching live display
+- Add placeholders with predefined ratios (Landscape 3:2, Portrait 2:3, Square 1:1, Custom)
+- Drag placeholders to position them
+- Resize placeholders with aspect ratio lock (fixed resize bug that wasn't accounting for canvas aspect ratio)
+- Visual settings: gap size, border thickness, border color, background color
+- Preset metadata: name, description, tags, set as default
+- Layer control for overlapping placeholders
+- Distribution tools (horizontal/vertical alignment, tidy up)
+- Grid overlay with snap-to-grid option
+
+**Photographer Preset Picker** (Gallery Detail Page):
+- Added "Choose Layout" option under Display Mode > Live Collage section
+- Modal shows available presets with mini thumbnail previews
+- Clicking a preset saves `collage_preset_id` to gallery
+- Shows currently selected preset name in dropdown
+- "Default Layout" option to use system default mosaic
+
+**API Endpoints**:
+- `POST /api/admin/collage-presets` - Create preset
+- `GET /api/admin/collage-presets` - List all presets (admin)
+- `GET /api/admin/collage-presets/{id}` - Get single preset
+- `PUT /api/admin/collage-presets/{id}` - Update preset
+- `DELETE /api/admin/collage-presets/{id}` - Delete preset
+- `POST /api/admin/collage-presets/{id}/duplicate` - Duplicate preset
+- `GET /api/collage-presets` - List presets (photographer)
+- `GET /api/collage-presets/{id}/public` - Get preset (public)
+- `GET /api/collage-presets/default/public` - Get default preset
+
+**Database Schema** (`collage_presets` collection):
+```json
+{
+  "id": "uuid",
+  "name": "string",
+  "description": "string", 
+  "tags": ["string"],
+  "placeholders": [{"id", "x", "y", "width", "height", "ratio", "z_index"}],
+  "settings": {"gap", "border_thickness", "border_color", "background_color"},
+  "is_default": false,
+  "created_by": "admin",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+**Gallery Schema Update**:
+- Added `collage_preset_id: Optional[str]` to Gallery model
+- Saved via `PUT /api/galleries/{id}` with `{"collage_preset_id": "preset-id"}`
 
 ### Live Event Display Modes ✅ (COMPLETED - February 4, 2026)
 
