@@ -269,7 +269,7 @@ Integrated with **Resend** email service.
 - `transactions` - Payment transaction history with proof URLs
 
 ## Access URLs
-- Preview: https://phototier.preview.emergentagent.com
+- Preview: https://collage-editor.preview.emergentagent.com
 - Pricing: /pricing
 - Admin: /admin
 
