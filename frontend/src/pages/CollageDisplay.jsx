@@ -14,21 +14,36 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// Clean layout with 9 LARGE tiles - photos are bigger and more visible
-// Optimized for guest appreciation - all tiles are substantial size
+// Exact layout from TurboCollage reference - 12 tiles with varied sizes
+// Large hero images on corners, smaller accent tiles in middle
 const TILE_LAYOUT = [
-  // Row 1 - Top (3 large tiles)
-  { x: 0, y: 0, w: 34, h: 50 },        // Large left
-  { x: 34, y: 0, w: 32, h: 50 },       // Large center
-  { x: 66, y: 0, w: 34, h: 50 },       // Large right
+  // Left column
+  { x: 0, y: 0, w: 30, h: 50 },        // LARGE portrait top-left (hero)
+  { x: 0, y: 50, w: 15, h: 50 },       // Medium square bottom-left
+  { x: 15, y: 50, w: 18, h: 50 },      // Medium landscape bottom-left-center
   
-  // Row 2 - Bottom (3 large + 3 medium in center)
-  { x: 0, y: 50, w: 34, h: 50 },       // Large bottom-left
-  { x: 34, y: 50, w: 16, h: 25 },      // Medium center-top-left
-  { x: 50, y: 50, w: 16, h: 25 },      // Medium center-top-right
-  { x: 34, y: 75, w: 16, h: 25 },      // Medium center-bottom-left
-  { x: 50, y: 75, w: 16, h: 25 },      // Medium center-bottom-right
-  { x: 66, y: 50, w: 34, h: 50 },      // Large bottom-right
+  // Center-left column  
+  { x: 30, y: 0, w: 18, h: 50 },       // Tall portrait
+  
+  // Center column - small tiles
+  { x: 48, y: 0, w: 17, h: 25 },       // Small landscape top
+  { x: 48, y: 25, w: 8, h: 20 },       // Small square
+  { x: 56, y: 25, w: 9, h: 20 },       // Small square  
+  { x: 48, y: 45, w: 17, h: 20 },      // Small landscape
+  
+  // Center-right - tall portrait
+  { x: 33, y: 50, w: 17, h: 35 },      // Medium portrait bottom
+  { x: 50, y: 65, w: 15, h: 20 },      // Small landscape bottom
+  { x: 50, y: 85, w: 15, h: 15 },      // Small bottom
+  
+  // Right column
+  { x: 65, y: 0, w: 17, h: 25 },       // Medium landscape top-right
+  { x: 65, y: 25, w: 17, h: 40 },      // Large portrait center-right
+  { x: 65, y: 65, w: 17, h: 35 },      // Medium bottom-right
+  
+  // Far right - tall portrait spanning height
+  { x: 82, y: 0, w: 18, h: 65 },       // TALL portrait far-right
+  { x: 82, y: 65, w: 18, h: 35 },      // Medium bottom far-right
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
