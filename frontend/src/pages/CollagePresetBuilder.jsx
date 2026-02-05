@@ -1202,7 +1202,8 @@ const CollagePresetBuilder = () => {
                     <label className="text-sm text-neutral-400 block mb-1">Width (%)</label>
                     <input
                       type="number"
-                      value={Math.round(selectedPlaceholder.width)}
+                      step="0.5"
+                      value={parseFloat(selectedPlaceholder.width.toFixed(1))}
                       onChange={(e) => {
                         const width = Number(e.target.value);
                         const ratioInfo = RATIO_PRESETS[selectedPlaceholder.ratio];
@@ -1225,9 +1226,24 @@ const CollagePresetBuilder = () => {
                     <label className="text-sm text-neutral-400 block mb-1">Height (%)</label>
                     <input
                       type="number"
-                      value={Math.round(selectedPlaceholder.height)}
-                      readOnly
-                      className="w-full px-2 py-1 bg-neutral-800 border border-neutral-700 rounded text-sm text-neutral-500"
+                      step="0.5"
+                      value={parseFloat(selectedPlaceholder.height.toFixed(1))}
+                      onChange={(e) => {
+                        const height = Number(e.target.value);
+                        const ratioInfo = RATIO_PRESETS[selectedPlaceholder.ratio];
+                        const canvasAspect = 16 / 9;
+                        let width;
+                        if (ratioInfo && ratioInfo.widthRatio && ratioInfo.heightRatio) {
+                          const targetRatio = ratioInfo.widthRatio / ratioInfo.heightRatio;
+                          width = (height * targetRatio) / canvasAspect;
+                        } else {
+                          width = selectedPlaceholder.width;
+                        }
+                        setPlaceholders(placeholders.map(p =>
+                          p.id === selectedPlaceholder.id ? { ...p, width, height } : p
+                        ));
+                      }}
+                      className="w-full px-2 py-1 bg-neutral-800 border border-neutral-700 rounded text-sm"
                     />
                   </div>
                 </div>
