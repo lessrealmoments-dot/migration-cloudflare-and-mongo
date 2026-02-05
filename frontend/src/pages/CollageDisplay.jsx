@@ -17,16 +17,16 @@ const getPollInterval = (photoCount) => {
 // Clean layout with 8 LARGE tiles - photos are bigger and more visible
 // Optimized for guest appreciation - all tiles are substantial size
 const TILE_LAYOUT = [
-  // Row 1 - Top (3 tiles)
-  { x: 0, y: 0, w: 35, h: 55 },        // Large left
+  // Row 1 - Top (3 large tiles)
+  { x: 0, y: 0, w: 35, h: 50 },        // Large left
   { x: 35, y: 0, w: 30, h: 50 },       // Large center
-  { x: 65, y: 0, w: 35, h: 55 },       // Large right
+  { x: 65, y: 0, w: 35, h: 50 },       // Large right
   
-  // Row 2 - Bottom (5 tiles)
-  { x: 0, y: 55, w: 35, h: 45 },       // Large bottom-left
-  { x: 35, y: 50, w: 30, h: 25 },      // Medium center-top
-  { x: 35, y: 75, w: 30, h: 25 },      // Medium center-bottom
-  { x: 65, y: 55, w: 35, h: 45 },      // Large bottom-right
+  // Row 2 - Bottom (5 tiles for visual interest)
+  { x: 0, y: 50, w: 35, h: 50 },       // Large bottom-left
+  { x: 35, y: 50, w: 15, h: 50 },      // Medium bottom-center-left
+  { x: 50, y: 50, w: 15, h: 50 },      // Medium bottom-center-right
+  { x: 65, y: 50, w: 35, h: 50 },      // Large bottom-right
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
