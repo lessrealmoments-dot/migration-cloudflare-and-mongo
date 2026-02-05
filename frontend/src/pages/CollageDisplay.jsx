@@ -494,19 +494,21 @@ const CollageDisplay = () => {
   return (
     <div 
       ref={containerRef}
-      className="fixed inset-0 bg-neutral-900 overflow-hidden"
+      className="fixed inset-0 overflow-hidden"
+      style={{ backgroundColor: presetSettings.background_color }}
       onMouseMove={handleMouseMove}
       data-testid="collage-display"
     >
       {/* 16:9 Container */}
       <div className="absolute inset-0 flex items-center justify-center p-2">
         <div 
-          className="relative bg-neutral-900 overflow-hidden rounded-lg"
+          className="relative overflow-hidden rounded-lg"
           style={{
             width: '100vw',
             height: 'calc(100vw * 9 / 16)',
             maxHeight: '100vh',
-            maxWidth: 'calc(100vh * 16 / 9)'
+            maxWidth: 'calc(100vh * 16 / 9)',
+            backgroundColor: presetSettings.background_color
           }}
         >
           {/* Layer A */}
