@@ -281,44 +281,29 @@ const SlideshowDisplay = () => {
       onClick={() => setIsPaused(!isPaused)}
       data-testid="slideshow-display"
     >
-      {/* Image Container - Single image at a time with crossfade */}
-      <div className="absolute inset-0">
-        {photos.map((photo, index) => {
-          const isActive = index === currentIndex;
-          const isPrev = index === (currentIndex - 1 + photos.length) % photos.length;
-          const isNext = index === (currentIndex + 1) % photos.length;
-          
-          // Only render current, previous, and next for performance
-          if (!isActive && !isPrev && !isNext) return null;
-          
-          return (
-            <div
-              key={photo.id}
-              className="absolute inset-0 flex items-center justify-center will-change-transform"
-              style={{
-                ...getTransitionStyle(transition),
-                opacity: isActive ? 1 : 0,
-                visibility: isActive ? 'visible' : 'hidden',
-                transform: transition === 'fade-zoom' 
-                  ? (isActive ? 'scale(1)' : 'scale(1.03)') 
-                  : transition === 'slide'
-                    ? (isActive ? 'translateX(0)' : (isPrev ? 'translateX(-30%)' : 'translateX(30%)'))
-                    : 'none',
-                zIndex: isActive ? 10 : 1,
-                pointerEvents: 'none',
-              }}
-            >
-              <img
-                src={getPhotoUrl(photo)}
-                alt=""
-                className="max-w-full max-h-full object-contain"
-                style={{ maxWidth: '100vw', maxHeight: '100vh' }}
-                draggable={false}
-              />
-            </div>
-          );
-        })}
+      {/* Single image display with crossfade transition */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img
+          key={photos[currentIndex]?.id}
+          src={getPhotoUrl(photos[currentIndex])}
+          alt=""
+          className="max-w-full max-h-full object-contain animate-fadeIn"
+          style={{ 
+            maxWidth: '100vw', 
+            maxHeight: '100vh',
+            animation: 'fadeIn 1s ease-in-out'
+          }}
+          draggable={false}
+        />
       </div>
+      
+      {/* CSS for fade animation */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
 
       {/* Controls Overlay - Clean, minimal */}
       <div 
