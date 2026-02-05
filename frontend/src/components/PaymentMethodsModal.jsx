@@ -74,6 +74,13 @@ const PaymentMethodsModal = ({
       return;
     }
     
+    // Check file size (max 10MB)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast.error('File too large. Maximum size is 10MB');
+      return;
+    }
+    
     setUploadingProof(true);
     try {
       const formData = new FormData();
@@ -84,15 +91,37 @@ const PaymentMethodsModal = ({
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
+        },
+        timeout: 60000, // 60 second timeout for large files
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          if (percentCompleted < 100) {
+            // Could add progress indicator here
+          }
         }
       });
       
-      setPaymentProofUrl(response.data.url);
-      toast.success('Payment proof uploaded!');
+      if (response.data.url) {
+        setPaymentProofUrl(response.data.url);
+        toast.success('Payment proof uploaded!');
+      } else {
+        throw new Error('No URL returned');
+      }
     } catch (error) {
-      toast.error('Failed to upload payment proof');
+      console.error('Upload error:', error);
+      if (error.response?.data?.detail) {
+        toast.error(error.response.data.detail);
+      } else if (error.code === 'ECONNABORTED') {
+        toast.error('Upload timed out. Please try with a smaller image.');
+      } else {
+        toast.error('Failed to upload payment proof. Please try again.');
+      }
     } finally {
       setUploadingProof(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
