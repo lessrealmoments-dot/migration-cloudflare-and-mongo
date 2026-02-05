@@ -4303,7 +4303,7 @@ async def google_drive_callback(request: Request, code: str = Query(...), state:
     del oauth_states[state]
     
     try:
-        flow = get_google_oauth_flow()
+        flow = get_google_oauth_flow(redirect_uri)
         flow.fetch_token(code=code)
         credentials = flow.credentials
         
@@ -4349,16 +4349,16 @@ async def google_drive_callback(request: Request, code: str = Query(...), state:
             }}
         )
         
-        # Redirect back to gallery
+        # Redirect back to gallery using the same base URL
         return RedirectResponse(
-            url=f"{FRONTEND_URL}/gallery/{gallery_id}?drive_connected=true",
+            url=f"{base_url}/gallery/{gallery_id}?drive_connected=true",
             status_code=302
         )
         
     except Exception as e:
         logger.error(f"OAuth callback error: {e}")
         return RedirectResponse(
-            url=f"{FRONTEND_URL}/gallery/{gallery_id}?drive_error=auth_failed",
+            url=f"{base_url}/gallery/{gallery_id}?drive_error=auth_failed",
             status_code=302
         )
 
