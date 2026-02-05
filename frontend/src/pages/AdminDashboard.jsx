@@ -672,6 +672,13 @@ const AdminDashboard = () => {
             Feature Toggles
           </button>
           <button
+            onClick={() => navigate('/admin/collage-presets')}
+            className="flex items-center gap-2 px-4 py-2 rounded-sm transition-colors bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700"
+          >
+            <LayoutGrid className="w-5 h-5" strokeWidth={1.5} />
+            Collage Presets
+          </button>
+          <button
             onClick={() => setActiveTab('landing')}
             className={`flex items-center gap-2 px-4 py-2 rounded-sm transition-colors ${
               activeTab === 'landing'
