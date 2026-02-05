@@ -1301,6 +1301,23 @@ const GalleryDetail = () => {
                     </div>
                     <span>Show QR Code</span>
                   </button>
+                  <button
+                    onClick={() => setShowCollagePresetPicker(true)}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-purple-50 flex items-center gap-3 rounded border-t border-zinc-100 mt-1 pt-2"
+                    data-testid="choose-collage-layout-btn"
+                  >
+                    <div className="w-7 h-7 bg-purple-100 rounded flex items-center justify-center">
+                      <Settings2 className="w-3.5 h-3.5 text-purple-600" />
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span>Choose Layout</span>
+                      {selectedCollagePreset && collagePresets.find(p => p.id === selectedCollagePreset) && (
+                        <span className="text-xs text-purple-600">
+                          {collagePresets.find(p => p.id === selectedCollagePreset)?.name}
+                        </span>
+                      )}
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>
