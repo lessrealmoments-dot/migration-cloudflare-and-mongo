@@ -797,7 +797,7 @@ const CollagePresetBuilder = () => {
                         onMouseDown={(e) => handlePlaceholderMouseDown(e, placeholder, 'n')}
                       />
                       <div
-                        className="absolute -bottom-1 left-1/2 w-6 h-2 -translate-x-1/2 bg-blue-500 rounded cursor-s-resize"
+                        className="absolute -bottom-2 left-1/2 w-8 h-3 -translate-x-1/2 bg-blue-500 rounded cursor-s-resize hover:bg-blue-400"
                         onMouseDown={(e) => handlePlaceholderMouseDown(e, placeholder, 's')}
                       />
                     </>
@@ -810,7 +810,7 @@ const CollagePresetBuilder = () => {
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-500">
                   <LayoutGrid className="w-12 h-12 mb-4 opacity-50" />
                   <p className="text-lg">Click a ratio button above to add placeholders</p>
-                  <p className="text-sm">Drag to position, resize with handles</p>
+                  <p className="text-sm">Click to select, then drag or resize</p>
                 </div>
               )}
             </div>
