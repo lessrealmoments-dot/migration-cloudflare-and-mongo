@@ -14,29 +14,19 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// Professional magazine-style layout - 15 tiles with MORE LANDSCAPE orientation
-// Better suited for landscape photos with subtle portrait accents
+// Clean layout with 9 LARGE tiles - photos are bigger and more visible
+// Optimized for guest appreciation with landscape-oriented tiles
 const TILE_LAYOUT = [
-  // Row 1 - Top row with landscape tiles
-  { x: 0, y: 0, w: 22, h: 38 },        // Wide landscape left
-  { x: 22, y: 0, w: 20, h: 32 },       // Landscape
-  { x: 42, y: 0, w: 22, h: 38 },       // Wide landscape center
-  { x: 64, y: 0, w: 18, h: 45 },       // Portrait accent
-  { x: 82, y: 0, w: 18, h: 38 },       // Landscape right
+  // Top row - 3 large landscape tiles
+  { x: 0, y: 0, w: 34, h: 50 },        // Large landscape left
+  { x: 34, y: 0, w: 33, h: 45 },       // Large landscape center
+  { x: 67, y: 0, w: 33, h: 50 },       // Large landscape right
   
-  // Row 2 - Middle row
-  { x: 0, y: 38, w: 20, h: 32 },       // Landscape
-  { x: 20, y: 32, w: 22, h: 36 },      // Wide landscape
-  { x: 42, y: 38, w: 22, h: 30 },      // Wide landscape
-  { x: 82, y: 38, w: 18, h: 32 },      // Landscape
-  
-  // Row 3 - Bottom row with landscape tiles
-  { x: 0, y: 70, w: 25, h: 30 },       // Extra wide landscape
-  { x: 25, y: 68, w: 20, h: 32 },      // Landscape
-  { x: 45, y: 68, w: 19, h: 32 },      // Landscape
-  { x: 64, y: 45, w: 18, h: 28 },      // Square-ish
-  { x: 64, y: 73, w: 18, h: 27 },      // Landscape
-  { x: 82, y: 70, w: 18, h: 30 },      // Landscape
+  // Bottom row - 3 large landscape tiles + 3 medium tiles
+  { x: 0, y: 50, w: 34, h: 50 },       // Large landscape bottom-left
+  { x: 34, y: 45, w: 33, h: 28 },      // Medium landscape center-top
+  { x: 34, y: 73, w: 33, h: 27 },      // Medium landscape center-bottom
+  { x: 67, y: 50, w: 33, h: 50 },      // Large landscape bottom-right
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
