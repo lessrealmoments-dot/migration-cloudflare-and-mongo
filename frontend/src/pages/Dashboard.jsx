@@ -147,6 +147,13 @@ const Dashboard = ({ user, setUser }) => {
       return;
     }
     
+    // Check file size (max 10MB)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast.error('File too large. Maximum size is 10MB');
+      return;
+    }
+    
     setUploadingProof(true);
     try {
       const formData = new FormData();
@@ -157,8 +164,13 @@ const Dashboard = ({ user, setUser }) => {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        timeout: 60000 // 60 second timeout
       });
+      
+      if (!uploadResponse.data.url) {
+        throw new Error('No URL returned from upload');
+      }
       
       // Submit payment proof
       await axios.post(`${API}/user/payment-proof`, {
@@ -171,7 +183,14 @@ const Dashboard = ({ user, setUser }) => {
       setShowPaymentModal(false);
       fetchSubscription();
     } catch (error) {
-      toast.error('Failed to upload payment proof');
+      console.error('Upload error:', error);
+      if (error.response?.data?.detail) {
+        toast.error(error.response.data.detail);
+      } else if (error.code === 'ECONNABORTED') {
+        toast.error('Upload timed out. Please try with a smaller image.');
+      } else {
+        toast.error('Failed to upload payment proof. Please try again.');
+      }
     } finally {
       setUploadingProof(false);
     }
