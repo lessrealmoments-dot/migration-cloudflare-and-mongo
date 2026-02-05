@@ -391,7 +391,7 @@ const CollageDisplay = () => {
     hideControlsTimer.current = setTimeout(() => setShowControls(false), 3000);
   };
 
-  // Render a layer of tiles with gaps/borders
+  // Render a layer of tiles with gaps/borders from preset settings
   const renderLayer = (tiles, isActive) => (
     <div 
       className="absolute inset-0"
@@ -399,7 +399,7 @@ const CollageDisplay = () => {
         opacity: isActive ? 1 : 0,
         transition: `opacity ${TRANSITION_DURATION}ms ease-in-out`,
         zIndex: isActive ? 2 : 1,
-        padding: `${TILE_GAP}px`,
+        padding: `${presetSettings.gap}px`,
       }}
     >
       {layout.map((tilePos, index) => {
@@ -407,17 +407,24 @@ const CollageDisplay = () => {
         if (!photo) return null;
         
         const url = getPhotoUrl(photo);
+        // Support both 'width'/'height' (new format) and 'w'/'h' (old format)
+        const width = tilePos.width || tilePos.w;
+        const height = tilePos.height || tilePos.h;
         
         return (
           <div
             key={`${index}-${photo.id}`}
             className="absolute overflow-hidden rounded-sm"
             style={{
-              left: `calc(${tilePos.x}% + ${TILE_GAP/2}px)`,
-              top: `calc(${tilePos.y}% + ${TILE_GAP/2}px)`,
-              width: `calc(${tilePos.w}% - ${TILE_GAP}px)`,
-              height: `calc(${tilePos.h}% - ${TILE_GAP}px)`,
+              left: `calc(${tilePos.x}% + ${presetSettings.gap/2}px)`,
+              top: `calc(${tilePos.y}% + ${presetSettings.gap/2}px)`,
+              width: `calc(${width}% - ${presetSettings.gap}px)`,
+              height: `calc(${height}% - ${presetSettings.gap}px)`,
               backgroundColor: '#1a1a1a',
+              border: presetSettings.border_thickness > 0 
+                ? `${presetSettings.border_thickness}px solid ${presetSettings.border_color}`
+                : 'none',
+              opacity: presetSettings.border_opacity,
             }}
           >
             <img
