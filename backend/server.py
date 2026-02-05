@@ -718,6 +718,7 @@ class GalleryCreate(BaseModel):
     display_mode: str = "slideshow"  # "slideshow" or "collage"
     display_transition: str = "crossfade"  # "crossfade", "fade-zoom", "slide", "flip"
     display_interval: int = 6  # seconds between transitions (slideshow mode)
+    collage_preset_id: Optional[str] = None  # Selected collage preset for collage mode
 
 class Gallery(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -739,6 +740,7 @@ class Gallery(BaseModel):
     display_mode: str = "slideshow"
     display_transition: str = "crossfade"
     display_interval: int = 6
+    collage_preset_id: Optional[str] = None  # Selected collage preset
     created_at: str
     photo_count: int = 0
     auto_delete_date: Optional[str] = None  # When gallery will be auto-deleted
