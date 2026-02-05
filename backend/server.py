@@ -2427,6 +2427,150 @@ async def upload_favicon(
     
     return {"success": True, "url": favicon_url}
 
+# ============ COLLAGE PRESET ENDPOINTS ============
+
+@api_router.get("/admin/collage-presets")
+async def get_collage_presets(admin: dict = Depends(get_admin_user)):
+    """Get all collage presets (admin only)"""
+    presets = await db.collage_presets.find({}, {"_id": 0}).sort("created_at", -1).to_list(None)
+    return presets or []
+
+@api_router.post("/admin/collage-presets")
+async def create_collage_preset(
+    preset_data: CollagePresetCreate,
+    admin: dict = Depends(get_admin_user)
+):
+    """Create a new collage preset (admin only)"""
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # If this preset is set as default, unset all other defaults
+    if preset_data.is_default:
+        await db.collage_presets.update_many({}, {"$set": {"is_default": False}})
+    
+    preset = {
+        "id": str(uuid.uuid4()),
+        "name": preset_data.name,
+        "description": preset_data.description,
+        "tags": preset_data.tags,
+        "placeholders": [p.model_dump() for p in preset_data.placeholders],
+        "settings": preset_data.settings.model_dump(),
+        "is_default": preset_data.is_default,
+        "created_by": admin["id"],
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await db.collage_presets.insert_one(preset)
+    del preset["_id"] if "_id" in preset else None
+    
+    return preset
+
+@api_router.get("/admin/collage-presets/{preset_id}")
+async def get_collage_preset(preset_id: str, admin: dict = Depends(get_admin_user)):
+    """Get a specific collage preset (admin only)"""
+    preset = await db.collage_presets.find_one({"id": preset_id}, {"_id": 0})
+    if not preset:
+        raise HTTPException(status_code=404, detail="Preset not found")
+    return preset
+
+@api_router.put("/admin/collage-presets/{preset_id}")
+async def update_collage_preset(
+    preset_id: str,
+    preset_data: CollagePresetUpdate,
+    admin: dict = Depends(get_admin_user)
+):
+    """Update a collage preset (admin only)"""
+    preset = await db.collage_presets.find_one({"id": preset_id})
+    if not preset:
+        raise HTTPException(status_code=404, detail="Preset not found")
+    
+    update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    
+    if preset_data.name is not None:
+        update_data["name"] = preset_data.name
+    if preset_data.description is not None:
+        update_data["description"] = preset_data.description
+    if preset_data.tags is not None:
+        update_data["tags"] = preset_data.tags
+    if preset_data.placeholders is not None:
+        update_data["placeholders"] = [p.model_dump() for p in preset_data.placeholders]
+    if preset_data.settings is not None:
+        update_data["settings"] = preset_data.settings.model_dump()
+    if preset_data.is_default is not None:
+        if preset_data.is_default:
+            # Unset all other defaults
+            await db.collage_presets.update_many({}, {"$set": {"is_default": False}})
+        update_data["is_default"] = preset_data.is_default
+    
+    await db.collage_presets.update_one({"id": preset_id}, {"$set": update_data})
+    
+    updated_preset = await db.collage_presets.find_one({"id": preset_id}, {"_id": 0})
+    return updated_preset
+
+@api_router.delete("/admin/collage-presets/{preset_id}")
+async def delete_collage_preset(preset_id: str, admin: dict = Depends(get_admin_user)):
+    """Delete a collage preset (admin only)"""
+    preset = await db.collage_presets.find_one({"id": preset_id})
+    if not preset:
+        raise HTTPException(status_code=404, detail="Preset not found")
+    
+    await db.collage_presets.delete_one({"id": preset_id})
+    
+    # Also clear this preset from any galleries using it
+    await db.galleries.update_many(
+        {"collage_preset_id": preset_id},
+        {"$set": {"collage_preset_id": None}}
+    )
+    
+    return {"success": True, "message": "Preset deleted"}
+
+@api_router.post("/admin/collage-presets/{preset_id}/duplicate")
+async def duplicate_collage_preset(preset_id: str, admin: dict = Depends(get_admin_user)):
+    """Duplicate an existing collage preset (admin only)"""
+    preset = await db.collage_presets.find_one({"id": preset_id}, {"_id": 0})
+    if not preset:
+        raise HTTPException(status_code=404, detail="Preset not found")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    new_preset = {
+        **preset,
+        "id": str(uuid.uuid4()),
+        "name": f"{preset['name']} (Copy)",
+        "is_default": False,
+        "created_by": admin["id"],
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await db.collage_presets.insert_one(new_preset)
+    del new_preset["_id"] if "_id" in new_preset else None
+    
+    return new_preset
+
+# Public endpoint for photographers to get available presets
+@api_router.get("/collage-presets")
+async def get_available_collage_presets(current_user: dict = Depends(get_current_user)):
+    """Get all available collage presets for photographers"""
+    presets = await db.collage_presets.find({}, {"_id": 0}).sort("created_at", -1).to_list(None)
+    return presets or []
+
+# Public endpoint to get a specific preset (for CollageDisplay)
+@api_router.get("/collage-presets/{preset_id}/public")
+async def get_collage_preset_public(preset_id: str):
+    """Get a specific collage preset (public - for display)"""
+    preset = await db.collage_presets.find_one({"id": preset_id}, {"_id": 0})
+    if not preset:
+        raise HTTPException(status_code=404, detail="Preset not found")
+    return preset
+
+# Get default preset
+@api_router.get("/collage-presets/default/public")
+async def get_default_collage_preset():
+    """Get the default collage preset"""
+    preset = await db.collage_presets.find_one({"is_default": True}, {"_id": 0})
+    return preset
+
 @api_router.get("/public/landing-config", response_model=LandingPageConfig)
 async def get_public_landing_config():
     """Get landing page config for public display"""
