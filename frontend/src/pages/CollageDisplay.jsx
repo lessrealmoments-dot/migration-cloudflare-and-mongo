@@ -16,10 +16,10 @@ const getPollInterval = (photoCount) => {
 
 // EDITORIAL MOSAIC COLLAGE - Premium Gallery Layout
 // 60% Landscape (3:2) | 30% Portrait (2:3) | 10% Square (1:1)
-// 12 tiles: 7 landscape, 4 portrait, 1 square - No overlaps guaranteed
+// 12 tiles: 7 landscape, 4 portrait, 1 square - No overlaps, no gaps
 const TILE_LAYOUT = [
   // === TOP SECTION ===
-  { x: 0, y: 0, w: 38, h: 42 },      // HERO Landscape (large)
+  { x: 0, y: 0, w: 38, h: 50 },      // HERO Landscape (extended to fill gap)
   { x: 38, y: 0, w: 22, h: 50 },     // Portrait (tall)
   { x: 60, y: 0, w: 22, h: 26 },     // Landscape (medium)
   { x: 82, y: 0, w: 18, h: 18 },     // Square (filler)
@@ -27,7 +27,7 @@ const TILE_LAYOUT = [
   { x: 60, y: 26, w: 22, h: 24 },    // Landscape (medium)
   
   // === MIDDLE SECTION ===
-  { x: 0, y: 42, w: 20, h: 36 },     // Portrait (tall)
+  { x: 0, y: 50, w: 20, h: 28 },     // Portrait (adjusted)
   { x: 20, y: 50, w: 40, h: 28 },    // Landscape (wide)
   { x: 60, y: 50, w: 40, h: 30 },    // HERO Landscape (large)
   
