@@ -1,25 +1,25 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Maximize, Minimize, Pause, Play, Loader2 } from 'lucide-react';
+import { Maximize, Minimize, Pause, Play, Camera } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Calculate poll interval based on photo count
 const getPollInterval = (photoCount) => {
-  if (photoCount < 10) return 15000;      // 15 seconds
-  if (photoCount < 20) return 30000;      // 30 seconds
-  if (photoCount < 30) return 60000;      // 1 minute
-  if (photoCount <= 50) return 120000;    // 2 minutes
-  return 180000;                           // 3 minutes for 50+
+  if (photoCount < 10) return 10000;       // 10 seconds - check frequently for new uploads
+  if (photoCount < 20) return 15000;       // 15 seconds
+  if (photoCount < 30) return 20000;       // 20 seconds
+  if (photoCount <= 50) return 30000;      // 30 seconds
+  return 45000;                            // 45 seconds for 50+
 };
 
-// Preload an image and return a promise
+// Preload an image - returns promise that resolves when loaded
 const preloadImage = (src) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const img = new Image();
-    img.onload = () => resolve(src);
-    img.onerror = () => reject(new Error(`Failed to load: ${src}`));
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false); // Don't reject, just mark as failed
     img.src = src;
   });
 };
@@ -36,69 +36,51 @@ const SlideshowDisplay = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Track loaded images - key is photo id, value is loaded status
-  const [loadedImages, setLoadedImages] = useState({});
-  const [currentImageReady, setCurrentImageReady] = useState(false);
+  const [isReady, setIsReady] = useState(false); // Ready to start slideshow
   
   const containerRef = useRef(null);
   const hideControlsTimer = useRef(null);
   const transitionTimer = useRef(null);
   const pollTimer = useRef(null);
   const lastPhotoCount = useRef(0);
-  const preloadQueue = useRef(new Set());
+  const preloadedSet = useRef(new Set()); // Track which photos are preloaded
+  const photosRef = useRef([]); // Keep photos in ref for callbacks
 
-  // Get the full URL for a photo
+  // Update ref when photos change
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
+
+  // Get photo URL
   const getPhotoUrl = useCallback((photo) => {
     if (!photo) return '';
     return `${BACKEND_URL}${photo.url}`;
   }, []);
 
-  // Get thumbnail URL (medium quality for faster loading)
-  const getThumbnailUrl = useCallback((photo) => {
-    if (!photo) return '';
-    // Use thumbnail_medium_url if available, otherwise fall back to main url
-    if (photo.thumbnail_medium_url) {
-      return `${BACKEND_URL}${photo.thumbnail_medium_url}`;
-    }
-    return `${BACKEND_URL}${photo.url}`;
-  }, []);
-
-  // Preload a batch of images
-  const preloadBatch = useCallback(async (startIndex, count = 5) => {
-    if (photos.length === 0) return;
+  // Preload next N photos from current index
+  const preloadAhead = useCallback(async (fromIndex, count = 5) => {
+    const currentPhotos = photosRef.current;
+    if (currentPhotos.length === 0) return;
     
     const toPreload = [];
     for (let i = 0; i < count; i++) {
-      const idx = (startIndex + i) % photos.length;
-      const photo = photos[idx];
-      const url = getPhotoUrl(photo);
-      
-      // Skip if already loaded or in queue
-      if (loadedImages[photo.id] || preloadQueue.current.has(url)) continue;
-      
-      preloadQueue.current.add(url);
-      toPreload.push({ photo, url, idx });
+      const idx = (fromIndex + i) % currentPhotos.length;
+      const photo = currentPhotos[idx];
+      if (photo && !preloadedSet.current.has(photo.id)) {
+        toPreload.push(photo);
+        preloadedSet.current.add(photo.id);
+      }
     }
     
-    // Preload all images in parallel
-    await Promise.all(
-      toPreload.map(async ({ photo, url }) => {
-        try {
-          await preloadImage(url);
-          setLoadedImages(prev => ({ ...prev, [photo.id]: true }));
-        } catch (err) {
-          console.warn(`Failed to preload image: ${url}`);
-        } finally {
-          preloadQueue.current.delete(url);
-        }
-      })
-    );
-  }, [photos, getPhotoUrl, loadedImages]);
+    // Preload in parallel, don't wait
+    toPreload.forEach(photo => {
+      preloadImage(getPhotoUrl(photo));
+    });
+  }, [getPhotoUrl]);
 
-  // Fetch display data
+  // Fetch display data - handles new photos seamlessly
   const fetchDisplayData = useCallback(async (isPolling = false) => {
     try {
       const response = await fetch(`${API}/display/${shareLink}`);
@@ -107,21 +89,34 @@ const SlideshowDisplay = () => {
       
       setDisplayData(data);
       
-      // Only update photos if count changed (new photos added)
-      if (data.photos.length !== lastPhotoCount.current || !isPolling) {
-        setPhotos(data.photos);
-        lastPhotoCount.current = data.photos.length;
-        
-        if (isPolling && data.photos.length > lastPhotoCount.current) {
-          console.log(`New photos detected: ${data.photos.length - lastPhotoCount.current} added`);
+      const newPhotoCount = data.photos.length;
+      const previousCount = lastPhotoCount.current;
+      
+      // Always update photos - new ones get added to the end of rotation
+      if (newPhotoCount !== previousCount || !isPolling) {
+        // Merge new photos - keep existing order, append new ones
+        if (isPolling && newPhotoCount > previousCount) {
+          // New photos detected during live event
+          const existingIds = new Set(photosRef.current.map(p => p.id));
+          const newPhotos = data.photos.filter(p => !existingIds.has(p.id));
+          
+          if (newPhotos.length > 0) {
+            console.log(`[Live] ${newPhotos.length} new photo(s) added to queue`);
+            setPhotos(prev => [...prev, ...newPhotos]);
+          }
+        } else {
+          // Initial load or full refresh
+          setPhotos(data.photos);
         }
+        
+        lastPhotoCount.current = newPhotoCount;
       }
       
-      setLoading(false);
+      setInitialLoading(false);
     } catch (err) {
       if (!isPolling) {
         setError(err.message);
-        setLoading(false);
+        setInitialLoading(false);
       }
     }
   }, [shareLink]);
@@ -131,43 +126,37 @@ const SlideshowDisplay = () => {
     fetchDisplayData();
   }, [fetchDisplayData]);
 
-  // Preload initial batch when photos are loaded
+  // Prepare initial photos and start slideshow
   useEffect(() => {
-    if (photos.length > 0) {
-      // Preload first 5 images immediately
-      preloadBatch(0, Math.min(5, photos.length));
-    }
-  }, [photos.length]); // Only run when photos array length changes
+    if (photos.length === 0 || isReady) return;
+    
+    // Preload first 5 photos before starting
+    const prepareSlideshow = async () => {
+      const initialBatch = photos.slice(0, Math.min(5, photos.length));
+      
+      await Promise.all(
+        initialBatch.map(photo => {
+          preloadedSet.current.add(photo.id);
+          return preloadImage(getPhotoUrl(photo));
+        })
+      );
+      
+      // Ready to start
+      setIsReady(true);
+    };
+    
+    prepareSlideshow();
+  }, [photos, isReady, getPhotoUrl]);
 
-  // Check if current image is ready and preload ahead
+  // Preload ahead as we navigate
   useEffect(() => {
-    if (photos.length === 0) return;
+    if (!isReady || photos.length === 0) return;
     
-    const currentPhoto = photos[currentIndex];
-    const isReady = loadedImages[currentPhoto?.id];
-    setCurrentImageReady(isReady);
-    
-    // If current is loaded, preload next batch
-    if (isReady) {
-      preloadBatch(currentIndex + 1, 5);
-    } else {
-      // Current not loaded - prioritize loading it
-      const url = getPhotoUrl(currentPhoto);
-      if (!preloadQueue.current.has(url)) {
-        preloadQueue.current.add(url);
-        preloadImage(url)
-          .then(() => {
-            setLoadedImages(prev => ({ ...prev, [currentPhoto.id]: true }));
-          })
-          .catch(() => {})
-          .finally(() => {
-            preloadQueue.current.delete(url);
-          });
-      }
-    }
-  }, [currentIndex, photos, loadedImages, preloadBatch, getPhotoUrl]);
+    // Preload 5 photos ahead of current
+    preloadAhead(currentIndex + 1, 5);
+  }, [currentIndex, isReady, photos.length, preloadAhead]);
 
-  // Dynamic poll interval based on photo count
+  // Dynamic poll interval for new photos
   useEffect(() => {
     if (photos.length === 0) return;
     
@@ -180,26 +169,18 @@ const SlideshowDisplay = () => {
     return () => clearInterval(pollTimer.current);
   }, [photos.length, fetchDisplayData]);
 
-  // Auto-advance slideshow - only when current image is ready
+  // Auto-advance slideshow
   useEffect(() => {
-    if (isPaused || photos.length <= 1 || !currentImageReady) return;
+    if (isPaused || photos.length <= 1 || !isReady) return;
     
     const interval = (overrideInterval ? parseInt(overrideInterval) : displayData?.display_interval) || 6;
     
-    // Check if next image is loaded before transitioning
-    const nextIndex = (currentIndex + 1) % photos.length;
-    const nextPhoto = photos[nextIndex];
-    const nextLoaded = loadedImages[nextPhoto?.id];
-    
-    // If next image isn't loaded, wait a bit longer
-    const actualInterval = nextLoaded ? interval * 1000 : Math.max(interval * 1000, 2000);
-    
     transitionTimer.current = setTimeout(() => {
-      setCurrentIndex(nextIndex);
-    }, actualInterval);
+      setCurrentIndex((prev) => (prev + 1) % photos.length);
+    }, interval * 1000);
     
     return () => clearTimeout(transitionTimer.current);
-  }, [currentIndex, isPaused, photos, displayData?.display_interval, overrideInterval, currentImageReady, loadedImages]);
+  }, [currentIndex, isPaused, photos.length, displayData?.display_interval, overrideInterval, isReady]);
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -222,41 +203,30 @@ const SlideshowDisplay = () => {
   };
 
   useEffect(() => {
-    return () => {
-      clearTimeout(hideControlsTimer.current);
-    };
+    return () => clearTimeout(hideControlsTimer.current);
   }, []);
 
   const transition = overrideTransition || displayData?.display_transition || 'crossfade';
 
-  // Get transition CSS based on type
+  // Get transition CSS
   const getTransitionStyle = (type) => {
     switch (type) {
       case 'fade-zoom':
-        return {
-          transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        };
+        return { transition: 'opacity 1.2s ease-in-out, transform 1.2s ease-in-out' };
       case 'slide':
-        return {
-          transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)',
-        };
-      case 'flip':
-        return {
-          transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)',
-        };
+        return { transition: 'opacity 0.8s ease-in-out, transform 0.8s ease-in-out' };
       default: // crossfade
-        return {
-          transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        };
+        return { transition: 'opacity 1.2s ease-in-out' };
     }
   };
 
-  if (loading) {
+  // Initial loading - fetching gallery data
+  if (initialLoading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-white animate-spin mx-auto mb-4" />
-          <div className="text-white text-xl">Loading display...</div>
+          <div className="w-16 h-16 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-6" />
+          <div className="text-white/80 text-xl font-light">Loading gallery...</div>
         </div>
       </div>
     );
@@ -270,20 +240,38 @@ const SlideshowDisplay = () => {
     );
   }
 
+  // Empty gallery - waiting for uploads
   if (photos.length === 0) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="text-center text-white">
-          <h1 className="text-3xl font-light mb-4">{displayData?.title || 'Gallery'}</h1>
-          <p className="text-zinc-400">No photos yet. Photos will appear as they are uploaded.</p>
+      <div className="fixed inset-0 bg-black flex items-center justify-center" data-testid="waiting-screen">
+        <div className="text-center">
+          <div className="w-24 h-24 border-2 border-white/10 rounded-full flex items-center justify-center mx-auto mb-8">
+            <Camera className="w-12 h-12 text-white/40" />
+          </div>
+          <h1 className="text-white text-3xl font-light mb-4">
+            {displayData?.event_title || displayData?.title || 'Gallery'}
+          </h1>
+          <p className="text-white/50 text-lg">Waiting for photos to be uploaded...</p>
+          <p className="text-white/30 text-sm mt-4">Photos will appear automatically</p>
         </div>
       </div>
     );
   }
 
-  // Calculate loading progress
-  const loadedCount = Object.values(loadedImages).filter(Boolean).length;
-  const loadingProgress = Math.round((loadedCount / photos.length) * 100);
+  // Preparing photos for smooth viewing
+  if (!isReady) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center" data-testid="preparing-screen">
+        <div className="text-center">
+          <div className="w-16 h-16 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-6" />
+          <h1 className="text-white text-2xl font-light mb-2">
+            {displayData?.event_title || displayData?.title}
+          </h1>
+          <p className="text-white/50">Preparing photos for smooth viewing...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -293,17 +281,15 @@ const SlideshowDisplay = () => {
       onClick={() => setIsPaused(!isPaused)}
       data-testid="slideshow-display"
     >
-      {/* Image Container - Stack images with smart loading */}
+      {/* Image Container - Only render current and adjacent images */}
       <div className="absolute inset-0">
         {photos.map((photo, index) => {
           const isActive = index === currentIndex;
           const isPrev = index === (currentIndex - 1 + photos.length) % photos.length;
-          const isNearby = Math.abs(index - currentIndex) <= 2 || 
-                          Math.abs(index - currentIndex) >= photos.length - 2;
-          const isLoaded = loadedImages[photo.id];
+          const isNext = index === (currentIndex + 1) % photos.length;
           
-          // Only render nearby images to save memory
-          if (!isNearby && !isActive) return null;
+          // Only render current, previous, and next for performance
+          if (!isActive && !isPrev && !isNext) return null;
           
           return (
             <div
@@ -313,101 +299,60 @@ const SlideshowDisplay = () => {
                 ...getTransitionStyle(transition),
                 opacity: isActive ? 1 : 0,
                 transform: transition === 'fade-zoom' 
-                  ? (isActive ? 'scale(1)' : 'scale(1.05)') 
+                  ? (isActive ? 'scale(1)' : 'scale(1.03)') 
                   : transition === 'slide'
-                    ? (isActive ? 'translateX(0)' : (isPrev ? 'translateX(-100%)' : 'translateX(100%)'))
+                    ? (isActive ? 'translateX(0)' : (isPrev ? 'translateX(-30%)' : 'translateX(30%)'))
                     : 'none',
                 zIndex: isActive ? 10 : (isPrev ? 5 : 1),
                 pointerEvents: 'none',
               }}
             >
-              {/* Show thumbnail as placeholder while full image loads */}
-              {!isLoaded && photo.thumbnail_medium_url && (
-                <img
-                  src={getThumbnailUrl(photo)}
-                  alt=""
-                  className="max-w-full max-h-full object-contain absolute inset-0 m-auto blur-sm scale-105"
-                  style={{ 
-                    maxWidth: '100vw', 
-                    maxHeight: '100vh',
-                    filter: 'blur(8px)',
-                  }}
-                />
-              )}
-              
-              {/* Full quality image */}
               <img
                 src={getPhotoUrl(photo)}
                 alt=""
-                className={`max-w-full max-h-full object-contain transition-opacity duration-500 ${
-                  isLoaded ? 'opacity-100' : 'opacity-0'
-                }`}
-                style={{ 
-                  maxWidth: '100vw', 
-                  maxHeight: '100vh',
-                }}
-                onLoad={() => {
-                  if (!loadedImages[photo.id]) {
-                    setLoadedImages(prev => ({ ...prev, [photo.id]: true }));
-                  }
-                }}
+                className="max-w-full max-h-full object-contain"
+                style={{ maxWidth: '100vw', maxHeight: '100vh' }}
               />
-              
-              {/* Loading spinner for current unloaded image */}
-              {isActive && !isLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center z-20">
-                  <div className="bg-black/40 backdrop-blur-sm rounded-full p-4">
-                    <Loader2 className="w-8 h-8 text-white animate-spin" />
-                  </div>
-                </div>
-              )}
             </div>
           );
         })}
       </div>
 
-      {/* Controls Overlay */}
+      {/* Controls Overlay - Clean, minimal */}
       <div 
         className={`absolute inset-0 z-50 transition-opacity duration-500 ${
           showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >
         {/* Top bar - Event info */}
-        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 via-black/30 to-transparent p-8 pb-20">
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-8 pb-20">
           <h1 className="text-white text-3xl font-light tracking-wide">
             {displayData?.event_title || displayData?.title}
           </h1>
           {displayData?.photographer_name && (
-            <p className="text-white/70 text-sm mt-2">by {displayData.photographer_name}</p>
+            <p className="text-white/60 text-sm mt-2">by {displayData.photographer_name}</p>
           )}
         </div>
 
         {/* Bottom bar - Controls */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-8 pt-20">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-8 pt-20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <button
                 onClick={(e) => { e.stopPropagation(); setIsPaused(!isPaused); }}
-                className="text-white/80 hover:text-white p-2 transition-colors"
+                className="text-white/70 hover:text-white p-2 transition-colors"
                 data-testid="play-pause-btn"
               >
                 {isPaused ? <Play className="w-8 h-8" /> : <Pause className="w-8 h-8" />}
               </button>
-              <span className="text-white/80 text-lg font-light">
+              <span className="text-white/70 text-lg font-light">
                 {currentIndex + 1} / {photos.length}
               </span>
-              {/* Loading indicator */}
-              {loadingProgress < 100 && (
-                <span className="text-white/50 text-sm flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Buffering {loadingProgress}%
-                </span>
-              )}
             </div>
             
             <button
               onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
-              className="text-white/80 hover:text-white p-2 transition-colors"
+              className="text-white/70 hover:text-white p-2 transition-colors"
               data-testid="fullscreen-btn"
             >
               {isFullscreen ? <Minimize className="w-8 h-8" /> : <Maximize className="w-8 h-8" />}
@@ -415,9 +360,9 @@ const SlideshowDisplay = () => {
           </div>
           
           {/* Progress bar */}
-          <div className="mt-6 h-1 bg-white/20 rounded-full overflow-hidden">
+          <div className="mt-6 h-0.5 bg-white/20 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-white/70 rounded-full transition-all duration-500 ease-out"
+              className="h-full bg-white/60 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${((currentIndex + 1) / photos.length) * 100}%` }}
             />
           </div>
@@ -426,8 +371,8 @@ const SlideshowDisplay = () => {
         {/* Pause indicator */}
         {isPaused && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-            <div className="bg-black/40 backdrop-blur-md rounded-full p-8">
-              <Pause className="w-16 h-16 text-white/90" />
+            <div className="bg-black/30 backdrop-blur-sm rounded-full p-8">
+              <Pause className="w-16 h-16 text-white/80" />
             </div>
           </div>
         )}
