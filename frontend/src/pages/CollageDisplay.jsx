@@ -14,24 +14,27 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// TurboCollage style - 10 tiles with LANDSCAPE orientation focus
-// Better suited for professional landscape photography
+// EDITORIAL MOSAIC COLLAGE - Premium Gallery Layout
+// 60% Landscape (3:2) | 30% Portrait (2:3) | 10% Square (1:1)
+// 12 tiles: 7 landscape, 4 portrait, 1 square - No overlaps guaranteed
 const TILE_LAYOUT = [
-  // TOP ROW - Wide landscape tiles
-  { x: 0, y: 0, w: 35, h: 40 },        // Large landscape top-left
-  { x: 35, y: 0, w: 30, h: 35 },       // Medium landscape top-center
-  { x: 65, y: 0, w: 35, h: 40 },       // Large landscape top-right
+  // === TOP SECTION ===
+  { x: 0, y: 0, w: 38, h: 42 },      // HERO Landscape (large)
+  { x: 38, y: 0, w: 22, h: 50 },     // Portrait (tall)
+  { x: 60, y: 0, w: 22, h: 26 },     // Landscape (medium)
+  { x: 82, y: 0, w: 18, h: 18 },     // Square (filler)
+  { x: 82, y: 18, w: 18, h: 32 },    // Portrait (medium)
+  { x: 60, y: 26, w: 22, h: 24 },    // Landscape (medium)
   
-  // MIDDLE ROW - Mixed landscape tiles
-  { x: 0, y: 40, w: 25, h: 30 },       // Medium landscape mid-left
-  { x: 25, y: 35, w: 25, h: 32 },      // Medium landscape mid-center-left
-  { x: 50, y: 35, w: 25, h: 30 },      // Medium landscape mid-center-right
-  { x: 75, y: 40, w: 25, h: 30 },      // Medium landscape mid-right
+  // === MIDDLE SECTION ===
+  { x: 0, y: 42, w: 20, h: 36 },     // Portrait (tall)
+  { x: 20, y: 50, w: 40, h: 28 },    // Landscape (wide)
+  { x: 60, y: 50, w: 40, h: 30 },    // HERO Landscape (large)
   
-  // BOTTOM ROW - Wide landscape tiles
-  { x: 0, y: 70, w: 35, h: 30 },       // Large landscape bottom-left
-  { x: 35, y: 67, w: 30, h: 33 },      // Medium landscape bottom-center
-  { x: 65, y: 70, w: 35, h: 30 },      // Large landscape bottom-right
+  // === BOTTOM SECTION ===
+  { x: 0, y: 78, w: 30, h: 22 },     // Landscape (wide)
+  { x: 30, y: 78, w: 30, h: 22 },    // Landscape (medium)
+  { x: 60, y: 80, w: 40, h: 20 },    // Landscape (wide)
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
