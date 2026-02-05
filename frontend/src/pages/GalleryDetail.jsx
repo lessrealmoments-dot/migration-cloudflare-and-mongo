@@ -1502,6 +1502,117 @@ const GalleryDetail = () => {
           </div>
         )}
 
+        {/* Collage Layout Preset Picker Modal */}
+        {showCollagePresetPicker && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" data-testid="collage-preset-picker-modal">
+            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-zinc-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-semibold">Choose Collage Layout</h3>
+                    <p className="text-sm text-zinc-500 mt-1">Select a layout for your live collage display</p>
+                  </div>
+                  <button
+                    onClick={() => setShowCollagePresetPicker(false)}
+                    className="p-2 hover:bg-zinc-100 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6 overflow-y-auto max-h-[50vh]">
+                {collagePresets.length === 0 ? (
+                  <div className="text-center py-12 text-zinc-500">
+                    <Grid className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No layout presets available</p>
+                    <p className="text-sm mt-1">Contact your administrator to create layouts</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Default option */}
+                    <button
+                      onClick={() => handleSaveCollagePreset(null)}
+                      disabled={savingPreset}
+                      className={`p-4 rounded-xl border-2 text-left transition-all ${
+                        !selectedCollagePreset 
+                          ? 'border-purple-500 bg-purple-50' 
+                          : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                      }`}
+                      data-testid="preset-option-default"
+                    >
+                      <div className="aspect-video bg-zinc-200 rounded-lg mb-3 flex items-center justify-center">
+                        <Grid className="w-8 h-8 text-zinc-400" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-zinc-900">Default Layout</p>
+                          <p className="text-xs text-zinc-500">System default mosaic</p>
+                        </div>
+                        {!selectedCollagePreset && (
+                          <Check className="w-5 h-5 text-purple-600" />
+                        )}
+                      </div>
+                    </button>
+                    
+                    {/* Preset options */}
+                    {collagePresets.map((preset) => (
+                      <button
+                        key={preset.id}
+                        onClick={() => handleSaveCollagePreset(preset.id)}
+                        disabled={savingPreset}
+                        className={`p-4 rounded-xl border-2 text-left transition-all ${
+                          selectedCollagePreset === preset.id 
+                            ? 'border-purple-500 bg-purple-50' 
+                            : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                        }`}
+                        data-testid={`preset-option-${preset.id}`}
+                      >
+                        {/* Mini preview of layout */}
+                        <div className="aspect-video bg-zinc-900 rounded-lg mb-3 relative overflow-hidden">
+                          {preset.placeholders?.slice(0, 6).map((ph, idx) => (
+                            <div
+                              key={idx}
+                              className="absolute bg-zinc-700 rounded-sm"
+                              style={{
+                                left: `${ph.x}%`,
+                                top: `${ph.y}%`,
+                                width: `${ph.width}%`,
+                                height: `${ph.height}%`,
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-zinc-900">{preset.name}</p>
+                            <p className="text-xs text-zinc-500">
+                              {preset.placeholders?.length || 0} tiles
+                              {preset.is_default && ' • Default'}
+                            </p>
+                          </div>
+                          {selectedCollagePreset === preset.id && (
+                            <Check className="w-5 h-5 text-purple-600" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex justify-end gap-3">
+                <button
+                  onClick={() => setShowCollagePresetPicker(false)}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg hover:bg-zinc-100 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-12">
           <h3 className="text-2xl font-normal mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
             Cover Photo
