@@ -239,9 +239,18 @@ const CollagePresetBuilder = () => {
     return { x, y };
   };
 
-  // Mouse down on placeholder
+  // Click to select placeholder (separate from drag)
+  const handlePlaceholderClick = (e, placeholder) => {
+    e.stopPropagation();
+    setSelectedPlaceholderId(placeholder.id);
+  };
+
+  // Mouse down on placeholder - for drag or resize
   const handlePlaceholderMouseDown = (e, placeholder, handle = null) => {
     e.stopPropagation();
+    e.preventDefault();
+    
+    // Always select on mousedown
     setSelectedPlaceholderId(placeholder.id);
     
     const coords = getCanvasCoords(e);
@@ -249,7 +258,9 @@ const CollagePresetBuilder = () => {
       x: coords.x - placeholder.x,
       y: coords.y - placeholder.y,
       width: placeholder.width,
-      height: placeholder.height
+      height: placeholder.height,
+      originalX: placeholder.x,
+      originalY: placeholder.y
     });
     
     if (handle) {
