@@ -4245,6 +4245,30 @@ class GoogleDriveBackupStatus(BaseModel):
 # Store temporary state for OAuth flow
 oauth_states = {}
 
+# Base URL for OAuth redirects - set this in production for custom domains
+OAUTH_BASE_URL = os.environ.get('OAUTH_BASE_URL', '')
+
+def get_oauth_base_url(request: Request) -> str:
+    """Get the base URL for OAuth redirects, handling proxies and custom domains"""
+    # 1. First check environment variable (best for custom domains)
+    if OAUTH_BASE_URL:
+        return OAUTH_BASE_URL.rstrip('/')
+    
+    # 2. Check X-Forwarded-Host header (set by proxies)
+    forwarded_host = request.headers.get('x-forwarded-host')
+    if forwarded_host:
+        scheme = request.headers.get('x-forwarded-proto', 'https')
+        return f"{scheme}://{forwarded_host}"
+    
+    # 3. Check Host header
+    host = request.headers.get('host')
+    if host and not host.endswith('.deploy.emergentcf.cloud'):
+        scheme = 'https'
+        return f"{scheme}://{host}"
+    
+    # 4. Fall back to request base_url
+    return str(request.base_url).rstrip('/')
+
 @api_router.get("/oauth/drive/authorize")
 async def google_drive_authorize(request: Request, gallery_id: str, current_user: dict = Depends(get_current_user)):
     """Start Google Drive OAuth flow"""
@@ -4254,10 +4278,11 @@ async def google_drive_authorize(request: Request, gallery_id: str, current_user
             detail="Google Drive not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET."
         )
     
-    # Build redirect URI dynamically from request
-    # This allows OAuth to work on any domain (preview, production, etc.)
-    base_url = str(request.base_url).rstrip('/')
+    # Build redirect URI - respects custom domains and proxies
+    base_url = get_oauth_base_url(request)
     redirect_uri = f"{base_url}/api/oauth/drive/callback"
+    
+    logger.info(f"OAuth authorize - base_url: {base_url}, redirect_uri: {redirect_uri}")
     
     flow = get_google_oauth_flow(redirect_uri)
     if not flow:
