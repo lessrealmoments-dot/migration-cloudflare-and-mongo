@@ -41,6 +41,13 @@ const PaymentDisputeModal = ({
       return;
     }
     
+    // Check file size (max 10MB)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast.error('File too large. Maximum size is 10MB');
+      return;
+    }
+    
     setUploading(true);
     try {
       const formData = new FormData();
@@ -51,15 +58,30 @@ const PaymentDisputeModal = ({
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        timeout: 60000 // 60 second timeout
       });
       
-      setNewProofUrl(response.data.url);
-      toast.success('New proof uploaded!');
+      if (response.data.url) {
+        setNewProofUrl(response.data.url);
+        toast.success('New proof uploaded!');
+      } else {
+        throw new Error('No URL returned');
+      }
     } catch (error) {
-      toast.error('Failed to upload image');
+      console.error('Upload error:', error);
+      if (error.response?.data?.detail) {
+        toast.error(error.response.data.detail);
+      } else if (error.code === 'ECONNABORTED') {
+        toast.error('Upload timed out. Please try with a smaller image.');
+      } else {
+        toast.error('Failed to upload image. Please try again.');
+      }
     } finally {
       setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
