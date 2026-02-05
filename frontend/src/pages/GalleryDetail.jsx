@@ -555,7 +555,7 @@ const GalleryDetail = () => {
   const fetchGalleryData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const [galleryRes, photosRes, sectionsRes, positionRes] = await Promise.all([
+      const [galleryRes, photosRes, sectionsRes, positionRes, presetsRes] = await Promise.all([
         axios.get(`${API}/galleries/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -567,12 +567,17 @@ const GalleryDetail = () => {
         }),
         axios.get(`${API}/galleries/${id}/cover-photo-position`, {
           headers: { Authorization: `Bearer ${token}` }
-        }).catch(() => ({ data: { scale: 1, positionX: 50, positionY: 50 } }))
+        }).catch(() => ({ data: { scale: 1, positionX: 50, positionY: 50 } })),
+        axios.get(`${API}/collage-presets`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: [] }))
       ]);
       setGallery(galleryRes.data);
       setPhotos(photosRes.data);
       setSections(sectionsRes.data);
       setCoverPhotoPosition(positionRes.data);
+      setCollagePresets(presetsRes.data);
+      setSelectedCollagePreset(galleryRes.data.collage_preset_id || null);
       
       // Check gallery-specific download lock
       checkGalleryDownloadLock(galleryRes.data);
@@ -581,6 +586,27 @@ const GalleryDetail = () => {
       navigate('/dashboard');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Save collage preset selection
+  const handleSaveCollagePreset = async (presetId) => {
+    setSavingPreset(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/galleries/${id}`, {
+        collage_preset_id: presetId || null
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSelectedCollagePreset(presetId);
+      setGallery({ ...gallery, collage_preset_id: presetId });
+      toast.success(presetId ? 'Collage layout saved!' : 'Using default layout');
+      setShowCollagePresetPicker(false);
+    } catch (error) {
+      toast.error('Failed to save collage layout');
+    } finally {
+      setSavingPreset(false);
     }
   };
 
