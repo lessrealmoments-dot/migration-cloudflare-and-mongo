@@ -4245,7 +4245,7 @@ class GoogleDriveBackupStatus(BaseModel):
 oauth_states = {}
 
 @api_router.get("/oauth/drive/authorize")
-async def google_drive_authorize(gallery_id: str, current_user: dict = Depends(get_current_user)):
+async def google_drive_authorize(request: Request, gallery_id: str, current_user: dict = Depends(get_current_user)):
     """Start Google Drive OAuth flow"""
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
         raise HTTPException(
@@ -4253,7 +4253,12 @@ async def google_drive_authorize(gallery_id: str, current_user: dict = Depends(g
             detail="Google Drive not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET."
         )
     
-    flow = get_google_oauth_flow()
+    # Build redirect URI dynamically from request
+    # This allows OAuth to work on any domain (preview, production, etc.)
+    base_url = str(request.base_url).rstrip('/')
+    redirect_uri = f"{base_url}/api/oauth/drive/callback"
+    
+    flow = get_google_oauth_flow(redirect_uri)
     if not flow:
         raise HTTPException(status_code=500, detail="Failed to create OAuth flow")
     
@@ -4262,6 +4267,8 @@ async def google_drive_authorize(gallery_id: str, current_user: dict = Depends(g
     oauth_states[state] = {
         "user_id": current_user["id"],
         "gallery_id": gallery_id,
+        "redirect_uri": redirect_uri,  # Store redirect URI for callback
+        "base_url": base_url,
         "created_at": datetime.now(timezone.utc)
     }
     
@@ -4275,19 +4282,22 @@ async def google_drive_authorize(gallery_id: str, current_user: dict = Depends(g
     return {"authorization_url": authorization_url}
 
 @api_router.get("/oauth/drive/callback")
-async def google_drive_callback(code: str = Query(...), state: str = Query(...)):
+async def google_drive_callback(request: Request, code: str = Query(...), state: str = Query(...)):
     """Handle Google Drive OAuth callback"""
     # Verify state
     state_data = oauth_states.get(state)
     if not state_data:
-        # Redirect to frontend with error
+        # Redirect to frontend with error - try to get base URL from request
+        base_url = str(request.base_url).rstrip('/')
         return RedirectResponse(
-            url=f"{FRONTEND_URL}/dashboard?drive_error=invalid_state",
+            url=f"{base_url}/dashboard?drive_error=invalid_state",
             status_code=302
         )
     
     user_id = state_data["user_id"]
     gallery_id = state_data["gallery_id"]
+    redirect_uri = state_data["redirect_uri"]
+    base_url = state_data["base_url"]
     
     # Clean up state
     del oauth_states[state]
