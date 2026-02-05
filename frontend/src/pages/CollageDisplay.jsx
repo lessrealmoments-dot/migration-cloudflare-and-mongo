@@ -225,6 +225,18 @@ const CollageDisplay = () => {
       
       setDisplayData(data);
       
+      // Apply collage preset if available
+      if (!isPolling && data.collage_preset) {
+        const preset = data.collage_preset;
+        if (preset.placeholders && preset.placeholders.length > 0) {
+          setLayout(preset.placeholders);
+        }
+        if (preset.settings) {
+          setPresetSettings(preset.settings);
+        }
+        console.log(`[Collage] Using preset: ${preset.name || 'Unnamed'} with ${preset.placeholders?.length || 0} tiles`);
+      }
+      
       const newPhotoCount = data.photos.length;
       const previousCount = lastPhotoCount.current;
       
