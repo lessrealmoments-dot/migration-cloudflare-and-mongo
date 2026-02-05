@@ -14,35 +14,29 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// Professional magazine-style layout - 15 tiles with organic arrangement
-// Inspired by TurboCollage - more varied and artistic layout
+// Professional magazine-style layout - 15 tiles with MORE LANDSCAPE orientation
+// Better suited for landscape photos with subtle portrait accents
 const TILE_LAYOUT = [
-  // Left section
-  { x: 0, y: 0, w: 18, h: 58 },        // Large portrait left
-  { x: 0, y: 58, w: 18, h: 42 },       // Bottom left
+  // Row 1 - Top row with landscape tiles
+  { x: 0, y: 0, w: 22, h: 38 },        // Wide landscape left
+  { x: 22, y: 0, w: 20, h: 32 },       // Landscape
+  { x: 42, y: 0, w: 22, h: 38 },       // Wide landscape center
+  { x: 64, y: 0, w: 18, h: 45 },       // Portrait accent
+  { x: 82, y: 0, w: 18, h: 38 },       // Landscape right
   
-  // Center-left section  
-  { x: 18, y: 0, w: 15, h: 35 },       // Top
-  { x: 18, y: 35, w: 15, h: 30 },      // Middle
-  { x: 18, y: 65, w: 15, h: 35 },      // Bottom
+  // Row 2 - Middle row
+  { x: 0, y: 38, w: 20, h: 32 },       // Landscape
+  { x: 20, y: 32, w: 22, h: 36 },      // Wide landscape
+  { x: 42, y: 38, w: 22, h: 30 },      // Wide landscape
+  { x: 82, y: 38, w: 18, h: 32 },      // Landscape
   
-  // Center section
-  { x: 33, y: 0, w: 17, h: 42 },       // Top center
-  { x: 33, y: 42, w: 17, h: 28 },      // Middle center
-  { x: 33, y: 70, w: 17, h: 30 },      // Bottom center
-  
-  // Center-right section
-  { x: 50, y: 0, w: 16, h: 38 },       // Top
-  { x: 50, y: 38, w: 16, h: 32 },      // Middle
-  { x: 50, y: 70, w: 16, h: 30 },      // Bottom
-  
-  // Right section
-  { x: 66, y: 0, w: 17, h: 48 },       // Top tall
-  { x: 66, y: 48, w: 17, h: 52 },      // Bottom tall
-  
-  // Far right section
-  { x: 83, y: 0, w: 17, h: 55 },       // Top extra tall
-  { x: 83, y: 55, w: 17, h: 45 },      // Bottom
+  // Row 3 - Bottom row with landscape tiles
+  { x: 0, y: 70, w: 25, h: 30 },       // Extra wide landscape
+  { x: 25, y: 68, w: 20, h: 32 },      // Landscape
+  { x: 45, y: 68, w: 19, h: 32 },      // Landscape
+  { x: 64, y: 45, w: 18, h: 28 },      // Square-ish
+  { x: 64, y: 73, w: 18, h: 27 },      // Landscape
+  { x: 82, y: 70, w: 18, h: 30 },      // Landscape
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
