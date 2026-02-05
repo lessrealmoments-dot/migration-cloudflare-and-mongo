@@ -296,7 +296,10 @@ const CollagePresetBuilder = () => {
         const ratioInfo = RATIO_PRESETS[p.ratio];
         let newWidth = p.width;
         let newHeight = p.height;
+        let newX = p.x;
+        let newY = p.y;
         
+        // Calculate new dimensions based on handle
         if (resizeHandle.includes('e')) {
           newWidth = snapToGridValue(coords.x - p.x);
         }
@@ -304,33 +307,42 @@ const CollagePresetBuilder = () => {
           newHeight = snapToGridValue(coords.y - p.y);
         }
         if (resizeHandle.includes('w')) {
-          const deltaX = p.x - snapToGridValue(coords.x);
-          newWidth = p.width + deltaX;
+          const newLeft = snapToGridValue(coords.x);
+          newWidth = p.x + p.width - newLeft;
+          newX = newLeft;
         }
         if (resizeHandle.includes('n')) {
-          const deltaY = p.y - snapToGridValue(coords.y);
-          newHeight = p.height + deltaY;
+          const newTop = snapToGridValue(coords.y);
+          newHeight = p.y + p.height - newTop;
+          newY = newTop;
         }
         
-        // Maintain aspect ratio
-        if (ratioInfo) {
+        // Maintain aspect ratio only if not custom
+        if (ratioInfo && ratioInfo.widthRatio && ratioInfo.heightRatio) {
           const targetRatio = ratioInfo.widthRatio / ratioInfo.heightRatio;
           if (resizeHandle.includes('e') || resizeHandle.includes('w')) {
             newHeight = newWidth / targetRatio;
-          } else {
+          } else if (resizeHandle.includes('n') || resizeHandle.includes('s')) {
             newWidth = newHeight * targetRatio;
+          }
+          // Corner handles - use dominant axis
+          if (resizeHandle.length === 2) {
+            // Use width as primary for corners
+            newHeight = newWidth / targetRatio;
           }
         }
         
         // Minimum size
         newWidth = Math.max(5, newWidth);
         newHeight = Math.max(5, newHeight);
+        newX = Math.max(0, newX);
+        newY = Math.max(0, newY);
         
         // Keep within bounds
-        if (p.x + newWidth > 100) newWidth = 100 - p.x;
-        if (p.y + newHeight > 100) newHeight = 100 - p.y;
+        if (newX + newWidth > 100) newWidth = 100 - newX;
+        if (newY + newHeight > 100) newHeight = 100 - newY;
         
-        return { ...p, width: newWidth, height: newHeight };
+        return { ...p, x: newX, y: newY, width: newWidth, height: newHeight };
       }
       
       return p;
