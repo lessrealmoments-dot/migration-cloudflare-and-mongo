@@ -274,7 +274,22 @@ Integrated with **Resend** email service.
 - Admin: /admin
 
 ## Last Updated
-February 5, 2026 - Collage Layout Preset Builder, Photographer Preset Picker
+February 5, 2026 - Fixed Collage Display stopping issue, Collage Layout Preset Builder
+
+### Collage Display Perpetual Loop Fix ✅ (COMPLETED - February 5, 2026)
+
+**Issue**: Collage display would stop after ~5 transitions (when showing 65+ tiles with 13-tile layouts on 53 photos)
+
+**Root Cause**: Race condition in the preload/transition logic:
+1. `isTransitioning` state wasn't being checked atomically
+2. `preloadNextSets()` could get stuck when `isPreloadingRef` wasn't properly released
+3. Preloaded sets were being consumed but not replenished correctly
+
+**Fix Applied** in `CollageDisplay.jsx`:
+- Added `isTransitioningRef` ref to prevent race conditions with state
+- Simplified `transitionToNext` to generate tiles directly if preloaded buffer is empty
+- Fixed `preloadNextSets` to properly calculate next indices and handle errors
+- Ensured `photoPoolIndex` always advances to prevent index stagnation
 
 ### Collage Layout Preset Builder ✅ (COMPLETED - February 5, 2026)
 
