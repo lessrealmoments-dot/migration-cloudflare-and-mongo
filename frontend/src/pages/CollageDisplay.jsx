@@ -32,24 +32,70 @@ const TILE_LAYOUT = [
 const DEFAULT_INTERVAL = 7;
 const MIN_INTERVAL = 3;
 const MAX_INTERVAL = 15;
-const TRANSITION_DURATION = 1200; // ms
+const TRANSITION_DURATION = 1200;
+const PRELOAD_SETS_AHEAD = 3; // Preload 3 sets ahead
 
-// Preload image with cache
-const imageCache = new Map();
-const preloadImage = (src) => {
-  if (imageCache.has(src)) {
-    return Promise.resolve(true);
+// Robust image preloader with retry and verification
+class ImagePreloader {
+  constructor() {
+    this.cache = new Map(); // url -> { loaded: boolean, element: Image }
+    this.loading = new Map(); // url -> Promise
   }
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      imageCache.set(src, true);
-      resolve(true);
-    };
-    img.onerror = () => resolve(false);
-    img.src = src;
-  });
-};
+
+  preload(src) {
+    // Already fully loaded
+    if (this.cache.has(src) && this.cache.get(src).loaded) {
+      return Promise.resolve(true);
+    }
+
+    // Currently loading - return existing promise
+    if (this.loading.has(src)) {
+      return this.loading.get(src);
+    }
+
+    // Start new load
+    const promise = new Promise((resolve) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        this.cache.set(src, { loaded: true, element: img });
+        this.loading.delete(src);
+        resolve(true);
+      };
+      
+      img.onerror = () => {
+        // Retry once on error
+        const retryImg = new Image();
+        retryImg.onload = () => {
+          this.cache.set(src, { loaded: true, element: retryImg });
+          this.loading.delete(src);
+          resolve(true);
+        };
+        retryImg.onerror = () => {
+          this.loading.delete(src);
+          resolve(false);
+        };
+        retryImg.src = src;
+      };
+      
+      img.src = src;
+    });
+
+    this.loading.set(src, promise);
+    return promise;
+  }
+
+  isLoaded(src) {
+    return this.cache.has(src) && this.cache.get(src).loaded;
+  }
+
+  async preloadAll(urls) {
+    const results = await Promise.all(urls.map(url => this.preload(url)));
+    return results.every(r => r);
+  }
+}
+
+const imagePreloader = new ImagePreloader();
 
 const CollageDisplay = () => {
   const { shareLink } = useParams();
@@ -65,11 +111,15 @@ const CollageDisplay = () => {
   const [error, setError] = useState(null);
   const [isReady, setIsReady] = useState(false);
   
-  // Simple approach: Two layers that alternate
+  // Two layers that alternate for smooth crossfade
   const [layerA, setLayerA] = useState([]);
   const [layerB, setLayerB] = useState([]);
-  const [activeLayer, setActiveLayer] = useState('A'); // Which layer is visible
+  const [activeLayer, setActiveLayer] = useState('A');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // Queue of preloaded sets ready to display
+  const preloadedSetsRef = useRef([]);
+  const isPreloadingRef = useRef(false);
   
   const urlInterval = searchParams.get('interval');
   const [updateInterval, setUpdateInterval] = useState(
@@ -100,23 +150,54 @@ const CollageDisplay = () => {
   }, []);
 
   // Generate a set of photos for the tiles
-  const generateTileSet = useCallback(() => {
+  const generateTileSet = useCallback((startIndex = null) => {
     const currentPhotos = photosRef.current;
     if (currentPhotos.length === 0) return [];
     
+    const index = startIndex !== null ? startIndex : photoPoolIndex.current;
     const tiles = [];
+    
     for (let i = 0; i < layout.length; i++) {
-      const photo = currentPhotos[photoPoolIndex.current % currentPhotos.length];
+      const photo = currentPhotos[(index + i) % currentPhotos.length];
       tiles.push(photo);
-      photoPoolIndex.current++;
     }
+    
+    if (startIndex === null) {
+      photoPoolIndex.current += layout.length;
+    }
+    
     return tiles;
   }, [layout.length]);
 
-  // Preload a set of photos
-  const preloadTileSet = useCallback(async (tiles) => {
-    await Promise.all(tiles.map(photo => preloadImage(getPhotoUrl(photo))));
-  }, [getPhotoUrl]);
+  // Preload multiple sets ahead in background
+  const preloadNextSets = useCallback(async () => {
+    if (isPreloadingRef.current || photosRef.current.length === 0) return;
+    
+    isPreloadingRef.current = true;
+    
+    const setsNeeded = PRELOAD_SETS_AHEAD - preloadedSetsRef.current.length;
+    
+    for (let s = 0; s < setsNeeded; s++) {
+      const nextIndex = photoPoolIndex.current + (preloadedSetsRef.current.length * layout.length);
+      const nextSet = generateTileSet(nextIndex);
+      const urls = nextSet.map(photo => getPhotoUrl(photo));
+      
+      // Wait for all images to load
+      await imagePreloader.preloadAll(urls);
+      
+      // Double-check all are loaded
+      const allLoaded = urls.every(url => imagePreloader.isLoaded(url));
+      
+      if (allLoaded) {
+        preloadedSetsRef.current.push({
+          photos: nextSet,
+          index: nextIndex
+        });
+      }
+    }
+    
+    isPreloadingRef.current = false;
+  }, [layout.length, generateTileSet, getPhotoUrl]);
 
   // Fetch display data
   const fetchDisplayData = useCallback(async (isPolling = false) => {
@@ -137,8 +218,8 @@ const CollageDisplay = () => {
           if (newPhotos.length > 0) {
             console.log(`[Live] ${newPhotos.length} new photo(s) added`);
             setPhotos(prev => [...prev, ...newPhotos]);
-            // Preload new photos
-            newPhotos.forEach(p => preloadImage(getPhotoUrl(p)));
+            // Preload new photos immediately
+            newPhotos.forEach(p => imagePreloader.preload(getPhotoUrl(p)));
           }
         } else {
           // Shuffle on initial load for variety
@@ -167,69 +248,89 @@ const CollageDisplay = () => {
     if (photos.length === 0 || isReady) return;
     
     const initialize = async () => {
-      // Generate and preload first set
+      // Generate first set
       const firstSet = [];
       for (let i = 0; i < Math.min(layout.length, photos.length); i++) {
         firstSet.push(photos[i]);
       }
       photoPoolIndex.current = layout.length;
       
-      await preloadTileSet(firstSet);
+      // Preload ALL first set images with verification
+      const urls = firstSet.map(p => getPhotoUrl(p));
+      await imagePreloader.preloadAll(urls);
       
-      // Set first layer and show it
+      // Set first layer
       setLayerA(firstSet);
       setActiveLayer('A');
       
-      // Preload next set in background
-      const nextSet = generateTileSet();
-      preloadTileSet(nextSet);
+      // Start preloading next sets in background
+      preloadNextSets();
       
       setIsReady(true);
     };
     
     initialize();
-  }, [photos, isReady, layout.length, preloadTileSet, generateTileSet]);
+  }, [photos, isReady, layout.length, getPhotoUrl, preloadNextSets]);
 
-  // Transition to next set
+  // Transition to next set - only if preloaded
   const transitionToNext = useCallback(async () => {
     if (isPaused || photosRef.current.length === 0 || isTransitioning) return;
     
+    // Check if we have a preloaded set ready
+    if (preloadedSetsRef.current.length === 0) {
+      // No preloaded set - force preload and wait
+      console.log('[Collage] Waiting for preload...');
+      await preloadNextSets();
+      
+      // Still nothing? Generate and preload on the spot
+      if (preloadedSetsRef.current.length === 0) {
+        const emergencySet = generateTileSet();
+        const urls = emergencySet.map(p => getPhotoUrl(p));
+        await imagePreloader.preloadAll(urls);
+        preloadedSetsRef.current.push({ photos: emergencySet, index: photoPoolIndex.current - layout.length });
+      }
+    }
+    
+    // Get the next preloaded set
+    const nextSetData = preloadedSetsRef.current.shift();
+    if (!nextSetData) return;
+    
+    const nextSet = nextSetData.photos;
+    
+    // Verify all images are still in cache (double-check)
+    const urls = nextSet.map(p => getPhotoUrl(p));
+    const allReady = urls.every(url => imagePreloader.isLoaded(url));
+    
+    if (!allReady) {
+      // Re-preload if somehow not ready
+      await imagePreloader.preloadAll(urls);
+    }
+    
     setIsTransitioning(true);
     
-    // Generate the next set of photos
-    const nextSet = generateTileSet();
-    
-    // Preload all images BEFORE starting transition
-    await preloadTileSet(nextSet);
-    
-    // Determine which layer to update (the hidden one)
+    // Update the hidden layer with new photos
     const targetLayer = activeLayer === 'A' ? 'B' : 'A';
     
-    // Set the next photos on the hidden layer
     if (targetLayer === 'A') {
       setLayerA(nextSet);
     } else {
       setLayerB(nextSet);
     }
     
-    // Wait a frame for the DOM to update with new images
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    // Wait for React to render the new images (they're already cached)
+    await new Promise(r => setTimeout(r, 50));
     
-    // Now trigger the crossfade by switching active layer
+    // Trigger crossfade
     setActiveLayer(targetLayer);
     
     // After transition completes
     setTimeout(() => {
       setIsTransitioning(false);
-      
-      // Preload the next batch in background
-      const futureSet = generateTileSet();
-      // Reset index since we just generated for preload
-      photoPoolIndex.current -= layout.length;
-      preloadTileSet(futureSet);
+      // Continue preloading
+      preloadNextSets();
     }, TRANSITION_DURATION);
     
-  }, [isPaused, isTransitioning, activeLayer, generateTileSet, preloadTileSet, layout.length]);
+  }, [isPaused, isTransitioning, activeLayer, generateTileSet, getPhotoUrl, preloadNextSets, layout.length]);
 
   // Poll for new photos
   useEffect(() => {
@@ -250,6 +351,19 @@ const CollageDisplay = () => {
     
     return () => clearInterval(updateTimer.current);
   }, [isReady, isPaused, updateInterval, transitionToNext]);
+
+  // Continuously preload in background
+  useEffect(() => {
+    if (!isReady || isPaused) return;
+    
+    const preloadInterval = setInterval(() => {
+      if (preloadedSetsRef.current.length < PRELOAD_SETS_AHEAD) {
+        preloadNextSets();
+      }
+    }, 2000);
+    
+    return () => clearInterval(preloadInterval);
+  }, [isReady, isPaused, preloadNextSets]);
 
   // Fullscreen
   const toggleFullscreen = () => {
@@ -283,6 +397,8 @@ const CollageDisplay = () => {
         const photo = tiles[index];
         if (!photo) return null;
         
+        const url = getPhotoUrl(photo);
+        
         return (
           <div
             key={`${index}-${photo.id}`}
@@ -295,9 +411,11 @@ const CollageDisplay = () => {
             }}
           >
             <img
-              src={getPhotoUrl(photo)}
+              src={url}
               alt=""
               className="w-full h-full object-cover"
+              loading="eager"
+              decoding="sync"
               draggable={false}
             />
           </div>
