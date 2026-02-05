@@ -198,21 +198,63 @@ const CollagePresetBuilder = () => {
   // Add placeholder
   const addPlaceholder = (ratio = '3:2') => {
     const ratioInfo = RATIO_PRESETS[ratio];
-    const baseSize = 20; // 20% base
-    let width = baseSize;
-    let height = baseSize;
     
-    // Calculate height based on ratio (if not custom)
-    if (ratioInfo && ratioInfo.widthRatio && ratioInfo.heightRatio) {
-      height = (baseSize * ratioInfo.heightRatio) / ratioInfo.widthRatio;
+    // Base dimensions - adjusted for 16:9 canvas
+    // Canvas is 16:9, so height% is worth more visually than width%
+    // A 20% width on 16:9 canvas = 20 units
+    // A 20% height on 16:9 canvas = 20 * (9/16) = 11.25 visual units
+    // To make squares look square, we need to account for canvas aspect ratio
+    
+    const canvasAspect = 16 / 9; // Canvas width/height ratio
+    let width, height;
+    
+    if (ratio === 'custom') {
+      // Custom: 20% x 20% (will look like landscape due to canvas)
+      width = 20;
+      height = 20;
+    } else if (ratioInfo && ratioInfo.widthRatio && ratioInfo.heightRatio) {
+      const targetAspect = ratioInfo.widthRatio / ratioInfo.heightRatio;
+      
+      if (ratio === '3:2') {
+        // Landscape - wider than tall
+        width = 25;
+        height = (width / targetAspect) * canvasAspect;
+      } else if (ratio === '2:3') {
+        // Portrait - taller than wide
+        height = 40;
+        width = height * targetAspect / canvasAspect;
+      } else if (ratio === '1:1') {
+        // Square - equal visual dimensions
+        width = 20;
+        height = width * canvasAspect;
+      } else if (ratio === '16:9') {
+        // Wide landscape
+        width = 30;
+        height = (width / targetAspect) * canvasAspect;
+      } else if (ratio === '4:3') {
+        // Classic
+        width = 25;
+        height = (width / targetAspect) * canvasAspect;
+      } else {
+        // Default
+        width = 20;
+        height = (width / targetAspect) * canvasAspect;
+      }
+    } else {
+      width = 20;
+      height = 20;
     }
+    
+    // Clamp values
+    width = Math.min(width, 50);
+    height = Math.min(height, 60);
     
     const newPlaceholder = {
       id: generateId(),
-      x: 10 + (placeholders.length * 5) % 30, // Stagger new placeholders
-      y: 10 + (placeholders.length * 5) % 30,
+      x: 5 + (placeholders.length * 5) % 30, // Stagger new placeholders
+      y: 5 + (placeholders.length * 5) % 30,
       width,
-      height: Math.min(height, 40), // Cap height
+      height,
       ratio,
       z_index: placeholders.length
     };
