@@ -199,13 +199,18 @@ const CollagePresetBuilder = () => {
   const addPlaceholder = (ratio = '3:2') => {
     const ratioInfo = RATIO_PRESETS[ratio];
     const baseSize = 20; // 20% base
-    const width = baseSize;
-    const height = (baseSize * ratioInfo.heightRatio) / ratioInfo.widthRatio;
+    let width = baseSize;
+    let height = baseSize;
+    
+    // Calculate height based on ratio (if not custom)
+    if (ratioInfo && ratioInfo.widthRatio && ratioInfo.heightRatio) {
+      height = (baseSize * ratioInfo.heightRatio) / ratioInfo.widthRatio;
+    }
     
     const newPlaceholder = {
       id: generateId(),
-      x: 10,
-      y: 10,
+      x: 10 + (placeholders.length * 5) % 30, // Stagger new placeholders
+      y: 10 + (placeholders.length * 5) % 30,
       width,
       height: Math.min(height, 40), // Cap height
       ratio,
