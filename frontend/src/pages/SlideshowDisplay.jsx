@@ -281,7 +281,7 @@ const SlideshowDisplay = () => {
       onClick={() => setIsPaused(!isPaused)}
       data-testid="slideshow-display"
     >
-      {/* Image Container - Only render current and adjacent images */}
+      {/* Image Container - Single image at a time with crossfade */}
       <div className="absolute inset-0">
         {photos.map((photo, index) => {
           const isActive = index === currentIndex;
@@ -294,16 +294,17 @@ const SlideshowDisplay = () => {
           return (
             <div
               key={photo.id}
-              className="absolute inset-0 flex items-center justify-center"
+              className="absolute inset-0 flex items-center justify-center will-change-transform"
               style={{
                 ...getTransitionStyle(transition),
                 opacity: isActive ? 1 : 0,
+                visibility: isActive ? 'visible' : 'hidden',
                 transform: transition === 'fade-zoom' 
                   ? (isActive ? 'scale(1)' : 'scale(1.03)') 
                   : transition === 'slide'
                     ? (isActive ? 'translateX(0)' : (isPrev ? 'translateX(-30%)' : 'translateX(30%)'))
                     : 'none',
-                zIndex: isActive ? 10 : (isPrev ? 5 : 1),
+                zIndex: isActive ? 10 : 1,
                 pointerEvents: 'none',
               }}
             >
@@ -312,6 +313,7 @@ const SlideshowDisplay = () => {
                 alt=""
                 className="max-w-full max-h-full object-contain"
                 style={{ maxWidth: '100vw', maxHeight: '100vh' }}
+                draggable={false}
               />
             </div>
           );
