@@ -1178,7 +1178,8 @@ const CollagePresetBuilder = () => {
                     <label className="text-sm text-neutral-400 block mb-1">X (%)</label>
                     <input
                       type="number"
-                      value={Math.round(selectedPlaceholder.x)}
+                      step="0.5"
+                      value={parseFloat(selectedPlaceholder.x.toFixed(1))}
                       onChange={(e) => setPlaceholders(placeholders.map(p =>
                         p.id === selectedPlaceholder.id ? { ...p, x: Number(e.target.value) } : p
                       ))}
@@ -1189,7 +1190,8 @@ const CollagePresetBuilder = () => {
                     <label className="text-sm text-neutral-400 block mb-1">Y (%)</label>
                     <input
                       type="number"
-                      value={Math.round(selectedPlaceholder.y)}
+                      step="0.5"
+                      value={parseFloat(selectedPlaceholder.y.toFixed(1))}
                       onChange={(e) => setPlaceholders(placeholders.map(p =>
                         p.id === selectedPlaceholder.id ? { ...p, y: Number(e.target.value) } : p
                       ))}
