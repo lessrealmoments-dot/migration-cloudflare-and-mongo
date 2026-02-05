@@ -3776,11 +3776,21 @@ async def get_display_data(share_link: str):
             "is_hidden": {"$ne": True},
             "is_flagged": {"$ne": True}
         },
-        {"_id": 0, "id": 1, "url": 1, "thumbnail_url": 1, "is_highlight": 1, "uploaded_at": 1}
+        {"_id": 0, "id": 1, "url": 1, "thumbnail_url": 1, "thumbnail_medium_url": 1, "is_highlight": 1, "uploaded_at": 1}
     ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).limit(500).to_list(None)
     
     # Get photographer info for branding
     photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0, "business_name": 1, "name": 1})
+    
+    # Get collage preset if specified
+    collage_preset = None
+    collage_preset_id = gallery.get("collage_preset_id")
+    if collage_preset_id:
+        collage_preset = await db.collage_presets.find_one({"id": collage_preset_id}, {"_id": 0})
+    
+    # If no preset specified, try to get default preset
+    if not collage_preset:
+        collage_preset = await db.collage_presets.find_one({"is_default": True}, {"_id": 0})
     
     return {
         "gallery_id": gallery["id"],
@@ -3791,6 +3801,7 @@ async def get_display_data(share_link: str):
         "display_mode": gallery.get("display_mode", "slideshow"),
         "display_transition": gallery.get("display_transition", "crossfade"),
         "display_interval": gallery.get("display_interval", 6),
+        "collage_preset": collage_preset,
         "photos": photos,
         "photo_count": len(photos),
         "last_updated": max([p.get("uploaded_at", "") for p in photos]) if photos else ""
