@@ -14,7 +14,7 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// Tile layout for 16:9 - 11 tiles
+// Tile layout for 16:9 - 11 tiles (no gaps, edge-to-edge)
 const TILE_LAYOUT = [
   { x: 0, y: 0, w: 25, h: 50 },
   { x: 25, y: 0, w: 25, h: 33.33 },
@@ -32,12 +32,20 @@ const TILE_LAYOUT = [
 const DEFAULT_INTERVAL = 7;
 const MIN_INTERVAL = 3;
 const MAX_INTERVAL = 15;
+const PRELOAD_COUNT = 5;
 
-// Preload image
+// Preload image with cache
+const imageCache = new Map();
 const preloadImage = (src) => {
+  if (imageCache.has(src)) {
+    return Promise.resolve(true);
+  }
   return new Promise((resolve) => {
     const img = new Image();
-    img.onload = () => resolve(true);
+    img.onload = () => {
+      imageCache.set(src, true);
+      resolve(true);
+    };
     img.onerror = () => resolve(false);
     img.src = src;
   });
@@ -57,11 +65,8 @@ const CollageDisplay = () => {
   const [error, setError] = useState(null);
   const [isReady, setIsReady] = useState(false);
   
-  // Two sets of tiles for crossfade transition
-  const [currentSet, setCurrentSet] = useState([]);
-  const [nextSet, setNextSet] = useState([]);
-  const [showNextSet, setShowNextSet] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  // Tile state - each tile has its own photo and transition state
+  const [tiles, setTiles] = useState([]);
   
   const urlInterval = searchParams.get('interval');
   const [updateInterval, setUpdateInterval] = useState(
@@ -75,7 +80,6 @@ const CollageDisplay = () => {
   const photoPoolIndex = useRef(0);
   const lastPhotoCount = useRef(0);
   const photosRef = useRef([]);
-  const preloadedSet = useRef(new Set());
 
   const layout = TILE_LAYOUT;
 
@@ -83,7 +87,7 @@ const CollageDisplay = () => {
     photosRef.current = photos;
   }, [photos]);
 
-  // Get photo URL - prefer thumbnail for tiles
+  // Get photo URL - prefer thumbnail for better performance
   const getPhotoUrl = useCallback((photo) => {
     if (!photo) return '';
     if (photo.thumbnail_medium_url) {
@@ -92,34 +96,20 @@ const CollageDisplay = () => {
     return `${BACKEND_URL}${photo.url}`;
   }, []);
 
-  // Generate a set of photos for tiles
-  const generateTileSet = useCallback(() => {
-    const currentPhotos = photosRef.current;
-    if (currentPhotos.length === 0) return [];
-    
-    const tiles = [];
-    for (let i = 0; i < layout.length; i++) {
-      const photo = currentPhotos[photoPoolIndex.current % currentPhotos.length];
-      tiles.push(photo);
-      photoPoolIndex.current++;
-    }
-    return tiles;
-  }, [layout.length]);
-
-  // Preload next batch
-  const preloadNextBatch = useCallback(async () => {
+  // Preload next batch of photos
+  const preloadNextBatch = useCallback(async (startIndex = 0) => {
     const currentPhotos = photosRef.current;
     if (currentPhotos.length === 0) return;
     
-    const startIdx = photoPoolIndex.current;
-    for (let i = 0; i < layout.length; i++) {
-      const idx = (startIdx + i) % currentPhotos.length;
+    const promises = [];
+    for (let i = 0; i < layout.length + PRELOAD_COUNT; i++) {
+      const idx = (startIndex + i) % currentPhotos.length;
       const photo = currentPhotos[idx];
-      if (photo && !preloadedSet.current.has(photo.id)) {
-        preloadedSet.current.add(photo.id);
-        preloadImage(getPhotoUrl(photo));
+      if (photo) {
+        promises.push(preloadImage(getPhotoUrl(photo)));
       }
     }
+    await Promise.all(promises);
   }, [layout.length, getPhotoUrl]);
 
   // Fetch display data
@@ -141,9 +131,11 @@ const CollageDisplay = () => {
           if (newPhotos.length > 0) {
             console.log(`[Live] ${newPhotos.length} new photo(s) added`);
             setPhotos(prev => [...prev, ...newPhotos]);
+            // Preload new photos
+            newPhotos.forEach(p => preloadImage(getPhotoUrl(p)));
           }
         } else {
-          // Shuffle on initial load
+          // Shuffle on initial load for variety
           const shuffled = [...data.photos].sort(() => Math.random() - 0.5);
           setPhotos(shuffled);
         }
@@ -157,7 +149,7 @@ const CollageDisplay = () => {
         setInitialLoading(false);
       }
     }
-  }, [shareLink]);
+  }, [shareLink, getPhotoUrl]);
 
   // Initial load
   useEffect(() => {
@@ -169,52 +161,68 @@ const CollageDisplay = () => {
     if (photos.length === 0 || isReady) return;
     
     const initialize = async () => {
-      // Preload first batch
-      const initialSet = [];
-      for (let i = 0; i < Math.min(layout.length, photos.length); i++) {
-        initialSet.push(photos[i]);
-        preloadedSet.current.add(photos[i].id);
-      }
+      // Create initial tile state
+      const initialTiles = layout.map((_, index) => ({
+        currentPhoto: photos[index % photos.length],
+        nextPhoto: null,
+        isTransitioning: false,
+      }));
       
-      await Promise.all(initialSet.map(p => preloadImage(getPhotoUrl(p))));
+      // Preload all initial images
+      const preloadPromises = initialTiles.map(tile => 
+        preloadImage(getPhotoUrl(tile.currentPhoto))
+      );
+      await Promise.all(preloadPromises);
       
       photoPoolIndex.current = layout.length;
-      setCurrentSet(initialSet);
+      setTiles(initialTiles);
       
       // Preload next batch
-      preloadNextBatch();
+      preloadNextBatch(photoPoolIndex.current);
       
       setIsReady(true);
     };
     
     initialize();
-  }, [photos, isReady, layout.length, getPhotoUrl, preloadNextBatch]);
+  }, [photos, isReady, layout, getPhotoUrl, preloadNextBatch]);
 
-  // Transition to next set
-  const transitionToNext = useCallback(async () => {
-    if (isPaused || photosRef.current.length === 0 || isTransitioning) return;
+  // Smooth transition - update all tiles with staggered crossfade
+  const transitionAllTiles = useCallback(async () => {
+    if (isPaused || photosRef.current.length === 0) return;
     
-    setIsTransitioning(true);
+    const currentPhotos = photosRef.current;
+    const newTiles = [];
     
-    // Generate next set
-    const newSet = generateTileSet();
-    setNextSet(newSet);
+    // Generate next photos for each tile
+    for (let i = 0; i < layout.length; i++) {
+      const nextPhoto = currentPhotos[photoPoolIndex.current % currentPhotos.length];
+      newTiles.push(nextPhoto);
+      photoPoolIndex.current++;
+    }
     
-    // Small delay then start crossfade
-    await new Promise(r => setTimeout(r, 50));
-    setShowNextSet(true);
+    // Ensure all next images are preloaded before transitioning
+    await Promise.all(newTiles.map(photo => preloadImage(getPhotoUrl(photo))));
     
-    // After transition completes, swap sets
+    // Start transition - set next photos and trigger fade
+    setTiles(prev => prev.map((tile, index) => ({
+      ...tile,
+      nextPhoto: newTiles[index],
+      isTransitioning: true,
+    })));
+    
+    // After transition completes, swap photos
     setTimeout(() => {
-      setCurrentSet(newSet);
-      setNextSet([]);
-      setShowNextSet(false);
-      setIsTransitioning(false);
+      setTiles(prev => prev.map((tile, index) => ({
+        currentPhoto: newTiles[index],
+        nextPhoto: null,
+        isTransitioning: false,
+      })));
       
       // Preload next batch
-      preloadNextBatch();
-    }, 1000); // Match CSS transition duration
-  }, [isPaused, isTransitioning, generateTileSet, preloadNextBatch]);
+      preloadNextBatch(photoPoolIndex.current);
+    }, 1200); // Transition duration
+    
+  }, [isPaused, layout.length, getPhotoUrl, preloadNextBatch]);
 
   // Poll for new photos
   useEffect(() => {
@@ -231,10 +239,10 @@ const CollageDisplay = () => {
   useEffect(() => {
     if (!isReady || isPaused) return;
     
-    updateTimer.current = setInterval(transitionToNext, updateInterval * 1000);
+    updateTimer.current = setInterval(transitionAllTiles, updateInterval * 1000);
     
     return () => clearInterval(updateTimer.current);
-  }, [isReady, isPaused, updateInterval, transitionToNext]);
+  }, [isReady, isPaused, updateInterval, transitionAllTiles]);
 
   // Fullscreen
   const toggleFullscreen = () => {
@@ -304,40 +312,6 @@ const CollageDisplay = () => {
     );
   }
 
-  // Render tile grid
-  const renderTileGrid = (tiles, opacity = 1, zIndex = 1) => (
-    <div 
-      className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
-      style={{ opacity, zIndex }}
-    >
-      {layout.map((tile, index) => {
-        const photo = tiles[index];
-        if (!photo) return null;
-        
-        return (
-          <div
-            key={`${index}-${photo.id}`}
-            className="absolute overflow-hidden"
-            style={{
-              left: `${tile.x}%`,
-              top: `${tile.y}%`,
-              width: `${tile.w}%`,
-              height: `${tile.h}%`,
-              padding: '2px'
-            }}
-          >
-            <img
-              src={getPhotoUrl(photo)}
-              alt=""
-              className="w-full h-full object-cover rounded-sm"
-              draggable={false}
-            />
-          </div>
-        );
-      })}
-    </div>
-  );
-
   return (
     <div 
       ref={containerRef}
@@ -356,11 +330,50 @@ const CollageDisplay = () => {
             maxWidth: 'calc(100vh * 16 / 9)'
           }}
         >
-          {/* Current set (always visible) */}
-          {renderTileGrid(currentSet, 1, 1)}
-          
-          {/* Next set (fades in during transition) */}
-          {nextSet.length > 0 && renderTileGrid(nextSet, showNextSet ? 1 : 0, 2)}
+          {/* Tiles with individual crossfade */}
+          {layout.map((tilePos, index) => {
+            const tile = tiles[index];
+            if (!tile) return null;
+            
+            return (
+              <div
+                key={index}
+                className="absolute overflow-hidden"
+                style={{
+                  left: `${tilePos.x}%`,
+                  top: `${tilePos.y}%`,
+                  width: `${tilePos.w}%`,
+                  height: `${tilePos.h}%`,
+                }}
+              >
+                {/* Current photo */}
+                <img
+                  src={getPhotoUrl(tile.currentPhoto)}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{
+                    opacity: tile.isTransitioning ? 0 : 1,
+                    transition: 'opacity 1.2s ease-in-out',
+                  }}
+                  draggable={false}
+                />
+                
+                {/* Next photo (fades in during transition) */}
+                {tile.nextPhoto && (
+                  <img
+                    src={getPhotoUrl(tile.nextPhoto)}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{
+                      opacity: tile.isTransitioning ? 1 : 0,
+                      transition: 'opacity 1.2s ease-in-out',
+                    }}
+                    draggable={false}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -387,6 +400,7 @@ const CollageDisplay = () => {
               <button
                 onClick={() => setIsPaused(!isPaused)}
                 className="text-white/70 hover:text-white p-2 transition-colors"
+                data-testid="pause-play-button"
               >
                 {isPaused ? <Play className="w-8 h-8" /> : <Pause className="w-8 h-8" />}
               </button>
@@ -400,12 +414,14 @@ const CollageDisplay = () => {
               <button
                 onClick={() => setShowSettings(!showSettings)}
                 className="text-white/70 hover:text-white p-2 transition-colors"
+                data-testid="settings-button"
               >
                 <Settings className="w-7 h-7" />
               </button>
               <button
                 onClick={toggleFullscreen}
                 className="text-white/70 hover:text-white p-2 transition-colors"
+                data-testid="fullscreen-button"
               >
                 {isFullscreen ? <Minimize className="w-8 h-8" /> : <Maximize className="w-8 h-8" />}
               </button>
@@ -416,7 +432,7 @@ const CollageDisplay = () => {
 
       {/* Settings */}
       {showSettings && showControls && (
-        <div className="absolute bottom-24 right-8 z-50 bg-black/70 backdrop-blur-md rounded-lg p-6 pointer-events-auto">
+        <div className="absolute bottom-24 right-8 z-50 bg-black/70 backdrop-blur-md rounded-lg p-6 pointer-events-auto" data-testid="settings-panel">
           <h3 className="text-white font-medium mb-4">Display Settings</h3>
           <div>
             <label className="text-white/60 text-sm block mb-2">
@@ -429,6 +445,7 @@ const CollageDisplay = () => {
               value={updateInterval}
               onChange={(e) => setUpdateInterval(parseInt(e.target.value))}
               className="w-48 accent-white"
+              data-testid="interval-slider"
             />
             <div className="flex justify-between text-white/40 text-xs mt-1">
               <span>{MIN_INTERVAL}s</span>
