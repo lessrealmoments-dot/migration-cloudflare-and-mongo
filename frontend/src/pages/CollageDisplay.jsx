@@ -193,11 +193,12 @@ const CollageDisplay = () => {
     if (isPreloadingRef.current || photosRef.current.length === 0) return;
     
     isPreloadingRef.current = true;
+    const currentLayout = layoutRef.current;
     
     const setsNeeded = PRELOAD_SETS_AHEAD - preloadedSetsRef.current.length;
     
     for (let s = 0; s < setsNeeded; s++) {
-      const nextIndex = photoPoolIndex.current + (preloadedSetsRef.current.length * layout.length);
+      const nextIndex = photoPoolIndex.current + (preloadedSetsRef.current.length * currentLayout.length);
       const nextSet = generateTileSet(nextIndex);
       const urls = nextSet.map(photo => getPhotoUrl(photo));
       
@@ -214,7 +215,7 @@ const CollageDisplay = () => {
     }
     
     isPreloadingRef.current = false;
-  }, [layout.length, generateTileSet, getPhotoUrl]);
+  }, [generateTileSet, getPhotoUrl]);
 
   const fetchDisplayData = useCallback(async (isPolling = false) => {
     try {
