@@ -5220,25 +5220,75 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
 
 @api_router.post("/upload-payment-proof")
 async def upload_payment_proof(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
-    """Upload payment proof screenshot"""
-    if not file.content_type.startswith('image/'):
+    """Upload payment proof screenshot with optimization"""
+    if not file.content_type or not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400, detail="Only image files allowed")
+    
+    # File size limit (10MB)
+    MAX_FILE_SIZE = 10 * 1024 * 1024
     
     # Create payment proofs directory
     proofs_dir = Path("uploads/payment_proofs")
     proofs_dir.mkdir(parents=True, exist_ok=True)
     
-    # Generate unique filename
-    file_ext = Path(file.filename).suffix or '.jpg'
-    filename = f"{user['id']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{file_ext}"
-    file_path = proofs_dir / filename
-    
-    # Save file
-    content = await file.read()
-    with open(file_path, "wb") as f:
-        f.write(content)
-    
-    return {"url": f"/api/files/payment_proofs/{filename}"}
+    try:
+        # Read file content
+        content = await file.read()
+        
+        # Check file size
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 10MB")
+        
+        if len(content) == 0:
+            raise HTTPException(status_code=400, detail="Empty file received")
+        
+        # Generate unique filename (always save as jpg for consistency)
+        filename = f"{user['id']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
+        file_path = proofs_dir / filename
+        
+        # Process and optimize image
+        try:
+            from PIL import Image
+            import io
+            
+            # Open image from bytes
+            img = Image.open(io.BytesIO(content))
+            
+            # Convert to RGB if necessary (handles PNG with transparency, etc.)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Resize if too large (max 2000px on longest side)
+            max_dimension = 2000
+            if max(img.size) > max_dimension:
+                ratio = max_dimension / max(img.size)
+                new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+            
+            # Save optimized image
+            img.save(file_path, 'JPEG', quality=85, optimize=True)
+            
+            logger.info(f"Payment proof uploaded successfully: {filename}, size: {file_path.stat().st_size} bytes")
+            
+        except Exception as img_error:
+            logger.error(f"Image processing error: {img_error}")
+            # Fall back to saving raw content if image processing fails
+            with open(file_path, "wb") as f:
+                f.write(content)
+        
+        return {"url": f"/api/files/payment_proofs/{filename}"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Payment proof upload error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload file. Please try again.")
 
 @api_router.get("/files/{file_type}/{filename}")
 async def serve_uploaded_file(file_type: str, filename: str):
