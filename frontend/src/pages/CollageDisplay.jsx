@@ -314,7 +314,6 @@ const CollageDisplay = () => {
     
     // Use ref to prevent race conditions with isTransitioning state
     if (isTransitioningRef.current) {
-      console.log('[Collage] Skipping - transition in progress');
       return;
     }
     
@@ -322,40 +321,40 @@ const CollageDisplay = () => {
     setIsTransitioning(true);
     
     try {
-      // Ensure we have preloaded sets
-      if (preloadedSetsRef.current.length === 0) {
-        console.log('[Collage] Preloading next sets...');
-        await preloadNextSets();
-        
-        // If still empty, generate emergency set
-        if (preloadedSetsRef.current.length === 0) {
-          console.log('[Collage] Generating emergency set');
-          const emergencySet = generateTileSet();
-          if (emergencySet.length > 0) {
-            const urls = emergencySet.map(p => getPhotoUrl(p));
-            await imagePreloader.preloadAll(urls);
-            preloadedSetsRef.current.push({ photos: emergencySet, index: photoPoolIndex.current - layoutRef.current.length });
-          }
+      let nextSet;
+      
+      // Try to get from preloaded sets first
+      if (preloadedSetsRef.current.length > 0) {
+        const nextSetData = preloadedSetsRef.current.shift();
+        nextSet = nextSetData.photos;
+      } else {
+        // Generate directly if no preloaded sets available
+        const currentPhotos = photosRef.current;
+        const currentLayout = layoutRef.current;
+        nextSet = [];
+        for (let i = 0; i < currentLayout.length; i++) {
+          const photo = currentPhotos[(photoPoolIndex.current + i) % currentPhotos.length];
+          nextSet.push(photo);
         }
       }
       
-      const nextSetData = preloadedSetsRef.current.shift();
-      if (!nextSetData || nextSetData.photos.length === 0) {
-        console.log('[Collage] No next set available, will retry');
+      // Advance pool index
+      photoPoolIndex.current += layoutRef.current.length;
+      
+      // Reset index periodically to prevent overflow
+      if (photoPoolIndex.current > photosRef.current.length * 100) {
+        photoPoolIndex.current = photoPoolIndex.current % photosRef.current.length;
+      }
+      
+      if (nextSet.length === 0) {
         isTransitioningRef.current = false;
         setIsTransitioning(false);
         return;
       }
       
-      const nextSet = nextSetData.photos;
-      
       // Ensure all images are loaded
       const urls = nextSet.map(p => getPhotoUrl(p));
-      const allReady = urls.every(url => imagePreloader.isLoaded(url));
-      
-      if (!allReady) {
-        await imagePreloader.preloadAll(urls);
-      }
+      await imagePreloader.preloadAll(urls);
       
       const targetLayer = activeLayer === 'A' ? 'B' : 'A';
       
@@ -382,7 +381,7 @@ const CollageDisplay = () => {
       setIsTransitioning(false);
     }
     
-  }, [isPaused, activeLayer, generateTileSet, getPhotoUrl, preloadNextSets]);
+  }, [isPaused, activeLayer, getPhotoUrl, preloadNextSets]);
 
   useEffect(() => {
     if (photos.length === 0) return;
