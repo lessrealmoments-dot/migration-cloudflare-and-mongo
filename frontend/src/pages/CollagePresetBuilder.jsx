@@ -346,6 +346,11 @@ const CollagePresetBuilder = () => {
         let newX = p.x;
         let newY = p.y;
         
+        // Canvas is 16:9, so we need to account for this when maintaining visual ratios
+        // A 1% width = 16 visual units, a 1% height = 9 visual units
+        // So to convert: visualRatio = (width% * 16) / (height% * 9)
+        const canvasAspect = 16 / 9;
+        
         // Calculate new dimensions based on handle
         if (resizeHandle.includes('e')) {
           newWidth = snapToGridValue(coords.x - p.x);
@@ -365,17 +370,23 @@ const CollagePresetBuilder = () => {
         }
         
         // Maintain aspect ratio only if not custom
+        // Account for canvas aspect ratio: visual ratio = target ratio
+        // (width% * 16) / (height% * 9) = targetRatio
+        // height% = (width% * 16) / (targetRatio * 9)
+        // height% = width% * canvasAspect / targetRatio
         if (ratioInfo && ratioInfo.widthRatio && ratioInfo.heightRatio) {
           const targetRatio = ratioInfo.widthRatio / ratioInfo.heightRatio;
-          if (resizeHandle.includes('e') || resizeHandle.includes('w')) {
-            newHeight = newWidth / targetRatio;
-          } else if (resizeHandle.includes('n') || resizeHandle.includes('s')) {
-            newWidth = newHeight * targetRatio;
-          }
-          // Corner handles - use dominant axis
-          if (resizeHandle.length === 2) {
-            // Use width as primary for corners
-            newHeight = newWidth / targetRatio;
+          
+          // Determine primary axis based on handle direction
+          const isHorizontalHandle = resizeHandle === 'e' || resizeHandle === 'w';
+          const isVerticalHandle = resizeHandle === 'n' || resizeHandle === 's';
+          
+          if (isHorizontalHandle || resizeHandle.length === 2) {
+            // Width is primary - calculate height to maintain visual ratio
+            newHeight = (newWidth * canvasAspect) / targetRatio;
+          } else if (isVerticalHandle) {
+            // Height is primary - calculate width to maintain visual ratio
+            newWidth = (newHeight * targetRatio) / canvasAspect;
           }
         }
         
