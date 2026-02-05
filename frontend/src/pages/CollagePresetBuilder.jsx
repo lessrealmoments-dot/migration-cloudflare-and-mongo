@@ -874,6 +874,22 @@ const CollagePresetBuilder = () => {
                   }}
                 />
               )}
+              
+              {/* Snap Guides - Visual alignment indicators */}
+              {snapGuides.vertical.map((x, i) => (
+                <div
+                  key={`v-${i}`}
+                  className="absolute top-0 bottom-0 w-px bg-pink-500 pointer-events-none z-[200]"
+                  style={{ left: `${x}%`, boxShadow: '0 0 4px rgba(236,72,153,0.8)' }}
+                />
+              ))}
+              {snapGuides.horizontal.map((y, i) => (
+                <div
+                  key={`h-${i}`}
+                  className="absolute left-0 right-0 h-px bg-pink-500 pointer-events-none z-[200]"
+                  style={{ top: `${y}%`, boxShadow: '0 0 4px rgba(236,72,153,0.8)' }}
+                />
+              ))}
 
               {/* Placeholders */}
               {placeholders.map((placeholder) => (
