@@ -4245,14 +4245,14 @@ class GoogleDriveBackupStatus(BaseModel):
 # Store temporary state for OAuth flow
 oauth_states = {}
 
-# Base URL for OAuth redirects - set this in production for custom domains
-OAUTH_BASE_URL = os.environ.get('OAUTH_BASE_URL', '')
+# Frontend/Base URL for redirects - set this in production for custom domains
+FRONTEND_URL = os.environ.get('FRONTEND_URL', '')
 
 def get_oauth_base_url(request: Request) -> str:
     """Get the base URL for OAuth redirects, handling proxies and custom domains"""
     # 1. First check environment variable (best for custom domains)
-    if OAUTH_BASE_URL:
-        return OAUTH_BASE_URL.rstrip('/')
+    if FRONTEND_URL:
+        return FRONTEND_URL.rstrip('/')
     
     # 2. Check X-Forwarded-Host header (set by proxies)
     forwarded_host = request.headers.get('x-forwarded-host')
