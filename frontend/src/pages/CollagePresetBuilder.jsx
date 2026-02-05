@@ -383,13 +383,40 @@ const CollagePresetBuilder = () => {
     if (!selectedPlaceholderId) return;
 
     const coords = getCanvasCoords(e);
+    let newGuides = { horizontal: [], vertical: [] };
     
     setPlaceholders(placeholders.map(p => {
       if (p.id !== selectedPlaceholderId) return p;
       
       if (isDragging) {
-        let newX = snapToGridValue(coords.x - dragStart.x);
-        let newY = snapToGridValue(coords.y - dragStart.y);
+        const rawX = coords.x - dragStart.x;
+        const rawY = coords.y - dragStart.y;
+        
+        // Smart snap for position
+        const snapX = smartSnap(rawX, 'x', p.id);
+        const snapY = smartSnap(rawY, 'y', p.id);
+        
+        // Also check right and bottom edges for snapping
+        const snapRightEdge = smartSnap(rawX + p.width, 'x', p.id, true);
+        const snapBottomEdge = smartSnap(rawY + p.height, 'y', p.id, true);
+        
+        let newX = snapX.value;
+        let newY = snapY.value;
+        
+        // Prefer edge snap if it found a guide
+        if (snapRightEdge.guides.length > 0 && snapX.guides.length === 0) {
+          newX = snapRightEdge.value - p.width;
+          newGuides.vertical = [...newGuides.vertical, ...snapRightEdge.guides];
+        } else {
+          newGuides.vertical = [...newGuides.vertical, ...snapX.guides];
+        }
+        
+        if (snapBottomEdge.guides.length > 0 && snapY.guides.length === 0) {
+          newY = snapBottomEdge.value - p.height;
+          newGuides.horizontal = [...newGuides.horizontal, ...snapBottomEdge.guides];
+        } else {
+          newGuides.horizontal = [...newGuides.horizontal, ...snapY.guides];
+        }
         
         // Keep within bounds
         newX = Math.max(0, Math.min(100 - p.width, newX));
