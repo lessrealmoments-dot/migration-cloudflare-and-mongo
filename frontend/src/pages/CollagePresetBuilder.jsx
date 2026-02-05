@@ -727,64 +727,73 @@ const CollagePresetBuilder = () => {
               {placeholders.map((placeholder) => (
                 <div
                   key={placeholder.id}
-                  className={`absolute cursor-move transition-shadow ${
+                  className={`absolute transition-shadow select-none ${
                     selectedPlaceholderId === placeholder.id
-                      ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-transparent'
-                      : 'hover:ring-1 hover:ring-white/30'
+                      ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black cursor-move z-50'
+                      : 'hover:ring-1 hover:ring-white/50 cursor-pointer'
                   }`}
                   style={{
                     left: `calc(${placeholder.x}% + ${settings.gap / 2}px)`,
                     top: `calc(${placeholder.y}% + ${settings.gap / 2}px)`,
                     width: `calc(${placeholder.width}% - ${settings.gap}px)`,
                     height: `calc(${placeholder.height}% - ${settings.gap}px)`,
-                    zIndex: placeholder.z_index,
+                    zIndex: selectedPlaceholderId === placeholder.id ? 100 : placeholder.z_index + 10,
                     backgroundColor: showPreview ? '#374151' : '#1f2937',
                     border: settings.border_thickness > 0 
                       ? `${settings.border_thickness}px solid ${settings.border_color}`
-                      : 'none'
+                      : '1px solid rgba(255,255,255,0.1)'
                   }}
-                  onMouseDown={(e) => handlePlaceholderMouseDown(e, placeholder)}
+                  onClick={(e) => handlePlaceholderClick(e, placeholder)}
+                  onMouseDown={(e) => {
+                    // Only start drag if already selected, otherwise just select
+                    if (selectedPlaceholderId === placeholder.id) {
+                      handlePlaceholderMouseDown(e, placeholder);
+                    } else {
+                      e.stopPropagation();
+                      setSelectedPlaceholderId(placeholder.id);
+                    }
+                  }}
                 >
                   {/* Placeholder Info */}
                   {!showPreview && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-400 text-xs">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-400 text-xs pointer-events-none">
                       <span className="font-medium">{RATIO_PRESETS[placeholder.ratio]?.label || placeholder.ratio}</span>
                       <span className="text-neutral-500">{Math.round(placeholder.width)}% × {Math.round(placeholder.height)}%</span>
                     </div>
                   )}
                   
-                  {/* Resize Handles */}
+                  {/* Resize Handles - only show when selected */}
                   {selectedPlaceholderId === placeholder.id && !showPreview && (
                     <>
-                      {/* Corners */}
+                      {/* Corners - larger for easier grabbing */}
                       <div
-                        className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-nw-resize"
+                        className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full cursor-nw-resize hover:bg-blue-400 hover:scale-110 transition-transform"
                         onMouseDown={(e) => handlePlaceholderMouseDown(e, placeholder, 'nw')}
                       />
                       <div
-                        className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-ne-resize"
+                        className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full cursor-ne-resize hover:bg-blue-400 hover:scale-110 transition-transform"
                         onMouseDown={(e) => handlePlaceholderMouseDown(e, placeholder, 'ne')}
                       />
                       <div
-                        className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-sw-resize"
+                        className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full cursor-sw-resize hover:bg-blue-400 hover:scale-110 transition-transform"
                         onMouseDown={(e) => handlePlaceholderMouseDown(e, placeholder, 'sw')}
                       />
                       <div
-                        className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize"
+                        className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full cursor-se-resize hover:bg-blue-400 hover:scale-110 transition-transform"
                         onMouseDown={(e) => handlePlaceholderMouseDown(e, placeholder, 'se')}
                       />
                       
-                      {/* Edges */}
+                      {/* Edges - larger for easier grabbing */}
                       <div
-                        className="absolute top-1/2 -left-1 w-2 h-6 -translate-y-1/2 bg-blue-500 rounded cursor-w-resize"
+                        className="absolute top-1/2 -left-2 w-3 h-8 -translate-y-1/2 bg-blue-500 rounded cursor-w-resize hover:bg-blue-400"
                         onMouseDown={(e) => handlePlaceholderMouseDown(e, placeholder, 'w')}
                       />
                       <div
-                        className="absolute top-1/2 -right-1 w-2 h-6 -translate-y-1/2 bg-blue-500 rounded cursor-e-resize"
+                        className="absolute top-1/2 -right-2 w-3 h-8 -translate-y-1/2 bg-blue-500 rounded cursor-e-resize hover:bg-blue-400"
                         onMouseDown={(e) => handlePlaceholderMouseDown(e, placeholder, 'e')}
                       />
                       <div
-                        className="absolute -top-1 left-1/2 w-6 h-2 -translate-x-1/2 bg-blue-500 rounded cursor-n-resize"
+                        className="absolute -top-2 left-1/2 w-8 h-3 -translate-x-1/2 bg-blue-500 rounded cursor-n-resize hover:bg-blue-400"
                         onMouseDown={(e) => handlePlaceholderMouseDown(e, placeholder, 'n')}
                       />
                       <div
