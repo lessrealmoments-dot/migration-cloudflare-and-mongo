@@ -2914,6 +2914,19 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
         update_data["download_all_password"] = hash_password(updates.download_all_password)
     if updates.theme is not None:
         update_data["theme"] = updates.theme
+    # Display settings
+    if updates.display_mode is not None:
+        update_data["display_mode"] = updates.display_mode
+    if updates.display_transition is not None:
+        update_data["display_transition"] = updates.display_transition
+    if updates.display_interval is not None:
+        update_data["display_interval"] = updates.display_interval
+    if updates.collage_preset_id is not None:
+        update_data["collage_preset_id"] = updates.collage_preset_id
+    # Handle explicit null for collage_preset_id (to clear it)
+    elif hasattr(updates, 'collage_preset_id') and updates.collage_preset_id is None:
+        # Check if the field was explicitly set to None in the request
+        pass  # Will be handled below
     
     if update_data:
         await db.galleries.update_one({"id": gallery_id}, {"$set": update_data})
