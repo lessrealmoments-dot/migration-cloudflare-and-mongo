@@ -116,6 +116,10 @@ const CollageDisplay = () => {
   const [error, setError] = useState(null);
   const [isReady, setIsReady] = useState(false);
   
+  // Preset-based layout
+  const [layout, setLayout] = useState(DEFAULT_TILE_LAYOUT);
+  const [presetSettings, setPresetSettings] = useState(DEFAULT_SETTINGS);
+  
   const [layerA, setLayerA] = useState([]);
   const [layerB, setLayerB] = useState([]);
   const [activeLayer, setActiveLayer] = useState('A');
@@ -136,12 +140,15 @@ const CollageDisplay = () => {
   const photoPoolIndex = useRef(0);
   const lastPhotoCount = useRef(0);
   const photosRef = useRef([]);
-
-  const layout = TILE_LAYOUT;
+  const layoutRef = useRef(layout);
 
   useEffect(() => {
     photosRef.current = photos;
   }, [photos]);
+  
+  useEffect(() => {
+    layoutRef.current = layout;
+  }, [layout]);
 
   const getPhotoUrl = useCallback((photo) => {
     if (!photo) return '';
