@@ -821,17 +821,27 @@ const CollagePresetBuilder = () => {
                   onChange={(e) => setSnapToGrid(e.target.checked)}
                   className="rounded"
                 />
-                Snap
+                Grid
               </label>
               <select
                 value={gridSize}
                 onChange={(e) => setGridSize(Number(e.target.value))}
                 className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm"
               >
+                <option value={1}>1%</option>
                 <option value={2}>2%</option>
                 <option value={5}>5%</option>
                 <option value={10}>10%</option>
               </select>
+              <label className="flex items-center gap-2 text-sm ml-2">
+                <input
+                  type="checkbox"
+                  checked={snapToEdges}
+                  onChange={(e) => setSnapToEdges(e.target.checked)}
+                  className="rounded"
+                />
+                <span title="Snap to edges of other tiles with gap spacing">Edges</span>
+              </label>
             </div>
           </div>
 
