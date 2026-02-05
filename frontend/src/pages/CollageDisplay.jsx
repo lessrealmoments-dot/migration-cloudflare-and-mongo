@@ -158,7 +158,18 @@ const CollageDisplay = () => {
     const currentPhotos = photosRef.current;
     if (currentPhotos.length === 0) return [];
     
-    const index = startIndex !== null ? startIndex : photoPoolIndex.current;
+    let index = startIndex !== null ? startIndex : photoPoolIndex.current;
+    
+    // Reset index if it gets too large (prevents overflow on long sessions)
+    // This also ensures perpetual looping
+    if (index >= currentPhotos.length * 100) {
+      index = index % currentPhotos.length;
+      if (startIndex === null) {
+        photoPoolIndex.current = index;
+      }
+      console.log('[Collage] Looping back to start - perpetual playback continues');
+    }
+    
     const tiles = [];
     
     for (let i = 0; i < layout.length; i++) {
