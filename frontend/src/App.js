@@ -13,6 +13,7 @@ import PricingPage from '@/pages/PricingPage';
 import AdminLogin from '@/pages/AdminLogin';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AdminGalleryReview from '@/pages/AdminGalleryReview';
+import CollagePresetBuilder from '@/pages/CollagePresetBuilder';
 import '@/App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
