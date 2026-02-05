@@ -14,19 +14,21 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// Clean layout with 8 LARGE tiles - photos are bigger and more visible
+// Clean layout with 9 LARGE tiles - photos are bigger and more visible
 // Optimized for guest appreciation - all tiles are substantial size
 const TILE_LAYOUT = [
   // Row 1 - Top (3 large tiles)
-  { x: 0, y: 0, w: 35, h: 50 },        // Large left
-  { x: 35, y: 0, w: 30, h: 50 },       // Large center
-  { x: 65, y: 0, w: 35, h: 50 },       // Large right
+  { x: 0, y: 0, w: 34, h: 50 },        // Large left
+  { x: 34, y: 0, w: 32, h: 50 },       // Large center
+  { x: 66, y: 0, w: 34, h: 50 },       // Large right
   
-  // Row 2 - Bottom (5 tiles for visual interest)
-  { x: 0, y: 50, w: 35, h: 50 },       // Large bottom-left
-  { x: 35, y: 50, w: 15, h: 50 },      // Medium bottom-center-left
-  { x: 50, y: 50, w: 15, h: 50 },      // Medium bottom-center-right
-  { x: 65, y: 50, w: 35, h: 50 },      // Large bottom-right
+  // Row 2 - Bottom (3 large + 3 medium in center)
+  { x: 0, y: 50, w: 34, h: 50 },       // Large bottom-left
+  { x: 34, y: 50, w: 16, h: 25 },      // Medium center-top-left
+  { x: 50, y: 50, w: 16, h: 25 },      // Medium center-top-right
+  { x: 34, y: 75, w: 16, h: 25 },      // Medium center-bottom-left
+  { x: 50, y: 75, w: 16, h: 25 },      // Medium center-bottom-right
+  { x: 66, y: 50, w: 34, h: 50 },      // Large bottom-right
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
