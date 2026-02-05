@@ -55,7 +55,9 @@ const CollagePresetBuilder = () => {
   const [showGrid, setShowGrid] = useState(true);
   const [gridSize, setGridSize] = useState(5); // 5% grid
   const [snapToGrid, setSnapToGrid] = useState(true);
+  const [snapToEdges, setSnapToEdges] = useState(true); // Snap to other tile edges
   const [showPreview, setShowPreview] = useState(false);
+  const [snapGuides, setSnapGuides] = useState({ horizontal: [], vertical: [] }); // Visual guides
   
   // Tag input
   const [tagInput, setTagInput] = useState('');
