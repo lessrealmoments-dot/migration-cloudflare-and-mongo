@@ -2539,7 +2539,7 @@ async def duplicate_collage_preset(preset_id: str, admin: dict = Depends(get_adm
         "id": str(uuid.uuid4()),
         "name": f"{preset['name']} (Copy)",
         "is_default": False,
-        "created_by": admin["id"],
+        "created_by": "admin",
         "created_at": now,
         "updated_at": now
     }
