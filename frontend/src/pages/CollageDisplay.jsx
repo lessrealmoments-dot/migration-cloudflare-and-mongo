@@ -196,27 +196,38 @@ const CollageDisplay = () => {
     isPreloadingRef.current = true;
     const currentLayout = layoutRef.current;
     
-    const setsNeeded = PRELOAD_SETS_AHEAD - preloadedSetsRef.current.length;
-    
-    for (let s = 0; s < setsNeeded; s++) {
-      const nextIndex = photoPoolIndex.current + (preloadedSetsRef.current.length * currentLayout.length);
-      const nextSet = generateTileSet(nextIndex);
-      const urls = nextSet.map(photo => getPhotoUrl(photo));
+    try {
+      const setsNeeded = PRELOAD_SETS_AHEAD - preloadedSetsRef.current.length;
       
-      await imagePreloader.preloadAll(urls);
-      
-      const allLoaded = urls.every(url => imagePreloader.isLoaded(url));
-      
-      if (allLoaded) {
+      for (let s = 0; s < setsNeeded; s++) {
+        // Calculate next index based on current pool position and already preloaded sets
+        const nextIndex = photoPoolIndex.current + (preloadedSetsRef.current.length * currentLayout.length);
+        
+        // Generate set at that index
+        const tiles = [];
+        const currentPhotos = photosRef.current;
+        for (let i = 0; i < currentLayout.length; i++) {
+          const photo = currentPhotos[(nextIndex + i) % currentPhotos.length];
+          tiles.push(photo);
+        }
+        
+        if (tiles.length === 0) continue;
+        
+        const urls = tiles.map(photo => getPhotoUrl(photo));
+        
+        await imagePreloader.preloadAll(urls);
+        
         preloadedSetsRef.current.push({
-          photos: nextSet,
+          photos: tiles,
           index: nextIndex
         });
       }
+    } catch (err) {
+      console.error('[Collage] Preload error:', err);
     }
     
     isPreloadingRef.current = false;
-  }, [generateTileSet, getPhotoUrl]);
+  }, [getPhotoUrl]);
 
   const fetchDisplayData = useCallback(async (isPolling = false) => {
     try {
