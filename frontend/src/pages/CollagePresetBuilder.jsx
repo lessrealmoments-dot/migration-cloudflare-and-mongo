@@ -1033,12 +1033,20 @@ const CollagePresetBuilder = () => {
                     onChange={(e) => {
                       const ratio = e.target.value;
                       const ratioInfo = RATIO_PRESETS[ratio];
-                      if (ratioInfo) {
-                        const newHeight = (selectedPlaceholder.width * ratioInfo.heightRatio) / ratioInfo.widthRatio;
+                      const canvasAspect = 16 / 9;
+                      if (ratioInfo && ratioInfo.widthRatio && ratioInfo.heightRatio) {
+                        // Calculate new height accounting for canvas aspect ratio
+                        const targetRatio = ratioInfo.widthRatio / ratioInfo.heightRatio;
+                        const newHeight = (selectedPlaceholder.width * canvasAspect) / targetRatio;
                         setPlaceholders(placeholders.map(p =>
                           p.id === selectedPlaceholder.id
                             ? { ...p, ratio, height: Math.min(newHeight, 100 - p.y) }
                             : p
+                        ));
+                      } else {
+                        // Custom ratio - keep current dimensions
+                        setPlaceholders(placeholders.map(p =>
+                          p.id === selectedPlaceholder.id ? { ...p, ratio } : p
                         ));
                       }
                     }}
