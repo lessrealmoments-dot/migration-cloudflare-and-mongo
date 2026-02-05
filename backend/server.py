@@ -759,6 +759,11 @@ class GalleryUpdate(BaseModel):
     guest_upload_enabled_days: Optional[int] = None
     download_all_password: Optional[str] = None
     theme: Optional[str] = None
+    # Display settings
+    display_mode: Optional[str] = None
+    display_transition: Optional[str] = None
+    display_interval: Optional[int] = None
+    collage_preset_id: Optional[str] = None
 
 class Section(BaseModel):
     id: str
