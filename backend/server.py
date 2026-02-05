@@ -298,8 +298,6 @@ def generate_thumbnail(source_path: Path, photo_id: str, size_name: str = 'mediu
 # Google Drive OAuth configuration
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
-GOOGLE_DRIVE_REDIRECT_URI = os.environ.get('GOOGLE_DRIVE_REDIRECT_URI', '')
-FRONTEND_URL = os.environ.get('FRONTEND_URL', '')
 GOOGLE_DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
 # Google Drive sync interval (in seconds)
@@ -308,8 +306,8 @@ DRIVE_SYNC_INTERVAL = 5 * 60  # 5 minutes
 # Background task control
 sync_task_running = False
 
-def get_google_oauth_flow(state: str = None):
-    """Create Google OAuth flow"""
+def get_google_oauth_flow(redirect_uri: str):
+    """Create Google OAuth flow with dynamic redirect URI"""
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
         return None
     
@@ -320,11 +318,11 @@ def get_google_oauth_flow(state: str = None):
                 "client_secret": GOOGLE_CLIENT_SECRET,
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                 "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [GOOGLE_DRIVE_REDIRECT_URI]
+                "redirect_uris": [redirect_uri]
             }
         },
         scopes=GOOGLE_DRIVE_SCOPES,
-        redirect_uri=GOOGLE_DRIVE_REDIRECT_URI
+        redirect_uri=redirect_uri
     )
 
 async def get_drive_service_for_user(user_id: str):
