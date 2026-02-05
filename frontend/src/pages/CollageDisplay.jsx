@@ -14,32 +14,31 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// Professional magazine-style layout - 15 tiles with varied sizes
-// Grid: 6 columns x 4 rows conceptually, with merged cells
+// Professional magazine-style layout - 16 tiles with varied sizes
+// Inspired by TurboCollage with gaps and varied tile sizes
 const TILE_LAYOUT = [
-  // Row 1
-  { x: 0, y: 0, w: 18, h: 50 },        // Large vertical left
-  { x: 18, y: 0, w: 14, h: 30 },       // Medium top
-  { x: 32, y: 0, w: 12, h: 25 },       // Small square
-  { x: 44, y: 0, w: 16, h: 35 },       // Medium vertical
-  { x: 60, y: 0, w: 18, h: 45 },       // Large vertical
-  { x: 78, y: 0, w: 22, h: 50 },       // Extra large vertical right
+  // Top row - varied heights
+  { x: 0, y: 0, w: 16, h: 55 },        // Tall left
+  { x: 16, y: 0, w: 14, h: 32 },       // Medium top-left
+  { x: 30, y: 0, w: 12, h: 28 },       // Small top
+  { x: 42, y: 0, w: 16, h: 38 },       // Medium top-center
+  { x: 58, y: 0, w: 14, h: 32 },       // Medium top-right
+  { x: 72, y: 0, w: 14, h: 45 },       // Tall right
+  { x: 86, y: 0, w: 14, h: 55 },       // Extra tall far right
   
-  // Row 2
-  { x: 18, y: 30, w: 14, h: 25 },      // Below medium top
-  { x: 32, y: 25, w: 12, h: 30 },      // Below small square
-  { x: 44, y: 35, w: 16, h: 25 },      // Below medium vertical
-  { x: 60, y: 45, w: 18, h: 30 },      // Below large vertical
+  // Middle row
+  { x: 16, y: 32, w: 14, h: 28 },      // Below top-left
+  { x: 30, y: 28, w: 12, h: 32 },      // Below small top
+  { x: 42, y: 38, w: 16, h: 27 },      // Below top-center
+  { x: 58, y: 32, w: 14, h: 33 },      // Below top-right
+  { x: 72, y: 45, w: 14, h: 30 },      // Below tall right
   
-  // Row 3
-  { x: 0, y: 50, w: 22, h: 50 },       // Large bottom left
-  { x: 22, y: 55, w: 16, h: 45 },      // Medium bottom
-  { x: 38, y: 55, w: 14, h: 22 },      // Small
-  { x: 52, y: 60, w: 14, h: 40 },      // Medium vertical
-  { x: 66, y: 75, w: 34, h: 25 },      // Wide bottom right
-  
-  // Fill gaps
-  { x: 38, y: 77, w: 14, h: 23 },      // Small bottom
+  // Bottom row
+  { x: 0, y: 55, w: 20, h: 45 },       // Large bottom-left
+  { x: 20, y: 60, w: 22, h: 40 },      // Wide bottom-center-left
+  { x: 42, y: 65, w: 20, h: 35 },      // Medium bottom-center
+  { x: 62, y: 65, w: 24, h: 35 },      // Wide bottom-center-right
+  { x: 86, y: 55, w: 14, h: 45 },      // Tall bottom-right
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
