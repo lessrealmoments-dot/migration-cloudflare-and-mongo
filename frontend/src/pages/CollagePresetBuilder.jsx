@@ -620,6 +620,13 @@ const CollagePresetBuilder = () => {
               >
                 <Square className="w-5 h-5" />
               </button>
+              <button
+                onClick={() => addPlaceholder('custom')}
+                className="p-2 hover:bg-neutral-700 rounded transition-colors"
+                title="Custom (Free resize)"
+              >
+                <Maximize2 className="w-5 h-5" />
+              </button>
             </div>
             
             <div className="w-px h-6 bg-neutral-700" />
