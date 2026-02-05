@@ -16,6 +16,7 @@ const RATIO_PRESETS = {
   '1:1': { label: 'Square (1:1)', widthRatio: 1, heightRatio: 1 },
   '16:9': { label: 'Wide (16:9)', widthRatio: 16, heightRatio: 9 },
   '4:3': { label: 'Classic (4:3)', widthRatio: 4, heightRatio: 3 },
+  'custom': { label: 'Custom (Free)', widthRatio: null, heightRatio: null },
 };
 
 const DEFAULT_SETTINGS = {
