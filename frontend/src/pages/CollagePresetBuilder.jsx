@@ -556,16 +556,45 @@ const CollagePresetBuilder = () => {
     setPlaceholders(newPlaceholders);
   };
 
-  // Tidy up - correct minor overlaps and uneven gaps
+  // Tidy up - fix overlaps and apply consistent gaps
   const tidyUp = () => {
-    // Simple implementation: snap all to grid and adjust overlaps
+    const gap = settings.gap || 0;
+    const gapPercent = gap * 0.1; // Convert pixel gap to approximate percentage
+    
+    // Snap all to grid first
     let newPlaceholders = placeholders.map(p => ({
       ...p,
       x: snapToGridValue(p.x),
       y: snapToGridValue(p.y),
-      width: snapToGridValue(p.width),
-      height: snapToGridValue(p.height)
+      width: Math.max(5, snapToGridValue(p.width)),
+      height: Math.max(5, snapToGridValue(p.height))
     }));
+    
+    // Sort by y then x position
+    newPlaceholders.sort((a, b) => a.y - b.y || a.x - b.x);
+    
+    // Fix vertical overlaps - push tiles down if they overlap
+    for (let i = 0; i < newPlaceholders.length; i++) {
+      for (let j = i + 1; j < newPlaceholders.length; j++) {
+        const a = newPlaceholders[i];
+        const b = newPlaceholders[j];
+        
+        // Check if horizontally overlapping
+        const hOverlap = !(a.x + a.width <= b.x || b.x + b.width <= a.x);
+        
+        if (hOverlap) {
+          // Check if vertically overlapping
+          const aBottom = a.y + a.height;
+          if (b.y < aBottom + gapPercent) {
+            // Push b down to not overlap with a
+            newPlaceholders[j] = {
+              ...b,
+              y: Math.min(100 - b.height, snapToGridValue(aBottom + gapPercent))
+            };
+          }
+        }
+      }
+    }
     
     // Keep within bounds
     newPlaceholders = newPlaceholders.map(p => ({
