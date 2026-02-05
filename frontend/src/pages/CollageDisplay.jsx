@@ -14,36 +14,24 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// TurboCollage exact style - 14 tiles matching reference
-// Large hero top-left, tall portrait far-right, varied middle section
+// TurboCollage style - 10 tiles with LANDSCAPE orientation focus
+// Better suited for professional landscape photography
 const TILE_LAYOUT = [
-  // LEFT SIDE - Large hero
-  { x: 0, y: 0, w: 30, h: 50 },        // LARGE portrait top-left (hero)
+  // TOP ROW - Wide landscape tiles
+  { x: 0, y: 0, w: 35, h: 40 },        // Large landscape top-left
+  { x: 35, y: 0, w: 30, h: 35 },       // Medium landscape top-center
+  { x: 65, y: 0, w: 35, h: 40 },       // Large landscape top-right
   
-  // CENTER-LEFT - Tall portrait  
-  { x: 30, y: 0, w: 18, h: 50 },       // Tall portrait center-left
+  // MIDDLE ROW - Mixed landscape tiles
+  { x: 0, y: 40, w: 25, h: 30 },       // Medium landscape mid-left
+  { x: 25, y: 35, w: 25, h: 32 },      // Medium landscape mid-center-left
+  { x: 50, y: 35, w: 25, h: 30 },      // Medium landscape mid-center-right
+  { x: 75, y: 40, w: 25, h: 30 },      // Medium landscape mid-right
   
-  // TOP CENTER - Two small tiles
-  { x: 48, y: 0, w: 10, h: 25 },       // Small square top-left
-  { x: 58, y: 0, w: 10, h: 25 },       // Small square top-right
-  
-  // CENTER - Medium tile
-  { x: 48, y: 25, w: 20, h: 25 },      // Medium landscape center
-  
-  // RIGHT SIDE - Medium tiles stacked
-  { x: 68, y: 0, w: 15, h: 35 },       // Medium portrait top-right
-  { x: 68, y: 35, w: 15, h: 35 },      // Medium portrait center-right
-  
-  // FAR RIGHT - Extra tall portrait  
-  { x: 83, y: 0, w: 17, h: 70 },       // TALL portrait far-right (feature)
-  
-  // BOTTOM ROW - Full width coverage
-  { x: 0, y: 50, w: 18, h: 50 },       // Medium square bottom-left
-  { x: 18, y: 50, w: 22, h: 50 },      // Large landscape bottom-center-left
-  { x: 40, y: 50, w: 16, h: 50 },      // Medium portrait bottom-center
-  { x: 56, y: 50, w: 12, h: 50 },      // Medium bottom-center-right
-  { x: 68, y: 70, w: 15, h: 30 },      // Small bottom-right
-  { x: 83, y: 70, w: 17, h: 30 },      // Small bottom far-right
+  // BOTTOM ROW - Wide landscape tiles
+  { x: 0, y: 70, w: 35, h: 30 },       // Large landscape bottom-left
+  { x: 35, y: 67, w: 30, h: 33 },      // Medium landscape bottom-center
+  { x: 65, y: 70, w: 35, h: 30 },      // Large landscape bottom-right
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
