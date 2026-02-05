@@ -14,31 +14,31 @@ const getPollInterval = (photoCount) => {
   return 45000;
 };
 
-// Professional magazine-style layout - 16 tiles with varied sizes
-// Inspired by TurboCollage with gaps and varied tile sizes
+// Professional magazine-style layout - 17 tiles with varied sizes
+// Inspired by TurboCollage with gaps and varied tile sizes - Full coverage
 const TILE_LAYOUT = [
   // Top row - varied heights
-  { x: 0, y: 0, w: 16, h: 55 },        // Tall left
-  { x: 16, y: 0, w: 14, h: 32 },       // Medium top-left
-  { x: 30, y: 0, w: 12, h: 28 },       // Small top
-  { x: 42, y: 0, w: 16, h: 38 },       // Medium top-center
-  { x: 58, y: 0, w: 14, h: 32 },       // Medium top-right
-  { x: 72, y: 0, w: 14, h: 45 },       // Tall right
-  { x: 86, y: 0, w: 14, h: 55 },       // Extra tall far right
+  { x: 0, y: 0, w: 16, h: 52 },        // Tall left
+  { x: 16, y: 0, w: 14, h: 30 },       // Medium top-left
+  { x: 30, y: 0, w: 14, h: 26 },       // Small top
+  { x: 44, y: 0, w: 16, h: 35 },       // Medium top-center
+  { x: 60, y: 0, w: 14, h: 30 },       // Medium top-right
+  { x: 74, y: 0, w: 13, h: 42 },       // Tall right
+  { x: 87, y: 0, w: 13, h: 52 },       // Extra tall far right
   
   // Middle row
-  { x: 16, y: 32, w: 14, h: 28 },      // Below top-left
-  { x: 30, y: 28, w: 12, h: 32 },      // Below small top
-  { x: 42, y: 38, w: 16, h: 27 },      // Below top-center
-  { x: 58, y: 32, w: 14, h: 33 },      // Below top-right
-  { x: 72, y: 45, w: 14, h: 30 },      // Below tall right
+  { x: 16, y: 30, w: 14, h: 26 },      // Below top-left
+  { x: 30, y: 26, w: 14, h: 30 },      // Below small top
+  { x: 44, y: 35, w: 16, h: 25 },      // Below top-center
+  { x: 60, y: 30, w: 14, h: 30 },      // Below top-right
+  { x: 74, y: 42, w: 13, h: 28 },      // Below tall right
   
-  // Bottom row
-  { x: 0, y: 55, w: 20, h: 45 },       // Large bottom-left
-  { x: 20, y: 60, w: 22, h: 40 },      // Wide bottom-center-left
-  { x: 42, y: 65, w: 20, h: 35 },      // Medium bottom-center
-  { x: 62, y: 65, w: 24, h: 35 },      // Wide bottom-center-right
-  { x: 86, y: 55, w: 14, h: 45 },      // Tall bottom-right
+  // Bottom row - full width coverage
+  { x: 0, y: 52, w: 18, h: 48 },       // Large bottom-left
+  { x: 18, y: 56, w: 18, h: 44 },      // Wide bottom-center-left
+  { x: 36, y: 56, w: 17, h: 44 },      // Medium bottom-center
+  { x: 53, y: 60, w: 21, h: 40 },      // Wide bottom-center-right
+  { x: 74, y: 70, w: 26, h: 30 },      // Wide bottom-right
 ];
 
 const TILE_GAP = 3; // Gap between tiles in pixels
