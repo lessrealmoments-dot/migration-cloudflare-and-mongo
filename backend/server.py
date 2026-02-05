@@ -2455,7 +2455,7 @@ async def create_collage_preset(
         "placeholders": [p.model_dump() for p in preset_data.placeholders],
         "settings": preset_data.settings.model_dump(),
         "is_default": preset_data.is_default,
-        "created_by": admin["id"],
+        "created_by": "admin",
         "created_at": now,
         "updated_at": now
     }
