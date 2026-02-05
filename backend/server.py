@@ -1695,33 +1695,34 @@ async def forgot_password(data: ForgotPassword):
     await db.users.update_one({"id": user["id"]}, {"$set": {"password": hashed_pw}})
     
     # Send email with new password
-    if RESEND_API_KEY:
-        try:
-            params = {
-                "from": SENDER_EMAIL,
-                "to": [data.email],
-                "subject": "PhotoShare - Your New Password",
-                "html": f"""
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #333;">Password Reset</h2>
-                    <p>Hello {user['name']},</p>
-                    <p>Your password has been reset. Here is your new password:</p>
-                    <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                        <code style="font-size: 18px; color: #333;">{new_password}</code>
-                    </div>
-                    <p>Please login and change your password immediately for security.</p>
-                    <p style="color: #666; font-size: 12px;">If you didn't request this, please contact support.</p>
+    if not RESEND_API_KEY:
+        logging.error("RESEND_API_KEY not configured in environment")
+        raise HTTPException(status_code=500, detail="Email service not configured. Please contact support.")
+    
+    try:
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [data.email],
+            "subject": "PhotoShare - Your New Password",
+            "html": f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">Password Reset</h2>
+                <p>Hello {user['name']},</p>
+                <p>Your password has been reset. Here is your new password:</p>
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <code style="font-size: 18px; color: #333;">{new_password}</code>
                 </div>
-                """
-            }
-            await asyncio.to_thread(resend.Emails.send, params)
-            logging.info(f"Password reset email sent to {data.email}")
-        except Exception as e:
-            logging.error(f"Failed to send email: {e}")
-            raise HTTPException(status_code=500, detail="Failed to send email. Please try again later.")
-    else:
-        # For testing without email configured
-        logging.info(f"New password for {data.email}: {new_password}")
+                <p>Please login and change your password immediately for security.</p>
+                <p style="color: #666; font-size: 12px;">If you didn't request this, please contact support.</p>
+            </div>
+            """
+        }
+        logging.info(f"Attempting to send password reset email to {data.email} from {SENDER_EMAIL}")
+        result = await asyncio.to_thread(resend.Emails.send, params)
+        logging.info(f"Password reset email sent to {data.email}, result: {result}")
+    except Exception as e:
+        logging.error(f"Failed to send password reset email to {data.email}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to send email. Please try again later.")
     
     return {"message": "If this email is registered, a new password has been sent."}
 
