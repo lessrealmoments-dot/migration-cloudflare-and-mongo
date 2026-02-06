@@ -4268,6 +4268,12 @@ async def get_display_data(share_link: str):
     if not collage_preset:
         collage_preset = await db.collage_presets.find_one({"is_default": True}, {"_id": 0})
     
+    # Get videos for video sections
+    videos = await db.gallery_videos.find(
+        {"gallery_id": gallery["id"]},
+        {"_id": 0}
+    ).sort([("is_featured", -1), ("order", 1)]).to_list(50)
+    
     return {
         "gallery_id": gallery["id"],
         "title": gallery.get("title", ""),
@@ -4280,6 +4286,8 @@ async def get_display_data(share_link: str):
         "collage_preset": collage_preset,
         "photos": photos,
         "photo_count": len(photos),
+        "videos": videos,  # NEW: Include videos
+        "sections": gallery.get("sections", []),  # NEW: Include sections with types
         "last_updated": max([p.get("uploaded_at", "") for p in photos]) if photos else ""
     }
 
