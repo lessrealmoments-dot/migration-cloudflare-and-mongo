@@ -767,9 +767,48 @@ class Section(BaseModel):
     id: str
     name: str
     order: int
+    type: str = "photo"  # "photo" or "video"
     contributor_link: Optional[str] = None  # Unique link for contributor uploads
     contributor_name: Optional[str] = None  # Company/contributor name
     contributor_enabled: bool = False  # Whether contributor uploads are enabled
+
+class GalleryVideo(BaseModel):
+    """Video entry for video sections"""
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    gallery_id: str
+    section_id: str
+    youtube_url: str
+    video_id: str  # Extracted YouTube video ID
+    tag: str  # Custom tag like "SDE", "Preparation", "Ceremony", etc.
+    title: Optional[str] = None
+    description: Optional[str] = None
+    thumbnail_url: Optional[str] = None  # Custom uploaded thumbnail
+    thumbnail_position: Optional[dict] = None  # {scale, x, y} for crop position
+    youtube_thumbnail_url: Optional[str] = None  # Auto-fetched from YouTube
+    duration: Optional[str] = None
+    is_featured: bool = False  # Featured video shows large
+    uploaded_by: str = "photographer"  # "photographer" or "contributor"
+    contributor_name: Optional[str] = None
+    order: int = 0
+    created_at: str
+
+class VideoCreate(BaseModel):
+    youtube_url: str
+    tag: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    is_featured: bool = False
+
+class VideoUpdate(BaseModel):
+    youtube_url: Optional[str] = None
+    tag: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    thumbnail_position: Optional[dict] = None
+    is_featured: Optional[bool] = None
+    order: Optional[int] = None
 
 class Photo(BaseModel):
     model_config = ConfigDict(extra="ignore")
