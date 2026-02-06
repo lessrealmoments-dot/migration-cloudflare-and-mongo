@@ -3315,7 +3315,7 @@ async def create_video(
     }
     
     await db.gallery_videos.insert_one(video_doc)
-    del video_doc["_id"] if "_id" in video_doc else None
+    video_doc.pop("_id", None)
     
     return video_doc
 
