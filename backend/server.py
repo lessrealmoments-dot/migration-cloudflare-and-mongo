@@ -3536,13 +3536,24 @@ async def get_contributor_upload_info(contributor_link: str):
     # Get photographer info for display
     photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0, "business_name": 1, "name": 1})
     
+    # Get existing videos if this is a video section
+    existing_videos = []
+    if section.get("type") == "video":
+        videos = await db.gallery_videos.find(
+            {"gallery_id": gallery["id"], "section_id": section["id"]},
+            {"_id": 0}
+        ).to_list(50)
+        existing_videos = videos
+    
     return {
         "gallery_id": gallery["id"],
         "gallery_title": gallery["title"],
         "section_id": section["id"],
         "section_name": section["name"],
+        "section_type": section.get("type", "photo"),  # NEW: Return section type
         "photographer_name": photographer.get("business_name") or photographer.get("name", "Photographer"),
-        "existing_contributor_name": section.get("contributor_name")
+        "existing_contributor_name": section.get("contributor_name"),
+        "existing_videos": existing_videos  # NEW: Return existing videos for video sections
     }
 
 @api_router.post("/contributor/{contributor_link}/set-name")
