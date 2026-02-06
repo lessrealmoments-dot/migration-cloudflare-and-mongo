@@ -260,6 +260,25 @@ const GalleryDetail = () => {
     toast.success('Contributor link copied to clipboard!');
   };
 
+  const showContributorQRCode = (contributorLink) => {
+    const contributorUrl = `${window.location.origin}/c/${contributorLink}`;
+    setContributorQRLink(contributorUrl);
+    setShowContributorQR(true);
+  };
+
+  const downloadContributorQR = () => {
+    if (contributorQrRef.current) {
+      const canvas = contributorQrRef.current.querySelector('canvas');
+      if (canvas) {
+        const link = document.createElement('a');
+        link.download = `contributor-qr-${gallery?.title || 'upload'}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        toast.success('QR Code downloaded!');
+      }
+    }
+  };
+
   const revokeContributorLink = async (sectionId) => {
     if (!window.confirm('Are you sure you want to revoke this contributor link? The contributor will no longer be able to upload photos.')) {
       return;
