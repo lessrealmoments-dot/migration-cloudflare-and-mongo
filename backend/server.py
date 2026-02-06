@@ -31,9 +31,38 @@ import io
 import aiofiles
 from PIL import Image
 
+import re
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# YouTube URL patterns and utilities
+def extract_youtube_video_id(url: str) -> Optional[str]:
+    """Extract video ID from various YouTube URL formats"""
+    patterns = [
+        r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})',
+        r'youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return None
+
+def get_youtube_thumbnail_url(video_id: str) -> str:
+    """Get the highest quality thumbnail URL for a YouTube video"""
+    # YouTube provides these thumbnail sizes:
+    # maxresdefault.jpg (1280x720) - may not exist
+    # sddefault.jpg (640x480)
+    # hqdefault.jpg (480x360)
+    # mqdefault.jpg (320x180)
+    # default.jpg (120x90)
+    return f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+
+def get_youtube_embed_url(video_id: str) -> str:
+    """Get embeddable YouTube URL"""
+    return f"https://www.youtube.com/embed/{video_id}"
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
