@@ -3173,10 +3173,16 @@ async def delete_section(gallery_id: str, section_id: str, current_user: dict = 
         raise HTTPException(status_code=404, detail="Gallery not found")
     
     sections = gallery.get("sections", [])
+    section_to_delete = next((s for s in sections if s["id"] == section_id), None)
     sections = [s for s in sections if s["id"] != section_id]
     
     await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
-    await db.photos.update_many({"gallery_id": gallery_id, "section_id": section_id}, {"$set": {"section_id": None}})
+    
+    # Delete associated content based on section type
+    if section_to_delete and section_to_delete.get("type") == "video":
+        await db.gallery_videos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    else:
+        await db.photos.update_many({"gallery_id": gallery_id, "section_id": section_id}, {"$set": {"section_id": None}})
     
     return {"message": "Section deleted"}
 
