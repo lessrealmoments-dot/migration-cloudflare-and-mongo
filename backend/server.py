@@ -3246,6 +3246,227 @@ async def reorder_sections(gallery_id: str, data: dict = Body(...), current_user
     
     return {"message": "Sections reordered", "sections": reordered_sections}
 
+# ============ Gallery Videos Endpoints ============
+
+@api_router.get("/galleries/{gallery_id}/videos")
+async def get_gallery_videos(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """Get all videos for a gallery"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    videos = await db.gallery_videos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(100)
+    # Sort by order, then by featured status
+    videos.sort(key=lambda v: (not v.get("is_featured", False), v.get("order", 0)))
+    return videos
+
+@api_router.post("/galleries/{gallery_id}/sections/{section_id}/videos")
+async def create_video(
+    gallery_id: str, 
+    section_id: str, 
+    video: VideoCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Add a video to a video section"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Verify section exists and is video type
+    section = next((s for s in gallery.get("sections", []) if s["id"] == section_id), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    if section.get("type") != "video":
+        raise HTTPException(status_code=400, detail="Section is not a video section")
+    
+    # Extract YouTube video ID
+    video_id = extract_youtube_video_id(video.youtube_url)
+    if not video_id:
+        raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+    
+    # Get existing videos count for order
+    existing_count = await db.gallery_videos.count_documents({"gallery_id": gallery_id, "section_id": section_id})
+    
+    # If this is featured, unfeatured other videos in this section
+    if video.is_featured:
+        await db.gallery_videos.update_many(
+            {"gallery_id": gallery_id, "section_id": section_id},
+            {"$set": {"is_featured": False}}
+        )
+    
+    video_doc = {
+        "id": str(uuid.uuid4()),
+        "gallery_id": gallery_id,
+        "section_id": section_id,
+        "youtube_url": video.youtube_url,
+        "video_id": video_id,
+        "tag": video.tag,
+        "title": video.title,
+        "description": video.description,
+        "thumbnail_url": None,
+        "thumbnail_position": None,
+        "youtube_thumbnail_url": get_youtube_thumbnail_url(video_id),
+        "duration": None,
+        "is_featured": video.is_featured,
+        "uploaded_by": "photographer",
+        "contributor_name": None,
+        "order": existing_count,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.gallery_videos.insert_one(video_doc)
+    del video_doc["_id"] if "_id" in video_doc else None
+    
+    return video_doc
+
+@api_router.put("/galleries/{gallery_id}/videos/{video_id}")
+async def update_video(
+    gallery_id: str, 
+    video_id: str, 
+    update: VideoUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update a video"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    video = await db.gallery_videos.find_one({"id": video_id, "gallery_id": gallery_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    update_data = {}
+    
+    if update.youtube_url is not None:
+        new_video_id = extract_youtube_video_id(update.youtube_url)
+        if not new_video_id:
+            raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+        update_data["youtube_url"] = update.youtube_url
+        update_data["video_id"] = new_video_id
+        update_data["youtube_thumbnail_url"] = get_youtube_thumbnail_url(new_video_id)
+    
+    if update.tag is not None:
+        update_data["tag"] = update.tag
+    if update.title is not None:
+        update_data["title"] = update.title
+    if update.description is not None:
+        update_data["description"] = update.description
+    if update.thumbnail_url is not None:
+        update_data["thumbnail_url"] = update.thumbnail_url
+    if update.thumbnail_position is not None:
+        update_data["thumbnail_position"] = update.thumbnail_position
+    if update.order is not None:
+        update_data["order"] = update.order
+    
+    if update.is_featured is not None:
+        update_data["is_featured"] = update.is_featured
+        # If setting as featured, unfeatured others in same section
+        if update.is_featured:
+            await db.gallery_videos.update_many(
+                {"gallery_id": gallery_id, "section_id": video["section_id"], "id": {"$ne": video_id}},
+                {"$set": {"is_featured": False}}
+            )
+    
+    if update_data:
+        await db.gallery_videos.update_one({"id": video_id}, {"$set": update_data})
+    
+    updated_video = await db.gallery_videos.find_one({"id": video_id}, {"_id": 0})
+    return updated_video
+
+@api_router.delete("/galleries/{gallery_id}/videos/{video_id}")
+async def delete_video(gallery_id: str, video_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a video"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    result = await db.gallery_videos.delete_one({"id": video_id, "gallery_id": gallery_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    return {"message": "Video deleted"}
+
+@api_router.post("/galleries/{gallery_id}/videos/{video_id}/set-featured")
+async def set_featured_video(gallery_id: str, video_id: str, current_user: dict = Depends(get_current_user)):
+    """Set a video as the featured video for its section"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    video = await db.gallery_videos.find_one({"id": video_id, "gallery_id": gallery_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Unfeatured all other videos in the same section
+    await db.gallery_videos.update_many(
+        {"gallery_id": gallery_id, "section_id": video["section_id"]},
+        {"$set": {"is_featured": False}}
+    )
+    
+    # Set this video as featured
+    await db.gallery_videos.update_one({"id": video_id}, {"$set": {"is_featured": True}})
+    
+    return {"message": "Video set as featured", "video_id": video_id}
+
+@api_router.post("/upload-video-thumbnail")
+async def upload_video_thumbnail(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    """Upload custom thumbnail for a video"""
+    if not file.content_type or not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Only image files allowed")
+    
+    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+    
+    thumbnails_dir = Path("uploads/video_thumbnails")
+    thumbnails_dir.mkdir(parents=True, exist_ok=True)
+    
+    try:
+        content = await file.read()
+        
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB")
+        
+        if len(content) == 0:
+            raise HTTPException(status_code=400, detail="Empty file received")
+        
+        filename = f"{user['id']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
+        file_path = thumbnails_dir / filename
+        
+        # Process and optimize thumbnail
+        try:
+            img = Image.open(io.BytesIO(content))
+            
+            # Convert to RGB
+            if img.mode in ('RGBA', 'LA', 'P'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Resize to reasonable max size while maintaining aspect ratio
+            max_dimension = 1920
+            if max(img.size) > max_dimension:
+                ratio = max_dimension / max(img.size)
+                new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+            
+            img.save(file_path, 'JPEG', quality=90, optimize=True)
+            
+        except Exception as img_error:
+            logger.error(f"Image processing error: {img_error}")
+            with open(file_path, "wb") as f:
+                f.write(content)
+        
+        return {"url": f"/api/files/video_thumbnails/{filename}"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Video thumbnail upload error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload thumbnail")
+
 # ============ Contributor Upload Link Endpoints ============
 
 @api_router.post("/galleries/{gallery_id}/sections/{section_id}/contributor-link")
