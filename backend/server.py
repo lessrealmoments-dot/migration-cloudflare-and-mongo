@@ -1107,6 +1107,7 @@ async def resolve_user_features(user: dict) -> dict:
     if override_mode and override_expires:
         try:
             expires_dt = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
+            logger.info(f"Checking override: mode={override_mode}, expires={expires_dt}, now={datetime.now(timezone.utc)}")
             if datetime.now(timezone.utc) < expires_dt:
                 # Override is active! Use override mode features
                 result["authority_source"] = "override_mode"
@@ -1116,6 +1117,7 @@ async def resolve_user_features(user: dict) -> dict:
                 
                 # Get mode features - use DEFAULT_MODE_FEATURES as base
                 mode_features = DEFAULT_MODE_FEATURES.get(override_mode, {}).copy()
+                logger.info(f"Mode features for {override_mode}: {mode_features}")
                 result["features"] = mode_features
                 
                 # Check unlimited credits from feature toggle
@@ -1133,8 +1135,10 @@ async def resolve_user_features(user: dict) -> dict:
                 elif override_mode == MODE_COMPED_STANDARD:
                     result["effective_plan"] = PLAN_STANDARD
                 
+                logger.info(f"Returning override result: {result}")
                 return result
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            logger.error(f"Override check error: {e}")
             pass  # Override expired or invalid, continue to normal plan
     
     # STEP 2: Normal Payment/Subscription Plan
