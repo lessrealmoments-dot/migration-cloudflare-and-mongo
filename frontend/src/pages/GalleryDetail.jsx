@@ -76,6 +76,10 @@ const GalleryDetail = () => {
   const [showDisplayQR, setShowDisplayQR] = useState(false);
   const [displayQRMode, setDisplayQRMode] = useState('slideshow');
   const displayQrRef = useRef(null);
+  // Contributor QR state
+  const [showContributorQR, setShowContributorQR] = useState(false);
+  const [contributorQRLink, setContributorQRLink] = useState('');
+  const contributorQrRef = useRef(null);
   // Embed code state
   const [showEmbedModal, setShowEmbedModal] = useState(false);
   // Multi-select state
