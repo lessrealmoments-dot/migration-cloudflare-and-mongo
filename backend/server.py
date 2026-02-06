@@ -3690,6 +3690,132 @@ async def upload_contributor_photo(
 
 # ============ End Contributor Upload Endpoints ============
 
+@api_router.post("/contributor/{contributor_link}/video")
+async def upload_contributor_video(
+    contributor_link: str,
+    youtube_url: str = Form(...),
+    tag: str = Form(...),
+    company_name: str = Form(...),
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None)
+):
+    """Upload a video link as a contributor to a video section"""
+    # Validate company name
+    if not company_name or not company_name.strip():
+        raise HTTPException(status_code=400, detail="Company name is required")
+    
+    # Find gallery with this contributor link
+    gallery = await db.galleries.find_one(
+        {"sections.contributor_link": contributor_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid contributor link")
+    
+    # Find the section
+    section = next((s for s in gallery.get("sections", []) if s.get("contributor_link") == contributor_link), None)
+    if not section or not section.get("contributor_enabled", False):
+        raise HTTPException(status_code=404, detail="Contributor uploads are not enabled")
+    
+    # Verify this is a video section
+    if section.get("type") != "video":
+        raise HTTPException(status_code=400, detail="This section is not configured for video uploads")
+    
+    # Extract YouTube video ID
+    video_id = extract_youtube_video_id(youtube_url)
+    if not video_id:
+        raise HTTPException(status_code=400, detail="Invalid YouTube URL. Please provide a valid YouTube video link.")
+    
+    # Check for duplicate videos
+    existing_video = await db.gallery_videos.find_one({
+        "gallery_id": gallery["id"],
+        "section_id": section["id"],
+        "video_id": video_id
+    })
+    if existing_video:
+        raise HTTPException(status_code=400, detail="This video has already been added to this section")
+    
+    # Update contributor name in section if not set
+    sections = gallery.get("sections", [])
+    section_idx = next((i for i, s in enumerate(sections) if s.get("contributor_link") == contributor_link), None)
+    if section_idx is not None and not sections[section_idx].get("contributor_name"):
+        sections[section_idx]["contributor_name"] = company_name.strip()
+        await db.galleries.update_one({"id": gallery["id"]}, {"$set": {"sections": sections}})
+    
+    # Get existing videos count for order
+    existing_count = await db.gallery_videos.count_documents({
+        "gallery_id": gallery["id"],
+        "section_id": section["id"]
+    })
+    
+    # Create video document
+    video_doc = {
+        "id": str(uuid.uuid4()),
+        "gallery_id": gallery["id"],
+        "section_id": section["id"],
+        "youtube_url": youtube_url,
+        "video_id": video_id,
+        "tag": tag.strip(),
+        "title": title.strip() if title else None,
+        "description": description.strip() if description else None,
+        "thumbnail_url": None,
+        "thumbnail_position": None,
+        "youtube_thumbnail_url": get_youtube_thumbnail_url(video_id),
+        "duration": None,
+        "is_featured": existing_count == 0,  # First video is automatically featured
+        "uploaded_by": "contributor",
+        "contributor_name": company_name.strip(),
+        "order": existing_count,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.gallery_videos.insert_one(video_doc)
+    
+    return {
+        "success": True,
+        "message": "Video added successfully",
+        "video": {
+            "id": video_doc["id"],
+            "tag": video_doc["tag"],
+            "title": video_doc["title"],
+            "youtube_thumbnail_url": video_doc["youtube_thumbnail_url"],
+            "is_featured": video_doc["is_featured"]
+        }
+    }
+
+@api_router.delete("/contributor/{contributor_link}/video/{video_id}")
+async def delete_contributor_video(contributor_link: str, video_id: str, company_name: str = None):
+    """Delete a video uploaded by contributor"""
+    # Find gallery with this contributor link
+    gallery = await db.galleries.find_one(
+        {"sections.contributor_link": contributor_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid contributor link")
+    
+    # Find the section
+    section = next((s for s in gallery.get("sections", []) if s.get("contributor_link") == contributor_link), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    # Find and delete the video (must be in same section and uploaded by contributor)
+    video = await db.gallery_videos.find_one({
+        "id": video_id,
+        "gallery_id": gallery["id"],
+        "section_id": section["id"],
+        "uploaded_by": "contributor"
+    })
+    
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found or you don't have permission to delete it")
+    
+    await db.gallery_videos.delete_one({"id": video_id})
+    
+    return {"success": True, "message": "Video deleted"}
+
+# ============ Gallery Photos Endpoints ============
+
 @api_router.post("/galleries/{gallery_id}/photos", response_model=Photo)
 async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id: Optional[str] = Form(None), current_user: dict = Depends(get_current_user)):
     """Optimized photo upload with concurrency control and async I/O"""
