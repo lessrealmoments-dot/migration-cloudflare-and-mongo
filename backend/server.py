@@ -5607,10 +5607,10 @@ async def upload_payment_proof(file: UploadFile = File(...), user: dict = Depend
 
 @api_router.get("/files/{file_type}/{filename}")
 async def serve_uploaded_file(file_type: str, filename: str):
-    """Serve uploaded files (payment proofs, QR codes, etc.)"""
+    """Serve uploaded files (payment proofs, QR codes, video thumbnails, etc.)"""
     from fastapi.responses import FileResponse
     
-    allowed_types = ["payment_proofs", "payment_qr"]
+    allowed_types = ["payment_proofs", "payment_qr", "video_thumbnails"]
     if file_type not in allowed_types:
         raise HTTPException(status_code=404, detail="File not found")
     
