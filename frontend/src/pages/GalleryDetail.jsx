@@ -1986,6 +1986,13 @@ const GalleryDetail = () => {
                         <Copy className="w-4 h-4" /> Copy Link
                       </button>
                       <button
+                        onClick={() => showContributorQRCode(sections.find(s => s.id === selectedSection)?.contributor_link)}
+                        className="px-4 py-2 bg-white border border-zinc-300 hover:bg-zinc-50 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        data-testid="show-contributor-qr"
+                      >
+                        <QrCode className="w-4 h-4" /> QR Code
+                      </button>
+                      <button
                         onClick={() => revokeContributorLink(selectedSection)}
                         className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-sm font-medium transition-colors"
                         data-testid="revoke-contributor-link"
