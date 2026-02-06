@@ -3129,16 +3129,26 @@ async def get_cover_photo_position(gallery_id: str, current_user: dict = Depends
     return position
 
 @api_router.post("/galleries/{gallery_id}/sections", response_model=Section)
-async def create_section(gallery_id: str, name: str = Form(...), current_user: dict = Depends(get_current_user)):
+async def create_section(
+    gallery_id: str, 
+    name: str = Form(...), 
+    type: str = Form("photo"),  # "photo" or "video"
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new section (photo or video type)"""
     gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    if type not in ["photo", "video"]:
+        raise HTTPException(status_code=400, detail="Section type must be 'photo' or 'video'")
     
     section_id = str(uuid.uuid4())
     sections = gallery.get("sections", [])
     new_section = {
         "id": section_id,
         "name": name,
+        "type": type,
         "order": len(sections)
     }
     sections.append(new_section)
