@@ -1525,6 +1525,84 @@ const GalleryDetail = () => {
           </div>
         )}
 
+        {/* Contributor QR Code Modal */}
+        {showContributorQR && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" data-testid="contributor-qr-modal">
+            <div className="bg-white rounded-xl max-w-md w-full overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-zinc-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-semibold">Contributor Upload QR</h3>
+                    <p className="text-sm text-zinc-500 mt-1">Share this QR code for photo uploads</p>
+                  </div>
+                  <button
+                    onClick={() => setShowContributorQR(false)}
+                    className="p-2 hover:bg-zinc-100 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div ref={contributorQrRef} className="bg-white p-6 rounded-lg flex justify-center">
+                  <QRCodeSVG 
+                    value={contributorQRLink}
+                    size={200}
+                    level="H"
+                    includeMargin={true}
+                  />
+                </div>
+                <p className="text-center text-sm text-zinc-500 mt-4 break-all px-4">
+                  {contributorQRLink}
+                </p>
+              </div>
+              
+              <div className="p-4 border-t border-zinc-200 flex gap-3">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(contributorQRLink);
+                    toast.success('Link copied!');
+                  }}
+                  className="flex-1 border border-zinc-300 py-3 rounded-lg hover:bg-zinc-50 font-medium flex items-center justify-center gap-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copy Link
+                </button>
+                <button
+                  onClick={() => {
+                    const svg = contributorQrRef.current?.querySelector('svg');
+                    if (svg) {
+                      const svgData = new XMLSerializer().serializeToString(svg);
+                      const canvas = document.createElement('canvas');
+                      const ctx = canvas.getContext('2d');
+                      const img = new Image();
+                      img.onload = () => {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                        const link = document.createElement('a');
+                        link.download = `contributor-upload-qr-${gallery?.title || 'gallery'}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        toast.success('QR Code downloaded!');
+                      };
+                      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+                    }
+                  }}
+                  data-testid="download-contributor-qr-btn"
+                  className="flex-1 bg-zinc-900 text-white py-3 rounded-lg hover:bg-zinc-800 font-medium flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Collage Layout Preset Picker Modal */}
         {showCollagePresetPicker && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" data-testid="collage-preset-picker-modal">
