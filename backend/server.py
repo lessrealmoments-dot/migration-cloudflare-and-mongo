@@ -1113,7 +1113,10 @@ async def resolve_user_features(user: dict) -> dict:
                 result["override_active"] = True
                 result["override_mode"] = override_mode
                 result["override_expires"] = override_expires
-                result["features"] = global_toggles.get(override_mode, DEFAULT_MODE_FEATURES.get(override_mode, {}))
+                
+                # Get mode features - use DEFAULT_MODE_FEATURES as base
+                mode_features = DEFAULT_MODE_FEATURES.get(override_mode, {}).copy()
+                result["features"] = mode_features
                 
                 # Check unlimited credits from feature toggle
                 if result["features"].get("unlimited_token", False):
@@ -1137,7 +1140,10 @@ async def resolve_user_features(user: dict) -> dict:
     # STEP 2: Normal Payment/Subscription Plan
     result["authority_source"] = "payment_plan"
     result["effective_plan"] = plan
-    result["features"] = global_toggles.get(plan, DEFAULT_PLAN_FEATURES.get(plan, {}))
+    
+    # Get plan features - use DEFAULT_PLAN_FEATURES as base
+    plan_features = DEFAULT_PLAN_FEATURES.get(plan, {}).copy()
+    result["features"] = plan_features
     
     # Check unlimited credits from feature toggle (unlikely for regular plans)
     if result["features"].get("unlimited_token", False):
