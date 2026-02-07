@@ -1276,7 +1276,7 @@ const PublicGallery = () => {
           )}
         </div>
         </>
-        )}
+      )}
       </div>
 
       {/* Premium Lightbox */}
