@@ -3549,12 +3549,19 @@ async def refresh_fotoshare_section(
 
 @api_router.get("/galleries/{gallery_id}/fotoshare-videos")
 async def get_fotoshare_videos(gallery_id: str, section_id: Optional[str] = None):
-    """Get fotoshare videos for a gallery (public endpoint for public gallery view)"""
+    """Get fotoshare videos for a gallery (supports both gallery_id and share_link)"""
+    # First try to find by gallery_id
     gallery = await db.galleries.find_one({"id": gallery_id}, {"_id": 0, "id": 1})
+    
+    # If not found, try by share_link
+    if not gallery:
+        gallery = await db.galleries.find_one({"share_link": gallery_id}, {"_id": 0, "id": 1})
+    
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    query = {"gallery_id": gallery_id}
+    actual_gallery_id = gallery["id"]
+    query = {"gallery_id": actual_gallery_id}
     if section_id:
         query["section_id"] = section_id
     
