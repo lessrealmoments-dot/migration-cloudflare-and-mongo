@@ -729,25 +729,44 @@ const PublicGallery = () => {
                 {gallery?.event_title || gallery?.title}
               </h1>
               
-              {/* Contributors Grid - Professional Layout */}
-              {gallery?.contributors && gallery.contributors.length > 0 ? (
-                <div className="mt-6">
-                  <p className="text-sm text-white/40 uppercase tracking-widest mb-4">Captured by</p>
-                  <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
-                    {gallery.contributors.map((c, i) => (
-                      <div key={i} className="text-center min-w-[120px]">
-                        <p className="text-white/90 font-medium text-sm md:text-base">{c.name}</p>
-                        <p className="text-white/40 text-xs mt-0.5">
-                          {c.role === 'Photography' ? 'Photography' : c.role}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+              {/* Elegant Credits Layout */}
+              {gallery?.contributors && gallery.contributors.length > 0 && (
+                <div className="mt-8">
+                  {/* Owner/Curator Section */}
+                  {(() => {
+                    const owner = gallery.contributors.find(c => c.is_owner);
+                    const others = gallery.contributors.filter(c => !c.is_owner);
+                    
+                    return (
+                      <>
+                        {/* The Story, Curated by */}
+                        <div className="mb-6">
+                          <p className="text-xs text-white/40 uppercase tracking-[0.3em] mb-2">
+                            The Story, Curated by
+                          </p>
+                          <p className="text-xl md:text-2xl text-white/95 font-light" style={{ fontFamily: 'Playfair Display, serif' }}>
+                            {owner?.name || gallery?.photographer_name}
+                          </p>
+                        </div>
+                        
+                        {/* Other Contributors */}
+                        {others.length > 0 && (
+                          <div className="mt-6">
+                            <p className="text-xs text-white/30 uppercase tracking-[0.2em] mb-4">with</p>
+                            <div className="flex flex-wrap justify-center gap-x-6 gap-y-3">
+                              {others.map((c, i) => (
+                                <div key={i} className="text-center">
+                                  <p className="text-white/80 text-sm font-medium">{c.name}</p>
+                                  <p className="text-white/40 text-[10px] uppercase tracking-wider mt-0.5">{c.role}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
-              ) : (
-                <p className="text-base md:text-lg text-white/60 font-light mt-4">
-                  Captured by <span className="text-white/90">{gallery?.photographer_name}</span>
-                </p>
               )}
             </motion.div>
             
