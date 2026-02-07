@@ -689,9 +689,25 @@ const PublicGallery = () => {
             </div>
           )}
 
-          {/* Sections - Masonry Layout */}
+          {/* Sections - Photo and Video */}
           {gallery?.sections && gallery.sections.length > 0 ? (
             gallery.sections.map((section) => {
+              // Check if this is a video section
+              if (section.type === 'video') {
+                const sectionVideos = getVideosBySection(section.id);
+                if (sectionVideos.length === 0) return null;
+                
+                return (
+                  <VideoSection
+                    key={section.id}
+                    videos={sectionVideos}
+                    sectionName={section.name}
+                    contributorName={section.contributor_name}
+                  />
+                );
+              }
+              
+              // Photo section
               const sectionPhotos = getRegularPhotosBySection(section.id);
               if (sectionPhotos.length === 0) return null;
               const isExpanded = isSectionExpanded(section.id);
