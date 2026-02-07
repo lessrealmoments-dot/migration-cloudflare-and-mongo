@@ -82,11 +82,18 @@ const PublicGallery = () => {
 
   const fetchPhotos = async (pwd = null) => {
     try {
-      const response = await axios.get(
-        `${API}/public/gallery/${shareLink}/photos`,
-        { params: { password: pwd || password } }
-      );
-      setPhotos(response.data);
+      const [photosRes, videosRes] = await Promise.all([
+        axios.get(
+          `${API}/public/gallery/${shareLink}/photos`,
+          { params: { password: pwd || password } }
+        ),
+        axios.get(
+          `${API}/public/gallery/${shareLink}/videos`,
+          { params: { password: pwd || password } }
+        ).catch(() => ({ data: [] })) // Videos are optional, don't fail if not available
+      ]);
+      setPhotos(photosRes.data);
+      setVideos(videosRes.data);
     } catch (error) {
       if (error.response?.status === 401) {
         toast.error('Invalid password');
