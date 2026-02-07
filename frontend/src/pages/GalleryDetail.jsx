@@ -2150,7 +2150,7 @@ const GalleryDetail = () => {
                   {sections.find(s => s.id === selectedSection)?.contributor_link ? (
                     <>
                       <button
-                        onClick={() => copyContributorLink(sections.find(s => s.id === selectedSection)?.contributor_link)}
+                        onClick={() => copyContributorLink(sections.find(s => s.id === selectedSection)?.contributor_link, selectedSection)}
                         className="px-4 py-2 bg-white border border-zinc-300 hover:bg-zinc-50 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                         data-testid="copy-contributor-link"
                       >
@@ -2217,7 +2217,7 @@ const GalleryDetail = () => {
                     {window.location.origin}/v/{sections.find(s => s.id === selectedSection)?.contributor_link}
                   </code>
                   <button
-                    onClick={() => copyContributorLink(sections.find(s => s.id === selectedSection)?.contributor_link)}
+                    onClick={() => copyContributorLink(sections.find(s => s.id === selectedSection)?.contributor_link, selectedSection)}
                     className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                   >
                     <Copy className="w-4 h-4" />
