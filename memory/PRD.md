@@ -412,10 +412,12 @@ Plus manual refresh button always available in gallery management.
 - **Better Guest Experience**: Elderly/non-tech-savvy guests can easily share photos with single click
 
 ### Files Modified
-- `/app/backend/server.py`: Added scraping utility, 4 new API endpoints, auto-refresh background task
-- `/app/frontend/src/pages/GalleryDetail.jsx`: 360 Booth section creation/management UI
-- `/app/frontend/src/components/FotoshareSection.jsx`: NEW - Public display component
+- `/app/backend/server.py`: Added scraping utility, 5 new API endpoints, auto-refresh background task, contributor fotoshare endpoint
+- `/app/frontend/src/pages/GalleryDetail.jsx`: 360 Booth section creation/management UI with contributor link generation
+- `/app/frontend/src/components/FotoshareSection.jsx`: NEW - Public display component with expand/collapse
 - `/app/frontend/src/pages/PublicGallery.jsx`: Integrated FotoshareSection, added upload modal popup
+- `/app/frontend/src/pages/FotoshareContributorUpload.jsx`: NEW - 360 booth supplier upload page
+- `/app/frontend/src/App.js`: Added `/f/:contributorLink` route
 
 ---
 
