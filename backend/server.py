@@ -64,6 +64,132 @@ def get_youtube_embed_url(video_id: str) -> str:
     """Get embeddable YouTube URL"""
     return f"https://www.youtube.com/embed/{video_id}"
 
+# ============ Fotoshare.co / 360 Booth Scraping ============
+
+def extract_fotoshare_event_id(url: str) -> Optional[str]:
+    """Extract event ID from fotoshare.co URL"""
+    # Patterns: fotoshare.co/e/EVENTID or fotoshare.co/event/EVENTID
+    patterns = [
+        r'fotoshare\.co/e/([a-zA-Z0-9_-]+)',
+        r'fotoshare\.co/event/([a-zA-Z0-9_-]+)',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return None
+
+async def scrape_fotoshare_videos(url: str) -> dict:
+    """
+    Scrape fotoshare.co event page to extract video thumbnails and metadata.
+    Returns dict with 'success', 'videos', 'event_title', 'error' keys.
+    """
+    import aiohttp
+    from bs4 import BeautifulSoup
+    
+    result = {
+        'success': False,
+        'videos': [],
+        'event_title': None,
+        'error': None,
+        'expired': False
+    }
+    
+    try:
+        # Normalize URL
+        if not url.startswith('http'):
+            url = f'https://{url}'
+        
+        event_id = extract_fotoshare_event_id(url)
+        if not event_id:
+            result['error'] = 'Invalid fotoshare.co URL format'
+            return result
+        
+        # Fetch the page
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        }
+        
+        timeout = aiohttp.ClientTimeout(total=30)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(url, headers=headers, allow_redirects=True) as response:
+                if response.status == 404:
+                    result['error'] = 'Event not found or link has expired'
+                    result['expired'] = True
+                    return result
+                
+                if response.status != 200:
+                    result['error'] = f'Failed to fetch page (status {response.status})'
+                    return result
+                
+                html = await response.text()
+        
+        # Parse HTML
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        # Check for expiration indicators
+        if 'expired' in html.lower() or 'no longer available' in html.lower():
+            result['expired'] = True
+            result['error'] = 'This event link has expired'
+            return result
+        
+        # Extract event title
+        title_elem = soup.select_one('.album-title, h1.textColor, #albumHeaderSection2 h1')
+        if title_elem:
+            result['event_title'] = title_elem.get_text(strip=True)
+        
+        # Extract video thumbnails from the items container
+        video_items = soup.select('.thumb[data-type="mp4"], .thumb[data-filetype="mp4"], div[data-hash]')
+        
+        videos = []
+        for idx, item in enumerate(video_items):
+            try:
+                video_hash = item.get('data-hash')
+                if not video_hash:
+                    continue
+                
+                thumbnail = item.get('data-thumb', '')
+                # Also try to get from img element
+                if not thumbnail:
+                    img = item.select_one('img')
+                    if img:
+                        thumbnail = img.get('data-src') or img.get('src', '')
+                
+                if not thumbnail:
+                    continue
+                
+                video_data = {
+                    'hash': video_hash,
+                    'source_url': f'https://fotoshare.co/i/{video_hash}',
+                    'thumbnail_url': thumbnail,
+                    'width': int(item.get('data-width', 1080)),
+                    'height': int(item.get('data-height', 1920)),
+                    'file_type': item.get('data-filetype', 'mp4'),
+                    'file_source': item.get('data-filesource', 'unknown'),
+                    'created_at_source': item.get('data-filecreated'),
+                    'order': idx
+                }
+                videos.append(video_data)
+            except Exception as e:
+                logging.warning(f"Error parsing video item: {e}")
+                continue
+        
+        result['success'] = True
+        result['videos'] = videos
+        logging.info(f"Scraped {len(videos)} videos from fotoshare.co event")
+        
+    except aiohttp.ClientError as e:
+        result['error'] = f'Network error: {str(e)}'
+        # Check if it might be expired
+        if 'timeout' in str(e).lower() or '404' in str(e):
+            result['expired'] = True
+    except Exception as e:
+        logging.error(f"Error scraping fotoshare: {e}")
+        result['error'] = f'Error scraping page: {str(e)}'
+    
+    return result
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
