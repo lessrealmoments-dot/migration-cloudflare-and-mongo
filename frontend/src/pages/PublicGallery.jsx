@@ -796,6 +796,41 @@ const PublicGallery = () => {
 
       {!gallery?.is_expired && (
         <>
+          {/* Guest Upload CTA - Prominent position at top */}
+          {!isViewOnly && gallery?.guest_upload_enabled && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+              className="py-8 px-6 text-center"
+              style={{ backgroundColor: currentTheme.colors.background }}
+            >
+              <motion.button
+                data-testid="guest-upload-cta-top"
+                onClick={() => {
+                  setGuestUploadExpanded(true);
+                  // Scroll to upload section
+                  setTimeout(() => {
+                    document.getElementById('guest-upload-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 100);
+                }}
+                className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-medium transition-all duration-300 shadow-lg hover:shadow-xl"
+                style={{ 
+                  backgroundColor: currentTheme.colors.accent,
+                  color: isDarkTheme ? '#000' : '#fff'
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Camera className="w-5 h-5" />
+                Share Your Photos
+              </motion.button>
+              <p className="mt-3 text-sm" style={{ color: currentTheme.colors.textLight }}>
+                Captured a moment? Add it to the gallery!
+              </p>
+            </motion.div>
+          )}
+
           {/* Description */}
           {gallery?.description && (
             <motion.section 
