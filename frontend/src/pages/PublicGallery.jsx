@@ -729,7 +729,22 @@ const PublicGallery = () => {
                 {gallery?.event_title || gallery?.title}
               </h1>
               <p className="text-base md:text-lg text-white/60 font-light">
-                Captured by <span className="text-white/90">{gallery?.photographer_name}</span>
+                {gallery?.contributors && gallery.contributors.length > 0 ? (
+                  <span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                    <span>Captured by</span>
+                    {gallery.contributors.map((c, i) => (
+                      <span key={i} className="inline-flex items-center">
+                        <span className="text-white/90">{c.name}</span>
+                        {c.role !== 'Photography' && (
+                          <span className="ml-1 text-xs text-white/40">({c.role})</span>
+                        )}
+                        {i < gallery.contributors.length - 1 && <span className="mx-1 text-white/40">•</span>}
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <>Captured by <span className="text-white/90">{gallery?.photographer_name}</span></>
+                )}
               </p>
             </motion.div>
             
