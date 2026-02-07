@@ -289,7 +289,67 @@ A new section type for galleries that allows videographers to add YouTube videos
 - contributor_name, created_by, created_at
 
 **sections (updated):**
-- type: "photo" | "video" (new field)
+- type: "photo" | "video" | "fotoshare" (new field)
+
+## 360 Glam Booth / Fotoshare.co Integration (NEW - February 2026) ✅
+
+### Feature Overview
+A new section type that allows photographers to import 360-degree booth videos from fotoshare.co by simply providing the event URL. Videos are scraped and synced automatically.
+
+### Section Types
+| Type | Description | Source | Display |
+|------|-------------|--------|---------|
+| photo | Traditional photo uploads | Upload | Photo grid/masonry |
+| video | YouTube video links | YouTube URL | Cinematic Showcase |
+| fotoshare | 360 booth videos | fotoshare.co URL | Vertical video grid |
+
+### How It Works
+1. **Create Section**: In gallery detail, click "Add Section" → Select "360 Booth" type
+2. **Enter URL**: Paste the fotoshare.co event URL (e.g., https://fotoshare.co/e/your-event)
+3. **Auto-Scrape**: System scrapes video thumbnails and metadata from the page
+4. **Display**: Videos appear in public gallery with vertical 9:16 aspect ratio
+5. **Refresh**: Click "Refresh" to sync new videos from the source
+
+### GalleryDetail Management UI
+- Pink-themed section button with Camera icon
+- Refresh button on section card
+- Source URL display with external link
+- Last synced timestamp
+- Expired link warning (amber alert)
+- Videos displayed in 5-column grid
+
+### FotoshareSection Component (Public Gallery)
+- Dark themed with gradient header
+- Pink accent color scheme
+- Vertical 9:16 video thumbnails (360° badge)
+- Hover-to-play overlay
+- Lightbox modal on click → "Watch Video" button opens fotoshare.co
+
+### API Endpoints
+- `POST /api/galleries/{id}/fotoshare-sections` - Create section (scrapes URL)
+- `POST /api/galleries/{id}/fotoshare-sections/{sid}/refresh` - Re-sync videos
+- `GET /api/galleries/{id}/fotoshare-videos` - Get videos (supports gallery_id or share_link)
+- `DELETE /api/galleries/{id}/fotoshare-sections/{sid}` - Delete section and videos
+
+### Database Schema
+**fotoshare_videos collection:**
+- id, gallery_id, section_id
+- hash (unique fotoshare identifier)
+- source_url (link to fotoshare.co/i/{hash})
+- thumbnail_url, width, height
+- file_type, file_source, order
+- synced_at, created_at_source
+
+**sections (updated):**
+- fotoshare_url (for type=fotoshare)
+- fotoshare_last_sync (ISO timestamp)
+- fotoshare_expired (boolean - true if link no longer works)
+
+### Expired Link Handling
+- When refresh fails with 404, section marked as expired
+- Amber warning shown in UI
+- Existing videos remain visible until section is deleted
+- Photographer can delete section and re-create with new URL
 
 ## Next Steps / Backlog
 1. **Payment Gateway Integration (P0)**: Integrate PayMongo or Stripe for automated payments
