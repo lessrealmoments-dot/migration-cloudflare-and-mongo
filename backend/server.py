@@ -3056,6 +3056,7 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         "sections": [],
         "event_title": gallery_data.event_title,
         "event_date": gallery_data.event_date,
+        "coordinator_name": gallery_data.coordinator_name,
         "share_link_expiration_date": share_link_expiration_date,
         "share_link_expiration_days": gallery_data.share_link_expiration_days,
         "guest_upload_expiration_date": guest_upload_expiration_date,
