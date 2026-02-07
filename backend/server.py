@@ -892,6 +892,8 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(auto_sync_drive_task())
     # Start auto-delete task
     asyncio.create_task(auto_delete_expired_galleries())
+    # Start fotoshare auto-refresh task
+    asyncio.create_task(auto_refresh_fotoshare_sections())
     yield
     # Stop background task
     global sync_task_running
