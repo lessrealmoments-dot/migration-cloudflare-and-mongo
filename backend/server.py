@@ -4785,34 +4785,31 @@ async def get_public_gallery(share_link: str):
     cover_position = gallery.get("cover_photo_position", {"scale": 1, "positionX": 50, "positionY": 50})
     
     # Build contributors list from all sources
+    # Each contributor is tied to their section name (allows same company multiple times)
     contributors = []
-    seen_names = set()
+    seen_entries = set()  # Track (name, section) pairs to avoid exact duplicates
     
-    # Add photographer as main contributor
-    contributors.append({"name": display_name, "role": "Photography"})
-    seen_names.add(display_name.lower())
-    
-    # Add coordinator if set
+    # Add coordinator first if set (special role, not tied to a section)
     coordinator_name = gallery.get("coordinator_name")
-    if coordinator_name and coordinator_name.lower() not in seen_names:
+    if coordinator_name:
         contributors.append({"name": coordinator_name, "role": "Coordinator"})
-        seen_names.add(coordinator_name.lower())
+        seen_entries.add((coordinator_name.lower(), "coordinator"))
     
-    # Add contributors from sections (photo, video, fotoshare)
+    # Add contributors from each section with section name as role
     for section in sections:
+        section_name = section.get("name", "")
         contributor_name = section.get("contributor_name")
-        if contributor_name and contributor_name.lower() not in seen_names:
-            # Determine role based on section type
-            section_type = section.get("type", "photo")
-            if section_type == "video":
-                role = "Videography"
-            elif section_type == "fotoshare":
-                role = "360 Booth"
-            else:
-                role = "Photography"
-            
-            contributors.append({"name": contributor_name, "role": role})
-            seen_names.add(contributor_name.lower())
+        
+        if contributor_name:
+            # Use section name as the role
+            entry_key = (contributor_name.lower(), section_name.lower())
+            if entry_key not in seen_entries:
+                contributors.append({"name": contributor_name, "role": section_name})
+                seen_entries.add(entry_key)
+    
+    # If no section contributors, add photographer as default
+    if len(contributors) == 0 or (len(contributors) == 1 and coordinator_name):
+        contributors.insert(0 if not coordinator_name else 1, {"name": display_name, "role": "Photography"})
     
     return PublicGallery(
         id=gallery["id"],
