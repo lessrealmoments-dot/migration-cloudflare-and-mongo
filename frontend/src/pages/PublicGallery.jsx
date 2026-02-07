@@ -604,78 +604,258 @@ const PublicGallery = () => {
 
   const themeStyles = getThemeStyles(gallery?.theme || 'classic');
   const currentTheme = themes[gallery?.theme || 'classic'];
+  
+  // Determine if theme is dark
+  const isDarkTheme = ['modern', 'neon', 'blackgold'].includes(gallery?.theme);
 
   return (
-    <div className="themed-gallery min-h-screen" style={themeStyles}>
-      <nav className="border-b backdrop-blur-md sticky top-0 z-40" style={{ 
-        borderColor: currentTheme.colors.accent,
-        backgroundColor: `${currentTheme.colors.background}cc`
-      }}>
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1
-                className="text-2xl font-medium"
-                style={{ fontFamily: currentTheme.fonts.heading || 'Playfair Display, serif', color: currentTheme.colors.text }}
-              >
-                {gallery?.title}
-              </h1>
-              <p className="text-sm" style={{ color: currentTheme.colors.textLight }}>by {gallery?.photographer_name}</p>
+    <div className="themed-gallery min-h-screen overflow-x-hidden" style={themeStyles} data-testid="public-gallery">
+      
+      {/* Floating Glass Navigation */}
+      <motion.nav 
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed top-6 left-1/2 -translate-x-1/2 z-50"
+      >
+        <div 
+          className="flex items-center gap-6 md:gap-10 px-6 md:px-10 py-4 rounded-full backdrop-blur-xl border shadow-2xl"
+          style={{ 
+            backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)',
+            borderColor: isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div 
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: currentTheme.colors.accent + '20' }}
+            >
+              <Camera className="w-4 h-4" style={{ color: currentTheme.colors.accent }} />
             </div>
-            <Camera className="w-6 h-6" strokeWidth={1.5} style={{ color: currentTheme.colors.accent }} />
+            <span 
+              className="text-sm font-medium hidden md:block"
+              style={{ color: currentTheme.colors.text, fontFamily: currentTheme.fonts.heading }}
+            >
+              {gallery?.photographer_name}
+            </span>
           </div>
+          
+          <div className="h-6 w-px" style={{ backgroundColor: currentTheme.colors.accent + '30' }} />
+          
+          <span 
+            className="text-xs uppercase tracking-[0.15em] font-medium"
+            style={{ color: currentTheme.colors.textLight }}
+          >
+            {photos.length} Photos
+          </span>
+          
+          {!isViewOnly && (
+            <>
+              <div className="h-6 w-px hidden md:block" style={{ backgroundColor: currentTheme.colors.accent + '30' }} />
+              <button
+                onClick={() => setGuestUploadExpanded(true)}
+                className="hidden md:flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-medium hover:opacity-70 transition-opacity"
+                style={{ color: currentTheme.colors.accent }}
+                data-testid="nav-upload-btn"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Upload
+              </button>
+            </>
+          )}
         </div>
-      </nav>
+      </motion.nav>
 
-      {gallery?.cover_photo_url && (
-        <div className="w-full h-64 md:h-96 overflow-hidden relative" style={{ borderBottom: `1px solid ${currentTheme.colors.accent}` }}>
-          <OptimizedImage
-            src={`${BACKEND_URL}${gallery.cover_photo_url}`}
-            alt="Cover"
-            className="w-full h-full"
-            showLoader={true}
-            style={{
-              objectFit: 'cover',
-              objectPosition: gallery.cover_photo_position 
-                ? `${gallery.cover_photo_position.positionX}% ${gallery.cover_photo_position.positionY}%`
-                : '50% 50%',
-              transform: gallery.cover_photo_position 
-                ? `scale(${gallery.cover_photo_position.scale})`
-                : 'scale(1)',
-              transformOrigin: 'center center'
-            }}
-          />
+      {/* Cinematic Hero Section */}
+      {gallery?.cover_photo_url ? (
+        <motion.section 
+          ref={heroRef}
+          className="relative h-[100svh] overflow-hidden"
+          data-testid="hero-section"
+        >
+          {/* Parallax Background Image */}
+          <motion.div 
+            className="absolute inset-0"
+            style={{ y: heroImageY, scale: heroScale }}
+          >
+            <OptimizedImage
+              src={`${BACKEND_URL}${gallery.cover_photo_url}`}
+              alt="Cover"
+              className="w-full h-full object-cover"
+              showLoader={true}
+              style={{
+                objectPosition: gallery.cover_photo_position 
+                  ? `${gallery.cover_photo_position.positionX}% ${gallery.cover_photo_position.positionY}%`
+                  : '50% 50%'
+              }}
+            />
+          </motion.div>
+          
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/70" />
+          
+          {/* Hero Content */}
+          <motion.div 
+            className="absolute inset-0 flex flex-col justify-end items-center pb-20 md:pb-32 px-6"
+            style={{ opacity: heroOpacity }}
+          >
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="text-center max-w-4xl"
+            >
+              {gallery?.event_title && (
+                <p className="text-sm md:text-base uppercase tracking-[0.3em] text-white/70 mb-4">
+                  {gallery.event_date && new Date(gallery.event_date).toLocaleDateString('en-US', { 
+                    month: 'long', day: 'numeric', year: 'numeric' 
+                  })}
+                </p>
+              )}
+              <h1 
+                className="text-5xl md:text-7xl lg:text-8xl font-normal text-white tracking-tight leading-[0.95] mb-6"
+                style={{ fontFamily: currentTheme.fonts.heading }}
+              >
+                {gallery?.event_title || gallery?.title}
+              </h1>
+              <p className="text-base md:text-lg text-white/60 font-light">
+                Captured by <span className="text-white/90">{gallery?.photographer_name}</span>
+              </p>
+            </motion.div>
+            
+            {/* Scroll Indicator */}
+            <motion.div 
+              className="absolute bottom-8 left-1/2 -translate-x-1/2"
+              animate={{ y: [0, 10, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <ChevronDown className="w-6 h-6 text-white/50" />
+            </motion.div>
+          </motion.div>
+        </motion.section>
+      ) : (
+        /* Simple Header when no cover photo */
+        <section className="pt-32 pb-16 px-6 md:px-12" style={{ backgroundColor: currentTheme.colors.background }}>
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-4xl mx-auto text-center"
+          >
+            {gallery?.event_date && (
+              <p 
+                className="text-xs uppercase tracking-[0.3em] mb-4"
+                style={{ color: currentTheme.colors.textLight }}
+              >
+                {new Date(gallery.event_date).toLocaleDateString('en-US', { 
+                  month: 'long', day: 'numeric', year: 'numeric' 
+                })}
+              </p>
+            )}
+            <h1 
+              className="text-4xl md:text-6xl lg:text-7xl font-normal tracking-tight mb-4"
+              style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+            >
+              {gallery?.event_title || gallery?.title}
+            </h1>
+            <p style={{ color: currentTheme.colors.textLight }}>
+              Captured by <span style={{ color: currentTheme.colors.text }}>{gallery?.photographer_name}</span>
+            </p>
+          </motion.div>
+        </section>
+      )}
+
+      {/* Expired Gallery Message */}
+      {gallery?.is_expired && (
+        <div className="px-6 md:px-12 py-24">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-xl mx-auto p-8 rounded-sm text-center border-2 border-dashed"
+            style={{ borderColor: currentTheme.colors.accent + '50' }}
+          >
+            <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: currentTheme.colors.accent }} />
+            <h3 className="text-xl font-medium mb-2" style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}>
+              Gallery Expired
+            </h3>
+            <p style={{ color: currentTheme.colors.textLight }}>
+              This gallery is no longer accessible. Please contact the photographer.
+            </p>
+          </motion.div>
         </div>
       )}
 
-      <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-12">
-        {gallery?.event_title && (
-          <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-normal mb-2" style={{ fontFamily: 'Playfair Display, serif' }}>
-              {gallery.event_title}
-            </h2>
-            {gallery.event_date && (
-              <p className="text-zinc-500">
-                {new Date(gallery.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </p>
-            )}
-          </div>
-        )}
+      {!gallery?.is_expired && (
+        <>
+          {/* Description */}
+          {gallery?.description && (
+            <motion.section 
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="py-16 md:py-24 px-6 md:px-12"
+              style={{ backgroundColor: currentTheme.colors.background }}
+            >
+              <div className="max-w-2xl mx-auto text-center">
+                <p 
+                  className="text-lg md:text-xl leading-relaxed font-light"
+                  style={{ color: currentTheme.colors.textLight, fontFamily: currentTheme.fonts.body }}
+                >
+                  {gallery.description}
+                </p>
+              </div>
+            </motion.section>
+          )}
 
-        {gallery?.is_expired && (
-          <div className="mb-8 p-6 bg-red-50 border border-red-200 rounded-sm text-center">
-            <p className="text-red-700 font-medium">This gallery has expired and is no longer accessible.</p>
-            <p className="text-sm text-red-600 mt-2">Please contact the photographer for access.</p>
-          </div>
-        )}
-
-        {!gallery?.is_expired && gallery?.description && (
-          <div className="mb-12 text-center max-w-2xl mx-auto">
-            <p className="text-base font-light text-zinc-600">{gallery.description}</p>
-          </div>
-        )}
-
-        {!gallery?.is_expired && gallery?.has_download_all_password && (
+          {/* Highlights Bento Grid */}
+          {getHighlightPhotos().length > 0 && (
+            <section className="py-16 md:py-24 px-6 md:px-12 lg:px-24" style={{ backgroundColor: currentTheme.colors.secondary }}>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="max-w-screen-2xl mx-auto"
+              >
+                <div className="text-center mb-16">
+                  <p 
+                    className="text-xs uppercase tracking-[0.3em] mb-3"
+                    style={{ color: currentTheme.colors.accent }}
+                  >
+                    Featured Moments
+                  </p>
+                  <h2 
+                    className="text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight"
+                    style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+                  >
+                    Highlights
+                  </h2>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[200px] md:auto-rows-[250px] gap-4 md:gap-6">
+                  {getHighlightPhotos().slice(0, 8).map((photo, idx) => {
+                    // Determine span based on position for visual interest
+                    let span = 'standard';
+                    if (idx === 0) span = 'hero';
+                    else if (idx === 1 || idx === 4) span = 'portrait';
+                    else if (idx === 3) span = 'wide';
+                    
+                    return (
+                      <BentoItem
+                        key={photo.id}
+                        photo={photo}
+                        index={idx}
+                        span={span}
+                        onView={setLightboxIndex}
+                        onDownload={handleDownload}
+                        photoIndex={photos.findIndex(p => p.id === photo.id)}
+                      />
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </section>
+          )}
           <div className="mb-8 text-center">
             <button
               data-testid="download-all-button"
