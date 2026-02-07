@@ -70,6 +70,7 @@ const CreateGallery = () => {
         password: formData.password || null,
         event_title: formData.event_title || null,
         event_date: formData.event_date || null,
+        coordinator_name: formData.coordinator_name || null,
         share_link_expiration_days: parseInt(formData.share_link_expiration_days),
         guest_upload_enabled_days: parseInt(formData.guest_upload_enabled_days),
         download_all_password: formData.download_all_password || null,
