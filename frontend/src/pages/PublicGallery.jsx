@@ -8,6 +8,7 @@ import { getThemeStyles, themes } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 import OptimizedImage from '@/components/OptimizedImage';
 import SocialSharePanel from '@/components/SocialSharePanel';
+import VideoSection from '@/components/VideoSection';
 import useBrandConfig from '../hooks/useBrandConfig';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
