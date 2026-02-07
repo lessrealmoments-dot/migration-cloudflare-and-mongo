@@ -59,16 +59,16 @@ const VideoSection = ({ videos = [], sectionName, contributorName }) => {
     <>
       <div className="bg-black py-8 md:py-12">
         <div className="max-w-7xl mx-auto px-4">
-          {/* Section Header */}
+          {/* Section Header - Elegant Cinematic Style */}
           {(sectionName || contributorName) && (
-            <div className="mb-6 text-center">
+            <div className="mb-8 text-center">
               {sectionName && (
-                <h2 className="text-2xl md:text-3xl font-light text-white tracking-wide">
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-white tracking-wide" style={{ fontFamily: 'Playfair Display, serif' }}>
                   {sectionName}
                 </h2>
               )}
               {contributorName && (
-                <p className="text-zinc-500 text-sm mt-1">by {contributorName}</p>
+                <p className="text-zinc-400 text-sm mt-2">by <span className="text-zinc-300">{contributorName}</span></p>
               )}
             </div>
           )}
