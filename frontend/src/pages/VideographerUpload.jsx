@@ -210,6 +210,7 @@ const VideographerUpload = () => {
                   placeholder="e.g., Juan Films"
                   className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none"
                   disabled={galleryInfo?.existing_contributor_name}
+                  data-testid="videographer-name-input"
                 />
               </div>
               
@@ -224,6 +225,7 @@ const VideographerUpload = () => {
                   onChange={(e) => handleUrlChange(e.target.value)}
                   placeholder="https://youtube.com/watch?v=..."
                   className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none"
+                  data-testid="youtube-url-input"
                 />
                 
                 {/* Preview */}
