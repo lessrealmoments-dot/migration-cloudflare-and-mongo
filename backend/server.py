@@ -4785,14 +4785,18 @@ async def get_public_gallery(share_link: str):
     cover_position = gallery.get("cover_photo_position", {"scale": 1, "positionX": 50, "positionY": 50})
     
     # Build contributors list from all sources
-    # Each contributor is tied to their section name (allows same company multiple times)
+    # Structure: owner first, then coordinator, then section contributors
     contributors = []
     seen_entries = set()  # Track (name, section) pairs to avoid exact duplicates
     
-    # Add coordinator first if set (special role, not tied to a section)
+    # Always add gallery owner first as the curator
+    contributors.append({"name": display_name, "role": "Gallery Owner", "is_owner": True})
+    seen_entries.add((display_name.lower(), "owner"))
+    
+    # Add coordinator if set (special role, not tied to a section)
     coordinator_name = gallery.get("coordinator_name")
     if coordinator_name:
-        contributors.append({"name": coordinator_name, "role": "Coordinator"})
+        contributors.append({"name": coordinator_name, "role": "Coordinator", "is_owner": False})
         seen_entries.add((coordinator_name.lower(), "coordinator"))
     
     # Add contributors from each section with section name as role
@@ -4804,12 +4808,8 @@ async def get_public_gallery(share_link: str):
             # Use section name as the role
             entry_key = (contributor_name.lower(), section_name.lower())
             if entry_key not in seen_entries:
-                contributors.append({"name": contributor_name, "role": section_name})
+                contributors.append({"name": contributor_name, "role": section_name, "is_owner": False})
                 seen_entries.add(entry_key)
-    
-    # If no section contributors, add photographer as default
-    if len(contributors) == 0 or (len(contributors) == 1 and coordinator_name):
-        contributors.insert(0 if not coordinator_name else 1, {"name": display_name, "role": "Photography"})
     
     return PublicGallery(
         id=gallery["id"],
