@@ -4084,6 +4084,100 @@ async def set_contributor_name(contributor_link: str, data: dict = Body(...)):
     
     return {"success": True, "company_name": company_name}
 
+@api_router.post("/contributor/{contributor_link}/fotoshare")
+async def submit_contributor_fotoshare(contributor_link: str, data: dict = Body(...)):
+    """Submit fotoshare.co URL as a contributor for 360 booth section"""
+    company_name = data.get("company_name", "").strip()
+    fotoshare_url = data.get("fotoshare_url", "").strip()
+    
+    if not company_name:
+        raise HTTPException(status_code=400, detail="Company/supplier name is required")
+    
+    if not fotoshare_url:
+        raise HTTPException(status_code=400, detail="Fotoshare.co URL is required")
+    
+    # Validate URL format
+    if not fotoshare_url.startswith("https://fotoshare.co/"):
+        raise HTTPException(status_code=400, detail="Please enter a valid fotoshare.co URL")
+    
+    # Find gallery with this contributor link
+    gallery = await db.galleries.find_one(
+        {"sections.contributor_link": contributor_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid contributor link")
+    
+    # Find the section
+    section = next((s for s in gallery.get("sections", []) if s.get("contributor_link") == contributor_link), None)
+    if not section or not section.get("contributor_enabled", False):
+        raise HTTPException(status_code=404, detail="Contributor uploads are not enabled")
+    
+    if section.get("type") != "fotoshare":
+        raise HTTPException(status_code=400, detail="This link is not for 360 booth uploads")
+    
+    # Scrape the fotoshare URL
+    scrape_result = await scrape_fotoshare_videos(fotoshare_url)
+    
+    if not scrape_result['success']:
+        error_msg = scrape_result.get('error', 'Failed to scrape fotoshare URL')
+        if scrape_result.get('expired'):
+            raise HTTPException(status_code=400, detail=f"Link expired: {error_msg}")
+        raise HTTPException(status_code=400, detail=error_msg)
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Update section with fotoshare URL and contributor name
+    sections = gallery.get("sections", [])
+    section_idx = next((i for i, s in enumerate(sections) if s.get("contributor_link") == contributor_link), None)
+    if section_idx is not None:
+        sections[section_idx]["fotoshare_url"] = fotoshare_url
+        sections[section_idx]["fotoshare_last_sync"] = now
+        sections[section_idx]["fotoshare_expired"] = False
+        sections[section_idx]["contributor_name"] = company_name
+        
+        await db.galleries.update_one({"id": gallery["id"]}, {"$set": {"sections": sections}})
+    
+    # Get existing video hashes to avoid duplicates
+    existing_videos = await db.fotoshare_videos.find(
+        {"gallery_id": gallery["id"], "section_id": section["id"]},
+        {"_id": 0, "hash": 1}
+    ).to_list(1000)
+    existing_hashes = {v['hash'] for v in existing_videos}
+    
+    # Store the scraped videos
+    new_videos = []
+    for video_data in scrape_result['videos']:
+        if video_data['hash'] not in existing_hashes:
+            video_entry = {
+                "id": str(uuid.uuid4()),
+                "gallery_id": gallery["id"],
+                "section_id": section["id"],
+                "hash": video_data['hash'],
+                "source_url": video_data['source_url'],
+                "thumbnail_url": video_data['thumbnail_url'],
+                "width": video_data.get('width', 1080),
+                "height": video_data.get('height', 1920),
+                "file_type": video_data.get('file_type', 'mp4'),
+                "file_source": video_data.get('file_source', 'lumabooth'),
+                "created_at_source": video_data.get('created_at_source'),
+                "order": video_data.get('order', 0),
+                "synced_at": now,
+                "contributor_name": company_name
+            }
+            new_videos.append(video_entry)
+    
+    if new_videos:
+        await db.fotoshare_videos.insert_many(new_videos)
+    
+    return {
+        "success": True,
+        "videos_count": len(scrape_result['videos']),
+        "new_videos_added": len(new_videos),
+        "event_title": scrape_result.get('event_title'),
+        "contributor_name": company_name
+    }
+
 @api_router.post("/contributor/{contributor_link}/upload")
 async def upload_contributor_photo(
     contributor_link: str,
