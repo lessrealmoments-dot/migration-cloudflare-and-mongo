@@ -4238,6 +4238,27 @@ async def get_public_gallery_photos(share_link: str, password: Optional[str] = N
     ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).limit(500).to_list(None)
     return [Photo(**p) for p in photos]
 
+@api_router.get("/public/gallery/{share_link}/videos")
+async def get_public_gallery_videos(share_link: str, password: Optional[str] = None):
+    """Get videos for a public gallery"""
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    if gallery.get("password") and not password:
+        raise HTTPException(status_code=401, detail="Password required")
+    
+    if gallery.get("password") and not verify_password(password, gallery["password"]):
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    # Get videos sorted by featured first, then order
+    videos = await db.gallery_videos.find(
+        {"gallery_id": gallery["id"]},
+        {"_id": 0}
+    ).sort([("is_featured", -1), ("order", 1)]).to_list(50)
+    
+    return videos
+
 @api_router.get("/display/{share_link}")
 async def get_display_data(share_link: str):
     """Get gallery data optimized for display/slideshow mode - no password required"""
