@@ -412,12 +412,21 @@ Plus manual refresh button always available in gallery management.
 - **Better Guest Experience**: Elderly/non-tech-savvy guests can easily share photos with single click
 
 ### Files Modified
-- `/app/backend/server.py`: Added scraping utility, 5 new API endpoints, auto-refresh background task, contributor fotoshare endpoint
-- `/app/frontend/src/pages/GalleryDetail.jsx`: 360 Booth section creation/management UI with contributor link generation
+- `/app/backend/server.py`: Added scraping utility, 5 new API endpoints, auto-refresh background task, contributor fotoshare endpoint, coordinator field
+- `/app/frontend/src/pages/GalleryDetail.jsx`: 360 Booth section creation/management UI with contributor link generation, coordinator field in edit modal
 - `/app/frontend/src/components/FotoshareSection.jsx`: NEW - Public display component with expand/collapse
-- `/app/frontend/src/pages/PublicGallery.jsx`: Integrated FotoshareSection, added upload modal popup
+- `/app/frontend/src/pages/PublicGallery.jsx`: Integrated FotoshareSection, added upload modal popup, displays all contributors
 - `/app/frontend/src/pages/FotoshareContributorUpload.jsx`: NEW - 360 booth supplier upload page
+- `/app/frontend/src/pages/CreateGallery.jsx`: Added coordinator name field
 - `/app/frontend/src/App.js`: Added `/f/:contributorLink` route
+
+### Gallery Credits Display
+The public gallery now shows all contributors with their roles:
+- **Photographer**: Main account owner (no role tag)
+- **Coordinator**: Event planner with "(Coordinator)" tag
+- **Videography**: Video section contributors with "(Videography)" tag
+- **360 Booth**: Fotoshare section contributors with "(360 Booth)" tag
+- **Photography**: Photo section contributors (no extra tag, same as photographer)
 
 ---
 
