@@ -19,6 +19,7 @@ const CreateGallery = () => {
     password: '',
     event_title: '',
     event_date: '',
+    coordinator_name: '',
     share_link_expiration_days: 30,
     guest_upload_enabled_days: 3,
     download_all_password: '',
