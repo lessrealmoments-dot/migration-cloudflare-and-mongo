@@ -121,6 +121,25 @@ const LandingPage = ({ user }) => {
     return config.hero_title;
   };
 
+  // Show elegant loading state while fetching config
+  if (configLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-8 h-8 border-2 border-zinc-300 border-t-zinc-800 rounded-full mx-auto mb-4"
+          />
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white relative">
       <nav className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
