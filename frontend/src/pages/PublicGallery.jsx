@@ -1277,7 +1277,6 @@ const PublicGallery = () => {
         </div>
         </>
       )}
-      </div>
 
       {/* Premium Lightbox */}
       {lightboxIndex !== null && (
