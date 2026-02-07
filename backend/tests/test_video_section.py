@@ -13,7 +13,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 TEST_USER_EMAIL = "tester1@gmail.com"
 TEST_USER_PASSWORD = "123"
 TEST_GALLERY_ID = "63f3be31-ab06-4df0-a270-3f1bc886708b"
-TEST_CONTRIBUTOR_LINK = "9JMeOcjZ2v2WIrzKeOjPkw"
+TEST_CONTRIBUTOR_LINK = "L1tU7_1w-GKF9iXonHVzCQ"
 TEST_YOUTUBE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
 
