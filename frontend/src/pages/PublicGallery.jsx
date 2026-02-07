@@ -1408,6 +1408,111 @@ const PublicGallery = () => {
         </div>
       )}
 
+      {/* Quick Upload Modal - Opens from top CTA button */}
+      <AnimatePresence>
+        {showUploadModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => !uploading && setShowUploadModal(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25 }}
+              className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center">
+                    <Camera className="w-5 h-5 text-zinc-600" />
+                  </div>
+                  <h3 className="text-xl font-medium">Share Your Photos</h3>
+                </div>
+                <button 
+                  onClick={() => !uploading && setShowUploadModal(false)} 
+                  disabled={uploading}
+                  className="p-2 hover:bg-zinc-100 rounded-full transition-colors disabled:opacity-50"
+                  data-testid="close-upload-modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div
+                {...getRootProps()}
+                data-testid="modal-upload-dropzone"
+                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ${
+                  isDragActive ? 'border-zinc-800 bg-zinc-50 scale-[1.02]' : 'border-zinc-300 hover:border-zinc-400'
+                }`}
+              >
+                <input {...getInputProps()} disabled={uploading} />
+                
+                {uploading && uploadProgress.length > 0 ? (
+                  <div className="space-y-4">
+                    <Loader2 className="w-10 h-10 mx-auto text-zinc-600 animate-spin" />
+                    <p className="font-medium text-zinc-700">Uploading {uploadProgress.length} photo(s)...</p>
+                    <div className="max-w-sm mx-auto space-y-2">
+                      {uploadProgress.slice(0, 3).map((file, index) => (
+                        <div key={index} className="flex items-center gap-3 text-left bg-zinc-50 rounded-lg p-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-zinc-700 truncate">{file.name}</p>
+                            <div className="w-full bg-zinc-200 rounded-full h-1.5 mt-1">
+                              <div 
+                                className={`h-1.5 rounded-full transition-all duration-300 ${
+                                  file.status === 'error' ? 'bg-red-500' : 
+                                  file.status === 'success' ? 'bg-green-500' : 'bg-zinc-600'
+                                }`}
+                                style={{ width: `${file.progress}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex-shrink-0">
+                            {file.status === 'uploading' && <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />}
+                            {file.status === 'success' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                            {file.status === 'error' && <AlertCircle className="w-4 h-4 text-red-500" />}
+                          </div>
+                        </div>
+                      ))}
+                      {uploadProgress.length > 3 && (
+                        <p className="text-sm text-zinc-500">+ {uploadProgress.length - 3} more files</p>
+                      )}
+                    </div>
+                  </div>
+                ) : isDragActive ? (
+                  <>
+                    <Upload className="w-12 h-12 mx-auto mb-4 text-zinc-600" />
+                    <p className="text-lg font-medium text-zinc-700">Drop photos here...</p>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-12 h-12 mx-auto mb-4 text-zinc-400" />
+                    <p className="text-lg font-medium text-zinc-700 mb-2">
+                      Drag & drop photos here
+                    </p>
+                    <p className="text-sm text-zinc-500 mb-4">or click to browse</p>
+                    <button 
+                      type="button"
+                      className="px-6 py-2 bg-zinc-900 text-white rounded-full text-sm font-medium hover:bg-zinc-800 transition-colors"
+                    >
+                      Select Photos
+                    </button>
+                  </>
+                )}
+              </div>
+              
+              <p className="text-xs text-zinc-500 mt-4 text-center">
+                Max 50MB per file • JPEG, PNG, GIF, WebP, HEIC
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Premium Lightbox */}
       {lightboxIndex !== null && (
         <PremiumLightbox
