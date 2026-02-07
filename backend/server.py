@@ -4779,6 +4779,36 @@ async def get_public_gallery(share_link: str):
     # Get cover photo position
     cover_position = gallery.get("cover_photo_position", {"scale": 1, "positionX": 50, "positionY": 50})
     
+    # Build contributors list from all sources
+    contributors = []
+    seen_names = set()
+    
+    # Add photographer as main contributor
+    contributors.append({"name": display_name, "role": "Photography"})
+    seen_names.add(display_name.lower())
+    
+    # Add coordinator if set
+    coordinator_name = gallery.get("coordinator_name")
+    if coordinator_name and coordinator_name.lower() not in seen_names:
+        contributors.append({"name": coordinator_name, "role": "Coordinator"})
+        seen_names.add(coordinator_name.lower())
+    
+    # Add contributors from sections (photo, video, fotoshare)
+    for section in sections:
+        contributor_name = section.get("contributor_name")
+        if contributor_name and contributor_name.lower() not in seen_names:
+            # Determine role based on section type
+            section_type = section.get("type", "photo")
+            if section_type == "video":
+                role = "Videography"
+            elif section_type == "fotoshare":
+                role = "360 Booth"
+            else:
+                role = "Photography"
+            
+            contributors.append({"name": contributor_name, "role": role})
+            seen_names.add(contributor_name.lower())
+    
     return PublicGallery(
         id=gallery["id"],
         title=gallery["title"],
@@ -4790,6 +4820,8 @@ async def get_public_gallery(share_link: str):
         sections=[Section(**s) for s in sections],
         event_title=gallery.get("event_title"),
         event_date=gallery.get("event_date"),
+        coordinator_name=coordinator_name,
+        contributors=contributors,
         is_expired=is_expired,
         guest_upload_enabled=guest_upload_enabled,
         has_download_all_password=gallery.get("download_all_password") is not None,
