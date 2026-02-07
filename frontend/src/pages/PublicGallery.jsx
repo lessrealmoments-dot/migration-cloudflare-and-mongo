@@ -962,7 +962,7 @@ const PublicGallery = () => {
                           </div>
                           <div className="flex-shrink-0">
                             {file.status === 'uploading' && (
-                              <Loader2 className="w-4 h-4 text-zinc-500 animate-spin" />
+                              <Loader2 className="w-4 h-4 animate-spin" style={{ color: currentTheme.colors.accent }} />
                             )}
                             {file.status === 'success' && (
                               <CheckCircle className="w-4 h-4 text-green-500" />
@@ -974,60 +974,45 @@ const PublicGallery = () => {
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-zinc-500 mt-2">Please wait until all uploads complete</p>
+                    <p className="text-xs mt-2" style={{ color: currentTheme.colors.textLight }}>Please wait until all uploads complete</p>
                   </div>
                 ) : isDragActive ? (
                   <>
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-zinc-400" strokeWidth={1.5} />
-                    <p className="text-base font-light text-zinc-600">Drop photos here...</p>
+                    <Upload className="w-16 h-16 mx-auto mb-4" style={{ color: currentTheme.colors.accent }} />
+                    <p className="text-lg font-light" style={{ color: currentTheme.colors.text }}>Drop photos here...</p>
                   </>
                 ) : (
                   <>
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-zinc-400" strokeWidth={1.5} />
-                    <p className="text-base font-light text-zinc-600 mb-2">
-                      Drag & drop your photos here, or click to select
+                    <Upload className="w-16 h-16 mx-auto mb-4" style={{ color: currentTheme.colors.accent + '60' }} />
+                    <p className="text-lg font-light mb-2" style={{ color: currentTheme.colors.text }}>
+                      Drag & drop your photos here
                     </p>
-                    <p className="text-sm text-zinc-500">Max 10 photos at a time • JPEG, PNG, GIF, WebP</p>
+                    <p className="text-sm mb-6" style={{ color: currentTheme.colors.textLight }}>
+                      or click to browse
+                    </p>
+                    <p className="text-xs" style={{ color: currentTheme.colors.textLight }}>
+                      Max 10 photos • JPEG, PNG, GIF, WebP
+                    </p>
                   </>
                 )}
               </div>
-            </div>
+              
+              <button
+                onClick={() => setGuestUploadExpanded(false)}
+                className="mt-4 text-sm mx-auto block"
+                style={{ color: currentTheme.colors.textLight }}
+              >
+                Cancel
+              </button>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
+      </div>
+    </motion.section>
             )}
 
-        <div>
-          <h3
-            className="text-3xl md:text-4xl font-normal mb-8 text-center"
-            style={{ fontFamily: 'Playfair Display, serif' }}
-          >
-            Gallery
-          </h3>
-
-          {/* Highlights Section - Grid Layout */}
-          {getHighlightPhotos().length > 0 && (
-            <div className="mb-16">
-              <h4
-                className="text-2xl md:text-3xl font-normal mb-6 text-center flex items-center justify-center gap-2"
-                style={{ fontFamily: 'Playfair Display, serif' }}
-              >
-                <Star className="w-6 h-6 text-yellow-500" />
-                Highlights
-                <span className="text-zinc-400 text-lg">({getHighlightPhotos().length})</span>
-              </h4>
-              <div className="highlight-grid">
-                {getHighlightPhotos().map((photo) => (
-                  <HighlightPhotoItem
-                    key={photo.id}
-                    photo={photo}
-                    photoIndex={photos.findIndex(p => p.id === photo.id)}
-                    onView={setLightboxIndex}
-                    onDownload={handleDownload}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Main Gallery Content */}
+        <div className="py-8" style={{ backgroundColor: currentTheme.colors.background }}>
 
           {/* Sections - Photo and Video */}
           {gallery?.sections && gallery.sections.length > 0 ? (
