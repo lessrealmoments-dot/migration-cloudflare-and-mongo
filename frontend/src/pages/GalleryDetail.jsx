@@ -595,6 +595,9 @@ const GalleryDetail = () => {
         axios.get(`${API}/galleries/${id}/sections`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
+        axios.get(`${API}/galleries/${id}/videos`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: [] })),
         axios.get(`${API}/galleries/${id}/cover-photo-position`, {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(() => ({ data: { scale: 1, positionX: 50, positionY: 50 } })),
@@ -605,6 +608,7 @@ const GalleryDetail = () => {
       setGallery(galleryRes.data);
       setPhotos(photosRes.data);
       setSections(sectionsRes.data);
+      setVideos(videosRes.data);
       setCoverPhotoPosition(positionRes.data);
       setCollagePresets(presetsRes.data);
       setSelectedCollagePreset(galleryRes.data.collage_preset_id || null);
