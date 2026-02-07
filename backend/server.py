@@ -3393,6 +3393,200 @@ async def rename_section(gallery_id: str, section_id: str, data: dict = Body(...
     
     return {"message": "Section renamed", "name": new_name.strip()}
 
+# ============ Fotoshare / 360 Booth Section Endpoints ============
+
+class FotoshareSectionCreate(BaseModel):
+    name: str
+    fotoshare_url: str
+
+@api_router.post("/galleries/{gallery_id}/fotoshare-sections")
+async def create_fotoshare_section(
+    gallery_id: str,
+    data: FotoshareSectionCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new fotoshare/360 booth section by scraping the URL"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Validate and scrape the fotoshare URL
+    scrape_result = await scrape_fotoshare_videos(data.fotoshare_url)
+    
+    if not scrape_result['success']:
+        error_msg = scrape_result.get('error', 'Failed to scrape fotoshare URL')
+        if scrape_result.get('expired'):
+            raise HTTPException(status_code=400, detail=f"Link expired: {error_msg}")
+        raise HTTPException(status_code=400, detail=error_msg)
+    
+    # Create the section
+    section_id = str(uuid.uuid4())
+    sections = gallery.get("sections", [])
+    now = datetime.now(timezone.utc).isoformat()
+    
+    new_section = {
+        "id": section_id,
+        "name": data.name,
+        "type": "fotoshare",
+        "order": len(sections),
+        "fotoshare_url": data.fotoshare_url,
+        "fotoshare_last_sync": now,
+        "fotoshare_expired": False
+    }
+    sections.append(new_section)
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    # Store the scraped videos
+    fotoshare_videos = []
+    for video_data in scrape_result['videos']:
+        video_entry = {
+            "id": str(uuid.uuid4()),
+            "gallery_id": gallery_id,
+            "section_id": section_id,
+            "hash": video_data['hash'],
+            "source_url": video_data['source_url'],
+            "thumbnail_url": video_data['thumbnail_url'],
+            "width": video_data.get('width', 1080),
+            "height": video_data.get('height', 1920),
+            "file_type": video_data.get('file_type', 'mp4'),
+            "file_source": video_data.get('file_source', 'lumabooth'),
+            "created_at_source": video_data.get('created_at_source'),
+            "order": video_data.get('order', 0),
+            "synced_at": now
+        }
+        fotoshare_videos.append(video_entry)
+    
+    if fotoshare_videos:
+        await db.fotoshare_videos.insert_many(fotoshare_videos)
+    
+    return {
+        "section": Section(**new_section),
+        "videos_count": len(fotoshare_videos),
+        "event_title": scrape_result.get('event_title')
+    }
+
+@api_router.post("/galleries/{gallery_id}/fotoshare-sections/{section_id}/refresh")
+async def refresh_fotoshare_section(
+    gallery_id: str,
+    section_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Refresh a fotoshare section by re-scraping the URL"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    sections = gallery.get("sections", [])
+    section = next((s for s in sections if s["id"] == section_id), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    if section.get("type") != "fotoshare":
+        raise HTTPException(status_code=400, detail="Section is not a fotoshare type")
+    
+    fotoshare_url = section.get("fotoshare_url")
+    if not fotoshare_url:
+        raise HTTPException(status_code=400, detail="No fotoshare URL configured for this section")
+    
+    # Scrape the URL again
+    scrape_result = await scrape_fotoshare_videos(fotoshare_url)
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Update section status
+    for s in sections:
+        if s["id"] == section_id:
+            s["fotoshare_last_sync"] = now
+            s["fotoshare_expired"] = scrape_result.get('expired', False)
+            break
+    
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    if not scrape_result['success']:
+        return {
+            "success": False,
+            "expired": scrape_result.get('expired', False),
+            "error": scrape_result.get('error'),
+            "videos_count": 0
+        }
+    
+    # Get existing video hashes
+    existing_videos = await db.fotoshare_videos.find(
+        {"gallery_id": gallery_id, "section_id": section_id},
+        {"_id": 0, "hash": 1}
+    ).to_list(1000)
+    existing_hashes = {v['hash'] for v in existing_videos}
+    
+    # Add new videos
+    new_videos = []
+    for video_data in scrape_result['videos']:
+        if video_data['hash'] not in existing_hashes:
+            video_entry = {
+                "id": str(uuid.uuid4()),
+                "gallery_id": gallery_id,
+                "section_id": section_id,
+                "hash": video_data['hash'],
+                "source_url": video_data['source_url'],
+                "thumbnail_url": video_data['thumbnail_url'],
+                "width": video_data.get('width', 1080),
+                "height": video_data.get('height', 1920),
+                "file_type": video_data.get('file_type', 'mp4'),
+                "file_source": video_data.get('file_source', 'lumabooth'),
+                "created_at_source": video_data.get('created_at_source'),
+                "order": video_data.get('order', 0),
+                "synced_at": now
+            }
+            new_videos.append(video_entry)
+    
+    if new_videos:
+        await db.fotoshare_videos.insert_many(new_videos)
+    
+    return {
+        "success": True,
+        "expired": False,
+        "videos_count": len(scrape_result['videos']),
+        "new_videos_added": len(new_videos)
+    }
+
+@api_router.get("/galleries/{gallery_id}/fotoshare-videos")
+async def get_fotoshare_videos(gallery_id: str, section_id: Optional[str] = None):
+    """Get fotoshare videos for a gallery (public endpoint for public gallery view)"""
+    gallery = await db.galleries.find_one({"id": gallery_id}, {"_id": 0, "id": 1})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    query = {"gallery_id": gallery_id}
+    if section_id:
+        query["section_id"] = section_id
+    
+    videos = await db.fotoshare_videos.find(query, {"_id": 0}).to_list(500)
+    videos.sort(key=lambda v: v.get("order", 0))
+    return videos
+
+@api_router.delete("/galleries/{gallery_id}/fotoshare-sections/{section_id}")
+async def delete_fotoshare_section(
+    gallery_id: str,
+    section_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a fotoshare section and all its videos"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    sections = gallery.get("sections", [])
+    section = next((s for s in sections if s["id"] == section_id), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    # Remove section
+    sections = [s for s in sections if s["id"] != section_id]
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    # Delete associated videos
+    await db.fotoshare_videos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    
+    return {"message": "Fotoshare section deleted"}
+
 # ============ Gallery Videos Endpoints ============
 
 @api_router.get("/galleries/{gallery_id}/videos")
