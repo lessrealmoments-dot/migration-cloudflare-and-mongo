@@ -5636,7 +5636,7 @@ async def submit_upgrade_request(data: UpgradeRequest, background_tasks: Backgro
             "email": db_user.get("email", "Unknown"),
             "request_type": "Plan Upgrade",
             "plan_or_credits": f"Upgrade to {data.requested_plan.capitalize()}",
-            "admin_url": f"{os.environ.get('FRONTEND_URL', 'https://imagebill-dash.preview.emergentagent.com')}/admin/dashboard"
+            "admin_url": f"{os.environ.get('FRONTEND_URL', 'https://subimagery.preview.emergentagent.com')}/admin/dashboard"
         })
         background_tasks.add_task(send_email, ADMIN_EMAIL, admin_subject, admin_html)
         
@@ -5692,7 +5692,7 @@ async def submit_extra_credits_request(data: ExtraCreditRequest, background_task
         "email": db_user.get("email", "Unknown"),
         "request_type": "Extra Credits Purchase",
         "plan_or_credits": f"{data.quantity} Extra Credit(s) - ₱{total_cost}",
-        "admin_url": f"{os.environ.get('FRONTEND_URL', 'https://imagebill-dash.preview.emergentagent.com')}/admin/dashboard"
+        "admin_url": f"{os.environ.get('FRONTEND_URL', 'https://subimagery.preview.emergentagent.com')}/admin/dashboard"
     })
     background_tasks.add_task(send_email, ADMIN_EMAIL, admin_subject, admin_html)
     
@@ -5840,7 +5840,7 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
         "name": user.get("name", "there"),
         "plan": email_plan or "Active",
         "credits": email_credits or "Updated",
-        "dashboard_url": f"{os.environ.get('FRONTEND_URL', 'https://imagebill-dash.preview.emergentagent.com')}/dashboard"
+        "dashboard_url": f"{os.environ.get('FRONTEND_URL', 'https://subimagery.preview.emergentagent.com')}/dashboard"
     })
     background_tasks.add_task(send_email, user.get("email"), subject, html)
     
