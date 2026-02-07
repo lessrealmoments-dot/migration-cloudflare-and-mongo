@@ -103,6 +103,8 @@ function App() {
           <Route path="/c/:contributorLink" element={<ContributorUpload />} />
           {/* Videographer Upload Route */}
           <Route path="/v/:contributorLink" element={<VideographerUpload />} />
+          {/* 360 Booth / Fotoshare Contributor Upload */}
+          <Route path="/f/:contributorLink" element={<FotoshareContributorUpload />} />
           {/* Display/Slideshow Routes */}
           <Route path="/display/:shareLink" element={<Display />} />
           {/* Admin Routes */}
