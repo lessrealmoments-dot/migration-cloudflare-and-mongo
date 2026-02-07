@@ -1,126 +1,111 @@
 {
-  "identity": {
-    "name": "E1",
-    "role": "Anti-AI Designer",
-    "mission": "Create a photography platform that feels like a high-end art gallery, not a SaaS tool.",
-    "principles": [
-      "Content is King: The UI must recede. Photos are the heroes.",
-      "White Space is Luxury: Use 3x more padding than standard.",
-      "Typography as Art: Headings are graphical elements.",
-      "Interaction over Decoration: Micro-interactions define quality."
-    ]
-  },
-  "typography": {
-    "fonts": {
-      "heading": "Playfair Display, serif",
-      "body": "Manrope, sans-serif",
-      "mono": "JetBrains Mono, monospace"
+  "design_system": {
+    "typography": {
+      "font_family": {
+        "heading": "var(--theme-font-heading, 'Playfair Display', serif)",
+        "body": "var(--theme-font-body, 'Manrope', sans-serif)",
+        "mono": "'JetBrains Mono', monospace"
+      },
+      "scale": {
+        "hero": "text-6xl md:text-8xl lg:text-9xl tracking-tighter leading-[0.9]",
+        "h1": "text-5xl md:text-7xl tracking-tight leading-none",
+        "h2": "text-4xl md:text-5xl tracking-tight",
+        "h3": "text-2xl md:text-3xl font-light",
+        "body_lg": "text-lg md:text-xl leading-relaxed font-light",
+        "body": "text-base leading-relaxed",
+        "caption": "text-xs uppercase tracking-[0.2em] font-medium"
+      }
     },
-    "scale": {
-      "h1": "text-5xl md:text-7xl font-medium tracking-tight leading-tight",
-      "h2": "text-4xl md:text-5xl font-normal tracking-tight",
-      "h3": "text-2xl md:text-3xl font-normal",
-      "body_lg": "text-lg md:text-xl font-light leading-relaxed",
-      "body_base": "text-base font-light leading-relaxed",
-      "caption": "text-xs uppercase tracking-[0.2em] font-medium text-muted-foreground"
+    "colors": {
+      "palette": {
+        "primary": "var(--theme-primary)",
+        "secondary": "var(--theme-secondary)",
+        "accent": "var(--theme-accent)",
+        "background": "var(--theme-background)",
+        "text": "var(--theme-text)",
+        "text_light": "var(--theme-text-light)",
+        "glass_bg": "rgba(255, 255, 255, 0.05)",
+        "glass_border": "rgba(255, 255, 255, 0.1)"
+      }
     },
-    "weights": {
-      "heading": "font-medium",
-      "body": "font-light"
-    }
-  },
-  "colors": {
-    "theme": "light",
-    "palette": {
-      "background": "#ffffff",
-      "foreground": "#18181b",
-      "primary": "#18181b",
-      "primary_foreground": "#ffffff",
-      "secondary": "#f4f4f5",
-      "secondary_foreground": "#18181b",
-      "muted": "#f4f4f5",
-      "muted_foreground": "#71717a",
-      "accent": "#f4f4f5",
-      "accent_foreground": "#18181b",
-      "border": "#e4e4e7",
-      "input": "#e4e4e7",
-      "ring": "#18181b"
+    "spacing": {
+      "container_padding": "px-6 md:px-12 lg:px-24",
+      "section_gap": "py-24 md:py-32",
+      "grid_gap": "gap-4 md:gap-8"
     },
-    "usage": {
-      "dashboard_bg": "bg-zinc-50/50",
-      "card_bg": "bg-white",
-      "gallery_bg": "bg-white",
-      "sidebar_bg": "bg-white border-r border-zinc-100"
-    }
-  },
-  "visual_enhancers": {
-    "radius": "rounded-sm",
-    "shadows": {
-      "card": "shadow-sm",
-      "hover": "shadow-md",
-      "dropdown": "shadow-lg border border-zinc-100"
-    },
-    "borders": "border border-zinc-200",
-    "glass": "backdrop-blur-md bg-white/80 border-b border-white/20"
-  },
-  "layout_strategies": {
-    "marketing": {
-      "grid": "grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12",
-      "container": "max-w-screen-2xl mx-auto px-6 md:px-12",
-      "spacing": "py-24 md:py-32"
-    },
-    "dashboard": {
-      "structure": "flex h-screen overflow-hidden bg-zinc-50/30",
-      "sidebar": "w-64 hidden md:flex flex-col border-r border-zinc-200 bg-white",
-      "main": "flex-1 overflow-y-auto p-8 md:p-12"
-    },
-    "gallery": {
-      "grid": "columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4",
-      "item": "break-inside-avoid mb-4"
+    "visual_enhancers": {
+      "glassmorphism": "backdrop-blur-xl bg-white/10 border border-white/10 shadow-2xl",
+      "shadows": {
+        "soft": "shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+        "glow": "shadow-[0_0_50px_-12px_var(--theme-accent)]"
+      },
+      "radius": {
+        "card": "rounded-sm",
+        "button": "rounded-full"
+      }
     }
   },
   "components": {
-    "buttons": {
-      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300",
-      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300",
-      "ghost": "hover:bg-zinc-100 text-foreground h-10 px-6 rounded-sm font-medium transition-all duration-300",
-      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-8 rounded-sm transition-all duration-300"
+    "HeroSection": {
+      "description": "Full-screen immersive hero with parallax effect. Title overlays the image centrally.",
+      "specs": {
+        "height": "h-screen",
+        "overlay": "bg-black/30",
+        "title_animation": "Fade out on scroll (opacity goes to 0 as user scrolls down)",
+        "image_behavior": "Parallax scroll (y: ['0%', '50%'])"
+      }
     },
-    "inputs": {
-      "default": "flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 focus:border-primary"
+    "Navigation": {
+      "description": "Floating glassmorphic pill navbar, centered at the top or bottom.",
+      "specs": {
+        "position": "fixed top-6 left-1/2 -translate-x-1/2 z-50",
+        "style": "glassmorphism rounded-full px-8 py-4 flex items-center gap-8",
+        "behavior": "Hide on scroll down, show on scroll up (optional) or always visible"
+      }
     },
-    "cards": {
-      "default": "rounded-sm border border-zinc-200 bg-white text-card-foreground shadow-sm p-6"
+    "BentoGrid": {
+      "description": "Asymmetrical grid for 'Highlights' section. Breaks the monotony of standard masonry.",
+      "layout": "Grid with col-span-2 and row-span-2 variations.",
+      "items": [
+        { "type": "hero", "span": "col-span-2 row-span-2" },
+        { "type": "portrait", "span": "col-span-1 row-span-2" },
+        { "type": "standard", "span": "col-span-1 row-span-1" }
+      ]
+    },
+    "MasonryGrid": {
+      "description": "Smart masonry for bulk photos. Staggered entrance animations.",
+      "specs": {
+        "columns": "1 (mobile), 2 (tablet), 3 (desktop)",
+        "gap": "gap-8",
+        "animation": "Fade in up with staggerChildren: 0.1"
+      }
+    },
+    "SectionHeader": {
+      "description": "Massive, editorial-style section headers.",
+      "style": "text-center mb-16",
+      "typography": "scale.h1"
     }
   },
   "image_urls": {
-    "hero": [
-      "https://images.unsplash.com/photo-1730476513367-16fe58a8a653?crop=entropy&cs=srgb&fm=jpg&q=85",
-      "https://images.unsplash.com/photo-1729948552636-fe6f7cc88f4a?crop=entropy&cs=srgb&fm=jpg&q=85"
-    ],
-    "gallery_samples": [
-      "https://images.unsplash.com/photo-1700639491303-a177c4402501?crop=entropy&cs=srgb&fm=jpg&q=85",
-      "https://images.unsplash.com/photo-1715331211281-bad87c23d24b?crop=entropy&cs=srgb&fm=jpg&q=85",
-      "https://images.unsplash.com/photo-1571273033940-89c3e9bb18b0?crop=entropy&cs=srgb&fm=jpg&q=85",
-      "https://images.unsplash.com/photo-1677853220358-a888c4365661?crop=entropy&cs=srgb&fm=jpg&q=85",
-      "https://images.unsplash.com/photo-1610380123149-fba11fb20792?crop=entropy&cs=srgb&fm=jpg&q=85"
-    ]
+    "hero_placeholder": "https://images.unsplash.com/photo-1770217614322-0e3bd39ed212?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "details_placeholder": "https://images.unsplash.com/photo-1626247299010-209ebe85fe9d?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "emotion_placeholder": "https://images.unsplash.com/photo-1675930555925-f981a209e013?crop=entropy&cs=srgb&fm=jpg&q=85"
   },
-  "instructions_to_main_agent": {
-    "general": "You are building a high-end photography platform. The aesthetic must be 'Invisible UI' - the interface should disappear to let the photos shine. Use lots of white space. Do not use gradients. Do not use rounded corners larger than 4px (sm).",
-    "marketing_page": "Use the 'Tetris' grid for the hero section. Mix large serif headings with small, wide-tracked sans-serif labels. Use the wedding portrait images for the hero.",
-    "dashboard": "Keep it extremely clean. White background, thin grey borders. No heavy shadows. Use the 'High Density Grid' for the gallery list.",
-    "gallery_view": "This is the most important page. It must look like a museum wall. Use a masonry layout. Allow the user to toggle between 'Grid' and 'Filmstrip' views if possible.",
-    "guest_upload": "Make this experience seamless. A large, elegant drop zone. Minimal form fields.",
-    "animations": "Use 'framer-motion' for page transitions. Images should fade in slowly (duration: 0.8s) when they load. Hover effects on images should be subtle (slight scale up 1.02, slight brightness increase)."
-  },
-  "universal_guidelines": [
-    "Do not use 'Inter' for headings. Use 'Playfair Display'.",
-    "Do not use generic blue for primary actions. Use Black (#18181b).",
-    "Ensure all interactive elements have `data-testid`.",
-    "Use `sonner` for toasts.",
-    "Use `lucide-react` for icons (stroke width 1.5px for elegance).",
-    "Never use pure black (#000000) for text, use #18181b.",
-    "Never use pure white (#ffffff) for dashboard background, use #f9fafb (zinc-50)."
+  "instructions_to_main_agent": [
+    "1. WRAPPER: Create a 'CinematicWrapper' component that wraps the PublicGallery content. This wrapper should handle the 'lenis' smooth scroll initialization.",
+    "2. HERO: Replace the existing static hero with a 'framer-motion' powered parallax hero. The title must be centered and huge.",
+    "3. HIGHLIGHTS: Replace the simple grid with a 'Bento' layout. Use the 'is_highlight' prop to filter these photos.",
+    "4. MASONRY: Enhance the existing masonry grid. Add more padding between items. Add a 'staggered fade-in' animation for each photo as it comes into view.",
+    "5. TYPOGRAPHY: Enforce the 'scale' defined in typography. Do not use default Tailwind sizes for headings.",
+    "6. NAVIGATION: Move the nav links/title into a floating glass pill. It should feel like an app, not a website.",
+    "7. THEME COMPATIBILITY: Use CSS variables (var(--theme-primary), etc.) for colors so the existing theme system still works, but apply the NEW layout structure regardless of the selected theme.",
+    "8. GUEST UPLOAD: Redesign the upload section to look like a 'Ticket' or 'Pass' rather than a form. Use a dashed border with a premium feel."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Do not use generic centered layouts without intention.",
+    "Use 2-3x more spacing than typical designs.",
+    "Every interaction needs micro-animations.",
+    "Use 'sonner' for toasts.",
+    "All interactive elements MUST include data-testid."
   ]
 }
