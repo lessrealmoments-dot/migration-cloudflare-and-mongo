@@ -728,24 +728,27 @@ const PublicGallery = () => {
               >
                 {gallery?.event_title || gallery?.title}
               </h1>
-              <p className="text-base md:text-lg text-white/60 font-light">
-                {gallery?.contributors && gallery.contributors.length > 0 ? (
-                  <span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-                    <span>Captured by</span>
+              
+              {/* Contributors Grid - Professional Layout */}
+              {gallery?.contributors && gallery.contributors.length > 0 ? (
+                <div className="mt-6">
+                  <p className="text-sm text-white/40 uppercase tracking-widest mb-4">Captured by</p>
+                  <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
                     {gallery.contributors.map((c, i) => (
-                      <span key={i} className="inline-flex items-center">
-                        <span className="text-white/90">{c.name}</span>
-                        {c.role !== 'Photography' && (
-                          <span className="ml-1 text-xs text-white/40">({c.role})</span>
-                        )}
-                        {i < gallery.contributors.length - 1 && <span className="mx-1 text-white/40">•</span>}
-                      </span>
+                      <div key={i} className="text-center min-w-[120px]">
+                        <p className="text-white/90 font-medium text-sm md:text-base">{c.name}</p>
+                        <p className="text-white/40 text-xs mt-0.5">
+                          {c.role === 'Photography' ? 'Photography' : c.role}
+                        </p>
+                      </div>
                     ))}
-                  </span>
-                ) : (
-                  <>Captured by <span className="text-white/90">{gallery?.photographer_name}</span></>
-                )}
-              </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-base md:text-lg text-white/60 font-light mt-4">
+                  Captured by <span className="text-white/90">{gallery?.photographer_name}</span>
+                </p>
+              )}
             </motion.div>
             
             {/* Scroll Indicator */}
