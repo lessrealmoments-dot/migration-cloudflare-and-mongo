@@ -384,6 +384,11 @@ const PublicGallery = () => {
     return photos.filter(p => p.uploaded_by === 'guest');
   };
 
+  // Get videos by section
+  const getVideosBySection = (sectionId) => {
+    return videos.filter(v => v.section_id === sectionId);
+  };
+
   // Get highlighted photos (shown in grid)
   const getHighlightPhotos = () => {
     return photos.filter(p => p.is_highlight && (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor'));
