@@ -2072,12 +2072,12 @@ const GalleryDetail = () => {
                   type="text"
                   value={newSectionName}
                   onChange={(e) => setNewSectionName(e.target.value)}
-                  placeholder="e.g., Wedding Ceremony, Reception, Video Highlights"
+                  placeholder={newSectionType === 'fotoshare' ? "e.g., 360 Glam Booth Moments" : "e.g., Wedding Ceremony, Reception, Video Highlights"}
                   className="flex h-10 flex-1 rounded-sm border border-input bg-white px-3 py-2 text-sm"
                   autoFocus
                 />
               </div>
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex flex-wrap items-center gap-4 mb-4">
                 <span className="text-sm text-zinc-600">Section type:</span>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -2103,7 +2103,41 @@ const GalleryDetail = () => {
                   <Film className="w-4 h-4 text-purple-600" />
                   <span className="text-sm">Videos</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sectionType"
+                    value="fotoshare"
+                    checked={newSectionType === 'fotoshare'}
+                    onChange={() => setNewSectionType('fotoshare')}
+                    className="accent-pink-500"
+                  />
+                  <Camera className="w-4 h-4 text-pink-500" />
+                  <span className="text-sm">360 Booth</span>
+                </label>
               </div>
+              
+              {/* Fotoshare URL input - only shown when fotoshare type selected */}
+              {newSectionType === 'fotoshare' && (
+                <div className="mb-4 p-3 bg-pink-50 border border-pink-200 rounded-md">
+                  <label className="flex items-center gap-2 text-sm text-pink-700 font-medium mb-2">
+                    <Sparkles className="w-4 h-4" />
+                    Fotoshare.co Event URL
+                  </label>
+                  <input
+                    type="url"
+                    data-testid="fotoshare-url-input"
+                    value={newFotoshareUrl}
+                    onChange={(e) => setNewFotoshareUrl(e.target.value)}
+                    placeholder="https://fotoshare.co/e/your-event-id"
+                    className="flex h-10 w-full rounded-sm border border-pink-300 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500"
+                  />
+                  <p className="text-xs text-pink-600 mt-1">
+                    Paste the fotoshare.co event link to import 360 booth videos
+                  </p>
+                </div>
+              )}
+              
               <div className="flex gap-3">
                 <button
                   type="submit"
@@ -2114,7 +2148,7 @@ const GalleryDetail = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowSectionForm(false); setNewSectionType('photo'); }}
+                  onClick={() => { setShowSectionForm(false); setNewSectionType('photo'); setNewFotoshareUrl(''); }}
                   className="border border-input h-10 px-6 rounded-sm"
                 >
                   Cancel
