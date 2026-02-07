@@ -2491,30 +2491,76 @@ const GalleryDetail = () => {
               </div>
             </div>
             
-            {/* Fotoshare URL info */}
-            <div className="bg-white rounded-lg p-4 mb-6 border border-pink-200">
-              <p className="text-sm text-zinc-600 mb-2">
-                Source: <a 
-                  href={sections.find(s => s.id === selectedSection)?.fotoshare_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-pink-600 hover:underline"
-                >
-                  {sections.find(s => s.id === selectedSection)?.fotoshare_url}
-                </a>
-              </p>
-              {sections.find(s => s.id === selectedSection)?.fotoshare_last_sync && (
-                <p className="text-xs text-zinc-500">
-                  Last synced: {new Date(sections.find(s => s.id === selectedSection)?.fotoshare_last_sync).toLocaleString()}
+            {/* Contributor Link for 360 Booth Suppliers */}
+            {sections.find(s => s.id === selectedSection)?.contributor_link ? (
+              <div className="bg-white rounded-lg p-4 mb-6 border border-pink-200">
+                <p className="text-sm text-zinc-600 mb-2">
+                  360 Booth suppliers can upload via:
                 </p>
-              )}
-              {sections.find(s => s.id === selectedSection)?.fotoshare_expired && (
-                <div className="mt-2 flex items-center gap-2 text-amber-600 bg-amber-50 p-2 rounded-md">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span className="text-sm">This fotoshare link has expired. Videos may no longer be accessible.</span>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-pink-100 px-3 py-2 rounded text-sm font-mono text-pink-800 truncate">
+                    {window.location.origin}/f/{sections.find(s => s.id === selectedSection)?.contributor_link}
+                  </code>
+                  <button
+                    onClick={() => copyContributorLink(sections.find(s => s.id === selectedSection)?.contributor_link, selectedSection)}
+                    className="p-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600"
+                    title="Copy link"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => showContributorQRCode(sections.find(s => s.id === selectedSection)?.contributor_link, selectedSection)}
+                    className="p-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600"
+                    title="Show QR Code"
+                  >
+                    <QrCode className="w-4 h-4" />
+                  </button>
                 </div>
-              )}
-            </div>
+                {sections.find(s => s.id === selectedSection)?.contributor_name && (
+                  <p className="text-xs text-pink-600 mt-2">
+                    Supplier: {sections.find(s => s.id === selectedSection)?.contributor_name}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg p-4 mb-6 border border-pink-200 text-center">
+                <p className="text-zinc-600 mb-3">Generate a contributor link to let 360 booth suppliers add videos</p>
+                <button
+                  onClick={() => generateContributorLink(selectedSection)}
+                  className="bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 inline-flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Generate 360 Booth Upload Link
+                </button>
+              </div>
+            )}
+            
+            {/* Fotoshare URL info - show if URL exists */}
+            {sections.find(s => s.id === selectedSection)?.fotoshare_url && (
+              <div className="bg-white rounded-lg p-4 mb-6 border border-pink-200">
+                <p className="text-sm text-zinc-600 mb-2">
+                  Source: <a 
+                    href={sections.find(s => s.id === selectedSection)?.fotoshare_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-pink-600 hover:underline"
+                  >
+                    {sections.find(s => s.id === selectedSection)?.fotoshare_url}
+                  </a>
+                </p>
+                {sections.find(s => s.id === selectedSection)?.fotoshare_last_sync && (
+                  <p className="text-xs text-zinc-500">
+                    Last synced: {new Date(sections.find(s => s.id === selectedSection)?.fotoshare_last_sync).toLocaleString()}
+                  </p>
+                )}
+                {sections.find(s => s.id === selectedSection)?.fotoshare_expired && (
+                  <div className="mt-2 flex items-center gap-2 text-amber-600 bg-amber-50 p-2 rounded-md">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span className="text-sm">This fotoshare link has expired. Videos may no longer be accessible.</span>
+                  </div>
+                )}
+              </div>
+            )}
             
             {/* Fotoshare Videos Grid */}
             {getFotoshareVideosBySection(selectedSection).length > 0 ? (
