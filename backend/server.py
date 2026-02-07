@@ -190,6 +190,143 @@ async def scrape_fotoshare_videos(url: str) -> dict:
     
     return result
 
+# ============ Fotoshare Auto-Refresh Background Task ============
+
+async def auto_refresh_fotoshare_sections():
+    """
+    Background task to auto-refresh fotoshare sections based on age:
+    - Day 1 (0-24h): Every 10 minutes
+    - Day 2 (24-48h): Every hour
+    - Day 3-30 (48h - 30 days): Every 24 hours
+    - After 30 days: Every 30 days
+    """
+    logger.info("Fotoshare auto-refresh task started")
+    
+    while True:
+        try:
+            now = datetime.now(timezone.utc)
+            
+            # Find all galleries with fotoshare sections
+            galleries = await db.galleries.find(
+                {"sections.type": "fotoshare"},
+                {"_id": 0, "id": 1, "sections": 1}
+            ).to_list(None)
+            
+            refreshed_count = 0
+            
+            for gallery in galleries:
+                for section in gallery.get("sections", []):
+                    if section.get("type") != "fotoshare":
+                        continue
+                    
+                    # Skip expired sections
+                    if section.get("fotoshare_expired"):
+                        continue
+                    
+                    fotoshare_url = section.get("fotoshare_url")
+                    if not fotoshare_url:
+                        continue
+                    
+                    last_sync_str = section.get("fotoshare_last_sync")
+                    if not last_sync_str:
+                        # Never synced - sync now
+                        should_refresh = True
+                    else:
+                        try:
+                            last_sync = datetime.fromisoformat(last_sync_str.replace('Z', '+00:00'))
+                            age = now - last_sync
+                            age_hours = age.total_seconds() / 3600
+                            age_days = age_hours / 24
+                            
+                            # Determine refresh interval based on section age
+                            # Calculate section creation age from first sync
+                            section_age_days = age_days  # Approximate by time since last sync
+                            
+                            if section_age_days < 1:
+                                # Day 1: Refresh every 10 minutes
+                                refresh_interval_minutes = 10
+                            elif section_age_days < 2:
+                                # Day 2: Refresh every hour
+                                refresh_interval_minutes = 60
+                            elif section_age_days < 30:
+                                # Day 3-30: Refresh every 24 hours
+                                refresh_interval_minutes = 24 * 60
+                            else:
+                                # After 30 days: Refresh every 30 days
+                                refresh_interval_minutes = 30 * 24 * 60
+                            
+                            minutes_since_sync = age.total_seconds() / 60
+                            should_refresh = minutes_since_sync >= refresh_interval_minutes
+                            
+                        except Exception as e:
+                            logger.warning(f"Error parsing last_sync date: {e}")
+                            should_refresh = True
+                    
+                    if should_refresh:
+                        try:
+                            # Perform refresh
+                            scrape_result = await scrape_fotoshare_videos(fotoshare_url)
+                            sync_time = datetime.now(timezone.utc).isoformat()
+                            
+                            # Update section status
+                            sections = gallery.get("sections", [])
+                            for s in sections:
+                                if s.get("id") == section.get("id"):
+                                    s["fotoshare_last_sync"] = sync_time
+                                    s["fotoshare_expired"] = scrape_result.get("expired", False)
+                                    break
+                            
+                            await db.galleries.update_one(
+                                {"id": gallery["id"]},
+                                {"$set": {"sections": sections}}
+                            )
+                            
+                            if scrape_result.get("success"):
+                                # Get existing video hashes
+                                existing = await db.fotoshare_videos.find(
+                                    {"gallery_id": gallery["id"], "section_id": section["id"]},
+                                    {"_id": 0, "hash": 1}
+                                ).to_list(1000)
+                                existing_hashes = {v["hash"] for v in existing}
+                                
+                                # Add new videos
+                                new_videos = []
+                                for video_data in scrape_result.get("videos", []):
+                                    if video_data["hash"] not in existing_hashes:
+                                        new_videos.append({
+                                            "id": str(uuid.uuid4()),
+                                            "gallery_id": gallery["id"],
+                                            "section_id": section["id"],
+                                            "hash": video_data["hash"],
+                                            "source_url": video_data["source_url"],
+                                            "thumbnail_url": video_data["thumbnail_url"],
+                                            "width": video_data.get("width", 1080),
+                                            "height": video_data.get("height", 1920),
+                                            "file_type": video_data.get("file_type", "mp4"),
+                                            "file_source": video_data.get("file_source", "lumabooth"),
+                                            "created_at_source": video_data.get("created_at_source"),
+                                            "order": video_data.get("order", 0),
+                                            "synced_at": sync_time
+                                        })
+                                
+                                if new_videos:
+                                    await db.fotoshare_videos.insert_many(new_videos)
+                                    logger.info(f"Auto-refresh: Added {len(new_videos)} new videos to section {section['id']}")
+                            
+                            refreshed_count += 1
+                            
+                        except Exception as e:
+                            logger.error(f"Auto-refresh error for section {section.get('id')}: {e}")
+            
+            if refreshed_count > 0:
+                logger.info(f"Fotoshare auto-refresh: Refreshed {refreshed_count} sections")
+                
+        except Exception as e:
+            logger.error(f"Fotoshare auto-refresh task error: {e}")
+        
+        # Check every 5 minutes for sections that need refreshing
+        await asyncio.sleep(300)
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
