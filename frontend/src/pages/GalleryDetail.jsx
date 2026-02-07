@@ -2093,11 +2093,12 @@ const GalleryDetail = () => {
                       onClick={() => setSelectedSection(section.id)}
                       className={`w-full h-12 rounded-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
                         selectedSection === section.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'border border-zinc-200 hover:bg-zinc-50'
+                          ? section.type === 'video' ? 'bg-purple-600 text-white' : 'bg-primary text-primary-foreground'
+                          : section.type === 'video' ? 'border border-purple-300 hover:bg-purple-50' : 'border border-zinc-200 hover:bg-zinc-50'
                       }`}
                     >
                       <GripVertical className="w-4 h-4 opacity-50" />
+                      {section.type === 'video' && <Film className="w-4 h-4" />}
                       {section.name}
                     </button>
                     <button
