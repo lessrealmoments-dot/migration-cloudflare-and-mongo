@@ -459,6 +459,7 @@ const GalleryDetail = () => {
     fetchGalleryData();
     fetchGoogleDriveStatus();
     fetchSubscriptionStatus();
+    fetchFotoshareVideos();
   }, [id]);
 
   const fetchSubscriptionStatus = async () => {
