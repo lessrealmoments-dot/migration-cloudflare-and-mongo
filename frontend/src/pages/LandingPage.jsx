@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Upload, Lock, Share2, Image as ImageIcon, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
+import { Camera, Upload, Lock, Share2, Image as ImageIcon, ChevronLeft, ChevronRight, Menu, X, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -10,12 +10,13 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const LandingPage = ({ user }) => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [configLoaded, setConfigLoaded] = useState(false);
+  const [configLoading, setConfigLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Start with null/empty values - NO defaults that could flash
   const [config, setConfig] = useState({
-    hero_title: 'Share Your Photography, Beautifully',
-    hero_subtitle: 'Create stunning galleries, share with clients, and let them upload their own photos. The professional way to showcase and collaborate.',
-    brand_name: '',  // Start empty to prevent flash
+    hero_title: '',
+    hero_subtitle: '',
+    brand_name: '',
     brand_tagline: '',
     hero_image_1: null,
     hero_image_2: null,
@@ -47,19 +48,33 @@ const LandingPage = ({ user }) => {
     const fetchConfig = async () => {
       try {
         const response = await axios.get(`${API}/public/landing-config`);
-        // Merge with defaults (only override if values exist)
-        setConfig(prev => ({
-          ...prev,
-          ...Object.fromEntries(
-            Object.entries(response.data).filter(([_, v]) => v)
-          )
-        }));
+        // Set config from API response, with fallbacks only if API returns empty
+        setConfig({
+          hero_title: response.data.hero_title || 'Welcome',
+          hero_subtitle: response.data.hero_subtitle || '',
+          brand_name: response.data.brand_name || 'Gallery',
+          brand_tagline: response.data.brand_tagline || '',
+          hero_image_1: response.data.hero_image_1 || null,
+          hero_image_2: response.data.hero_image_2 || null,
+          hero_image_3: response.data.hero_image_3 || null,
+          hero_image_4: response.data.hero_image_4 || null,
+          hero_image_5: response.data.hero_image_5 || null,
+          hero_image_6: response.data.hero_image_6 || null,
+          hero_image_7: response.data.hero_image_7 || null,
+          hero_image_8: response.data.hero_image_8 || null,
+          hero_image_9: response.data.hero_image_9 || null,
+          hero_image_10: response.data.hero_image_10 || null
+        });
       } catch (error) {
-        console.error('Using default landing config');
-        // Set fallback brand name on error
-        setConfig(prev => ({ ...prev, brand_name: 'PhotoShare' }));
+        console.error('Failed to load landing config');
+        // Only use generic fallbacks on error - nothing that looks like a template
+        setConfig(prev => ({ 
+          ...prev, 
+          hero_title: 'Welcome',
+          brand_name: 'Gallery' 
+        }));
       } finally {
-        setConfigLoaded(true);
+        setConfigLoading(false);
       }
     };
     fetchConfig();
