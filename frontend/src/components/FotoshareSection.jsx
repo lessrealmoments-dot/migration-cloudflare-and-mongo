@@ -40,7 +40,11 @@ const FotoshareSection = ({ section, videos, themeColors }) => {
             <h2 className="text-2xl md:text-3xl font-light tracking-wide" style={{ color: textColor }}>
               {section.name}
             </h2>
-            <p className="text-sm opacity-50" style={{ color: textColor }}>360° Booth Experience</p>
+            {section.contributor_name ? (
+              <p className="text-sm opacity-60" style={{ color: textColor }}>by {section.contributor_name}</p>
+            ) : (
+              <p className="text-sm opacity-50" style={{ color: textColor }}>360° Booth Experience</p>
+            )}
           </div>
         </div>
         <div className="flex-1 h-px bg-gradient-to-r from-pink-500/50 to-transparent" />
