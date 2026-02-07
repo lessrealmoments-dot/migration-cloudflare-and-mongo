@@ -364,16 +364,32 @@ A new section type that allows photographers to import 360-degree booth videos f
 ### 360 Glam Booth / Fotoshare.co Integration ✅ (COMPLETED)
 - **New Section Type**: "360 Booth" option when creating gallery sections
 - **Auto-Scraping**: Backend scrapes fotoshare.co event pages for video data
-- **Sync/Refresh**: Videos can be refreshed to capture new additions
+- **Sync/Refresh**: Videos can be refreshed manually or automatically
 - **Expired Link Detection**: System detects when event links expire
 - **FotoshareSection Component**: Cinematic display in public gallery
 - **Full Test Coverage**: Backend (15/15 tests passed), Frontend working
 
+### Auto-Refresh Schedule (NEW)
+Background task automatically syncs fotoshare sections based on age:
+| Section Age | Refresh Interval |
+|-------------|------------------|
+| Day 1 (0-24h) | Every 10 minutes |
+| Day 2 (24-48h) | Every 1 hour |
+| Day 3-30 | Every 24 hours |
+| After 30 days | Every 30 days |
+
+Plus manual refresh button always available in gallery management.
+
+### Public Gallery UX Improvement ✅
+- **Upload Button at Top**: "Share Your Photos" CTA now appears immediately after hero
+- **Smooth Scroll**: Clicking the top button scrolls to upload section and auto-expands it
+- **Better Guest Experience**: First thing guests see is the invitation to share photos
+
 ### Files Modified
-- `/app/backend/server.py`: Added scraping utility, 4 new API endpoints
+- `/app/backend/server.py`: Added scraping utility, 4 new API endpoints, auto-refresh background task
 - `/app/frontend/src/pages/GalleryDetail.jsx`: 360 Booth section creation/management UI
 - `/app/frontend/src/components/FotoshareSection.jsx`: NEW - Public display component
-- `/app/frontend/src/pages/PublicGallery.jsx`: Integrated FotoshareSection
+- `/app/frontend/src/pages/PublicGallery.jsx`: Integrated FotoshareSection, moved upload CTA to top
 
 ---
 
