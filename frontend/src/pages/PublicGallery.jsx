@@ -808,13 +808,7 @@ const PublicGallery = () => {
             >
               <motion.button
                 data-testid="guest-upload-cta-top"
-                onClick={() => {
-                  setGuestUploadExpanded(true);
-                  // Scroll to upload section
-                  setTimeout(() => {
-                    document.getElementById('guest-upload-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }, 100);
-                }}
+                onClick={() => setShowUploadModal(true)}
                 className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-medium transition-all duration-300 shadow-lg hover:shadow-xl"
                 style={{ 
                   backgroundColor: currentTheme.colors.accent,
