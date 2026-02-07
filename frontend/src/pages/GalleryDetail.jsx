@@ -2184,6 +2184,142 @@ const GalleryDetail = () => {
           )}
         </div>
 
+        {/* Video Section Management - Show when a video section is selected */}
+        {selectedSection && sections.find(s => s.id === selectedSection)?.type === 'video' && (
+          <div className="mb-12 bg-purple-50 rounded-xl p-6 border border-purple-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-normal flex items-center gap-3" style={{ fontFamily: 'Playfair Display, serif' }}>
+                <Film className="w-6 h-6 text-purple-600" />
+                Video Section: {sections.find(s => s.id === selectedSection)?.name}
+              </h3>
+              <span className="text-purple-600 text-sm font-medium">
+                {getVideosBySection(selectedSection).length} video(s)
+              </span>
+            </div>
+            
+            {/* Video contributor link info */}
+            {sections.find(s => s.id === selectedSection)?.contributor_link ? (
+              <div className="bg-white rounded-lg p-4 mb-6 border border-purple-200">
+                <p className="text-sm text-zinc-600 mb-2">
+                  Videographers can upload via:
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-purple-100 px-3 py-2 rounded text-sm font-mono text-purple-800 truncate">
+                    {window.location.origin}/v/{sections.find(s => s.id === selectedSection)?.contributor_link}
+                  </code>
+                  <button
+                    onClick={() => copyContributorLink(sections.find(s => s.id === selectedSection)?.contributor_link)}
+                    className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => showContributorQRCode(sections.find(s => s.id === selectedSection)?.contributor_link)}
+                    className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  >
+                    <QrCode className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg p-4 mb-6 border border-purple-200 text-center">
+                <p className="text-zinc-600 mb-3">Generate a contributor link to let videographers add videos</p>
+                <button
+                  onClick={() => generateContributorLink(selectedSection)}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 inline-flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Generate Video Upload Link
+                </button>
+              </div>
+            )}
+            
+            {/* Videos Grid */}
+            {getVideosBySection(selectedSection).length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {getVideosBySection(selectedSection).map((video) => (
+                  <div 
+                    key={video.id}
+                    className={`relative group bg-white rounded-lg overflow-hidden border-2 ${
+                      video.is_featured ? 'border-yellow-400' : 'border-transparent'
+                    } hover:border-purple-400 transition-colors`}
+                  >
+                    {/* Thumbnail */}
+                    <div className="aspect-video bg-zinc-900 relative">
+                      <img
+                        src={video.thumbnail_url || video.youtube_thumbnail_url || `https://img.youtube.com/vi/${video.video_id}/maxresdefault.jpg`}
+                        alt={video.title || video.tag}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = `https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`;
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Play className="w-10 h-10 text-white" fill="white" />
+                      </div>
+                      {video.is_featured && (
+                        <div className="absolute top-2 left-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-semibold flex items-center gap-1">
+                          <Star className="w-3 h-3" fill="currentColor" /> Featured
+                        </div>
+                      )}
+                      <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                        {video.tag}
+                      </span>
+                    </div>
+                    
+                    {/* Info */}
+                    <div className="p-3">
+                      <h4 className="text-sm font-medium text-zinc-800 truncate">
+                        {video.title || video.tag}
+                      </h4>
+                      {video.contributor_name && (
+                        <p className="text-xs text-zinc-500 truncate">by {video.contributor_name}</p>
+                      )}
+                    </div>
+                    
+                    {/* Actions */}
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {!video.is_featured && (
+                        <button
+                          onClick={() => handleSetFeaturedVideo(video.id)}
+                          className="p-1.5 bg-yellow-500 text-black rounded-full hover:bg-yellow-600"
+                          title="Set as featured"
+                        >
+                          <Star className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <a
+                        href={video.youtube_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 bg-white text-zinc-700 rounded-full hover:bg-zinc-100"
+                        title="View on YouTube"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                      <button
+                        onClick={() => handleDeleteVideo(video.id)}
+                        className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"
+                        title="Delete video"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-zinc-500">
+                <Video className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No videos in this section yet</p>
+                <p className="text-sm mt-1">Share the contributor link with your videographer</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Photo Upload Section - Hide when viewing video section */}
+        {!(selectedSection && sections.find(s => s.id === selectedSection)?.type === 'video') && (
         <div className="mb-12">
           <h3 className="text-2xl font-normal mb-6" style={{ fontFamily: 'Playfair Display, serif' }}>
             Upload Photos {selectedSection && `to ${sections.find(s => s.id === selectedSection)?.name}`}
