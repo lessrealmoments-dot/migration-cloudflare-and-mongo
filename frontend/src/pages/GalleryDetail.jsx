@@ -873,18 +873,12 @@ const GalleryDetail = () => {
   const handleCreateSection = async (e) => {
     e.preventDefault();
     if (!newSectionName.trim()) return;
-    
-    // For fotoshare sections, require URL
-    if (newSectionType === 'fotoshare' && !newFotoshareUrl.trim()) {
-      toast.error('Please enter a fotoshare.co URL');
-      return;
-    }
 
     try {
       const token = localStorage.getItem('token');
       
-      if (newSectionType === 'fotoshare') {
-        // Create fotoshare section with dedicated endpoint
+      if (newSectionType === 'fotoshare' && newFotoshareUrl.trim()) {
+        // Create fotoshare section with URL - dedicated endpoint
         const response = await axios.post(`${API}/galleries/${id}/fotoshare-sections`, {
           name: newSectionName,
           fotoshare_url: newFotoshareUrl
@@ -897,7 +891,7 @@ const GalleryDetail = () => {
         // Fetch the fotoshare videos
         fetchFotoshareVideos();
       } else {
-        // Create regular photo/video section
+        // Create regular section (photo, video, or fotoshare without URL)
         const formData = new FormData();
         formData.append('name', newSectionName);
         formData.append('type', newSectionType);
@@ -907,7 +901,8 @@ const GalleryDetail = () => {
         });
         
         setSections([...sections, response.data]);
-        toast.success('Section created!');
+        const typeLabel = newSectionType === 'fotoshare' ? '360 Booth section created! Generate a contributor link to let suppliers add videos.' : 'Section created!';
+        toast.success(typeLabel);
       }
       
       setNewSectionName('');
