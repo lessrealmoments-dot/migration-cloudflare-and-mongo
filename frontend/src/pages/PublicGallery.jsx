@@ -1205,8 +1205,8 @@ const PublicGallery = () => {
                         {section.name}
                       </h3>
                       {section.contributor_name && (
-                        <p className="text-sm mt-3" style={{ color: currentTheme.colors.textLight }}>
-                          Captured by <span style={{ color: currentTheme.colors.text }}>{section.contributor_name}</span>
+                        <p className="text-sm mt-2 opacity-70" style={{ color: currentTheme.colors.textLight }}>
+                          by <span style={{ color: currentTheme.colors.text, opacity: 0.9 }}>{section.contributor_name}</span>
                         </p>
                       )}
                     </motion.div>
