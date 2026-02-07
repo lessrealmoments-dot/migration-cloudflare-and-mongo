@@ -303,6 +303,7 @@ const VideographerUpload = () => {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Our Perfect Day"
                   className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none"
+                  data-testid="video-title-input"
                 />
               </div>
               
@@ -317,6 +318,7 @@ const VideographerUpload = () => {
                   placeholder="Short description of the video..."
                   rows={3}
                   className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none resize-none"
+                  data-testid="video-description-input"
                 />
               </div>
               
@@ -325,6 +327,7 @@ const VideographerUpload = () => {
                 type="submit"
                 disabled={uploading}
                 className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                data-testid="add-video-button"
               >
                 {uploading ? (
                   <>
