@@ -305,10 +305,28 @@ A new section type that allows photographers to import 360-degree booth videos f
 
 ### How It Works
 1. **Create Section**: In gallery detail, click "Add Section" → Select "360 Booth" type
-2. **Enter URL**: Paste the fotoshare.co event URL (e.g., https://fotoshare.co/e/your-event)
+2. **Two Options**:
+   - **Option A - Direct Import**: Enter fotoshare.co URL now to import videos immediately
+   - **Option B - Supplier Contributor**: Leave URL blank, generate a contributor link for your 360 booth supplier
 3. **Auto-Scrape**: System scrapes video thumbnails and metadata from the page
 4. **Display**: Videos appear in public gallery with vertical 9:16 aspect ratio
 5. **Refresh**: Click "Refresh" to sync new videos from the source
+
+### Contributor Mode for 360 Booth Suppliers
+Just like video and photo sections, 360 booth sections support contributor links:
+
+| Route | Section Type | Use Case |
+|-------|-------------|----------|
+| `/c/{link}` | Photo | Photo contributor uploads |
+| `/v/{link}` | Video | Videographer uploads YouTube links |
+| `/f/{link}` | Fotoshare | 360 booth supplier submits fotoshare.co URL |
+
+**Workflow:**
+1. Photographer creates empty 360 Booth section (without URL)
+2. Photographer generates contributor link → Gets `/f/{link}` URL
+3. Photographer shares link/QR code with 360 booth supplier
+4. Supplier visits link, enters company name and fotoshare.co URL
+5. System imports all videos with supplier attribution
 
 ### Public Gallery Display
 - **Preview Mode**: Shows 6 videos initially with "Show X More Videos" button
