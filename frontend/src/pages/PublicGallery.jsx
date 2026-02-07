@@ -530,6 +530,11 @@ const PublicGallery = () => {
     return videos.filter(v => v.section_id === sectionId);
   };
 
+  // Get fotoshare videos by section
+  const getFotoshareVideosBySection = (sectionId) => {
+    return fotoshareVideos.filter(v => v.section_id === sectionId);
+  };
+
   // Get highlighted photos (shown in grid)
   const getHighlightPhotos = () => {
     return photos.filter(p => p.is_highlight && (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor'));
