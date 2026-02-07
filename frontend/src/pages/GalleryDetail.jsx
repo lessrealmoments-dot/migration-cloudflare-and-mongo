@@ -3143,6 +3143,17 @@ const GalleryDetail = () => {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium mb-2">Coordinator Name</label>
+                <input
+                  type="text"
+                  value={editFormData.coordinator_name}
+                  onChange={(e) => setEditFormData({ ...editFormData, coordinator_name: e.target.value })}
+                  placeholder="e.g., Events by Sarah"
+                  className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
+                />
+                <p className="text-xs text-zinc-500 mt-1">Event planner/coordinator who organized this event</p>
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-2">Description</label>
                 <textarea
                   value={editFormData.description}
