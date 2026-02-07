@@ -3274,6 +3274,8 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
                 update_data["guest_upload_expiration_date"] = (event_dt + timedelta(days=updates.guest_upload_enabled_days)).isoformat()
             except:
                 pass
+    if updates.coordinator_name is not None:
+        update_data["coordinator_name"] = updates.coordinator_name
     if updates.share_link_expiration_days is not None:
         update_data["share_link_expiration_days"] = updates.share_link_expiration_days
         created_at = datetime.fromisoformat(gallery["created_at"])
