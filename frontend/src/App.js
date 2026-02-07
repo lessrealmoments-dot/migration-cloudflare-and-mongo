@@ -8,6 +8,7 @@ import CreateGallery from '@/pages/CreateGallery';
 import GalleryDetail from '@/pages/GalleryDetail';
 import PublicGallery from '@/pages/PublicGallery';
 import ContributorUpload from '@/pages/ContributorUpload';
+import VideographerUpload from '@/pages/VideographerUpload';
 import Display from '@/pages/Display';
 import PricingPage from '@/pages/PricingPage';
 import AdminLogin from '@/pages/AdminLogin';
