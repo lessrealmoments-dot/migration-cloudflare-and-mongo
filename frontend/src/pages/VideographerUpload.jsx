@@ -239,7 +239,7 @@ const VideographerUpload = () => {
                         e.target.src = `https://img.youtube.com/vi/${previewVideoId}/hqdefault.jpg`;
                       }}
                     />
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
                         <Play className="w-8 h-8 text-white ml-1" fill="white" />
                       </div>
