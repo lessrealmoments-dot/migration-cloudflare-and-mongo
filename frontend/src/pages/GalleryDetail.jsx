@@ -2215,14 +2215,37 @@ const GalleryDetail = () => {
                       onClick={() => setSelectedSection(section.id)}
                       className={`w-full h-12 rounded-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
                         selectedSection === section.id
-                          ? section.type === 'video' ? 'bg-purple-600 text-white' : 'bg-primary text-primary-foreground'
-                          : section.type === 'video' ? 'border border-purple-300 hover:bg-purple-50' : 'border border-zinc-200 hover:bg-zinc-50'
+                          ? section.type === 'video' ? 'bg-purple-600 text-white' 
+                            : section.type === 'fotoshare' ? 'bg-pink-500 text-white'
+                            : 'bg-primary text-primary-foreground'
+                          : section.type === 'video' ? 'border border-purple-300 hover:bg-purple-50' 
+                            : section.type === 'fotoshare' ? 'border border-pink-300 hover:bg-pink-50'
+                            : 'border border-zinc-200 hover:bg-zinc-50'
                       }`}
                     >
                       <GripVertical className="w-4 h-4 opacity-50" />
                       {section.type === 'video' && <Film className="w-4 h-4" />}
+                      {section.type === 'fotoshare' && <Camera className="w-4 h-4" />}
                       {section.name}
+                      {section.type === 'fotoshare' && section.fotoshare_expired && (
+                        <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      )}
                     </button>
+                    {/* Refresh button for fotoshare sections */}
+                    {section.type === 'fotoshare' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRefreshFotoshare(section.id); }}
+                        disabled={refreshingSection === section.id}
+                        className="absolute -top-2 left-6 bg-pink-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center disabled:opacity-50"
+                        title="Refresh from fotoshare.co"
+                      >
+                        {refreshingSection === section.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <RotateCcw className="w-3 h-3" strokeWidth={2} />
+                        )}
+                      </button>
+                    )}
                     <button
                       onClick={(e) => { e.stopPropagation(); startEditingSection(section); }}
                       className="absolute -top-2 -left-2 bg-blue-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
