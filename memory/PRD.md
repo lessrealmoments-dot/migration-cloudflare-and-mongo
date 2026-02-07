@@ -301,7 +301,7 @@ A new section type that allows photographers to import 360-degree booth videos f
 |------|-------------|--------|---------|
 | photo | Traditional photo uploads | Upload | Photo grid/masonry |
 | video | YouTube video links | YouTube URL | Cinematic Showcase |
-| fotoshare | 360 booth videos | fotoshare.co URL | Vertical video grid |
+| fotoshare | 360 booth videos | fotoshare.co URL | Vertical video grid (collapsible) |
 
 ### How It Works
 1. **Create Section**: In gallery detail, click "Add Section" → Select "360 Booth" type
@@ -309,6 +309,13 @@ A new section type that allows photographers to import 360-degree booth videos f
 3. **Auto-Scrape**: System scrapes video thumbnails and metadata from the page
 4. **Display**: Videos appear in public gallery with vertical 9:16 aspect ratio
 5. **Refresh**: Click "Refresh" to sync new videos from the source
+
+### Public Gallery Display
+- **Preview Mode**: Shows 6 videos initially with "Show X More Videos" button
+- **Expanded Mode**: Click to reveal all videos, "Show Less" to collapse
+- **Play Mode Toggle**: Choose between:
+  - **"Play Here"**: Embedded iframe player (default)
+  - **"Fotoshare.co"**: Open in new tab on fotoshare.co
 
 ### GalleryDetail Management UI
 - Pink-themed section button with Camera icon
@@ -323,7 +330,8 @@ A new section type that allows photographers to import 360-degree booth videos f
 - Pink accent color scheme
 - Vertical 9:16 video thumbnails (360° badge)
 - Hover-to-play overlay
-- Lightbox modal on click → "Watch Video" button opens fotoshare.co
+- Expand/collapse functionality
+- Dual play mode (embedded vs external)
 
 ### API Endpoints
 - `POST /api/galleries/{id}/fotoshare-sections` - Create section (scrapes URL)
