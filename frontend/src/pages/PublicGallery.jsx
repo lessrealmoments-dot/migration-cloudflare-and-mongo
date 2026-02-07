@@ -806,27 +806,43 @@ const PublicGallery = () => {
               {gallery?.event_title || gallery?.title}
             </h1>
             
-            {/* Contributors Grid - Professional Layout */}
-            {gallery?.contributors && gallery.contributors.length > 0 ? (
-              <div className="mt-6">
-                <p className="text-sm uppercase tracking-widest mb-4" style={{ color: currentTheme.colors.textLight, opacity: 0.6 }}>
-                  Captured by
-                </p>
-                <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
-                  {gallery.contributors.map((c, i) => (
-                    <div key={i} className="text-center min-w-[120px]">
-                      <p className="font-medium text-sm md:text-base" style={{ color: currentTheme.colors.text }}>{c.name}</p>
-                      <p className="text-xs mt-0.5" style={{ color: currentTheme.colors.textLight, opacity: 0.6 }}>
-                        {c.role === 'Photography' ? 'Photography' : c.role}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+            {/* Elegant Credits Layout */}
+            {gallery?.contributors && gallery.contributors.length > 0 && (
+              <div className="mt-8">
+                {(() => {
+                  const owner = gallery.contributors.find(c => c.is_owner);
+                  const others = gallery.contributors.filter(c => !c.is_owner);
+                  
+                  return (
+                    <>
+                      {/* The Story, Curated by */}
+                      <div className="mb-6">
+                        <p className="text-xs uppercase tracking-[0.3em] mb-2" style={{ color: currentTheme.colors.textLight, opacity: 0.5 }}>
+                          The Story, Curated by
+                        </p>
+                        <p className="text-xl md:text-2xl font-light" style={{ fontFamily: 'Playfair Display, serif', color: currentTheme.colors.text }}>
+                          {owner?.name || gallery?.photographer_name}
+                        </p>
+                      </div>
+                      
+                      {/* Other Contributors */}
+                      {others.length > 0 && (
+                        <div className="mt-6">
+                          <p className="text-xs uppercase tracking-[0.2em] mb-4" style={{ color: currentTheme.colors.textLight, opacity: 0.4 }}>with</p>
+                          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3">
+                            {others.map((c, i) => (
+                              <div key={i} className="text-center">
+                                <p className="text-sm font-medium" style={{ color: currentTheme.colors.text, opacity: 0.85 }}>{c.name}</p>
+                                <p className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: currentTheme.colors.textLight, opacity: 0.5 }}>{c.role}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
-            ) : (
-              <p className="mt-4" style={{ color: currentTheme.colors.textLight }}>
-                Captured by <span style={{ color: currentTheme.colors.text }}>{gallery?.photographer_name}</span>
-              </p>
             )}
           </motion.div>
         </section>
