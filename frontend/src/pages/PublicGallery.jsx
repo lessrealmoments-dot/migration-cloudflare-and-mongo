@@ -1088,6 +1088,7 @@ const PublicGallery = () => {
                       <FotoshareSection
                         section={section}
                         videos={sectionFotoshareVideos}
+                        themeColors={currentTheme.colors}
                       />
                     </div>
                   </div>
