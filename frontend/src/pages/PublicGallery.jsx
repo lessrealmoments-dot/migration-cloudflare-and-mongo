@@ -871,52 +871,75 @@ const PublicGallery = () => {
         {!gallery?.is_expired && (
           <>
             {/* Guest Upload Section - Hidden in view-only mode */}
-            {!isViewOnly && (
-            <div className="mb-12">
-              <button
-                data-testid="guest-upload-toggle"
-                onClick={() => setGuestUploadExpanded(!guestUploadExpanded)}
-                disabled={!gallery?.guest_upload_enabled}
-                className={`w-full border border-zinc-200 rounded-sm p-6 transition-all duration-300 flex items-center justify-between ${
-                  gallery?.guest_upload_enabled
-                    ? 'bg-zinc-50 hover:bg-zinc-100 cursor-pointer'
-                    : 'bg-zinc-100 cursor-not-allowed opacity-60'
-                }`}
-              >
-            <div className="flex items-center gap-3">
-              <Upload className="w-6 h-6 text-zinc-600" strokeWidth={1.5} />
-              <div className="text-left">
-                <h3 className="text-xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
-                  {gallery?.guest_upload_enabled ? 'Upload Your Photos' : 'Upload Window Closed'}
-                </h3>
-                <p className="text-sm text-zinc-500">
-                  {gallery?.guest_upload_enabled 
-                    ? 'Share your shots with the celebrant'
-                    : 'Guest uploads are no longer accepted for this gallery'}
-                </p>
-              </div>
-            </div>
-            {guestUploadExpanded ? (
-              <ChevronUp className="w-6 h-6 text-zinc-600" strokeWidth={1.5} />
-            ) : (
-              <ChevronDown className="w-6 h-6 text-zinc-600" strokeWidth={1.5} />
-            )}
-          </button>
+            {!isViewOnly && gallery?.guest_upload_enabled && (
+            <motion.section 
+              className="py-16 md:py-24"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              style={{ backgroundColor: currentTheme.colors.secondary }}
+            >
+              <div className="max-w-3xl mx-auto px-6 md:px-12">
+                <motion.div 
+                  className="text-center mb-10"
+                  initial={{ y: 20, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true }}
+                >
+                  <div 
+                    className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6"
+                    style={{ backgroundColor: currentTheme.colors.accent + '20' }}
+                  >
+                    <Camera className="w-7 h-7" style={{ color: currentTheme.colors.accent }} />
+                  </div>
+                  <h3 
+                    className="text-3xl md:text-4xl font-normal mb-3"
+                    style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+                  >
+                    Share Your Moments
+                  </h3>
+                  <p style={{ color: currentTheme.colors.textLight }}>
+                    Captured something special? Add your photos to the collection.
+                  </p>
+                </motion.div>
 
-          {guestUploadExpanded && (
-            <div className="mt-6">
-              <div
-                {...getRootProps()}
-                data-testid="guest-upload-dropzone"
-                className={`border-2 border-dashed rounded-sm p-12 text-center cursor-pointer transition-all duration-300 ${
-                  isDragActive
-                    ? 'border-primary bg-zinc-50'
-                    : uploading
-                    ? 'border-zinc-300 bg-zinc-50 cursor-not-allowed'
-                    : 'border-zinc-300 hover:border-zinc-400 hover:bg-zinc-50/50'
-                }`}
-              >
-                <input {...getInputProps()} disabled={uploading} />
+                <AnimatePresence>
+                  {!guestUploadExpanded ? (
+                    <motion.button
+                      key="upload-btn"
+                      data-testid="guest-upload-toggle"
+                      onClick={() => setGuestUploadExpanded(true)}
+                      className="w-full py-5 rounded-full font-medium transition-all duration-300 flex items-center justify-center gap-3"
+                      style={{ 
+                        backgroundColor: currentTheme.colors.accent,
+                        color: isDarkTheme ? '#000' : '#fff'
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Upload className="w-5 h-5" />
+                      Upload Your Photos
+                    </motion.button>
+                  ) : (
+                    <motion.div
+                      key="upload-area"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div
+                        {...getRootProps()}
+                        data-testid="guest-upload-dropzone"
+                        className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 ${
+                          isDragActive ? 'scale-[1.02]' : ''
+                        }`}
+                        style={{ 
+                          borderColor: isDragActive ? currentTheme.colors.accent : currentTheme.colors.accent + '40',
+                          backgroundColor: isDragActive ? currentTheme.colors.accent + '10' : 'transparent'
+                        }}
+                      >
+                        <input {...getInputProps()} disabled={uploading} />
                 
                 {uploading && uploadProgress.length > 0 ? (
                   <div className="space-y-4">
