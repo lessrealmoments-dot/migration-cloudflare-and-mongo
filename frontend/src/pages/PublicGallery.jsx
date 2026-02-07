@@ -22,6 +22,7 @@ const PublicGallery = () => {
   const brandConfig = useBrandConfig();
   const [gallery, setGallery] = useState(null);
   const [photos, setPhotos] = useState([]);
+  const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [passwordRequired, setPasswordRequired] = useState(false);
   const [password, setPassword] = useState('');
