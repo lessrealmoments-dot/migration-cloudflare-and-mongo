@@ -256,12 +256,13 @@ const GalleryDetail = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      // Check if this is a video section to use the correct URL prefix
+      // Check section type to use the correct URL prefix
       const section = sections.find(s => s.id === sectionId);
-      const urlPrefix = section?.type === 'video' ? '/v/' : '/c/';
+      const urlPrefix = section?.type === 'video' ? '/v/' : section?.type === 'fotoshare' ? '/f/' : '/c/';
+      const linkType = section?.type === 'video' ? 'Video upload' : section?.type === 'fotoshare' ? '360 Booth upload' : 'Contributor';
       const contributorUrl = `${window.location.origin}${urlPrefix}${response.data.contributor_link}`;
       await navigator.clipboard.writeText(contributorUrl);
-      toast.success(`${section?.type === 'video' ? 'Video upload' : 'Contributor'} link created and copied to clipboard!`);
+      toast.success(`${linkType} link created and copied to clipboard!`);
       fetchGalleryData();
     } catch (error) {
       toast.error('Failed to generate contributor link');
@@ -269,18 +270,18 @@ const GalleryDetail = () => {
   };
 
   const copyContributorLink = async (contributorLink, sectionId) => {
-    // Check if this is a video section to use the correct URL prefix
+    // Check section type to use the correct URL prefix
     const section = sections.find(s => s.id === sectionId);
-    const urlPrefix = section?.type === 'video' ? '/v/' : '/c/';
+    const urlPrefix = section?.type === 'video' ? '/v/' : section?.type === 'fotoshare' ? '/f/' : '/c/';
     const contributorUrl = `${window.location.origin}${urlPrefix}${contributorLink}`;
     await navigator.clipboard.writeText(contributorUrl);
     toast.success('Link copied to clipboard!');
   };
 
   const showContributorQRCode = (contributorLink, sectionId) => {
-    // Check if this is a video section to use the correct URL prefix
+    // Check section type to use the correct URL prefix
     const section = sections.find(s => s.id === sectionId);
-    const urlPrefix = section?.type === 'video' ? '/v/' : '/c/';
+    const urlPrefix = section?.type === 'video' ? '/v/' : section?.type === 'fotoshare' ? '/f/' : '/c/';
     const contributorUrl = `${window.location.origin}${urlPrefix}${contributorLink}`;
     setContributorQRLink(contributorUrl);
     setShowContributorQR(true);
