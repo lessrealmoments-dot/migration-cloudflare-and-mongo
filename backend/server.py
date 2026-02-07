@@ -3327,6 +3327,7 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
         cover_photo_url=updated_gallery.get("cover_photo_url"),
         event_title=updated_gallery.get("event_title"),
         event_date=updated_gallery.get("event_date"),
+        coordinator_name=updated_gallery.get("coordinator_name"),
         share_link_expiration_date=updated_gallery.get("share_link_expiration_date"),
         guest_upload_expiration_date=updated_gallery.get("guest_upload_expiration_date"),
         guest_upload_enabled=True,
