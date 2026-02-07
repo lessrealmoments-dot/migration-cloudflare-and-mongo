@@ -158,6 +158,18 @@ const PublicGallery = () => {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [guestUploadExpanded, setGuestUploadExpanded] = useState(false);
   const [showDownloadAllModal, setShowDownloadAllModal] = useState(false);
+  
+  // Scroll tracking for parallax effects
+  const heroRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+  
+  // Parallax transforms
+  const heroImageY = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
   const [downloadAllPassword, setDownloadAllPassword] = useState('');
   const [expandedSections, setExpandedSections] = useState({});
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
