@@ -359,7 +359,25 @@ A new section type that allows photographers to import 360-degree booth videos f
    - Phase 2: Extract routes to APIRouter modules
    - Phase 3: Add tests and dependency injection
 
-## Recent Updates (February 4, 2026)
+## Recent Updates (February 7, 2026)
+
+### 360 Glam Booth / Fotoshare.co Integration ✅ (COMPLETED)
+- **New Section Type**: "360 Booth" option when creating gallery sections
+- **Auto-Scraping**: Backend scrapes fotoshare.co event pages for video data
+- **Sync/Refresh**: Videos can be refreshed to capture new additions
+- **Expired Link Detection**: System detects when event links expire
+- **FotoshareSection Component**: Cinematic display in public gallery
+- **Full Test Coverage**: Backend (15/15 tests passed), Frontend working
+
+### Files Modified
+- `/app/backend/server.py`: Added scraping utility, 4 new API endpoints
+- `/app/frontend/src/pages/GalleryDetail.jsx`: 360 Booth section creation/management UI
+- `/app/frontend/src/components/FotoshareSection.jsx`: NEW - Public display component
+- `/app/frontend/src/pages/PublicGallery.jsx`: Integrated FotoshareSection
+
+---
+
+## Previous Updates (February 4, 2026)
 
 ### Photographer Analytics Dashboard ✅ (COMPLETED)
 - **Summary Stats**: Galleries, Photos, Total Views, Storage Used
