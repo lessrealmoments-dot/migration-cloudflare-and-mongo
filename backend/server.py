@@ -796,10 +796,31 @@ class Section(BaseModel):
     id: str
     name: str
     order: int
-    type: str = "photo"  # "photo" or "video"
+    type: str = "photo"  # "photo", "video", or "fotoshare"
     contributor_link: Optional[str] = None  # Unique link for contributor uploads
     contributor_name: Optional[str] = None  # Company/contributor name
     contributor_enabled: bool = False  # Whether contributor uploads are enabled
+    # Fotoshare-specific fields
+    fotoshare_url: Optional[str] = None  # The fotoshare.co event URL
+    fotoshare_last_sync: Optional[str] = None  # Last sync timestamp
+    fotoshare_expired: bool = False  # Whether the link has expired
+
+class FotoshareVideo(BaseModel):
+    """Video entry from fotoshare.co / 360 booth providers"""
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    gallery_id: str
+    section_id: str
+    hash: str  # Fotoshare video hash (e.g., "308xz2a")
+    source_url: str  # Full URL to view on fotoshare (e.g., "https://fotoshare.co/i/308xz2a")
+    thumbnail_url: str  # CDN thumbnail URL
+    width: int = 1080
+    height: int = 1920
+    file_type: str = "mp4"
+    file_source: str = "lumabooth"  # e.g., "lumabooth"
+    created_at_source: Optional[str] = None  # When it was created on fotoshare
+    order: int = 0
+    synced_at: str  # When we synced this video
 
 class GalleryVideo(BaseModel):
     """Video entry for video sections"""
