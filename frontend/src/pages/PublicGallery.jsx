@@ -1365,9 +1365,43 @@ const PublicGallery = () => {
         isVisible={authenticated && !gallery?.is_expired}
       />
 
-      <footer className="border-t py-8 mt-12" style={{ borderColor: currentTheme.colors.accent }}>
-        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 text-center text-sm" style={{ color: currentTheme.colors.textLight }}>
-          <p>© {new Date().getFullYear()} {brandConfig.brand_name || 'PhotoShare'}. Built for photographers.</p>
+      {/* Elegant Footer */}
+      <footer 
+        className="py-16 md:py-24"
+        style={{ backgroundColor: currentTheme.colors.secondary }}
+      >
+        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <div 
+              className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-6"
+              style={{ backgroundColor: currentTheme.colors.accent + '20' }}
+            >
+              <Heart className="w-6 h-6" style={{ color: currentTheme.colors.accent }} />
+            </div>
+            <p 
+              className="text-lg md:text-xl font-light mb-2"
+              style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+            >
+              Thank you for being part of this special day
+            </p>
+            <p className="text-sm" style={{ color: currentTheme.colors.textLight }}>
+              Captured with love by {gallery?.photographer_name}
+            </p>
+            <div 
+              className="w-16 h-px mx-auto my-8"
+              style={{ backgroundColor: currentTheme.colors.accent + '40' }}
+            />
+            <p 
+              className="text-xs uppercase tracking-[0.2em]"
+              style={{ color: currentTheme.colors.textLight }}
+            >
+              {brandConfig.brand_name || 'PhotoShare'} © {new Date().getFullYear()}
+            </p>
+          </motion.div>
         </div>
       </footer>
     </div>
