@@ -32,6 +32,13 @@ const ContributorUpload = () => {
     const fetchInfo = async () => {
       try {
         const response = await axios.get(`${API}/contributor/${contributorLink}`);
+        
+        // If this is a video section, redirect to videographer upload page
+        if (response.data.section_type === 'video') {
+          navigate(`/v/${contributorLink}`, { replace: true });
+          return;
+        }
+        
         setInfo(response.data);
         
         // If contributor name already exists, skip to upload
@@ -47,7 +54,7 @@ const ContributorUpload = () => {
     };
     
     fetchInfo();
-  }, [contributorLink]);
+  }, [contributorLink, navigate]);
 
   const handleNameSubmit = (e) => {
     e.preventDefault();
