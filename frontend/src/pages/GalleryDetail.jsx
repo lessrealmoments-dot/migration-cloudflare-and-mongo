@@ -2652,8 +2652,8 @@ const GalleryDetail = () => {
         </div>
         )}
 
-        {/* Hide photo management when viewing video section */}
-        {!(selectedSection && sections.find(s => s.id === selectedSection)?.type === 'video') && (
+        {/* Hide photo management when viewing video or fotoshare section */}
+        {!(selectedSection && (sections.find(s => s.id === selectedSection)?.type === 'video' || sections.find(s => s.id === selectedSection)?.type === 'fotoshare')) && (
         <div>
           {/* Photo Management Toolbar */}
           <div className="flex items-center justify-between mb-6">
