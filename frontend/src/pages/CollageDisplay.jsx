@@ -465,13 +465,10 @@ const CollageDisplay = () => {
               opacity: presetSettings.border_opacity,
             }}
           >
-            <img
-              src={url}
-              alt=""
-              className="w-full h-full object-cover"
-              loading="eager"
-              decoding="sync"
-              draggable={false}
+            <CollageImage 
+              src={url} 
+              photoId={photo.id}
+              preloader={imagePreloader}
             />
           </div>
         );
