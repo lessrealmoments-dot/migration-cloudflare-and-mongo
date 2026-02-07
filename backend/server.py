@@ -6176,7 +6176,7 @@ async def submit_extra_credits_request(data: ExtraCreditRequest, background_task
         "email": db_user.get("email", "Unknown"),
         "request_type": "Extra Credits Purchase",
         "plan_or_credits": f"{data.quantity} Extra Credit(s) - ₱{total_cost}",
-        "admin_url": f"{os.environ.get('FRONTEND_URL', 'https://subimagery.preview.emergentagent.com')}/admin/dashboard"
+        "admin_url": f"{os.environ.get('FRONTEND_URL')}/admin/dashboard"
     })
     background_tasks.add_task(send_email, ADMIN_EMAIL, admin_subject, admin_html)
     
