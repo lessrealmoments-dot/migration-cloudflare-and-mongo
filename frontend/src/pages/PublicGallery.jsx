@@ -159,6 +159,7 @@ const PublicGallery = () => {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [guestUploadExpanded, setGuestUploadExpanded] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false); // Modal for quick upload
   const [showDownloadAllModal, setShowDownloadAllModal] = useState(false);
   
   // Scroll tracking for parallax effects
