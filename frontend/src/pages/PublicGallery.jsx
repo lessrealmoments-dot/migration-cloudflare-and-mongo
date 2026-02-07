@@ -1014,7 +1014,7 @@ const PublicGallery = () => {
         </AnimatePresence>
       </div>
     </motion.section>
-            )}
+          )}
 
         {/* Main Gallery Content */}
         <div className="py-8" style={{ backgroundColor: currentTheme.colors.background }}>
