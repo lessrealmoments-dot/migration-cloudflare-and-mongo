@@ -2118,7 +2118,7 @@ const GalleryDetail = () => {
                 <div className="mb-4 p-3 bg-pink-50 border border-pink-200 rounded-md">
                   <label className="flex items-center gap-2 text-sm text-pink-700 font-medium mb-2">
                     <Sparkles className="w-4 h-4" />
-                    Fotoshare.co Event URL
+                    Fotoshare.co Event URL (Optional)
                   </label>
                   <input
                     type="url"
@@ -2129,7 +2129,7 @@ const GalleryDetail = () => {
                     className="flex h-10 w-full rounded-sm border border-pink-300 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500"
                   />
                   <p className="text-xs text-pink-600 mt-1">
-                    Paste the fotoshare.co event link to import 360 booth videos
+                    Enter URL now to import videos, or leave blank and generate a contributor link for your supplier
                   </p>
                 </div>
               )}
