@@ -784,7 +784,22 @@ const PublicGallery = () => {
               {gallery?.event_title || gallery?.title}
             </h1>
             <p style={{ color: currentTheme.colors.textLight }}>
-              Captured by <span style={{ color: currentTheme.colors.text }}>{gallery?.photographer_name}</span>
+              {gallery?.contributors && gallery.contributors.length > 0 ? (
+                <span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                  <span>Captured by</span>
+                  {gallery.contributors.map((c, i) => (
+                    <span key={i} className="inline-flex items-center">
+                      <span style={{ color: currentTheme.colors.text }}>{c.name}</span>
+                      {c.role !== 'Photography' && (
+                        <span className="ml-1 text-xs opacity-60">({c.role})</span>
+                      )}
+                      {i < gallery.contributors.length - 1 && <span className="mx-1 opacity-40">•</span>}
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                <>Captured by <span style={{ color: currentTheme.colors.text }}>{gallery?.photographer_name}</span></>
+              )}
             </p>
           </motion.div>
         </section>
