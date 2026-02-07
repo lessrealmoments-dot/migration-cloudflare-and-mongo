@@ -4032,6 +4032,15 @@ async def get_contributor_upload_info(contributor_link: str):
         ).to_list(50)
         existing_videos = videos
     
+    # Get existing fotoshare videos if this is a fotoshare section
+    existing_fotoshare_videos = []
+    if section.get("type") == "fotoshare":
+        fvideos = await db.fotoshare_videos.find(
+            {"gallery_id": gallery["id"], "section_id": section["id"]},
+            {"_id": 0}
+        ).to_list(100)
+        existing_fotoshare_videos = fvideos
+    
     return {
         "gallery_id": gallery["id"],
         "gallery_title": gallery["title"],
@@ -4040,7 +4049,9 @@ async def get_contributor_upload_info(contributor_link: str):
         "section_type": section.get("type", "photo"),  # NEW: Return section type
         "photographer_name": photographer.get("business_name") or photographer.get("name", "Photographer"),
         "existing_contributor_name": section.get("contributor_name"),
-        "existing_videos": existing_videos  # NEW: Return existing videos for video sections
+        "existing_videos": existing_videos,  # For video sections
+        "existing_fotoshare_videos": existing_fotoshare_videos,  # For fotoshare sections
+        "fotoshare_url": section.get("fotoshare_url")  # Existing fotoshare URL if any
     }
 
 @api_router.post("/contributor/{contributor_link}/set-name")
