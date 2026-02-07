@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { Lock, Upload, Download, X, Camera, ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle, Star } from 'lucide-react';
+import { Lock, Upload, Download, X, Camera, ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle, Star, Share2, Heart, Play } from 'lucide-react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { getThemeStyles, themes } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 import OptimizedImage from '@/components/OptimizedImage';
@@ -14,6 +15,130 @@ import useBrandConfig from '../hooks/useBrandConfig';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const PREVIEW_COUNT = 8;
+
+// Animated Photo Card Component
+const AnimatedPhotoCard = ({ photo, index, onView, onDownload, photoIndex }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.6, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
+      className="masonry-item group relative overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      data-testid={`photo-card-${photo.id}`}
+    >
+      <div 
+        className="relative cursor-pointer"
+        onClick={() => onView(photoIndex)}
+      >
+        <OptimizedImage
+          src={photo.thumbnail_medium_url || photo.thumbnail_url || photo.url}
+          alt={photo.title || 'Photo'}
+          className="w-full rounded-sm transition-transform duration-700 ease-out group-hover:scale-105"
+          showLoader={true}
+        />
+        
+        {/* Elegant Overlay */}
+        <motion.div 
+          className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isHovered ? 1 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-between items-end">
+            <motion.button
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: isHovered ? 0 : 10, opacity: isHovered ? 1 : 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              onClick={(e) => { e.stopPropagation(); onDownload(photo); }}
+              className="p-2.5 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-colors"
+              data-testid={`download-photo-${photo.id}`}
+            >
+              <Download className="w-4 h-4 text-white" />
+            </motion.button>
+            {photo.is_highlight && (
+              <motion.div
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: isHovered ? 0 : 10, opacity: isHovered ? 1 : 0 }}
+                transition={{ duration: 0.3, delay: 0.15 }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full"
+              >
+                <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
+                <span className="text-xs text-white font-medium">Featured</span>
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Bento Grid Item for Highlights
+const BentoItem = ({ photo, index, span, onView, onDownload, photoIndex }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const spanClasses = {
+    'hero': 'col-span-2 row-span-2',
+    'portrait': 'col-span-1 row-span-2', 
+    'wide': 'col-span-2 row-span-1',
+    'standard': 'col-span-1 row-span-1'
+  };
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.7, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+      className={`${spanClasses[span] || spanClasses.standard} relative overflow-hidden rounded-sm cursor-pointer group`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onView(photoIndex)}
+      data-testid={`bento-item-${photo.id}`}
+    >
+      <OptimizedImage
+        src={photo.url || photo.thumbnail_medium_url}
+        alt={photo.title || 'Highlight'}
+        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+        showLoader={true}
+      />
+      
+      {/* Gradient Overlay */}
+      <motion.div 
+        className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
+        initial={{ opacity: 0.3 }}
+        animate={{ opacity: isHovered ? 0.8 : 0.3 }}
+        transition={{ duration: 0.4 }}
+      />
+      
+      {/* Content */}
+      <div className="absolute inset-0 flex flex-col justify-end p-6">
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex items-center gap-3"
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); onDownload(photo); }}
+            className="p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-colors"
+          >
+            <Download className="w-5 h-5 text-white" />
+          </button>
+          <div className="flex items-center gap-1.5 px-4 py-2 bg-white/20 backdrop-blur-md rounded-full">
+            <Star className="w-4 h-4 text-yellow-400" fill="currentColor" />
+            <span className="text-sm text-white font-medium">Highlight</span>
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
 
 const PublicGallery = () => {
   const { shareLink } = useParams();
