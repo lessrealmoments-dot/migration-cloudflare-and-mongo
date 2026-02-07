@@ -585,7 +585,7 @@ const GalleryDetail = () => {
   const fetchGalleryData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const [galleryRes, photosRes, sectionsRes, positionRes, presetsRes] = await Promise.all([
+      const [galleryRes, photosRes, sectionsRes, videosRes, positionRes, presetsRes] = await Promise.all([
         axios.get(`${API}/galleries/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
