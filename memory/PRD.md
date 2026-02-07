@@ -195,6 +195,65 @@ Admin-controlled features that can be independently toggled per package/mode:
 - `/dashboard` - User dashboard with subscription card
 - `/admin` - Admin login
 - `/admin/dashboard` - Admin panel with Billing tab
+- `/v/{contributor_link}` - Videographer upload page for video sections
+- `/c/{contributor_link}` - Contributor upload page for photo sections
+
+## Videographer Section (NEW - February 2026) ✅
+
+### Feature Overview
+A new section type for galleries that allows videographers to add YouTube videos with a dedicated upload experience.
+
+### Section Types
+| Type | Description | Contributor URL | Display |
+|------|-------------|-----------------|---------|
+| photo | Traditional photo uploads | /c/{link} | Photo grid/masonry |
+| video | YouTube video links | /v/{link} | Cinematic Showcase |
+
+### Video Section Features
+- **Create Video Section**: Select "Videos" type when creating a new section
+- **Contributor Link**: Generate unique link for videographers (uses /v/ prefix)
+- **Video Tags**: SDE, Preparation, Ceremony, Reception, Highlights, Full Film, Trailer, or Custom
+- **Featured Video**: One video can be marked as "Featured" (displays prominently)
+- **Thumbnail Management**: Auto-fetch from YouTube or upload custom thumbnail
+- **Video Management**: View, edit, delete videos from photographer dashboard
+
+### VideographerUpload Page (/v/{link})
+- Dark gradient theme with purple accents
+- Company/Videographer name field
+- YouTube URL input with live preview
+- Tag selection chips
+- Optional title and description
+- "Your Videos" grid showing uploaded videos
+
+### VideoSection Component (Public Gallery)
+- Cinematic Showcase layout
+- Featured video at top (if set)
+- Horizontal row of video thumbnails
+- Play button overlay on thumbnails
+- Tag badges on each video
+- Contributor credit line
+
+### API Endpoints
+- `POST /api/galleries/{id}/sections` - Create section (type: 'photo' or 'video')
+- `GET /api/galleries/{id}/videos` - Get all videos for a gallery
+- `POST /api/galleries/{id}/videos` - Add video (photographer)
+- `PUT /api/galleries/{id}/videos/{vid}` - Update video
+- `DELETE /api/galleries/{id}/videos/{vid}` - Delete video
+- `POST /api/galleries/{id}/videos/{vid}/feature` - Set featured video
+- `POST /api/contributor/{link}/video` - Videographer upload
+- `GET /api/public/gallery/{share}/videos` - Public videos endpoint
+
+### Database Schema
+**gallery_videos collection:**
+- id, gallery_id, section_id
+- youtube_url, video_id (extracted)
+- tag, title, description
+- thumbnail_url, youtube_thumbnail_url
+- is_featured, order
+- contributor_name, created_by, created_at
+
+**sections (updated):**
+- type: "photo" | "video" (new field)
 
 ## Next Steps / Backlog
 1. **Payment Gateway Integration (P0)**: Integrate PayMongo or Stripe for automated payments
