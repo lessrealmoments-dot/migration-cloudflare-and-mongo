@@ -856,20 +856,25 @@ const PublicGallery = () => {
               </motion.div>
             </section>
           )}
-          <div className="mb-8 text-center">
+
+        {/* Download All Button */}
+        {gallery?.has_download_all_password && (
+          <div className="py-8 text-center">
             <button
               data-testid="download-all-button"
               onClick={() => setShowDownloadAllModal(true)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-8 rounded-sm font-medium tracking-wide transition-all duration-300 inline-flex items-center gap-2"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-medium transition-all duration-300"
+              style={{ 
+                backgroundColor: currentTheme.colors.accent,
+                color: isDarkTheme ? '#000' : '#fff'
+              }}
             >
-              <Download className="w-5 h-5" strokeWidth={1.5} />
+              <Download className="w-5 h-5" />
               Download All Photos
             </button>
           </div>
         )}
 
-        {!gallery?.is_expired && (
-          <>
             {/* Guest Upload Section - Hidden in view-only mode */}
             {!isViewOnly && gallery?.guest_upload_enabled && (
             <motion.section 
