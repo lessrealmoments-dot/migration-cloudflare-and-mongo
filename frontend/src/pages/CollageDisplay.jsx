@@ -102,6 +102,80 @@ class ImagePreloader {
 
 const imagePreloader = new ImagePreloader();
 
+// Robust image component for collage tiles - handles loading/errors gracefully
+const CollageImage = ({ src, photoId, preloader }) => {
+  const [loaded, setLoaded] = useState(preloader.isLoaded(src));
+  const [error, setError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const imgRef = useRef(null);
+  const maxRetries = 2;
+
+  useEffect(() => {
+    // Check if already preloaded
+    if (preloader.isLoaded(src)) {
+      setLoaded(true);
+      return;
+    }
+
+    // Preload the image
+    preloader.preload(src).then(success => {
+      if (success) {
+        setLoaded(true);
+      } else if (retryCount < maxRetries) {
+        setRetryCount(prev => prev + 1);
+      } else {
+        setError(true);
+      }
+    });
+  }, [src, retryCount, preloader]);
+
+  const handleLoad = () => {
+    setLoaded(true);
+    setError(false);
+  };
+
+  const handleError = () => {
+    if (retryCount < maxRetries) {
+      // Retry with cache buster
+      setRetryCount(prev => prev + 1);
+    } else {
+      setError(true);
+    }
+  };
+
+  // Generate URL with retry cache buster if needed
+  const imageUrl = retryCount > 0 ? `${src}${src.includes('?') ? '&' : '?'}r=${retryCount}` : src;
+
+  return (
+    <>
+      {/* Placeholder/Loading state - subtle gradient */}
+      {!loaded && !error && (
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 animate-pulse" />
+      )}
+      
+      {/* Error state - dark placeholder */}
+      {error && (
+        <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-zinc-800" />
+        </div>
+      )}
+      
+      {/* Actual image */}
+      <img
+        ref={imgRef}
+        src={imageUrl}
+        alt=""
+        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded && !error ? 'opacity-100' : 'opacity-0'}`}
+        loading="eager"
+        decoding="sync"
+        draggable={false}
+        onLoad={handleLoad}
+        onError={handleError}
+      />
+    </>
+  );
+};
+
 const CollageDisplay = () => {
   const { shareLink } = useParams();
   const [searchParams] = useSearchParams();
