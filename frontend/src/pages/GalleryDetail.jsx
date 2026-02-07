@@ -46,8 +46,12 @@ const GalleryDetail = () => {
   const [newSectionName, setNewSectionName] = useState('');
   const [showSectionForm, setShowSectionForm] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
-  // New section type state (photo or video)
+  // New section type state (photo, video, or fotoshare)
   const [newSectionType, setNewSectionType] = useState('photo');
+  // Fotoshare section state
+  const [newFotoshareUrl, setNewFotoshareUrl] = useState('');
+  const [fotoshareVideos, setFotoshareVideos] = useState([]);
+  const [refreshingSection, setRefreshingSection] = useState(null);
   // Section rename state
   const [editingSectionId, setEditingSectionId] = useState(null);
   const [editingSectionName, setEditingSectionName] = useState('');
