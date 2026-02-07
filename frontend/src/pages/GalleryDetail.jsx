@@ -871,25 +871,99 @@ const GalleryDetail = () => {
   const handleCreateSection = async (e) => {
     e.preventDefault();
     if (!newSectionName.trim()) return;
+    
+    // For fotoshare sections, require URL
+    if (newSectionType === 'fotoshare' && !newFotoshareUrl.trim()) {
+      toast.error('Please enter a fotoshare.co URL');
+      return;
+    }
 
     try {
       const token = localStorage.getItem('token');
-      const formData = new FormData();
-      formData.append('name', newSectionName);
-      formData.append('type', newSectionType);
       
-      const response = await axios.post(`${API}/galleries/${id}/sections`, formData, {
+      if (newSectionType === 'fotoshare') {
+        // Create fotoshare section with dedicated endpoint
+        const response = await axios.post(`${API}/galleries/${id}/fotoshare-sections`, {
+          name: newSectionName,
+          fotoshare_url: newFotoshareUrl
+        }, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        
+        setSections([...sections, response.data.section]);
+        toast.success(`360 Booth section created with ${response.data.videos_count} videos!`);
+        // Fetch the fotoshare videos
+        fetchFotoshareVideos();
+      } else {
+        // Create regular photo/video section
+        const formData = new FormData();
+        formData.append('name', newSectionName);
+        formData.append('type', newSectionType);
+        
+        const response = await axios.post(`${API}/galleries/${id}/sections`, formData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        setSections([...sections, response.data]);
+        toast.success('Section created!');
+      }
+      
+      setNewSectionName('');
+      setNewSectionType('photo');
+      setNewFotoshareUrl('');
+      setShowSectionForm(false);
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Failed to create section';
+      toast.error(errorMsg);
+    }
+  };
+
+  // Fetch fotoshare videos
+  const fetchFotoshareVideos = async () => {
+    try {
+      const response = await axios.get(`${API}/galleries/${id}/fotoshare-videos`);
+      setFotoshareVideos(response.data);
+    } catch (error) {
+      console.error('Failed to fetch fotoshare videos');
+    }
+  };
+
+  // Refresh fotoshare section
+  const handleRefreshFotoshare = async (sectionId) => {
+    setRefreshingSection(sectionId);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/galleries/${id}/fotoshare-sections/${sectionId}/refresh`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      setSections([...sections, response.data]);
-      setNewSectionName('');
-      setNewSectionType('photo');
-      setShowSectionForm(false);
-      toast.success('Section created!');
+      if (response.data.success) {
+        toast.success(`Refreshed! ${response.data.new_videos_added} new videos found.`);
+        fetchFotoshareVideos();
+        // Update section sync timestamp
+        setSections(sections.map(s => 
+          s.id === sectionId 
+            ? { ...s, fotoshare_last_sync: new Date().toISOString(), fotoshare_expired: false }
+            : s
+        ));
+      } else if (response.data.expired) {
+        toast.error('This fotoshare link has expired');
+        setSections(sections.map(s => 
+          s.id === sectionId ? { ...s, fotoshare_expired: true } : s
+        ));
+      } else {
+        toast.error(response.data.error || 'Failed to refresh');
+      }
     } catch (error) {
-      toast.error('Failed to create section');
+      toast.error('Failed to refresh section');
+    } finally {
+      setRefreshingSection(null);
     }
+  };
+
+  // Get fotoshare videos by section
+  const getFotoshareVideosBySection = (sectionId) => {
+    return fotoshareVideos.filter(v => v.section_id === sectionId);
   };
 
   // Get videos by section
