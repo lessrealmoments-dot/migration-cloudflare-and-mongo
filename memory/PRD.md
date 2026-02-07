@@ -382,14 +382,14 @@ Plus manual refresh button always available in gallery management.
 
 ### Public Gallery UX Improvement ✅
 - **Upload Button at Top**: "Share Your Photos" CTA now appears immediately after hero
-- **Smooth Scroll**: Clicking the top button scrolls to upload section and auto-expands it
-- **Better Guest Experience**: First thing guests see is the invitation to share photos
+- **One-Click Upload Modal**: Clicking the button opens upload popup instantly (no scrolling needed)
+- **Better Guest Experience**: Elderly/non-tech-savvy guests can easily share photos with single click
 
 ### Files Modified
 - `/app/backend/server.py`: Added scraping utility, 4 new API endpoints, auto-refresh background task
 - `/app/frontend/src/pages/GalleryDetail.jsx`: 360 Booth section creation/management UI
 - `/app/frontend/src/components/FotoshareSection.jsx`: NEW - Public display component
-- `/app/frontend/src/pages/PublicGallery.jsx`: Integrated FotoshareSection, moved upload CTA to top
+- `/app/frontend/src/pages/PublicGallery.jsx`: Integrated FotoshareSection, added upload modal popup
 
 ---
 
