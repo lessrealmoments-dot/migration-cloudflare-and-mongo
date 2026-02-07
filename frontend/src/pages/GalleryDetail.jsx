@@ -33,6 +33,7 @@ const GalleryDetail = () => {
   const { isFeatureEnabled, getUnavailableMessage } = useFeatureToggles();
   const [gallery, setGallery] = useState(null);
   const [photos, setPhotos] = useState([]);
+  const [videos, setVideos] = useState([]);
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -45,6 +46,8 @@ const GalleryDetail = () => {
   const [newSectionName, setNewSectionName] = useState('');
   const [showSectionForm, setShowSectionForm] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
+  // New section type state (photo or video)
+  const [newSectionType, setNewSectionType] = useState('photo');
   // Section rename state
   const [editingSectionId, setEditingSectionId] = useState(null);
   const [editingSectionName, setEditingSectionName] = useState('');
@@ -103,6 +106,9 @@ const GalleryDetail = () => {
   const [showCollagePresetPicker, setShowCollagePresetPicker] = useState(false);
   const [selectedCollagePreset, setSelectedCollagePreset] = useState(null);
   const [savingPreset, setSavingPreset] = useState(false);
+  // Video management state
+  const [editingVideo, setEditingVideo] = useState(null);
+  const [showVideoThumbnailCropper, setShowVideoThumbnailCropper] = useState(false);
 
   // Section drag handlers
   const handleSectionDragStart = (e, section) => {
