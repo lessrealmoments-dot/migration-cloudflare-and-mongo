@@ -1002,6 +1002,7 @@ class GalleryCreate(BaseModel):
     password: Optional[str] = None
     event_title: Optional[str] = None
     event_date: Optional[str] = None
+    coordinator_name: Optional[str] = None  # Event coordinator/planner name
     share_link_expiration_days: int = 30
     guest_upload_enabled_days: int = 3
     download_all_password: Optional[str] = None
@@ -1023,6 +1024,7 @@ class Gallery(BaseModel):
     cover_photo_url: Optional[str] = None
     event_title: Optional[str] = None
     event_date: Optional[str] = None
+    coordinator_name: Optional[str] = None  # Event coordinator/planner name
     share_link_expiration_date: Optional[str] = None
     guest_upload_expiration_date: Optional[str] = None
     guest_upload_enabled: bool = True
@@ -1047,6 +1049,7 @@ class GalleryUpdate(BaseModel):
     password: Optional[str] = None
     event_title: Optional[str] = None
     event_date: Optional[str] = None
+    coordinator_name: Optional[str] = None  # Event coordinator/planner name
     share_link_expiration_days: Optional[int] = None
     guest_upload_enabled_days: Optional[int] = None
     download_all_password: Optional[str] = None
