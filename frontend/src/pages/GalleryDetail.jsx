@@ -2463,8 +2463,118 @@ const GalleryDetail = () => {
           </div>
         )}
 
-        {/* Photo Upload Section - Hide when viewing video section */}
-        {!(selectedSection && sections.find(s => s.id === selectedSection)?.type === 'video') && (
+        {/* 360 Booth / Fotoshare Section Management - Show when a fotoshare section is selected */}
+        {selectedSection && sections.find(s => s.id === selectedSection)?.type === 'fotoshare' && (
+          <div className="mb-12 bg-pink-50 rounded-xl p-6 border border-pink-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-normal flex items-center gap-3" style={{ fontFamily: 'Playfair Display, serif' }}>
+                <Camera className="w-6 h-6 text-pink-500" />
+                360 Booth: {sections.find(s => s.id === selectedSection)?.name}
+              </h3>
+              <div className="flex items-center gap-3">
+                <span className="text-pink-600 text-sm font-medium">
+                  {getFotoshareVideosBySection(selectedSection).length} video(s)
+                </span>
+                <button
+                  onClick={() => handleRefreshFotoshare(selectedSection)}
+                  disabled={refreshingSection === selectedSection}
+                  className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 disabled:opacity-50 transition-colors flex items-center gap-2"
+                  data-testid="refresh-fotoshare-btn"
+                >
+                  {refreshingSection === selectedSection ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-4 h-4" />
+                  )}
+                  Refresh
+                </button>
+              </div>
+            </div>
+            
+            {/* Fotoshare URL info */}
+            <div className="bg-white rounded-lg p-4 mb-6 border border-pink-200">
+              <p className="text-sm text-zinc-600 mb-2">
+                Source: <a 
+                  href={sections.find(s => s.id === selectedSection)?.fotoshare_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-pink-600 hover:underline"
+                >
+                  {sections.find(s => s.id === selectedSection)?.fotoshare_url}
+                </a>
+              </p>
+              {sections.find(s => s.id === selectedSection)?.fotoshare_last_sync && (
+                <p className="text-xs text-zinc-500">
+                  Last synced: {new Date(sections.find(s => s.id === selectedSection)?.fotoshare_last_sync).toLocaleString()}
+                </p>
+              )}
+              {sections.find(s => s.id === selectedSection)?.fotoshare_expired && (
+                <div className="mt-2 flex items-center gap-2 text-amber-600 bg-amber-50 p-2 rounded-md">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span className="text-sm">This fotoshare link has expired. Videos may no longer be accessible.</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Fotoshare Videos Grid */}
+            {getFotoshareVideosBySection(selectedSection).length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {getFotoshareVideosBySection(selectedSection).map((video) => (
+                  <div 
+                    key={video.id}
+                    className="relative group bg-white rounded-lg overflow-hidden border border-pink-200 hover:border-pink-400 transition-colors"
+                  >
+                    {/* Thumbnail */}
+                    <div className="aspect-[9/16] bg-zinc-900 relative">
+                      <img
+                        src={video.thumbnail_url}
+                        alt={`360 Booth Video`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23333" width="100" height="100"/><text fill="%23fff" x="50" y="50" text-anchor="middle" dy=".3em" font-size="12">360</text></svg>';
+                        }}
+                      />
+                      {/* Play overlay */}
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <a 
+                          href={video.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-white/90 p-3 rounded-full hover:bg-white transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Play className="w-6 h-6 text-pink-500 fill-current" />
+                        </a>
+                      </div>
+                    </div>
+                    
+                    {/* Video info */}
+                    <div className="p-2 text-center">
+                      <a 
+                        href={video.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-pink-600 hover:underline flex items-center justify-center gap-1"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        View on Fotoshare
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-lg border border-pink-200">
+                <Camera className="w-12 h-12 mx-auto text-pink-300 mb-4" />
+                <p className="text-zinc-600">No videos found</p>
+                <p className="text-sm text-zinc-500 mt-1">Click Refresh to sync videos from fotoshare.co</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Photo Upload Section - Hide when viewing video or fotoshare section */}
+        {!(selectedSection && (sections.find(s => s.id === selectedSection)?.type === 'video' || sections.find(s => s.id === selectedSection)?.type === 'fotoshare')) && (
         <div className="mb-12">
           <h3 className="text-2xl font-normal mb-6" style={{ fontFamily: 'Playfair Display, serif' }}>
             Upload Photos {selectedSection && `to ${sections.find(s => s.id === selectedSection)?.name}`}
