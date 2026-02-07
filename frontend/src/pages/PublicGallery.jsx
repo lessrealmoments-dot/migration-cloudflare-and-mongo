@@ -922,6 +922,7 @@ const PublicGallery = () => {
             {/* Guest Upload Section - Hidden in view-only mode */}
             {!isViewOnly && gallery?.guest_upload_enabled && (
             <motion.section 
+              id="guest-upload-section"
               className="py-16 md:py-24"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
