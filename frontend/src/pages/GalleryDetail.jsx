@@ -2656,6 +2656,7 @@ const GalleryDetail = () => {
             </div>
           )}
         </div>
+        )}
 
         {/* Guest Photos Section */}
         {getGuestPhotos().length > 0 && (
