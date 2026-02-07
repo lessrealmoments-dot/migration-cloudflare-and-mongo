@@ -44,44 +44,90 @@ const MAX_INTERVAL = 15;
 const TRANSITION_DURATION = 1200;
 const PRELOAD_SETS_AHEAD = 3;
 
-// Robust image preloader with retry and verification
+// Enhanced image preloader with timeout, retry, and verification
 class ImagePreloader {
   constructor() {
     this.cache = new Map();
     this.loading = new Map();
+    this.failed = new Set();
+    this.timeout = 12000; // 12 second timeout per image
+    this.maxRetries = 2;
   }
 
-  preload(src) {
+  preload(src, retryCount = 0) {
+    // Already loaded successfully
     if (this.cache.has(src) && this.cache.get(src).loaded) {
       return Promise.resolve(true);
     }
 
+    // Currently loading - return existing promise
     if (this.loading.has(src)) {
       return this.loading.get(src);
     }
 
+    // Failed too many times - don't retry
+    if (this.failed.has(src) && retryCount >= this.maxRetries) {
+      return Promise.resolve(false);
+    }
+
     const promise = new Promise((resolve) => {
       const img = new Image();
-      
-      img.onload = () => {
-        this.cache.set(src, { loaded: true, element: img });
-        this.loading.delete(src);
-        resolve(true);
+      let timeoutId = null;
+      let resolved = false;
+
+      const cleanup = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        img.onload = null;
+        img.onerror = null;
       };
-      
-      img.onerror = () => {
-        const retryImg = new Image();
-        retryImg.onload = () => {
-          this.cache.set(src, { loaded: true, element: retryImg });
+
+      const succeed = () => {
+        if (resolved) return;
+        resolved = true;
+        cleanup();
+        // Verify image actually loaded with valid dimensions
+        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+          this.cache.set(src, { loaded: true, element: img, timestamp: Date.now() });
+          this.failed.delete(src);
           this.loading.delete(src);
           resolve(true);
-        };
-        retryImg.onerror = () => {
-          this.loading.delete(src);
-          resolve(false);
-        };
-        retryImg.src = src;
+        } else {
+          fail();
+        }
       };
+
+      const fail = () => {
+        if (resolved) return;
+        resolved = true;
+        cleanup();
+        this.loading.delete(src);
+        
+        // Retry if under limit
+        if (retryCount < this.maxRetries) {
+          // Add small delay before retry
+          setTimeout(() => {
+            const retryUrl = `${src}${src.includes('?') ? '&' : '?'}retry=${retryCount + 1}&t=${Date.now()}`;
+            this.preload(retryUrl, retryCount + 1).then(resolve);
+          }, 500 * (retryCount + 1));
+        } else {
+          this.failed.add(src);
+          resolve(false);
+        }
+      };
+
+      // Set timeout
+      timeoutId = setTimeout(() => {
+        console.warn(`[ImagePreloader] Timeout loading: ${src.substring(0, 50)}...`);
+        fail();
+      }, this.timeout);
+
+      img.onload = succeed;
+      img.onerror = fail;
+      
+      // Use crossOrigin for external images to prevent CORS issues
+      if (src.startsWith('http') && !src.includes(window.location.hostname)) {
+        img.crossOrigin = 'anonymous';
+      }
       
       img.src = src;
     });
@@ -94,9 +140,46 @@ class ImagePreloader {
     return this.cache.has(src) && this.cache.get(src).loaded;
   }
 
-  async preloadAll(urls) {
-    const results = await Promise.all(urls.map(url => this.preload(url)));
-    return results.every(r => r);
+  hasFailed(src) {
+    return this.failed.has(src);
+  }
+
+  async preloadAll(urls, options = {}) {
+    const { concurrency = 4, failFast = false } = options;
+    
+    // Process in batches for better performance
+    const results = [];
+    for (let i = 0; i < urls.length; i += concurrency) {
+      const batch = urls.slice(i, i + concurrency);
+      const batchResults = await Promise.all(batch.map(url => this.preload(url)));
+      results.push(...batchResults);
+      
+      // If failFast and any failed, stop early
+      if (failFast && batchResults.some(r => !r)) {
+        break;
+      }
+    }
+    
+    const successCount = results.filter(r => r).length;
+    return successCount === urls.length;
+  }
+
+  // Clear old cache entries to free memory
+  cleanCache(maxAge = 300000) { // 5 minutes default
+    const now = Date.now();
+    for (const [src, data] of this.cache.entries()) {
+      if (now - data.timestamp > maxAge) {
+        this.cache.delete(src);
+      }
+    }
+  }
+
+  getStats() {
+    return {
+      cached: this.cache.size,
+      loading: this.loading.size,
+      failed: this.failed.size
+    };
   }
 }
 
