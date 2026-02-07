@@ -3246,39 +3246,6 @@ async def rename_section(gallery_id: str, section_id: str, data: dict = Body(...
     
     return {"message": "Section renamed", "name": new_name.strip()}
 
-@api_router.put("/galleries/{gallery_id}/sections/reorder")
-async def reorder_sections(gallery_id: str, data: dict = Body(...), current_user: dict = Depends(get_current_user)):
-    """Reorder sections within a gallery"""
-    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
-    if not gallery:
-        raise HTTPException(status_code=404, detail="Gallery not found")
-    
-    section_orders = data.get("section_orders", [])
-    if not section_orders:
-        raise HTTPException(status_code=400, detail="section_orders is required")
-    
-    sections = gallery.get("sections", [])
-    
-    # Create a map for quick lookup
-    section_map = {s["id"]: s for s in sections}
-    
-    # Reorder sections based on the provided order
-    reordered_sections = []
-    for order_item in section_orders:
-        section_id = order_item.get("id")
-        new_order = order_item.get("order", 0)
-        if section_id in section_map:
-            section = section_map[section_id]
-            section["order"] = new_order
-            reordered_sections.append(section)
-    
-    # Sort by order
-    reordered_sections.sort(key=lambda s: s.get("order", 0))
-    
-    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": reordered_sections}})
-    
-    return {"message": "Sections reordered", "sections": reordered_sections}
-
 # ============ Gallery Videos Endpoints ============
 
 @api_router.get("/galleries/{gallery_id}/videos")
