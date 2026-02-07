@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, X, ExternalLink, Camera, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, X, ExternalLink, Camera, ChevronDown } from 'lucide-react';
 
 const PREVIEW_COUNT = 6; // Show 6 videos initially
 
-const FotoshareSection = ({ section, videos }) => {
+const FotoshareSection = ({ section, videos, themeColors }) => {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [playMode, setPlayMode] = useState('local'); // 'local' or 'external'
@@ -16,6 +16,10 @@ const FotoshareSection = ({ section, videos }) => {
   const displayVideos = isExpanded ? videos : videos.slice(0, PREVIEW_COUNT);
   const hasMore = videos.length > PREVIEW_COUNT;
   const hiddenCount = videos.length - PREVIEW_COUNT;
+
+  // Use theme colors if provided, otherwise use defaults
+  const accentColor = themeColors?.accent || '#ec4899';
+  const textColor = themeColors?.text || '#ffffff';
 
   return (
     <motion.div
@@ -33,14 +37,14 @@ const FotoshareSection = ({ section, videos }) => {
             <Camera className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl font-light tracking-wide text-white/90">
+            <h2 className="text-2xl md:text-3xl font-light tracking-wide" style={{ color: textColor }}>
               {section.name}
             </h2>
-            <p className="text-sm text-white/50">360° Booth Experience</p>
+            <p className="text-sm opacity-50" style={{ color: textColor }}>360° Booth Experience</p>
           </div>
         </div>
         <div className="flex-1 h-px bg-gradient-to-r from-pink-500/50 to-transparent" />
-        <span className="text-white/40 text-sm">{videos.length} moments</span>
+        <span className="text-sm opacity-40" style={{ color: textColor }}>{videos.length} moments</span>
       </div>
 
       {/* Videos Grid - Vertical format for 360 videos */}
@@ -87,42 +91,44 @@ const FotoshareSection = ({ section, videos }) => {
         ))}
       </div>
 
-      {/* Expand/Collapse Button */}
+      {/* Expand/Collapse Button - Prominent styling matching photo sections */}
       {hasMore && (
         <motion.div 
-          className="mt-6 text-center"
+          className="text-center mt-12"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
         >
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full text-white/80 hover:text-white transition-all duration-300"
+            className="group inline-flex items-center gap-3 px-8 py-4 rounded-full transition-all duration-300 border-2 hover:bg-pink-500/10"
+            style={{ 
+              borderColor: accentColor,
+              color: textColor 
+            }}
             data-testid="fotoshare-expand-toggle"
           >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="w-5 h-5" />
-                Show Less
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-5 h-5" />
-                Show {hiddenCount} More Videos
-              </>
-            )}
+            <span className="font-medium">
+              {isExpanded ? 'Show Less' : `View All ${videos.length} Videos`}
+            </span>
+            <motion.span
+              animate={{ rotate: isExpanded ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ChevronDown className="w-5 h-5" />
+            </motion.span>
           </button>
         </motion.div>
       )}
 
-      {/* Video Player Modal */}
+      {/* Video Player Modal - Tighter container for vertical videos */}
       <AnimatePresence>
         {selectedVideo && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
             onClick={() => setSelectedVideo(null)}
           >
             <motion.div
@@ -130,26 +136,26 @@ const FotoshareSection = ({ section, videos }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 25 }}
-              className="relative max-w-2xl w-full mx-4"
+              className="relative flex flex-col items-center"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close button */}
               <button
                 onClick={() => setSelectedVideo(null)}
-                className="absolute -top-12 right-0 p-2 text-white/60 hover:text-white transition-colors"
+                className="absolute -top-12 right-0 p-2 text-white/60 hover:text-white transition-colors z-10"
                 data-testid="close-fotoshare-modal"
               >
                 <X className="w-8 h-8" />
               </button>
 
               {/* Play Mode Toggle */}
-              <div className="absolute -top-12 left-0 flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-4">
                 <button
                   onClick={() => setPlayMode('local')}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     playMode === 'local' 
                       ? 'bg-pink-500 text-white' 
-                      : 'bg-white/10 text-white/60 hover:text-white'
+                      : 'bg-white/10 text-white/60 hover:text-white hover:bg-white/20'
                   }`}
                   data-testid="play-mode-local"
                 >
@@ -160,7 +166,7 @@ const FotoshareSection = ({ section, videos }) => {
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${
                     playMode === 'external' 
                       ? 'bg-pink-500 text-white' 
-                      : 'bg-white/10 text-white/60 hover:text-white'
+                      : 'bg-white/10 text-white/60 hover:text-white hover:bg-white/20'
                   }`}
                   data-testid="play-mode-external"
                 >
@@ -169,15 +175,28 @@ const FotoshareSection = ({ section, videos }) => {
                 </button>
               </div>
 
-              {/* Video Content */}
-              <div className="bg-zinc-900 rounded-2xl overflow-hidden">
+              {/* Video Content - Tight wrapper for vertical video */}
+              <div className="bg-zinc-900 rounded-2xl overflow-hidden" style={{ width: 'auto', maxWidth: '400px' }}>
                 {playMode === 'local' ? (
                   /* Embedded Player - iframe to fotoshare */
-                  <div className="aspect-[9/16] max-h-[75vh] relative bg-black">
+                  <div 
+                    className="relative bg-black"
+                    style={{ 
+                      width: '100%',
+                      maxWidth: '400px',
+                      aspectRatio: '9/16',
+                      maxHeight: '70vh'
+                    }}
+                  >
                     <iframe
                       src={selectedVideo.source_url}
                       title="360 Booth Video"
                       className="w-full h-full"
+                      style={{ 
+                        width: '100%',
+                        height: '100%',
+                        aspectRatio: '9/16'
+                      }}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       data-testid="fotoshare-iframe"
@@ -185,11 +204,19 @@ const FotoshareSection = ({ section, videos }) => {
                   </div>
                 ) : (
                   /* External Link View */
-                  <div className="aspect-[9/16] max-h-[70vh] relative">
+                  <div 
+                    className="relative"
+                    style={{ 
+                      width: '100%',
+                      maxWidth: '400px',
+                      aspectRatio: '9/16',
+                      maxHeight: '70vh'
+                    }}
+                  >
                     <img
                       src={selectedVideo.thumbnail_url}
                       alt="360 Booth Video"
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                       <a
@@ -208,7 +235,7 @@ const FotoshareSection = ({ section, videos }) => {
                 )}
                 
                 {/* Video info */}
-                <div className="p-4 text-center border-t border-zinc-800">
+                <div className="p-3 text-center border-t border-zinc-800">
                   <p className="text-white/60 text-sm">
                     {playMode === 'local' ? (
                       'Playing embedded from fotoshare.co'
