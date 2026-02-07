@@ -1032,50 +1032,86 @@ const PublicGallery = () => {
               const hasMore = sectionPhotos.length > PREVIEW_COUNT;
               
               return (
-                <div key={section.id} className="mb-12">
-                  <div 
-                    className="flex items-center justify-center gap-4 mb-6 cursor-pointer"
-                    onClick={() => hasMore && toggleSectionExpand(section.id)}
-                  >
-                    <div className="text-center">
-                      <h4
-                        className="text-2xl md:text-3xl font-normal"
-                        style={{ fontFamily: 'Playfair Display, serif' }}
+                <motion.section 
+                  key={section.id} 
+                  className="py-16 md:py-24"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="max-w-screen-2xl mx-auto px-6 md:px-12 lg:px-24">
+                    {/* Section Header */}
+                    <motion.div 
+                      className="text-center mb-12 md:mb-16"
+                      initial={{ y: 30, opacity: 0 }}
+                      whileInView={{ y: 0, opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <p 
+                        className="text-xs uppercase tracking-[0.3em] mb-3"
+                        style={{ color: currentTheme.colors.accent }}
+                      >
+                        {sectionPhotos.length} Photos
+                      </p>
+                      <h3 
+                        className="text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight"
+                        style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
                       >
                         {section.name}
-                        <span className="text-zinc-400 text-lg ml-2">({sectionPhotos.length})</span>
-                      </h4>
+                      </h3>
                       {section.contributor_name && (
-                        <p className="text-sm mt-1" style={{ color: currentTheme.colors.textLight }}>
-                          Photos by <span className="font-medium" style={{ color: currentTheme.colors.text }}>{section.contributor_name}</span>
+                        <p className="text-sm mt-3" style={{ color: currentTheme.colors.textLight }}>
+                          Captured by <span style={{ color: currentTheme.colors.text }}>{section.contributor_name}</span>
                         </p>
                       )}
+                    </motion.div>
+                    
+                    {/* Photo Grid with Animations */}
+                    <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 md:gap-8">
+                      {displayPhotos.map((photo, idx) => (
+                        <AnimatedPhotoCard
+                          key={photo.id}
+                          photo={photo}
+                          index={idx}
+                          onView={setLightboxIndex}
+                          onDownload={handleDownload}
+                          photoIndex={photos.findIndex(p => p.id === photo.id)}
+                        />
+                      ))}
                     </div>
+                    
+                    {/* Show More Button */}
+                    {hasMore && (
+                      <motion.div 
+                        className="text-center mt-12"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                      >
+                        <button 
+                          onClick={() => toggleSectionExpand(section.id)}
+                          className="group inline-flex items-center gap-3 px-8 py-4 rounded-full transition-all duration-300 border-2"
+                          style={{ 
+                            borderColor: currentTheme.colors.accent,
+                            color: currentTheme.colors.text 
+                          }}
+                          data-testid={`show-more-${section.id}`}
+                        >
+                          <span className="font-medium">
+                            {isExpanded ? 'Show Less' : `View All ${sectionPhotos.length} Photos`}
+                          </span>
+                          <motion.span
+                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <ChevronDown className="w-5 h-5" />
+                          </motion.span>
+                        </button>
+                      </motion.div>
+                    )}
                   </div>
-                  <div className="masonry-grid">
-                    {displayPhotos.map((photo, idx) => (
-                      <PublicPhotoItem
-                        key={photo.id}
-                        photo={photo}
-                        photoIndex={photos.findIndex(p => p.id === photo.id)}
-                        onView={setLightboxIndex}
-                        onDownload={handleDownload}
-                      />
-                    ))}
-                  </div>
-                  {hasMore && (
-                    <button 
-                      onClick={() => toggleSectionExpand(section.id)}
-                      className="mt-6 mx-auto block px-6 py-3 border-2 border-zinc-300 rounded-full text-zinc-600 hover:border-zinc-400 hover:text-zinc-800 transition-colors flex items-center gap-2"
-                    >
-                      {isExpanded ? (
-                        <>Collapse <ChevronUp className="w-4 h-4" /></>
-                      ) : (
-                        <>Show all {sectionPhotos.length} photos <ChevronDown className="w-4 h-4" /></>
-                      )}
-                    </button>
-                  )}
-                </div>
+                </motion.section>
               );
             })
           ) : null}
