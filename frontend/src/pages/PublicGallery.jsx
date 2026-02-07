@@ -786,24 +786,29 @@ const PublicGallery = () => {
             >
               {gallery?.event_title || gallery?.title}
             </h1>
-            <p style={{ color: currentTheme.colors.textLight }}>
-              {gallery?.contributors && gallery.contributors.length > 0 ? (
-                <span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-                  <span>Captured by</span>
+            
+            {/* Contributors Grid - Professional Layout */}
+            {gallery?.contributors && gallery.contributors.length > 0 ? (
+              <div className="mt-6">
+                <p className="text-sm uppercase tracking-widest mb-4" style={{ color: currentTheme.colors.textLight, opacity: 0.6 }}>
+                  Captured by
+                </p>
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
                   {gallery.contributors.map((c, i) => (
-                    <span key={i} className="inline-flex items-center">
-                      <span style={{ color: currentTheme.colors.text }}>{c.name}</span>
-                      {c.role !== 'Photography' && (
-                        <span className="ml-1 text-xs opacity-60">({c.role})</span>
-                      )}
-                      {i < gallery.contributors.length - 1 && <span className="mx-1 opacity-40">•</span>}
-                    </span>
+                    <div key={i} className="text-center min-w-[120px]">
+                      <p className="font-medium text-sm md:text-base" style={{ color: currentTheme.colors.text }}>{c.name}</p>
+                      <p className="text-xs mt-0.5" style={{ color: currentTheme.colors.textLight, opacity: 0.6 }}>
+                        {c.role === 'Photography' ? 'Photography' : c.role}
+                      </p>
+                    </div>
                   ))}
-                </span>
-              ) : (
-                <>Captured by <span style={{ color: currentTheme.colors.text }}>{gallery?.photographer_name}</span></>
-              )}
-            </p>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4" style={{ color: currentTheme.colors.textLight }}>
+                Captured by <span style={{ color: currentTheme.colors.text }}>{gallery?.photographer_name}</span>
+              </p>
+            )}
           </motion.div>
         </section>
       )}
