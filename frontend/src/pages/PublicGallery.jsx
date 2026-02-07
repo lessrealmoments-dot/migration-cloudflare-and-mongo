@@ -1124,6 +1124,7 @@ const PublicGallery = () => {
             })
           ) : null}
 
+          {/* Unsorted Photos Section */}
           {getRegularPhotosWithoutSection().length > 0 && (
             (() => {
               const unsortedPhotos = getRegularPhotosWithoutSection();
@@ -1133,49 +1134,82 @@ const PublicGallery = () => {
               const hasMore = unsortedPhotos.length > PREVIEW_COUNT;
               
               return (
-                <div className="mb-12">
-                  {(gallery?.sections && gallery.sections.length > 0) || getHighlightPhotos().length > 0 ? (
-                    <div 
-                      className="flex items-center justify-center gap-4 mb-6 cursor-pointer"
-                      onClick={() => hasMore && toggleSectionExpand(sectionId)}
-                    >
-                      <h4
-                        className="text-2xl md:text-3xl font-normal text-center"
-                        style={{ fontFamily: 'Playfair Display, serif' }}
+                <motion.section 
+                  className="py-16 md:py-24"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="max-w-screen-2xl mx-auto px-6 md:px-12 lg:px-24">
+                    {(gallery?.sections && gallery.sections.length > 0) || getHighlightPhotos().length > 0 ? (
+                      <motion.div 
+                        className="text-center mb-12 md:mb-16"
+                        initial={{ y: 30, opacity: 0 }}
+                        whileInView={{ y: 0, opacity: 1 }}
+                        viewport={{ once: true }}
                       >
-                        {gallery?.sections?.length > 0 ? 'More Photos' : 'Gallery'}
-                        <span className="text-zinc-400 text-lg ml-2">({unsortedPhotos.length})</span>
-                      </h4>
+                        <p 
+                          className="text-xs uppercase tracking-[0.3em] mb-3"
+                          style={{ color: currentTheme.colors.accent }}
+                        >
+                          {unsortedPhotos.length} Photos
+                        </p>
+                        <h3 
+                          className="text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight"
+                          style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+                        >
+                          {gallery?.sections?.length > 0 ? 'More Moments' : 'Gallery'}
+                        </h3>
+                      </motion.div>
+                    ) : null}
+                    
+                    <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 md:gap-8">
+                      {displayPhotos.map((photo, idx) => (
+                        <AnimatedPhotoCard
+                          key={photo.id}
+                          photo={photo}
+                          index={idx}
+                          onView={setLightboxIndex}
+                          onDownload={handleDownload}
+                          photoIndex={photos.findIndex(p => p.id === photo.id)}
+                        />
+                      ))}
                     </div>
-                  ) : null}
-                  <div className="masonry-grid">
-                    {displayPhotos.map((photo) => (
-                      <PublicPhotoItem
-                        key={photo.id}
-                        photo={photo}
-                        photoIndex={photos.findIndex(p => p.id === photo.id)}
-                        onView={setLightboxIndex}
-                        onDownload={handleDownload}
-                      />
-                    ))}
+                    
+                    {hasMore && (
+                      <motion.div 
+                        className="text-center mt-12"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                      >
+                        <button 
+                          onClick={() => toggleSectionExpand(sectionId)}
+                          className="group inline-flex items-center gap-3 px-8 py-4 rounded-full transition-all duration-300 border-2"
+                          style={{ 
+                            borderColor: currentTheme.colors.accent,
+                            color: currentTheme.colors.text 
+                          }}
+                        >
+                          <span className="font-medium">
+                            {isExpanded ? 'Show Less' : `View All ${unsortedPhotos.length} Photos`}
+                          </span>
+                          <motion.span
+                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <ChevronDown className="w-5 h-5" />
+                          </motion.span>
+                        </button>
+                      </motion.div>
+                    )}
                   </div>
-                  {hasMore && (
-                    <button 
-                      onClick={() => toggleSectionExpand(sectionId)}
-                      className="mt-6 mx-auto block px-6 py-3 border-2 border-zinc-300 rounded-full text-zinc-600 hover:border-zinc-400 hover:text-zinc-800 transition-colors flex items-center gap-2"
-                    >
-                      {isExpanded ? (
-                        <>Collapse <ChevronUp className="w-4 h-4" /></>
-                      ) : (
-                        <>Show all {unsortedPhotos.length} photos <ChevronDown className="w-4 h-4" /></>
-                      )}
-                    </button>
-                  )}
-                </div>
+                </motion.section>
               );
             })()
           )}
 
+          {/* Guest Photos Section */}
           {getGuestPhotos().length > 0 && (
             (() => {
               const guestPhotos = getGuestPhotos();
