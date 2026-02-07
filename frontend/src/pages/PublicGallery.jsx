@@ -1028,7 +1028,7 @@ const PublicGallery = () => {
         {/* Main Gallery Content */}
         <div className="py-8" style={{ backgroundColor: currentTheme.colors.background }}>
 
-          {/* Sections - Photo and Video */}
+          {/* Sections - Photo, Video, and Fotoshare */}
           {gallery?.sections && gallery.sections.length > 0 ? (
             gallery.sections.map((section) => {
               // Check if this is a video section
@@ -1043,6 +1043,23 @@ const PublicGallery = () => {
                     sectionName={section.name}
                     contributorName={section.contributor_name}
                   />
+                );
+              }
+              
+              // Check if this is a fotoshare/360 booth section
+              if (section.type === 'fotoshare') {
+                const sectionFotoshareVideos = getFotoshareVideosBySection(section.id);
+                if (sectionFotoshareVideos.length === 0 && !section.fotoshare_expired) return null;
+                
+                return (
+                  <div key={section.id} className="py-16 md:py-24" style={{ backgroundColor: currentTheme.colors.background }}>
+                    <div className="max-w-screen-2xl mx-auto px-6 md:px-12 lg:px-24">
+                      <FotoshareSection
+                        section={section}
+                        videos={sectionFotoshareVideos}
+                      />
+                    </div>
+                  </div>
                 );
               }
               
