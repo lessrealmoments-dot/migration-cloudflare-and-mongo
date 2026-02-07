@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, X, ExternalLink, Camera } from 'lucide-react';
+import { Play, X, ExternalLink, Camera, ChevronDown, ChevronUp } from 'lucide-react';
+
+const PREVIEW_COUNT = 6; // Show 6 videos initially
 
 const FotoshareSection = ({ section, videos }) => {
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [playMode, setPlayMode] = useState('local'); // 'local' or 'external'
 
   if (!videos || videos.length === 0) {
     return null;
   }
+
+  const displayVideos = isExpanded ? videos : videos.slice(0, PREVIEW_COUNT);
+  const hasMore = videos.length > PREVIEW_COUNT;
+  const hiddenCount = videos.length - PREVIEW_COUNT;
 
   return (
     <motion.div
@@ -37,7 +45,7 @@ const FotoshareSection = ({ section, videos }) => {
 
       {/* Videos Grid - Vertical format for 360 videos */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {videos.map((video, index) => (
+        {displayVideos.map((video, index) => (
           <motion.div
             key={video.id}
             initial={{ opacity: 0, scale: 0.9 }}
@@ -79,7 +87,35 @@ const FotoshareSection = ({ section, videos }) => {
         ))}
       </div>
 
-      {/* Lightbox Modal */}
+      {/* Expand/Collapse Button */}
+      {hasMore && (
+        <motion.div 
+          className="mt-6 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full text-white/80 hover:text-white transition-all duration-300"
+            data-testid="fotoshare-expand-toggle"
+          >
+            {isExpanded ? (
+              <>
+                <ChevronUp className="w-5 h-5" />
+                Show Less
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-5 h-5" />
+                Show {hiddenCount} More Videos
+              </>
+            )}
+          </button>
+        </motion.div>
+      )}
+
+      {/* Video Player Modal */}
       <AnimatePresence>
         {selectedVideo && (
           <motion.div
@@ -106,41 +142,89 @@ const FotoshareSection = ({ section, videos }) => {
                 <X className="w-8 h-8" />
               </button>
 
-              {/* Video preview with thumbnail and link to source */}
+              {/* Play Mode Toggle */}
+              <div className="absolute -top-12 left-0 flex items-center gap-2">
+                <button
+                  onClick={() => setPlayMode('local')}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    playMode === 'local' 
+                      ? 'bg-pink-500 text-white' 
+                      : 'bg-white/10 text-white/60 hover:text-white'
+                  }`}
+                  data-testid="play-mode-local"
+                >
+                  Play Here
+                </button>
+                <button
+                  onClick={() => setPlayMode('external')}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${
+                    playMode === 'external' 
+                      ? 'bg-pink-500 text-white' 
+                      : 'bg-white/10 text-white/60 hover:text-white'
+                  }`}
+                  data-testid="play-mode-external"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Fotoshare.co
+                </button>
+              </div>
+
+              {/* Video Content */}
               <div className="bg-zinc-900 rounded-2xl overflow-hidden">
-                <div className="aspect-[9/16] max-h-[70vh] relative">
-                  <img
-                    src={selectedVideo.thumbnail_url}
-                    alt="360 Booth Video"
-                    className="w-full h-full object-contain"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <a
-                      href={selectedVideo.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-full transition-colors font-medium shadow-xl"
-                      data-testid="watch-on-fotoshare"
-                    >
-                      <Play className="w-5 h-5 fill-current" />
-                      Watch Video
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
+                {playMode === 'local' ? (
+                  /* Embedded Player - iframe to fotoshare */
+                  <div className="aspect-[9/16] max-h-[75vh] relative bg-black">
+                    <iframe
+                      src={selectedVideo.source_url}
+                      title="360 Booth Video"
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      data-testid="fotoshare-iframe"
+                    />
                   </div>
-                </div>
+                ) : (
+                  /* External Link View */
+                  <div className="aspect-[9/16] max-h-[70vh] relative">
+                    <img
+                      src={selectedVideo.thumbnail_url}
+                      alt="360 Booth Video"
+                      className="w-full h-full object-contain"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                      <a
+                        href={selectedVideo.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-full transition-colors font-medium shadow-xl"
+                        data-testid="watch-on-fotoshare"
+                      >
+                        <Play className="w-5 h-5 fill-current" />
+                        Open on Fotoshare.co
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Video info */}
                 <div className="p-4 text-center border-t border-zinc-800">
                   <p className="text-white/60 text-sm">
-                    This video is hosted on{' '}
-                    <a 
-                      href={selectedVideo.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-pink-400 hover:text-pink-300 transition-colors"
-                    >
-                      fotoshare.co
-                    </a>
+                    {playMode === 'local' ? (
+                      'Playing embedded from fotoshare.co'
+                    ) : (
+                      <>
+                        Opens in new tab on{' '}
+                        <a 
+                          href={selectedVideo.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-pink-400 hover:text-pink-300 transition-colors"
+                        >
+                          fotoshare.co
+                        </a>
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
