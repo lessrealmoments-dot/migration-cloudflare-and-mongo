@@ -1977,30 +1977,61 @@ const GalleryDetail = () => {
           </div>
 
           {showSectionForm && (
-            <form onSubmit={handleCreateSection} className="mb-6 flex gap-3">
-              <input
-                data-testid="section-name-input"
-                type="text"
-                value={newSectionName}
-                onChange={(e) => setNewSectionName(e.target.value)}
-                placeholder="e.g., Wedding Ceremony, Reception, Photobooth"
-                className="flex h-10 flex-1 rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
-                autoFocus
-              />
-              <button
-                type="submit"
-                data-testid="create-section-button"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 rounded-sm font-medium"
-              >
-                Create
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowSectionForm(false)}
-                className="border border-input h-10 px-6 rounded-sm"
-              >
-                Cancel
-              </button>
+            <form onSubmit={handleCreateSection} className="mb-6 p-4 bg-zinc-50 rounded-lg border border-zinc-200">
+              <div className="flex gap-3 mb-3">
+                <input
+                  data-testid="section-name-input"
+                  type="text"
+                  value={newSectionName}
+                  onChange={(e) => setNewSectionName(e.target.value)}
+                  placeholder="e.g., Wedding Ceremony, Reception, Video Highlights"
+                  className="flex h-10 flex-1 rounded-sm border border-input bg-white px-3 py-2 text-sm"
+                  autoFocus
+                />
+              </div>
+              <div className="flex items-center gap-4 mb-4">
+                <span className="text-sm text-zinc-600">Section type:</span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sectionType"
+                    value="photo"
+                    checked={newSectionType === 'photo'}
+                    onChange={() => setNewSectionType('photo')}
+                    className="accent-primary"
+                  />
+                  <ImageIcon className="w-4 h-4 text-zinc-600" />
+                  <span className="text-sm">Photos</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sectionType"
+                    value="video"
+                    checked={newSectionType === 'video'}
+                    onChange={() => setNewSectionType('video')}
+                    className="accent-purple-600"
+                  />
+                  <Film className="w-4 h-4 text-purple-600" />
+                  <span className="text-sm">Videos</span>
+                </label>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  data-testid="create-section-button"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 rounded-sm font-medium"
+                >
+                  Create Section
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowSectionForm(false); setNewSectionType('photo'); }}
+                  className="border border-input h-10 px-6 rounded-sm"
+                >
+                  Cancel
+                </button>
+              </div>
             </form>
           )}
 
