@@ -9,6 +9,7 @@ import GalleryDetail from '@/pages/GalleryDetail';
 import PublicGallery from '@/pages/PublicGallery';
 import ContributorUpload from '@/pages/ContributorUpload';
 import VideographerUpload from '@/pages/VideographerUpload';
+import FotoshareContributorUpload from '@/pages/FotoshareContributorUpload';
 import Display from '@/pages/Display';
 import PricingPage from '@/pages/PricingPage';
 import AdminLogin from '@/pages/AdminLogin';
