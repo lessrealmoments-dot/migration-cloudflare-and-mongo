@@ -863,6 +863,7 @@ const GalleryDetail = () => {
       const token = localStorage.getItem('token');
       const formData = new FormData();
       formData.append('name', newSectionName);
+      formData.append('type', newSectionType);
       
       const response = await axios.post(`${API}/galleries/${id}/sections`, formData, {
         headers: { Authorization: `Bearer ${token}` }
@@ -870,10 +871,50 @@ const GalleryDetail = () => {
       
       setSections([...sections, response.data]);
       setNewSectionName('');
+      setNewSectionType('photo');
       setShowSectionForm(false);
       toast.success('Section created!');
     } catch (error) {
       toast.error('Failed to create section');
+    }
+  };
+
+  // Get videos by section
+  const getVideosBySection = (sectionId) => {
+    return videos.filter(v => v.section_id === sectionId);
+  };
+
+  // Handle video deletion
+  const handleDeleteVideo = async (videoId) => {
+    if (!window.confirm('Are you sure you want to delete this video?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/galleries/${id}/videos/${videoId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setVideos(videos.filter(v => v.id !== videoId));
+      toast.success('Video deleted');
+    } catch (error) {
+      toast.error('Failed to delete video');
+    }
+  };
+
+  // Handle set featured video
+  const handleSetFeaturedVideo = async (videoId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/galleries/${id}/videos/${videoId}/feature`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Update local state
+      setVideos(videos.map(v => ({
+        ...v,
+        is_featured: v.id === videoId
+      })));
+      toast.success('Video set as featured');
+    } catch (error) {
+      toast.error('Failed to update featured video');
     }
   };
 
