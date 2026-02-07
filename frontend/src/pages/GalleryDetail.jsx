@@ -252,23 +252,32 @@ const GalleryDetail = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      const contributorUrl = `${window.location.origin}/c/${response.data.contributor_link}`;
+      // Check if this is a video section to use the correct URL prefix
+      const section = sections.find(s => s.id === sectionId);
+      const urlPrefix = section?.type === 'video' ? '/v/' : '/c/';
+      const contributorUrl = `${window.location.origin}${urlPrefix}${response.data.contributor_link}`;
       await navigator.clipboard.writeText(contributorUrl);
-      toast.success(`Contributor link created and copied to clipboard!`);
+      toast.success(`${section?.type === 'video' ? 'Video upload' : 'Contributor'} link created and copied to clipboard!`);
       fetchGalleryData();
     } catch (error) {
       toast.error('Failed to generate contributor link');
     }
   };
 
-  const copyContributorLink = async (contributorLink) => {
-    const contributorUrl = `${window.location.origin}/c/${contributorLink}`;
+  const copyContributorLink = async (contributorLink, sectionId) => {
+    // Check if this is a video section to use the correct URL prefix
+    const section = sections.find(s => s.id === sectionId);
+    const urlPrefix = section?.type === 'video' ? '/v/' : '/c/';
+    const contributorUrl = `${window.location.origin}${urlPrefix}${contributorLink}`;
     await navigator.clipboard.writeText(contributorUrl);
-    toast.success('Contributor link copied to clipboard!');
+    toast.success('Link copied to clipboard!');
   };
 
-  const showContributorQRCode = (contributorLink) => {
-    const contributorUrl = `${window.location.origin}/c/${contributorLink}`;
+  const showContributorQRCode = (contributorLink, sectionId) => {
+    // Check if this is a video section to use the correct URL prefix
+    const section = sections.find(s => s.id === sectionId);
+    const urlPrefix = section?.type === 'video' ? '/v/' : '/c/';
+    const contributorUrl = `${window.location.origin}${urlPrefix}${contributorLink}`;
     setContributorQRLink(contributorUrl);
     setShowContributorQR(true);
   };
