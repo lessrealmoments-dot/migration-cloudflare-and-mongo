@@ -280,6 +280,21 @@ const CreateGallery = () => {
           </div>
 
           <div>
+            <label className="block text-sm font-medium mb-2">Coordinator Name (Optional)</label>
+            <input
+              data-testid="coordinator-name-input"
+              type="text"
+              value={formData.coordinator_name}
+              onChange={(e) => setFormData({ ...formData, coordinator_name: e.target.value })}
+              placeholder="e.g., Events by Sarah"
+              className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200 focus:border-primary"
+            />
+            <p className="text-xs text-zinc-500 mt-2">
+              Event coordinator/planner who organized this event
+            </p>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium mb-2">Description (Optional)</label>
             <textarea
               data-testid="gallery-description-input"
