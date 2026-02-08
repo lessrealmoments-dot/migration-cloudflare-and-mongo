@@ -1756,6 +1756,26 @@ const PublicGallery = () => {
         />
       )}
 
+      {/* pCloud Photos Lightbox */}
+      {pcloudLightboxIndex !== null && (
+        <PremiumLightbox
+          photos={pcloudLightboxPhotos}
+          initialIndex={pcloudLightboxIndex}
+          onClose={() => setPcloudLightboxIndex(null)}
+          onDownload={(photo) => {
+            // Download pCloud photo
+            const link = document.createElement('a');
+            link.href = photo.url;
+            link.download = photo.name || 'photo.jpg';
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }}
+          backendUrl={BACKEND_URL}
+        />
+      )}
+
       {/* Social Share Panel - Floating on right side */}
       <SocialSharePanel 
         galleryTitle={gallery?.title || 'Photo Gallery'}
