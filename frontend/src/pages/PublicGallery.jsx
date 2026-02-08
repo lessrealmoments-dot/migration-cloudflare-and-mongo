@@ -1266,6 +1266,35 @@ const PublicGallery = () => {
                           by <span style={{ color: currentTheme.colors.text, opacity: 0.9 }}>{section.contributor_name}</span>
                         </p>
                       )}
+                      
+                      {/* Section Download Button */}
+                      {downloadInfo && (
+                        <motion.button
+                          onClick={() => handleSectionDownload(section.id, section.name)}
+                          disabled={downloadingSection === section.id}
+                          className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105"
+                          style={{ 
+                            backgroundColor: currentTheme.colors.accent + '15',
+                            color: currentTheme.colors.accent,
+                            border: `1px solid ${currentTheme.colors.accent}30`
+                          }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.98 }}
+                          data-testid={`download-section-${section.id}`}
+                        >
+                          {downloadingSection === section.id ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Downloading...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-4 h-4" />
+                              Download This Section
+                            </>
+                          )}
+                        </motion.button>
+                      )}
                     </motion.div>
                     
                     {/* Photo Grid with Animations */}
