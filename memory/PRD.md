@@ -816,3 +816,75 @@ User reported "broken images" after uploading images for the landing page via Ad
 ### Files Modified
 - `/app/frontend/src/pages/AdminDashboard.jsx`: Added error handling and upload verification
 - `/app/frontend/src/pages/LandingPage.jsx`: Added error handling for hero images
+
+## pCloud Integration ✅ (COMPLETED - February 8, 2026)
+
+### Feature Overview
+Integrated pCloud as a photo source for galleries. This allows photographers to:
+1. Link pCloud shared folders to gallery sections
+2. Photos are proxied through our server (bypasses ISP blocking like Smart in Philippines)
+3. Supports supplier subfolders - photos organized by who uploaded them
+
+### How It Works
+1. **Photographer's Workflow:**
+   - Creates event folder in pCloud (e.g., "Janmark's Wedding")
+   - Creates subfolder for each section (e.g., "Official Photographer", "RAW FILES")
+   - Generates pCloud "request file link" and sends to supplier
+   - Supplier uploads to pCloud → creates subfolder with their name
+   - Photographer links pCloud folder to gallery section in dashboard
+
+2. **System Architecture:**
+   - pCloud API (`api.pcloud.com/showpublink`) fetches folder metadata
+   - Photos stored in MongoDB with reference to pCloud code + fileid
+   - Proxy endpoint (`/api/pcloud/serve/{code}/{fileid}`) streams images
+   - Bypasses ISP blocking by routing through our server
+
+### API Endpoints
+- `POST /api/galleries/{id}/pcloud-sections` - Create new pCloud section
+- `POST /api/galleries/{id}/pcloud-sections/{section_id}/refresh` - Sync new photos
+- `GET /api/galleries/{id}/pcloud-photos` - Get pCloud photos for photographer
+- `GET /api/public/gallery/{share_link}/pcloud-photos` - Get pCloud photos for guests
+- `GET /api/pcloud/serve/{code}/{fileid}` - Proxy/serve pCloud image
+
+### Frontend Features
+- New "pCloud" section type option when creating sections
+- Blue-themed UI consistent with pCloud branding
+- Refresh button to sync new photos from pCloud
+- Lightbox viewing with navigation and download
+- Photos show supplier name attribution
+
+### Database Schema
+```javascript
+// pcloud_photos collection
+{
+  id: String,
+  gallery_id: String,
+  section_id: String,
+  pcloud_code: String,      // Share link code
+  fileid: String,           // pCloud file ID (as string)
+  name: String,             // Original filename
+  size: Number,             // File size in bytes
+  width: Number,
+  height: Number,
+  contenttype: String,
+  supplier_name: String,    // From subfolder name
+  hash: String,
+  synced_at: String
+}
+```
+
+### Files Modified
+- `/app/backend/server.py`: Added pCloud helper functions and API endpoints
+- `/app/frontend/src/pages/GalleryDetail.jsx`: Added pCloud section creation and management
+- `/app/frontend/src/pages/PublicGallery.jsx`: Added pCloud section rendering and lightbox
+
+### Known Limitations
+- Large files may load slowly (proxied in real-time)
+- Photos must be synced manually with "Refresh" button
+- Does not auto-detect new uploads from pCloud
+
+### Testing
+- Tested with real pCloud share link containing 35+ photos
+- Lightbox viewing and navigation working
+- Download functionality working
+- ISP bypass confirmed (images served through our domain)
