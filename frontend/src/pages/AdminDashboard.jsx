@@ -513,15 +513,32 @@ const AdminDashboard = () => {
         }
       });
       
+      const imageUrl = response.data.url;
+      
+      // Verify the uploaded image can be loaded
+      const fullImageUrl = imageUrl.startsWith('/api') ? `${BACKEND_URL}${imageUrl}` : imageUrl;
+      const img = new Image();
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = () => reject(new Error('Image verification failed'));
+        img.src = fullImageUrl;
+      });
+      
       // Update local state with new image URL
       setLandingConfig(prev => ({
         ...prev,
-        [slot]: response.data.url
+        [slot]: imageUrl
       }));
       
       toast.success('Image uploaded successfully');
     } catch (error) {
-      toast.error('Failed to upload image');
+      console.error('Image upload error:', error);
+      if (error.message === 'Image verification failed') {
+        toast.error('Image uploaded but failed to load. Please try again.');
+      } else {
+        toast.error('Failed to upload image');
+      }
     } finally {
       setUploadingImage(null);
     }
