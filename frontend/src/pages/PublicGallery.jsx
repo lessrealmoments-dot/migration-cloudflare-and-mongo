@@ -1764,9 +1764,10 @@ const PublicGallery = () => {
           initialIndex={pcloudLightboxIndex}
           onClose={() => setPcloudLightboxIndex(null)}
           onDownload={(photo) => {
-            // Download pCloud photo
+            // Download pCloud photo using full URL
+            const downloadUrl = `${BACKEND_URL}${photo.url}`;
             const link = document.createElement('a');
-            link.href = photo.url;
+            link.href = downloadUrl;
             link.download = photo.name || 'photo.jpg';
             link.target = '_blank';
             document.body.appendChild(link);
