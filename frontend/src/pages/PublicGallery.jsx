@@ -1178,11 +1178,11 @@ const PublicGallery = () => {
                 const hasMore = sectionPcloudPhotos.length > PREVIEW_COUNT;
                 
                 // Create lightbox-compatible photo objects for pCloud photos
-                // Use /api prefix for lightbox since it will add backendUrl
+                // Use full image URL for lightbox, thumbnail for grid
                 const pcloudLightboxPhotos = sectionPcloudPhotos.map(p => ({
                   ...p,
-                  url: `/api${p.proxy_url}`,
-                  thumbnail_url: `/api${p.proxy_url}`,
+                  url: `/api${p.proxy_url}`,  // Full image for lightbox viewing
+                  thumbnail_url: `/api${p.thumbnail_url || p.proxy_url}`,  // Thumbnail for lightbox nav
                   is_pcloud: true
                 }));
                 
