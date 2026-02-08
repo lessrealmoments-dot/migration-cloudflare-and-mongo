@@ -5911,9 +5911,11 @@ async def download_section(share_link: str, request: SectionDownloadRequest, chu
     section_title = "All_Photos"
     if request.section_id:
         photo_filter["section_id"] = request.section_id
-        section = await db.sections.find_one({"id": request.section_id}, {"_id": 0})
+        # Get section from gallery document (sections are stored within gallery)
+        sections = gallery.get("sections", [])
+        section = next((s for s in sections if s["id"] == request.section_id), None)
         if section:
-            section_title = section.get("title", "Section").replace(" ", "_").replace("/", "-")
+            section_title = section.get("name", section.get("title", "Section")).replace(" ", "_").replace("/", "-")
     
     photos = await db.photos.find(photo_filter, {"_id": 0}).to_list(None)
     
