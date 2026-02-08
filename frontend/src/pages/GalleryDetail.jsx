@@ -508,6 +508,7 @@ const GalleryDetail = () => {
     fetchGoogleDriveStatus();
     fetchSubscriptionStatus();
     fetchFotoshareVideos();
+    fetchPcloudPhotos();
     fetchFlaggedPhotos();
     checkPhotoHealth();
   }, [id]);
