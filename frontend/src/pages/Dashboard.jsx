@@ -643,16 +643,20 @@ const Dashboard = ({ user, setUser }) => {
                   {/* Days until deletion indicator */}
                   {gallery.days_until_deletion !== null && gallery.days_until_deletion !== undefined && (
                     <div className={`flex items-center gap-1 text-xs ${
-                      gallery.days_until_deletion <= 30 
-                        ? 'text-red-600' 
-                        : gallery.days_until_deletion <= 60 
-                          ? 'text-amber-600' 
-                          : 'text-zinc-400'
+                      gallery.days_until_deletion > 36000
+                        ? 'text-green-600'
+                        : gallery.days_until_deletion <= 30 
+                          ? 'text-red-600' 
+                          : gallery.days_until_deletion <= 60 
+                            ? 'text-amber-600' 
+                            : 'text-zinc-400'
                     }`}>
                       <Clock className="w-3 h-3" strokeWidth={1.5} />
-                      {gallery.days_until_deletion <= 0 
-                        ? 'Expires today' 
-                        : `${gallery.days_until_deletion} days remaining`}
+                      {gallery.days_until_deletion > 36000
+                        ? 'Never expires'
+                        : gallery.days_until_deletion <= 0 
+                          ? 'Expires today' 
+                          : `${gallery.days_until_deletion} days remaining`}
                     </div>
                   )}
                   {/* Edit lock indicator */}
