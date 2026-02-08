@@ -4316,14 +4316,14 @@ async def create_pcloud_section(
             "gallery_id": gallery_id,
             "section_id": section_id,
             "pcloud_code": code,
-            "fileid": photo['fileid'],
+            "fileid": str(photo['fileid']),  # Convert to string to avoid MongoDB int overflow
             "name": photo['name'],
             "size": photo.get('size', 0),
             "width": photo.get('width'),
             "height": photo.get('height'),
             "contenttype": photo.get('contenttype', 'image/jpeg'),
             "supplier_name": photo.get('supplier_name'),
-            "hash": photo.get('hash'),
+            "hash": str(photo.get('hash', '')) if photo.get('hash') else None,  # Convert to string
             "created_at_source": photo.get('created'),
             "order": idx,
             "synced_at": sync_time
