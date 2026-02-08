@@ -4633,20 +4633,41 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
         "uploaded_by": "photographer",
         "section_id": section_id,
         "file_size": file_size,
-        "uploaded_at": datetime.now(timezone.utc).isoformat()
+        "uploaded_at": datetime.now(timezone.utc).isoformat(),
+        "is_flagged": False,
+        "is_hidden": False,
+        "auto_flagged": False
     }
     
-    # Generate thumbnails in background (non-blocking)
+    # Generate thumbnails with retry logic - auto-flag if all retries fail
+    thumbnail_failed = False
     try:
         thumb_small = generate_thumbnail(file_path, photo_id, 'small')
         thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
+        
         if thumb_small:
             photo_doc["thumbnail_url"] = thumb_small
+        else:
+            thumbnail_failed = True
+            logger.warning(f"Small thumbnail generation failed for {photo_id} after retries")
+            
         if thumb_medium:
             photo_doc["thumbnail_medium_url"] = thumb_medium
+        else:
+            thumbnail_failed = True
+            logger.warning(f"Medium thumbnail generation failed for {photo_id} after retries")
+            
     except Exception as e:
-        logger.warning(f"Thumbnail generation failed for {photo_id}: {e}")
-        # Continue without thumbnails - not critical
+        thumbnail_failed = True
+        logger.warning(f"Thumbnail generation exception for {photo_id}: {e}")
+    
+    # Auto-flag photo if thumbnails failed - it will be hidden from public gallery
+    if thumbnail_failed:
+        photo_doc["is_flagged"] = True
+        photo_doc["auto_flagged"] = True
+        photo_doc["flagged_at"] = datetime.now(timezone.utc).isoformat()
+        photo_doc["flagged_reason"] = "auto:thumbnail_generation_failed"
+        logger.info(f"Auto-flagged photo {photo_id} due to thumbnail generation failure")
     
     try:
         await db.photos.insert_one(photo_doc)
