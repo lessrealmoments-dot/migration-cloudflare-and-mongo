@@ -495,7 +495,7 @@ Integrated with **Resend** email service.
 - `transactions` - Payment transaction history with proof URLs
 
 ## Access URLs
-- Preview: https://mediasubs-2.preview.emergentagent.com
+- Preview: https://photofixr-4.preview.emergentagent.com
 - Pricing: /pricing
 - Admin: /admin
 
