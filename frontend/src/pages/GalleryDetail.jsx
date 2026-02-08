@@ -125,11 +125,36 @@ const GalleryDetail = () => {
   const handleSectionDragStart = (e, section) => {
     setDraggedSection(section);
     e.dataTransfer.effectAllowed = 'move';
+    // Add visual feedback
+    e.target.style.opacity = '0.5';
+  };
+
+  const handleSectionDragEnd = (e) => {
+    e.target.style.opacity = '1';
+    setDraggedSection(null);
+    setDropTargetId(null);
+    setDropPosition(null);
   };
 
   const handleSectionDragOver = (e, section) => {
     e.preventDefault();
     if (!draggedSection || draggedSection.id === section.id) return;
+    
+    // Calculate if we're in the top or bottom half of the target
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    const position = e.clientY < midY ? 'before' : 'after';
+    
+    setDropTargetId(section.id);
+    setDropPosition(position);
+  };
+
+  const handleSectionDragLeave = (e) => {
+    // Only clear if we're actually leaving the element
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setDropTargetId(null);
+      setDropPosition(null);
+    }
   };
 
   const handleSectionDrop = async (e, targetSection) => {
@@ -138,7 +163,17 @@ const GalleryDetail = () => {
 
     const newSections = [...sections];
     const draggedIdx = newSections.findIndex(s => s.id === draggedSection.id);
-    const targetIdx = newSections.findIndex(s => s.id === targetSection.id);
+    let targetIdx = newSections.findIndex(s => s.id === targetSection.id);
+    
+    // Adjust target index based on drop position
+    if (dropPosition === 'after') {
+      targetIdx = targetIdx + 1;
+    }
+    
+    // Adjust if dragging from before target
+    if (draggedIdx < targetIdx) {
+      targetIdx = targetIdx - 1;
+    }
 
     // Remove dragged section and insert at target position
     const [removed] = newSections.splice(draggedIdx, 1);
@@ -148,6 +183,8 @@ const GalleryDetail = () => {
     const updatedSections = newSections.map((s, idx) => ({ ...s, order: idx }));
     setSections(updatedSections);
     setDraggedSection(null);
+    setDropTargetId(null);
+    setDropPosition(null);
 
     // Save to backend
     try {
