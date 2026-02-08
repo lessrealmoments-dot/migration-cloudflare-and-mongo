@@ -169,6 +169,38 @@ const FeatureTogglePage = () => {
     }));
   };
 
+  const handleStorageChange = (section, key, value) => {
+    setToggles(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [key]: {
+          ...prev[section][key],
+          features: {
+            ...prev[section][key].features,
+            storage_limit_gb: parseInt(value)
+          }
+        }
+      }
+    }));
+  };
+
+  const handleExpirationChange = (section, key, value) => {
+    setToggles(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [key]: {
+          ...prev[section][key],
+          features: {
+            ...prev[section][key].features,
+            gallery_expiration_days: parseInt(value)
+          }
+        }
+      }
+    }));
+  };
+
   const handleSaveAll = async () => {
     setSaving(true);
     try {
