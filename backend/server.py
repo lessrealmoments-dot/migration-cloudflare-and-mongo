@@ -3222,7 +3222,7 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     # Set auto-delete date based on plan and settings
     # Free/Demo: 6 hours
     # Override modes: Use mode-specific gallery_expiration_days
-    # Paid plans: Use billing settings (paid_gallery_expiration_months)
+    # Paid plans: Check global_toggles first, then fall back to billing settings
     billing_settings = await get_billing_settings()
     global_toggles = await get_global_feature_toggles()
     
@@ -3234,9 +3234,18 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     elif is_demo:
         auto_delete_date = (created_at + timedelta(hours=FREE_GALLERY_EXPIRATION_HOURS)).isoformat()
     else:
-        # Paid plans - use universal billing settings
-        expiration_months = billing_settings.get("paid_gallery_expiration_months", 6)
-        auto_delete_date = (created_at + timedelta(days=expiration_months * 30)).isoformat()
+        # Paid plans - check global_toggles for plan-specific settings first
+        plan = current_user.get("plan", PLAN_FREE)
+        plan_config = global_toggles.get(plan, {})
+        
+        if plan_config.get("gallery_expiration_days"):
+            # Use plan-specific expiration from global toggles
+            gallery_expiration_days = plan_config.get("gallery_expiration_days")
+            auto_delete_date = (created_at + timedelta(days=gallery_expiration_days)).isoformat()
+        else:
+            # Fall back to billing settings (universal)
+            expiration_months = billing_settings.get("paid_gallery_expiration_months", 6)
+            auto_delete_date = (created_at + timedelta(days=expiration_months * 30)).isoformat()
     
     # Demo gallery feature expiry (6 hours) - only for free plan
     demo_features_expire = None
