@@ -1482,13 +1482,35 @@ const PublicGallery = () => {
           <div className="bg-white rounded-sm max-w-md w-full p-8">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-normal" style={{ fontFamily: 'Playfair Display, serif' }}>
-                Download All Photos
+                Download Photos
               </h3>
               <button onClick={() => !isDownloadingAll && setShowDownloadAllModal(false)} disabled={isDownloadingAll}>
                 <X className="w-6 h-6" strokeWidth={1.5} />
               </button>
             </div>
-            <form onSubmit={handleDownloadAll} className="space-y-6">
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setIsDownloadingAll(true);
+              try {
+                // Verify password and fetch download info
+                const response = await axios.post(
+                  `${API}/public/gallery/${shareLink}/download-info`,
+                  { password: downloadAllPassword }
+                );
+                setDownloadInfo(response.data);
+                toast.success('Password verified! Choose what to download.', { id: 'verify-pwd' });
+                setShowDownloadAllModal(false);
+                setShowDownloadDropdown(true);
+              } catch (error) {
+                if (error.response?.status === 401) {
+                  toast.error('Invalid download password', { id: 'verify-pwd' });
+                } else {
+                  toast.error('Failed to verify password', { id: 'verify-pwd' });
+                }
+              } finally {
+                setIsDownloadingAll(false);
+              }
+            }} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium mb-2">Enter Download Password</label>
                 <input
@@ -1524,12 +1546,12 @@ const PublicGallery = () => {
                   {isDownloadingAll ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Downloading...
+                      Verifying...
                     </>
                   ) : (
                     <>
                       <Download className="w-4 h-4" strokeWidth={1.5} />
-                      Download
+                      Continue
                     </>
                   )}
                 </button>
