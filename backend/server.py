@@ -4728,6 +4728,215 @@ async def delete_photo(photo_id: str, current_user: dict = Depends(get_current_u
     
     return {"message": "Photo deleted"}
 
+# ============ Photo Thumbnail Health & Repair Endpoints ============
+
+class ThumbnailRepairRequest(BaseModel):
+    force_regenerate: bool = False
+
+class PhotoHealthCheck(BaseModel):
+    photo_id: str
+    original_valid: bool
+    thumbnail_small_valid: bool
+    thumbnail_medium_valid: bool
+    is_flagged: bool
+    flagged_reason: Optional[str] = None
+    needs_repair: bool
+
+@api_router.get("/galleries/{gallery_id}/photos/health")
+async def get_gallery_photos_health(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """Check health status of all photos in a gallery - identify broken thumbnails"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(None)
+    
+    health_results = []
+    total_issues = 0
+    auto_flagged_count = 0
+    
+    for photo in photos:
+        photo_id = photo["id"]
+        original_path = UPLOAD_DIR / photo["filename"]
+        
+        # Check original
+        original_valid = validate_image_file(original_path)["valid"]
+        
+        # Check thumbnails
+        thumb_small_valid = validate_thumbnail(photo_id, 'small')["valid"]
+        thumb_medium_valid = validate_thumbnail(photo_id, 'medium')["valid"]
+        
+        needs_repair = not original_valid or not thumb_small_valid or not thumb_medium_valid
+        
+        if needs_repair:
+            total_issues += 1
+        
+        if photo.get("auto_flagged"):
+            auto_flagged_count += 1
+        
+        health_results.append({
+            "photo_id": photo_id,
+            "original_filename": photo.get("original_filename", "unknown"),
+            "original_valid": original_valid,
+            "thumbnail_small_valid": thumb_small_valid,
+            "thumbnail_medium_valid": thumb_medium_valid,
+            "is_flagged": photo.get("is_flagged", False),
+            "auto_flagged": photo.get("auto_flagged", False),
+            "flagged_reason": photo.get("flagged_reason"),
+            "needs_repair": needs_repair
+        })
+    
+    return {
+        "gallery_id": gallery_id,
+        "total_photos": len(photos),
+        "total_issues": total_issues,
+        "auto_flagged_count": auto_flagged_count,
+        "photos": health_results
+    }
+
+@api_router.post("/galleries/{gallery_id}/photos/repair-thumbnails")
+async def repair_gallery_thumbnails(gallery_id: str, data: ThumbnailRepairRequest, current_user: dict = Depends(get_current_user)):
+    """Scan and repair all thumbnails in a gallery"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(None)
+    
+    results = {
+        "total_photos": len(photos),
+        "repaired": 0,
+        "failed": 0,
+        "already_valid": 0,
+        "unflagged": 0,
+        "details": []
+    }
+    
+    for photo in photos:
+        repair_result = await validate_and_repair_photo_thumbnails(
+            photo["id"], 
+            force_regenerate=data.force_regenerate
+        )
+        
+        if repair_result["success"]:
+            if repair_result.get("regenerated"):
+                results["repaired"] += 1
+                
+                # If photo was auto-flagged due to thumbnails and repair succeeded, unflag it
+                if photo.get("auto_flagged") and photo.get("flagged_reason") == "auto:thumbnail_generation_failed":
+                    await db.photos.update_one(
+                        {"id": photo["id"]},
+                        {"$set": {
+                            "is_flagged": False,
+                            "auto_flagged": False,
+                            "flagged_at": None,
+                            "flagged_reason": None
+                        }}
+                    )
+                    results["unflagged"] += 1
+            else:
+                results["already_valid"] += 1
+        else:
+            results["failed"] += 1
+            results["details"].append({
+                "photo_id": photo["id"],
+                "error": repair_result.get("error")
+            })
+    
+    return results
+
+@api_router.post("/photos/{photo_id}/repair-thumbnail")
+async def repair_single_photo_thumbnail(photo_id: str, data: ThumbnailRepairRequest, current_user: dict = Depends(get_current_user)):
+    """Repair thumbnails for a single photo"""
+    photo = await db.photos.find_one({"id": photo_id}, {"_id": 0})
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    gallery = await db.galleries.find_one({"id": photo["gallery_id"], "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    result = await validate_and_repair_photo_thumbnails(photo_id, force_regenerate=data.force_regenerate)
+    
+    # If repair succeeded and photo was auto-flagged, unflag it
+    if result["success"] and photo.get("auto_flagged") and photo.get("flagged_reason") == "auto:thumbnail_generation_failed":
+        await db.photos.update_one(
+            {"id": photo_id},
+            {"$set": {
+                "is_flagged": False,
+                "auto_flagged": False,
+                "flagged_at": None,
+                "flagged_reason": None
+            }}
+        )
+        result["unflagged"] = True
+    
+    return result
+
+@api_router.post("/photos/{photo_id}/unflag")
+async def unflag_photo(photo_id: str, current_user: dict = Depends(get_current_user)):
+    """Manually unflag a photo (makes it visible in public gallery again)"""
+    photo = await db.photos.find_one({"id": photo_id}, {"_id": 0})
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    gallery = await db.galleries.find_one({"id": photo["gallery_id"], "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    await db.photos.update_one(
+        {"id": photo_id},
+        {"$set": {
+            "is_flagged": False,
+            "auto_flagged": False,
+            "flagged_at": None,
+            "flagged_reason": None
+        }}
+    )
+    
+    return {"message": "Photo unflagged successfully", "photo_id": photo_id}
+
+@api_router.post("/photos/{photo_id}/flag")
+async def flag_photo(photo_id: str, reason: str = "manual", current_user: dict = Depends(get_current_user)):
+    """Manually flag a photo (hides it from public gallery)"""
+    photo = await db.photos.find_one({"id": photo_id}, {"_id": 0})
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    gallery = await db.galleries.find_one({"id": photo["gallery_id"], "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    await db.photos.update_one(
+        {"id": photo_id},
+        {"$set": {
+            "is_flagged": True,
+            "auto_flagged": False,
+            "flagged_at": datetime.now(timezone.utc).isoformat(),
+            "flagged_reason": f"manual:{reason}"
+        }}
+    )
+    
+    return {"message": "Photo flagged successfully", "photo_id": photo_id}
+
+@api_router.get("/galleries/{gallery_id}/flagged-photos")
+async def get_gallery_flagged_photos(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """Get all flagged photos in a gallery for photographer review"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    flagged_photos = await db.photos.find(
+        {"gallery_id": gallery_id, "is_flagged": True},
+        {"_id": 0}
+    ).sort("flagged_at", -1).to_list(None)
+    
+    return {
+        "gallery_id": gallery_id,
+        "flagged_count": len(flagged_photos),
+        "photos": [Photo(**p) for p in flagged_photos]
+    }
+
 @api_router.post("/galleries/{gallery_id}/photos/reorder")
 async def reorder_photos(gallery_id: str, data: PhotoReorder, current_user: dict = Depends(get_current_user)):
     """Reorder photos in a gallery"""
