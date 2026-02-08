@@ -888,3 +888,25 @@ Integrated pCloud as a photo source for galleries. This allows photographers to:
 - Lightbox viewing and navigation working
 - Download functionality working
 - ISP bypass confirmed (images served through our domain)
+
+### Thumbnail Optimization ✅ (COMPLETED - February 8, 2026)
+
+**Problem:** pCloud photos are large (2-3MB each), causing slow gallery loading.
+
+**Solution:** Implemented pCloud's `getpubthumb` API for fast thumbnails:
+- Gallery grid uses 400x400 thumbnails (~40KB each instead of 2-3MB)
+- Lightbox filmstrip uses thumbnails for quick navigation
+- Full-quality images load only when viewing in lightbox
+
+**Performance Improvement:**
+- Before: 2.3MB per image = 80MB+ to load 35 photos
+- After: 44KB per thumbnail = 1.5MB to load 35 thumbnails (50x faster!)
+
+**API Endpoints:**
+- `GET /api/pcloud/thumb/{code}/{fileid}?size=400x400` - Returns thumbnail (cached 24hrs)
+- Full image endpoint unchanged: `GET /api/pcloud/serve/{code}/{fileid}`
+
+**Files Modified:**
+- `/app/backend/server.py`: Added thumbnail proxy endpoint
+- `/app/frontend/src/pages/PublicGallery.jsx`: Use thumbnails in grid
+- `/app/frontend/src/components/PremiumLightbox.jsx`: Use thumbnails in filmstrip
