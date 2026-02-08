@@ -459,7 +459,9 @@ DEFAULT_MODE_FEATURES = {
         "qr_code": True,
         "view_public_gallery": True,
         "display_mode": True,
-        "collaboration_link": True
+        "collaboration_link": True,
+        "storage_limit_gb": -1,  # -1 = unlimited
+        "gallery_expiration_days": 36500  # ~100 years (never)
     },
     MODE_EARLY_PARTNER_BETA: {
         "unlimited_token": False,
@@ -467,7 +469,9 @@ DEFAULT_MODE_FEATURES = {
         "qr_code": True,
         "view_public_gallery": True,
         "display_mode": True,
-        "collaboration_link": True
+        "collaboration_link": True,
+        "storage_limit_gb": 50,  # 50GB
+        "gallery_expiration_days": 180  # 6 months
     },
     MODE_COMPED_PRO: {
         "unlimited_token": False,
@@ -475,7 +479,9 @@ DEFAULT_MODE_FEATURES = {
         "qr_code": True,
         "view_public_gallery": True,
         "display_mode": True,
-        "collaboration_link": True
+        "collaboration_link": True,
+        "storage_limit_gb": 50,  # 50GB
+        "gallery_expiration_days": 180  # 6 months
     },
     MODE_COMPED_STANDARD: {
         "unlimited_token": False,
@@ -483,7 +489,9 @@ DEFAULT_MODE_FEATURES = {
         "qr_code": True,
         "view_public_gallery": True,
         "display_mode": False,
-        "collaboration_link": False
+        "collaboration_link": False,
+        "storage_limit_gb": 20,  # 20GB
+        "gallery_expiration_days": 90  # 3 months
     },
     MODE_ENTERPRISE_ACCESS: {
         "unlimited_token": True,
@@ -491,7 +499,9 @@ DEFAULT_MODE_FEATURES = {
         "qr_code": True,
         "view_public_gallery": True,
         "display_mode": True,
-        "collaboration_link": True
+        "collaboration_link": True,
+        "storage_limit_gb": -1,  # -1 = unlimited
+        "gallery_expiration_days": 36500  # ~100 years (never)
     }
 }
 
