@@ -4719,7 +4719,8 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
         logger.error(f"Error reading uploaded file: {e}")
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
     
-    if storage_used + file_size > storage_quota:
+    # Check storage quota (skip if unlimited: -1)
+    if storage_quota != -1 and storage_used + file_size > storage_quota:
         raise HTTPException(
             status_code=403, 
             detail=f"Storage quota exceeded. Used: {storage_used/(1024*1024):.1f}MB / {storage_quota/(1024*1024):.0f}MB"
