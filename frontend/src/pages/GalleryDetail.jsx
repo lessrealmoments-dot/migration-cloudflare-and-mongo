@@ -2884,8 +2884,97 @@ const GalleryDetail = () => {
           </div>
         )}
 
-        {/* Photo Upload Section - Hide when viewing video or fotoshare section */}
-        {!(selectedSection && (sections.find(s => s.id === selectedSection)?.type === 'video' || sections.find(s => s.id === selectedSection)?.type === 'fotoshare')) && (
+        {/* pCloud Section Management - Show when a pCloud section is selected */}
+        {selectedSection && sections.find(s => s.id === selectedSection)?.type === 'pcloud' && (
+          <div className="mb-12 bg-blue-50 rounded-xl p-6 border border-blue-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-normal flex items-center gap-3" style={{ fontFamily: 'Playfair Display, serif' }}>
+                <Cloud className="w-6 h-6 text-blue-500" />
+                pCloud: {sections.find(s => s.id === selectedSection)?.name}
+              </h3>
+              <div className="flex items-center gap-3">
+                <span className="text-blue-600 text-sm font-medium">
+                  {getPcloudPhotosBySection(selectedSection).length} photo(s)
+                </span>
+                <button
+                  onClick={() => handleRefreshPcloud(selectedSection)}
+                  disabled={refreshingSection === selectedSection}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors flex items-center gap-2"
+                  data-testid="refresh-pcloud-btn"
+                >
+                  {refreshingSection === selectedSection ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-4 h-4" />
+                  )}
+                  Refresh
+                </button>
+              </div>
+            </div>
+            
+            {/* pCloud folder info */}
+            <div className="bg-white rounded-lg p-4 mb-6 border border-blue-200">
+              <p className="text-sm text-zinc-600 mb-2">
+                <span className="font-medium">Linked folder:</span> {sections.find(s => s.id === selectedSection)?.pcloud_folder_name || 'Unknown'}
+              </p>
+              {sections.find(s => s.id === selectedSection)?.pcloud_last_sync && (
+                <p className="text-xs text-zinc-500">
+                  Last synced: {new Date(sections.find(s => s.id === selectedSection)?.pcloud_last_sync).toLocaleString()}
+                </p>
+              )}
+              {sections.find(s => s.id === selectedSection)?.pcloud_error && (
+                <div className="mt-2 flex items-center gap-2 text-amber-600 bg-amber-50 p-2 rounded-md">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span className="text-sm">{sections.find(s => s.id === selectedSection)?.pcloud_error}</span>
+                </div>
+              )}
+              <p className="text-xs text-blue-600 mt-2">
+                Photos are proxied through your server to bypass ISP restrictions.
+              </p>
+            </div>
+            
+            {/* pCloud Photos Grid */}
+            {getPcloudPhotosBySection(selectedSection).length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {getPcloudPhotosBySection(selectedSection).map((photo) => (
+                  <div 
+                    key={photo.id}
+                    className="relative group bg-white rounded-lg overflow-hidden border border-blue-200 hover:border-blue-400 transition-colors"
+                  >
+                    {/* Thumbnail */}
+                    <div className="aspect-square bg-zinc-100 relative">
+                      <img
+                        src={`${API}/pcloud/serve/${photo.pcloud_code}/${photo.fileid}`}
+                        alt={photo.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23e5e7eb" width="100" height="100"/><text fill="%2371717a" x="50" y="50" text-anchor="middle" dy=".3em" font-size="10">Error</text></svg>';
+                        }}
+                      />
+                      {/* Overlay with info */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2">
+                        <p className="text-white text-xs text-center truncate w-full">{photo.name}</p>
+                        {photo.supplier_name && (
+                          <p className="text-blue-300 text-xs mt-1">by {photo.supplier_name}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-lg border border-blue-200">
+                <Cloud className="w-12 h-12 mx-auto text-blue-300 mb-4" />
+                <p className="text-zinc-600">No photos found</p>
+                <p className="text-sm text-zinc-500 mt-1">Click Refresh to sync photos from pCloud</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Photo Upload Section - Hide when viewing video, fotoshare, or pcloud section */}
+        {!(selectedSection && (sections.find(s => s.id === selectedSection)?.type === 'video' || sections.find(s => s.id === selectedSection)?.type === 'fotoshare' || sections.find(s => s.id === selectedSection)?.type === 'pcloud')) && (
         <div className="mb-12">
           <h3 className="text-2xl font-normal mb-6" style={{ fontFamily: 'Playfair Display, serif' }}>
             Upload Photos {selectedSection && `to ${sections.find(s => s.id === selectedSection)?.name}`}
