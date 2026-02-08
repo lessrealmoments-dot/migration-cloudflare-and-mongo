@@ -183,11 +183,16 @@ class TestDownloadSection:
         assert 'attachment' in content_disposition
         assert '.zip' in content_disposition
         
-        # Verify we got actual content
-        content_length = int(response.headers.get('content-length', 0))
-        assert content_length > 0, "Expected non-empty ZIP file"
+        # Verify we got actual content by reading a small portion
+        # (don't download the full file in tests)
+        first_chunk = next(response.iter_content(chunk_size=1024), None)
+        assert first_chunk is not None, "Expected non-empty ZIP file"
+        assert len(first_chunk) > 0, "Expected non-empty ZIP content"
         
-        print(f"✓ Download chunk 1 successful: {content_length / (1024*1024):.1f}MB")
+        # ZIP files start with PK signature (0x504B)
+        assert first_chunk[:2] == b'PK', "Expected valid ZIP file signature"
+        
+        print(f"✓ Download chunk 1 successful: valid ZIP file received")
     
     def test_download_section_specific_section(self):
         """Test downloading a specific section"""
