@@ -5896,7 +5896,6 @@ async def get_public_download_info(share_link: str, request: SectionDownloadRequ
     
     # Get sections from the gallery document (sections are stored within gallery, not separate collection)
     sections = gallery.get("sections", [])
-    sections_dict = {s["id"]: s for s in sections}
     
     # Calculate chunks based on 250MB limit
     chunks = []
