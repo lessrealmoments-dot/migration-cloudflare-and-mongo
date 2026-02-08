@@ -4495,6 +4495,44 @@ async def serve_pcloud_image(code: str, fileid: str):
         logger.error(f"Error proxying pCloud image: {e}")
         raise HTTPException(status_code=502, detail="Failed to fetch image from pCloud")
 
+@api_router.get("/pcloud/thumb/{code}/{fileid}")
+async def serve_pcloud_thumbnail(code: str, fileid: str, size: str = "400x400"):
+    """
+    Proxy a pCloud thumbnail through our server.
+    Much smaller than full image - great for gallery grid views.
+    
+    Size format: WIDTHxHEIGHT (e.g., 400x400, 200x200)
+    Valid sizes: dimensions divisible by 4 or 5, between 16-2048 (max 1024 height)
+    """
+    import aiohttp
+    
+    try:
+        # Use pCloud's getpubthumb API
+        api_url = f"https://api.pcloud.com/getpubthumb?code={code}&fileid={fileid}&size={size}"
+        
+        timeout = aiohttp.ClientTimeout(total=30)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(api_url) as response:
+                if response.status != 200:
+                    # Fall back to serving full image if thumbnail fails
+                    logger.warning(f"pCloud thumbnail failed, status: {response.status}")
+                    raise HTTPException(status_code=response.status, detail="Thumbnail not available")
+                
+                content = await response.read()
+                content_type = response.headers.get('Content-Type', 'image/jpeg')
+                
+                return StreamingResponse(
+                    io.BytesIO(content),
+                    media_type=content_type,
+                    headers={
+                        "Cache-Control": "public, max-age=86400",  # Cache thumbnails for 24 hours
+                        "Content-Length": str(len(content))
+                    }
+                )
+    except aiohttp.ClientError as e:
+        logger.error(f"Error fetching pCloud thumbnail: {e}")
+        raise HTTPException(status_code=502, detail="Failed to fetch thumbnail from pCloud")
+
 @api_router.get("/public/gallery/{share_link}/pcloud-photos")
 async def get_public_pcloud_photos(share_link: str, section_id: Optional[str] = None):
     """Get pCloud photos for public gallery view"""
