@@ -1084,21 +1084,102 @@ const PublicGallery = () => {
             </section>
           )}
 
-        {/* Download All Button */}
+        {/* Download Button with Dropdown */}
         {gallery?.has_download_all_password && (
-          <div className="py-8 text-center">
-            <button
-              data-testid="download-all-button"
-              onClick={() => setShowDownloadAllModal(true)}
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-medium transition-all duration-300"
-              style={{ 
-                backgroundColor: currentTheme.colors.accent,
-                color: isDarkTheme ? '#000' : '#fff'
-              }}
-            >
-              <Download className="w-5 h-5" />
-              Download All Photos
-            </button>
+          <div className="py-8 text-center relative">
+            <div className="inline-block relative">
+              <button
+                data-testid="download-all-button"
+                onClick={() => {
+                  if (!downloadInfo) {
+                    setShowDownloadAllModal(true);
+                  } else {
+                    setShowDownloadDropdown(!showDownloadDropdown);
+                  }
+                }}
+                className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-medium transition-all duration-300"
+                style={{ 
+                  backgroundColor: currentTheme.colors.accent,
+                  color: isDarkTheme ? '#000' : '#fff'
+                }}
+              >
+                <Download className="w-5 h-5" />
+                Download Photos
+                <ChevronDown className={`w-4 h-4 transition-transform ${showDownloadDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {/* Download Dropdown */}
+              <AnimatePresence>
+                {showDownloadDropdown && downloadInfo && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute left-1/2 -translate-x-1/2 mt-2 w-72 rounded-xl shadow-2xl overflow-hidden z-50"
+                    style={{ backgroundColor: currentTheme.colors.secondary }}
+                  >
+                    <div className="p-2">
+                      {/* Download All Option */}
+                      <button
+                        onClick={() => handleSectionDownload(null, 'All_Photos')}
+                        disabled={downloadingSection}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-white/10 transition-colors text-left"
+                        style={{ color: currentTheme.colors.text }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Download className="w-4 h-4" style={{ color: currentTheme.colors.accent }} />
+                          <span className="font-medium">Download All</span>
+                        </div>
+                        <span className="text-xs opacity-60">
+                          {downloadInfo.total_photos} photos • {downloadInfo.total_size_mb}MB
+                        </span>
+                      </button>
+                      
+                      {/* Section Divider */}
+                      {downloadInfo.sections?.length > 0 && (
+                        <div className="border-t my-2" style={{ borderColor: currentTheme.colors.text + '20' }} />
+                      )}
+                      
+                      {/* Individual Sections */}
+                      {downloadInfo.sections?.map((section) => (
+                        <button
+                          key={section.id}
+                          onClick={() => handleSectionDownload(section.id, section.title)}
+                          disabled={downloadingSection}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-white/10 transition-colors text-left"
+                          style={{ color: currentTheme.colors.text }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-4 h-4 rounded-full" style={{ backgroundColor: currentTheme.colors.accent + '40' }} />
+                            <span className="text-sm">{section.title}</span>
+                          </div>
+                          <span className="text-xs opacity-60">
+                            {section.photo_count} • {section.size_mb}MB
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {/* Chunk Info */}
+                    {downloadInfo.chunk_count > 1 && (
+                      <div className="px-4 py-2 text-xs text-center border-t" 
+                           style={{ borderColor: currentTheme.colors.text + '20', color: currentTheme.colors.textLight }}>
+                        Large downloads split into 250MB parts
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            
+            {/* Click outside to close dropdown */}
+            {showDownloadDropdown && (
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setShowDownloadDropdown(false)}
+              />
+            )}
           </div>
         )}
 
