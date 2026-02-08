@@ -4461,13 +4461,13 @@ async def delete_pcloud_section(
     return {"message": "pCloud section deleted"}
 
 @api_router.get("/pcloud/serve/{code}/{fileid}")
-async def serve_pcloud_image(code: str, fileid: int):
+async def serve_pcloud_image(code: str, fileid: str):
     """
     Proxy a pCloud image through our server.
     This bypasses ISP blocking (e.g., Smart in Philippines blocks pCloud).
     """
-    # Get download URL from pCloud
-    download_info = await get_pcloud_download_url(code, fileid)
+    # Get download URL from pCloud (fileid needs to be int for API)
+    download_info = await get_pcloud_download_url(code, int(fileid))
     if not download_info:
         raise HTTPException(status_code=404, detail="Could not get pCloud download URL")
     
