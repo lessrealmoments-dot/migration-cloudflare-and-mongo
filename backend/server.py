@@ -6596,6 +6596,10 @@ async def get_photographer_analytics(current_user: dict = Depends(get_current_us
         "created_at": {"$gte": month_start.isoformat()}
     })
     
+    # Get effective storage quota from global toggles
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    effective_storage = await get_effective_storage_quota(user)
+    
     return PhotographerAnalytics(
         total_galleries=len(galleries),
         total_photos=total_photos,
@@ -6603,7 +6607,7 @@ async def get_photographer_analytics(current_user: dict = Depends(get_current_us
         total_qr_scans=total_qr_scans,
         total_downloads=total_downloads,
         storage_used=current_user.get("storage_used", 0),
-        storage_quota=current_user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
+        storage_quota=effective_storage if effective_storage != -1 else 999999999999,  # -1 means unlimited
         galleries=gallery_analytics,
         views_today=views_today,
         views_this_week=views_this_week,
