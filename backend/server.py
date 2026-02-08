@@ -2673,9 +2673,9 @@ async def update_single_mode_features(
     if mode_or_plan not in valid_keys:
         raise HTTPException(status_code=400, detail=f"Invalid mode/plan. Must be one of: {valid_keys}")
     
-    # Validate feature keys - include new storage and expiration fields for override modes
+    # Validate feature keys - include storage and expiration for override modes AND paid plans
     valid_features = ["unlimited_token", "copy_share_link", "qr_code", "view_public_gallery", "display_mode", "collaboration_link"]
-    if mode_or_plan in ALL_OVERRIDE_MODES:
+    if mode_or_plan in ALL_OVERRIDE_MODES or mode_or_plan in [PLAN_STANDARD, PLAN_PRO]:
         valid_features.extend(["storage_limit_gb", "gallery_expiration_days"])
     
     for key in features.keys():
