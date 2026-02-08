@@ -108,6 +108,22 @@ const LandingPage = ({ user }) => {
 
   // Parse hero title for line breaks
   const renderHeroTitle = () => {
+    // Handle period-separated phrases like "Every moment. Every perspective. One gallery."
+    if (config.hero_title && config.hero_title.includes('. ')) {
+      const phrases = config.hero_title.split('. ');
+      return (
+        <>
+          {phrases.map((phrase, index) => (
+            <span key={index}>
+              {phrase}{index < phrases.length - 1 ? '.' : ''}
+              {index < phrases.length - 1 && <br />}
+            </span>
+          ))}
+        </>
+      );
+    }
+    
+    // Handle comma-separated titles
     const parts = config.hero_title.split(',');
     if (parts.length > 1) {
       return (
