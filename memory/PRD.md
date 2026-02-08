@@ -8,6 +8,28 @@ Build a photo-sharing application for event photographers with:
 - **Complete subscription system with plans, credits, billing, and pricing page**
 - **Professional, cinematic public gallery experience**
 
+## Enhanced Download Feature (NEW - December 2025) ✅
+
+### Section-Based Downloads
+Guests and photographers can now download photos by section:
+- **Download Photos Dropdown** - Click to see options:
+  - Download All (shows total photos & size)
+  - Individual sections (shows section photo count & size)
+- **Per-Section Download Button** - Appears below each section header
+- **Smart Filtering** - Only visible photos included (excludes hidden & flagged)
+
+### 250MB Auto-Split
+Large downloads automatically split into multiple ZIP files:
+- Maximum 250MB per ZIP chunk
+- Downloads labeled as "Part 1 of 2", "Part 2 of 2", etc.
+- Progress tracking for multi-part downloads
+
+### API Endpoints
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/public/gallery/{share_link}/download-info` | Get sections, photo counts, chunk info |
+| `POST /api/public/gallery/{share_link}/download-section?chunk=1` | Download specific section/chunk |
+
 ## Admin Storage & Expiration Controls (NEW - December 2025) ✅
 
 ### Override Mode Controls
