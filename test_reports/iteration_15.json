@@ -1,0 +1,76 @@
+{
+  "summary": "Tested Admin Controls for Storage Allocation and Gallery Expiration. All 9 backend tests passed. Fixed bug in billing settings endpoint that wasn't persisting paid_gallery_expiration_months and paid_storage_limit_gb values. Frontend UI verified working correctly.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "test_report_links": [
+    "/app/backend/tests/test_admin_controls.py",
+    "/app/test_reports/pytest/admin_controls_results.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "Fixed bug in /api/billing/settings PUT endpoint - was not saving paid_gallery_expiration_months and paid_storage_limit_gb fields",
+    "FeatureTogglePage.jsx: Storage Limit and Gallery Expiration dropdowns correctly implemented for Override Modes",
+    "AdminDashboard.jsx: Paid Plan Settings (Universal) section correctly shows Gallery Expiration (1-6 months) and Storage Allocation dropdowns",
+    "Dashboard.jsx: 'Never expires' display logic correctly checks for days_until_deletion > 36000",
+    "PublicGallery.jsx: Correctly uses setShowUploadModal instead of setGuestUploadExpanded - no errors"
+  ],
+
+  "updated_files": [
+    "/app/backend/server.py",
+    "/app/backend/tests/test_admin_controls.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100% (all UI elements working)"
+  },
+
+  "test_credentials": {
+    "admin": {"username": "admin", "password": "Aa@58798546521325"},
+    "founders_circle_user": {"email": "lessrealmoments@gmail.com", "password": "n%%MYXCgIziZ"}
+  },
+
+  "seed_data_creation": "None - used existing data",
+
+  "retest_needed": false,
+
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "Admin Controls for Storage Allocation and Gallery Expiration fully tested. Feature Toggles page shows Storage Limit and Gallery Expiration dropdowns for each Override Mode. Founders Circle defaults to Unlimited storage and Never (100 years) expiration. Early Partner Beta defaults to 50GB storage and 6 Months expiration. Billing tab shows Paid Plan Settings (Universal) section with Gallery Expiration (1-6 months) and Storage Allocation dropdowns. Fixed bug where billing settings weren't persisting paid_gallery_expiration_months and paid_storage_limit_gb values. Guest gallery upload modal works correctly - navbar Upload button opens modal without errors.",
+
+  "features_tested": {
+    "feature_toggles_storage_limit_dropdown": "PASS - Storage Limit dropdown visible for each Override Mode",
+    "feature_toggles_gallery_expiration_dropdown": "PASS - Gallery Expiration dropdown visible for each Override Mode",
+    "founders_circle_defaults": "PASS - Unlimited storage (-1) and Never (36500 days) expiration",
+    "early_partner_beta_defaults": "PASS - 50GB storage and 6 Months (180 days) expiration",
+    "billing_paid_plan_settings": "PASS - Gallery Expiration and Storage Allocation dropdowns visible",
+    "billing_settings_persistence": "PASS - paid_gallery_expiration_months and paid_storage_limit_gb values persist after save (FIXED)",
+    "never_expires_display": "PASS - Dashboard.jsx checks days_until_deletion > 36000 for 'Never expires' display",
+    "navbar_upload_button": "PASS - Works without 'setGuestUploadExpanded is not defined' error",
+    "upload_modal": "PASS - Opens correctly from navbar Upload button"
+  },
+
+  "bug_fixed": {
+    "description": "Billing settings PUT endpoint was not saving paid_gallery_expiration_months and paid_storage_limit_gb fields",
+    "file": "/app/backend/server.py",
+    "line": "6470-6487",
+    "fix": "Added paid_gallery_expiration_months and paid_storage_limit_gb to update_data dict in update_billing_settings endpoint"
+  },
+
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
