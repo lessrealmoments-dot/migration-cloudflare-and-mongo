@@ -4549,7 +4549,10 @@ async def get_public_pcloud_photos(share_link: str, section_id: Optional[str] = 
     
     # Add proxy URLs for each photo (without /api prefix since frontend adds it)
     for photo in photos:
-        photo["proxy_url"] = f"/pcloud/serve/{photo['pcloud_code']}/{photo['fileid']}"
+        code = photo['pcloud_code']
+        fileid = photo['fileid']
+        photo["proxy_url"] = f"/pcloud/serve/{code}/{fileid}"
+        photo["thumbnail_url"] = f"/pcloud/thumb/{code}/{fileid}?size=400x400"
     
     return photos
 
