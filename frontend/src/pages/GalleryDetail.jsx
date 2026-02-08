@@ -2302,16 +2302,22 @@ const GalleryDetail = () => {
             >
               All Photos
             </button>
-            {sections.map((section) => (
+            {sections.map((section, index) => (
               <div 
                 key={section.id} 
                 className={`relative group cursor-move ${draggedSection?.id === section.id ? 'opacity-50' : ''}`}
                 draggable
                 onDragStart={(e) => handleSectionDragStart(e, section)}
                 onDragOver={(e) => handleSectionDragOver(e, section)}
+                onDragLeave={handleSectionDragLeave}
                 onDrop={(e) => handleSectionDrop(e, section)}
-                onDragEnd={() => setDraggedSection(null)}
+                onDragEnd={handleSectionDragEnd}
               >
+                {/* Drop indicator - before */}
+                {dropTargetId === section.id && dropPosition === 'before' && (
+                  <div className="absolute -top-1 left-0 right-0 h-0.5 bg-zinc-900 z-10" />
+                )}
+                
                 {editingSectionId === section.id ? (
                   <div className="flex items-center gap-2 w-full">
                     <input
