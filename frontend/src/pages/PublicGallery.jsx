@@ -1737,7 +1737,7 @@ const PublicGallery = () => {
               Thank you for being part of this special day
             </p>
             <p className="text-sm" style={{ color: currentTheme.colors.textLight }}>
-              Captured with love by {gallery?.photographer_name}
+              Gathered with love by {gallery?.photographer_name || brandConfig.brand_name || 'PhotoShare'}
             </p>
             <div 
               className="w-16 h-px mx-auto my-8"
