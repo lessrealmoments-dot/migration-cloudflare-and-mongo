@@ -1166,6 +1166,108 @@ const PublicGallery = () => {
                 );
               }
               
+              // Check if this is a pCloud section
+              if (section.type === 'pcloud') {
+                const sectionPcloudPhotos = getPcloudPhotosBySection(section.id);
+                if (sectionPcloudPhotos.length === 0) return null;
+                
+                const isExpanded = isSectionExpanded(section.id);
+                const displayPcloudPhotos = isExpanded ? sectionPcloudPhotos : sectionPcloudPhotos.slice(0, PREVIEW_COUNT);
+                const hasMore = sectionPcloudPhotos.length > PREVIEW_COUNT;
+                
+                return (
+                  <motion.section 
+                    key={section.id} 
+                    className="py-16 md:py-24"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                  >
+                    <div className="max-w-screen-2xl mx-auto px-6 md:px-12 lg:px-24">
+                      {/* Section Header */}
+                      <motion.div 
+                        className="text-center mb-12 md:mb-16"
+                        initial={{ y: 30, opacity: 0 }}
+                        whileInView={{ y: 0, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                      >
+                        <p 
+                          className="text-xs uppercase tracking-[0.3em] mb-3"
+                          style={{ color: currentTheme.colors.accent }}
+                        >
+                          {sectionPcloudPhotos.length} Photos
+                        </p>
+                        <h3 
+                          className="text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight"
+                          style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+                        >
+                          {section.name}
+                        </h3>
+                      </motion.div>
+                      
+                      {/* pCloud Photos Grid */}
+                      <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+                        {displayPcloudPhotos.map((photo, index) => (
+                          <motion.div
+                            key={photo.id}
+                            className="break-inside-avoid mb-4 group cursor-pointer relative overflow-hidden rounded-lg"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: index * 0.05 }}
+                            onClick={() => {
+                              // Create a temporary photo object for lightbox
+                              setSelectedPhoto({
+                                ...photo,
+                                url: photo.proxy_url,
+                                thumbnail_url: photo.proxy_url
+                              });
+                            }}
+                          >
+                            <img
+                              src={`${API}${photo.proxy_url}`}
+                              alt={photo.name}
+                              className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                              loading="lazy"
+                              onError={(e) => {
+                                e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23e5e7eb" width="100" height="100"/><text fill="%2371717a" x="50" y="50" text-anchor="middle" dy=".3em" font-size="10">Error</text></svg>';
+                              }}
+                            />
+                            {photo.supplier_name && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <p className="text-white text-xs">by {photo.supplier_name}</p>
+                              </div>
+                            )}
+                          </motion.div>
+                        ))}
+                      </div>
+                      
+                      {/* View More Button */}
+                      {hasMore && (
+                        <div className="text-center mt-12">
+                          <button
+                            onClick={() => toggleSectionExpand(section.id)}
+                            className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105"
+                            style={{ 
+                              backgroundColor: currentTheme.colors.accent + '10',
+                              color: currentTheme.colors.accent,
+                              border: `1px solid ${currentTheme.colors.accent}30`
+                            }}
+                          >
+                            {isExpanded ? (
+                              <>Show Less</>
+                            ) : (
+                              <>View All {sectionPcloudPhotos.length} Photos</>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </motion.section>
+                );
+              }
+              
               // Photo section
               const sectionPhotos = getRegularPhotosBySection(section.id);
               if (sectionPhotos.length === 0) return null;
