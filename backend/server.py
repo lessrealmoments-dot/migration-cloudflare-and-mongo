@@ -5860,6 +5860,9 @@ async def get_public_download_info(share_link: str, request: SectionDownloadRequ
     # Build section info with photo counts
     section_info = []
     for section in sorted(sections, key=lambda s: s.get("order", 0)):
+        # Only include photo sections (not video or fotoshare)
+        if section.get("type", "photo") != "photo":
+            continue
         section_photos = [p for p in photos if p.get("section_id") == section["id"]]
         if section_photos:
             section_size = sum(
@@ -5869,7 +5872,7 @@ async def get_public_download_info(share_link: str, request: SectionDownloadRequ
             )
             section_info.append({
                 "id": section["id"],
-                "title": section.get("title", "Untitled"),
+                "title": section.get("name", section.get("title", "Untitled")),
                 "photo_count": len(section_photos),
                 "size_mb": round(section_size / (1024 * 1024), 1)
             })
