@@ -5695,8 +5695,17 @@ async def serve_photo(filename: str, download: bool = False):
 
 @api_router.get("/photos/thumb/{filename}")
 async def serve_thumbnail(filename: str):
-    """Serve optimized thumbnail images"""
+    """Serve optimized thumbnail images with validation and fallback"""
     file_path = THUMBNAILS_DIR / filename
+    
+    # Check if thumbnail exists and is valid
+    if file_path.exists():
+        file_size = file_path.stat().st_size
+        if file_size == 0:
+            # Empty file - try to regenerate
+            logger.warning(f"Empty thumbnail found: {filename}")
+            file_path.unlink()  # Remove the empty file
+    
     if not file_path.exists():
         # Try to generate thumbnail on-the-fly if original exists
         parts = filename.rsplit('_', 1)
@@ -5704,17 +5713,22 @@ async def serve_thumbnail(filename: str):
             photo_id = parts[0]
             size_name = parts[1].replace('.jpg', '')
             # Find original file
-            for ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+            for ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif']:
                 original = UPLOAD_DIR / f"{photo_id}.{ext}"
                 if original.exists():
                     thumb_url = generate_thumbnail(original, photo_id, size_name)
                     if thumb_url and file_path.exists():
+                        logger.info(f"Regenerated missing thumbnail: {filename}")
                         break
         
         if not file_path.exists():
+            # Return a placeholder or error
             raise HTTPException(status_code=404, detail="Thumbnail not found")
     
+    # Final validation - ensure file is readable and not corrupt
     file_size = file_path.stat().st_size
+    if file_size == 0:
+        raise HTTPException(status_code=404, detail="Thumbnail corrupted")
     
     return FileResponse(
         file_path,
