@@ -2213,6 +2213,53 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         created_at=current_user["created_at"]
     )
 
+@api_router.get("/auth/effective-settings")
+async def get_effective_settings(current_user: dict = Depends(get_current_user)):
+    """Get the user's effective plan settings (storage, expiration) based on their plan/override mode"""
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    
+    # Get effective storage quota
+    effective_storage = await get_effective_storage_quota(user)
+    
+    # Get effective gallery expiration
+    global_toggles = await get_global_feature_toggles()
+    override_mode = user.get("override_mode")
+    override_expires = user.get("override_expires")
+    plan = user.get("plan", PLAN_FREE)
+    
+    gallery_expiration_days = 180  # Default
+    settings_source = "default"
+    
+    # Check override mode first
+    if override_mode and override_expires:
+        try:
+            expires = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
+            if expires > datetime.now(timezone.utc):
+                mode_config = global_toggles.get(override_mode, {})
+                gallery_expiration_days = mode_config.get("gallery_expiration_days", 180)
+                settings_source = f"override:{override_mode}"
+        except:
+            pass
+    
+    # If no override, check plan config
+    if settings_source == "default" and plan in [PLAN_STANDARD, PLAN_PRO]:
+        plan_config = global_toggles.get(plan, {})
+        if plan_config.get("gallery_expiration_days"):
+            gallery_expiration_days = plan_config.get("gallery_expiration_days")
+            settings_source = f"plan:{plan}"
+    
+    return {
+        "plan": plan,
+        "override_mode": override_mode if settings_source.startswith("override") else None,
+        "settings_source": settings_source,
+        "storage_limit_bytes": effective_storage,
+        "storage_limit_gb": -1 if effective_storage == -1 else round(effective_storage / (1024 * 1024 * 1024), 1),
+        "storage_unlimited": effective_storage == -1,
+        "storage_used_bytes": user.get("storage_used", 0),
+        "gallery_expiration_days": gallery_expiration_days,
+        "gallery_expiration_display": "Never" if gallery_expiration_days >= 36500 else f"{gallery_expiration_days} days"
+    }
+
 @api_router.put("/auth/profile", response_model=User)
 async def update_profile(profile: UserProfile, current_user: dict = Depends(get_current_user)):
     """Update photographer profile (name, business name)"""
