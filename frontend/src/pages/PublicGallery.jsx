@@ -1175,6 +1175,14 @@ const PublicGallery = () => {
                 const displayPcloudPhotos = isExpanded ? sectionPcloudPhotos : sectionPcloudPhotos.slice(0, PREVIEW_COUNT);
                 const hasMore = sectionPcloudPhotos.length > PREVIEW_COUNT;
                 
+                // Create lightbox-compatible photo objects for pCloud photos
+                const pcloudLightboxPhotos = sectionPcloudPhotos.map(p => ({
+                  ...p,
+                  url: `${API}${p.proxy_url}`,
+                  thumbnail_url: `${API}${p.proxy_url}`,
+                  is_pcloud: true
+                }));
+                
                 return (
                   <motion.section 
                     key={section.id} 
@@ -1217,12 +1225,9 @@ const PublicGallery = () => {
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: index * 0.05 }}
                             onClick={() => {
-                              // Create a temporary photo object for lightbox
-                              setSelectedPhoto({
-                                ...photo,
-                                url: photo.proxy_url,
-                                thumbnail_url: photo.proxy_url
-                              });
+                              // Open lightbox with pCloud photos
+                              setPcloudLightboxPhotos(pcloudLightboxPhotos);
+                              setPcloudLightboxIndex(index);
                             }}
                           >
                             <img
