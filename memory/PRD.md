@@ -781,3 +781,38 @@ Users reported broken thumbnails in galleries and black/perpetually loading imag
 - `/app/backend/server.py`: Added thumbnail retry logic, validation functions, new endpoints
 - `/app/frontend/src/pages/GalleryDetail.jsx`: Added flagged photos section, repair UI, modal
 - `/app/frontend/src/pages/CollageDisplay.jsx`: Added thumbnail URL filter for photos
+
+## Landing Page Image Upload Error Handling ✅ (COMPLETED - February 8, 2026)
+
+### Problem Investigated
+User reported "broken images" after uploading images for the landing page via Admin Dashboard.
+
+### Investigation Results
+- Backend upload endpoint `/api/admin/landing-image` is working correctly
+- Images are stored in `/app/backend/uploads/` with proper filenames
+- Database stores correct URLs in `site_config.landing` collection
+- Image serving endpoint `/api/photos/serve/{filename}` returns 200 with correct content-type
+- **No reproduction of the "broken image" issue in current environment**
+
+### Defensive Improvements Made
+1. **Image Error Handling in Admin Dashboard**
+   - Added `onError` handler to hero image display
+   - Broken images will be hidden and logged to console for debugging
+
+2. **Upload Verification**
+   - After upload, images are now verified by loading them in the browser
+   - If verification fails, user sees "Image uploaded but failed to load. Please try again."
+
+3. **Landing Page Error Handling**
+   - Added `onError` handler to hero carousel images
+   - Broken images are hidden and logged for debugging
+
+### Possible Causes (if issue persists)
+- Browser caching issue on user's machine
+- Network/CDN issue specific to user's environment
+- Upload interrupted mid-process (before database update)
+- File corruption during upload
+
+### Files Modified
+- `/app/frontend/src/pages/AdminDashboard.jsx`: Added error handling and upload verification
+- `/app/frontend/src/pages/LandingPage.jsx`: Added error handling for hero images
