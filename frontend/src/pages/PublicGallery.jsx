@@ -663,7 +663,7 @@ const PublicGallery = () => {
             <>
               <div className="h-6 w-px hidden md:block" style={{ backgroundColor: currentTheme.colors.accent + '30' }} />
               <button
-                onClick={() => setGuestUploadExpanded(true)}
+                onClick={() => setShowUploadModal(true)}
                 className="hidden md:flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-medium hover:opacity-70 transition-opacity"
                 style={{ color: currentTheme.colors.accent }}
                 data-testid="nav-upload-btn"
