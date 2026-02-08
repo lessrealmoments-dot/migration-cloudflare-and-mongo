@@ -4257,6 +4257,256 @@ async def delete_fotoshare_section(
     
     return {"message": "Fotoshare section deleted"}
 
+# ============ pCloud Integration Endpoints ============
+
+@api_router.post("/galleries/{gallery_id}/pcloud-sections")
+async def create_pcloud_section(
+    gallery_id: str,
+    pcloud_url: str = Body(..., embed=True),
+    section_name: Optional[str] = Body(None, embed=True),
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new pCloud section by linking to a pCloud shared folder"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Extract code from URL
+    code = extract_pcloud_code(pcloud_url)
+    if not code:
+        raise HTTPException(status_code=400, detail="Invalid pCloud URL. Please provide a valid share link.")
+    
+    # Fetch folder contents from pCloud
+    pcloud_data = await fetch_pcloud_folder(code)
+    if not pcloud_data['success']:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch pCloud folder: {pcloud_data['error']}")
+    
+    # Create section
+    sections = gallery.get("sections", [])
+    new_order = max([s.get("order", 0) for s in sections], default=-1) + 1
+    
+    section_id = str(uuid.uuid4())
+    new_section = {
+        "id": section_id,
+        "name": section_name or pcloud_data['folder_name'],
+        "order": new_order,
+        "type": "pcloud",
+        "pcloud_code": code,
+        "pcloud_folder_name": pcloud_data['folder_name'],
+        "pcloud_last_sync": datetime.now(timezone.utc).isoformat(),
+        "pcloud_error": None
+    }
+    
+    sections.append(new_section)
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    # Store photos in database
+    sync_time = datetime.now(timezone.utc).isoformat()
+    pcloud_photos = []
+    for idx, photo in enumerate(pcloud_data['photos']):
+        pcloud_photos.append({
+            "id": str(uuid.uuid4()),
+            "gallery_id": gallery_id,
+            "section_id": section_id,
+            "pcloud_code": code,
+            "fileid": photo['fileid'],
+            "name": photo['name'],
+            "size": photo.get('size', 0),
+            "width": photo.get('width'),
+            "height": photo.get('height'),
+            "contenttype": photo.get('contenttype', 'image/jpeg'),
+            "supplier_name": photo.get('supplier_name'),
+            "hash": photo.get('hash'),
+            "created_at_source": photo.get('created'),
+            "order": idx,
+            "synced_at": sync_time
+        })
+    
+    if pcloud_photos:
+        await db.pcloud_photos.insert_many(pcloud_photos)
+    
+    return {
+        "section": new_section,
+        "photo_count": len(pcloud_photos),
+        "subfolders": pcloud_data['subfolders']
+    }
+
+@api_router.post("/galleries/{gallery_id}/pcloud-sections/{section_id}/refresh")
+async def refresh_pcloud_section(
+    gallery_id: str,
+    section_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Refresh photos from a pCloud section"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    sections = gallery.get("sections", [])
+    section = next((s for s in sections if s["id"] == section_id and s.get("type") == "pcloud"), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="pCloud section not found")
+    
+    code = section.get("pcloud_code")
+    if not code:
+        raise HTTPException(status_code=400, detail="Section has no pCloud code")
+    
+    # Fetch fresh data from pCloud
+    pcloud_data = await fetch_pcloud_folder(code)
+    
+    # Update section status
+    for s in sections:
+        if s["id"] == section_id:
+            s["pcloud_last_sync"] = datetime.now(timezone.utc).isoformat()
+            s["pcloud_error"] = pcloud_data['error'] if not pcloud_data['success'] else None
+            break
+    
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    if not pcloud_data['success']:
+        return {"success": False, "error": pcloud_data['error'], "photos_added": 0}
+    
+    # Get existing photo fileids
+    existing = await db.pcloud_photos.find(
+        {"gallery_id": gallery_id, "section_id": section_id},
+        {"_id": 0, "fileid": 1}
+    ).to_list(10000)
+    existing_fileids = {p["fileid"] for p in existing}
+    
+    # Add new photos
+    sync_time = datetime.now(timezone.utc).isoformat()
+    existing_count = len(existing_fileids)
+    new_photos = []
+    
+    for photo in pcloud_data['photos']:
+        if photo['fileid'] not in existing_fileids:
+            new_photos.append({
+                "id": str(uuid.uuid4()),
+                "gallery_id": gallery_id,
+                "section_id": section_id,
+                "pcloud_code": code,
+                "fileid": photo['fileid'],
+                "name": photo['name'],
+                "size": photo.get('size', 0),
+                "width": photo.get('width'),
+                "height": photo.get('height'),
+                "contenttype": photo.get('contenttype', 'image/jpeg'),
+                "supplier_name": photo.get('supplier_name'),
+                "hash": photo.get('hash'),
+                "created_at_source": photo.get('created'),
+                "order": existing_count + len(new_photos),
+                "synced_at": sync_time
+            })
+    
+    if new_photos:
+        await db.pcloud_photos.insert_many(new_photos)
+    
+    return {
+        "success": True,
+        "photos_added": len(new_photos),
+        "total_photos": len(pcloud_data['photos']),
+        "subfolders": pcloud_data['subfolders']
+    }
+
+@api_router.get("/galleries/{gallery_id}/pcloud-photos")
+async def get_pcloud_photos(
+    gallery_id: str,
+    section_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all pCloud photos for a gallery or specific section"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    query = {"gallery_id": gallery_id}
+    if section_id:
+        query["section_id"] = section_id
+    
+    photos = await db.pcloud_photos.find(query, {"_id": 0}).to_list(10000)
+    photos.sort(key=lambda p: p.get("order", 0))
+    return photos
+
+@api_router.delete("/galleries/{gallery_id}/pcloud-sections/{section_id}")
+async def delete_pcloud_section(
+    gallery_id: str,
+    section_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a pCloud section and all its photos"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    sections = gallery.get("sections", [])
+    section = next((s for s in sections if s["id"] == section_id), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    # Remove section
+    sections = [s for s in sections if s["id"] != section_id]
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    # Delete associated photos
+    await db.pcloud_photos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    
+    return {"message": "pCloud section deleted"}
+
+@api_router.get("/pcloud/serve/{code}/{fileid}")
+async def serve_pcloud_image(code: str, fileid: int):
+    """
+    Proxy a pCloud image through our server.
+    This bypasses ISP blocking (e.g., Smart in Philippines blocks pCloud).
+    """
+    # Get download URL from pCloud
+    download_info = await get_pcloud_download_url(code, fileid)
+    if not download_info:
+        raise HTTPException(status_code=404, detail="Could not get pCloud download URL")
+    
+    # Fetch the image
+    import aiohttp
+    try:
+        timeout = aiohttp.ClientTimeout(total=60)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(download_info['url']) as response:
+                if response.status != 200:
+                    raise HTTPException(status_code=response.status, detail="Failed to fetch from pCloud")
+                
+                content = await response.read()
+                content_type = response.headers.get('Content-Type', 'image/jpeg')
+                
+                return StreamingResponse(
+                    io.BytesIO(content),
+                    media_type=content_type,
+                    headers={
+                        "Cache-Control": "public, max-age=3600",  # Cache for 1 hour
+                        "Content-Length": str(len(content))
+                    }
+                )
+    except aiohttp.ClientError as e:
+        logger.error(f"Error proxying pCloud image: {e}")
+        raise HTTPException(status_code=502, detail="Failed to fetch image from pCloud")
+
+@api_router.get("/public/gallery/{share_link}/pcloud-photos")
+async def get_public_pcloud_photos(share_link: str, section_id: Optional[str] = None):
+    """Get pCloud photos for public gallery view"""
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    query = {"gallery_id": gallery["id"]}
+    if section_id:
+        query["section_id"] = section_id
+    
+    photos = await db.pcloud_photos.find(query, {"_id": 0}).to_list(10000)
+    photos.sort(key=lambda p: p.get("order", 0))
+    
+    # Add proxy URLs for each photo
+    for photo in photos:
+        photo["proxy_url"] = f"/api/pcloud/serve/{photo['pcloud_code']}/{photo['fileid']}"
+    
+    return photos
+
 # ============ Gallery Videos Endpoints ============
 
 @api_router.get("/galleries/{gallery_id}/videos")
