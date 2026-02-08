@@ -226,7 +226,7 @@ const PublicGallery = () => {
 
   const fetchPhotos = async (pwd = null) => {
     try {
-      const [photosRes, videosRes, fotoshareRes] = await Promise.all([
+      const [photosRes, videosRes, fotoshareRes, pcloudRes] = await Promise.all([
         axios.get(
           `${API}/public/gallery/${shareLink}/photos`,
           { params: { password: pwd || password } }
@@ -235,11 +235,13 @@ const PublicGallery = () => {
           `${API}/public/gallery/${shareLink}/videos`,
           { params: { password: pwd || password } }
         ).catch(() => ({ data: [] })), // Videos are optional, don't fail if not available
-        axios.get(`${API}/galleries/${shareLink}/fotoshare-videos`).catch(() => ({ data: [] })) // Fotoshare videos
+        axios.get(`${API}/galleries/${shareLink}/fotoshare-videos`).catch(() => ({ data: [] })), // Fotoshare videos
+        axios.get(`${API}/public/gallery/${shareLink}/pcloud-photos`).catch(() => ({ data: [] })) // pCloud photos
       ]);
       setPhotos(photosRes.data);
       setVideos(videosRes.data);
       setFotoshareVideos(fotoshareRes.data);
+      setPcloudPhotos(pcloudRes.data);
     } catch (error) {
       if (error.response?.status === 401) {
         toast.error('Invalid password');
