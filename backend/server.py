@@ -540,52 +540,182 @@ JPEG_QUALITY = 85  # Balance between quality and size
 THUMBNAILS_DIR = UPLOAD_DIR / 'thumbnails'
 THUMBNAILS_DIR.mkdir(exist_ok=True)
 
+# Thumbnail generation retry settings
+THUMBNAIL_MAX_RETRIES = 3
+THUMBNAIL_RETRY_DELAY = 0.5  # seconds between retries
+
+def generate_thumbnail_single(source_path: Path, photo_id: str, size_name: str = 'medium') -> Optional[str]:
+    """Generate a single thumbnail (internal, no retry)"""
+    size = THUMBNAIL_SIZES.get(size_name, THUMBNAIL_SIZES['medium'])
+    thumb_filename = f"{photo_id}_{size_name}.jpg"
+    thumb_path = THUMBNAILS_DIR / thumb_filename
+    
+    with Image.open(source_path) as img:
+        # Convert to RGB if necessary (handles PNG with transparency, HEIC, etc.)
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        # Preserve aspect ratio
+        img.thumbnail(size, Image.Resampling.LANCZOS)
+        
+        # Auto-rotate based on EXIF
+        try:
+            from PIL import ExifTags
+            for orientation in ExifTags.TAGS.keys():
+                if ExifTags.TAGS[orientation] == 'Orientation':
+                    break
+            exif = img._getexif()
+            if exif:
+                orientation_value = exif.get(orientation)
+                if orientation_value == 3:
+                    img = img.rotate(180, expand=True)
+                elif orientation_value == 6:
+                    img = img.rotate(270, expand=True)
+                elif orientation_value == 8:
+                    img = img.rotate(90, expand=True)
+        except (AttributeError, KeyError, IndexError):
+            pass
+        
+        # Save optimized JPEG
+        img.save(thumb_path, 'JPEG', quality=JPEG_QUALITY, optimize=True)
+    
+    return f"/api/photos/thumb/{thumb_filename}"
+
 def generate_thumbnail(source_path: Path, photo_id: str, size_name: str = 'medium') -> Optional[str]:
-    """Generate optimized thumbnail from source image"""
+    """Generate optimized thumbnail with retry logic"""
+    import time
+    last_error = None
+    
+    for attempt in range(THUMBNAIL_MAX_RETRIES):
+        try:
+            result = generate_thumbnail_single(source_path, photo_id, size_name)
+            # Verify the thumbnail was created successfully
+            thumb_filename = f"{photo_id}_{size_name}.jpg"
+            thumb_path = THUMBNAILS_DIR / thumb_filename
+            if thumb_path.exists() and thumb_path.stat().st_size > 0:
+                return result
+            else:
+                raise Exception("Thumbnail file not created or empty")
+        except Exception as e:
+            last_error = e
+            logger.warning(f"Thumbnail generation attempt {attempt + 1}/{THUMBNAIL_MAX_RETRIES} failed for {photo_id}: {e}")
+            if attempt < THUMBNAIL_MAX_RETRIES - 1:
+                time.sleep(THUMBNAIL_RETRY_DELAY)
+    
+    logger.error(f"All {THUMBNAIL_MAX_RETRIES} thumbnail generation attempts failed for {photo_id}: {last_error}")
+    return None
+
+def validate_image_file(file_path: Path) -> dict:
+    """Validate an image file - check if it exists, is readable, and can be opened by PIL"""
+    result = {
+        "valid": False,
+        "exists": False,
+        "readable": False,
+        "pil_valid": False,
+        "file_size": 0,
+        "error": None
+    }
+    
     try:
-        size = THUMBNAIL_SIZES.get(size_name, THUMBNAIL_SIZES['medium'])
-        thumb_filename = f"{photo_id}_{size_name}.jpg"
-        thumb_path = THUMBNAILS_DIR / thumb_filename
+        if not file_path.exists():
+            result["error"] = "File does not exist"
+            return result
+        result["exists"] = True
         
-        with Image.open(source_path) as img:
-            # Convert to RGB if necessary (handles PNG with transparency, HEIC, etc.)
-            if img.mode in ('RGBA', 'LA', 'P'):
-                background = Image.new('RGB', img.size, (255, 255, 255))
-                if img.mode == 'P':
-                    img = img.convert('RGBA')
-                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-                img = background
-            elif img.mode != 'RGB':
-                img = img.convert('RGB')
-            
-            # Preserve aspect ratio
-            img.thumbnail(size, Image.Resampling.LANCZOS)
-            
-            # Auto-rotate based on EXIF
-            try:
-                from PIL import ExifTags
-                for orientation in ExifTags.TAGS.keys():
-                    if ExifTags.TAGS[orientation] == 'Orientation':
-                        break
-                exif = img._getexif()
-                if exif:
-                    orientation_value = exif.get(orientation)
-                    if orientation_value == 3:
-                        img = img.rotate(180, expand=True)
-                    elif orientation_value == 6:
-                        img = img.rotate(270, expand=True)
-                    elif orientation_value == 8:
-                        img = img.rotate(90, expand=True)
-            except (AttributeError, KeyError, IndexError):
-                pass
-            
-            # Save optimized JPEG
-            img.save(thumb_path, 'JPEG', quality=JPEG_QUALITY, optimize=True)
+        file_size = file_path.stat().st_size
+        result["file_size"] = file_size
         
-        return f"/api/photos/thumb/{thumb_filename}"
+        if file_size == 0:
+            result["error"] = "File is empty (0 bytes)"
+            return result
+        result["readable"] = True
+        
+        # Try to open with PIL to verify it's a valid image
+        with Image.open(file_path) as img:
+            img.verify()
+        result["pil_valid"] = True
+        result["valid"] = True
+        
     except Exception as e:
-        logger.error(f"Error generating thumbnail for {photo_id}: {e}")
-        return None
+        result["error"] = str(e)
+    
+    return result
+
+def validate_thumbnail(photo_id: str, size_name: str = 'medium') -> dict:
+    """Validate a thumbnail file"""
+    thumb_filename = f"{photo_id}_{size_name}.jpg"
+    thumb_path = THUMBNAILS_DIR / thumb_filename
+    return validate_image_file(thumb_path)
+
+async def auto_flag_photo(photo_id: str, reason: str):
+    """Auto-flag a photo due to processing issues"""
+    await db.photos.update_one(
+        {"id": photo_id},
+        {"$set": {
+            "is_flagged": True,
+            "flagged_at": datetime.now(timezone.utc).isoformat(),
+            "flagged_reason": f"auto:{reason}",
+            "auto_flagged": True
+        }}
+    )
+    logger.info(f"Auto-flagged photo {photo_id}: {reason}")
+
+async def validate_and_repair_photo_thumbnails(photo_id: str, force_regenerate: bool = False) -> dict:
+    """Validate and optionally repair thumbnails for a photo"""
+    photo = await db.photos.find_one({"id": photo_id}, {"_id": 0})
+    if not photo:
+        return {"success": False, "error": "Photo not found"}
+    
+    # Get the original file path
+    original_path = UPLOAD_DIR / photo["filename"]
+    
+    # Validate original
+    original_validation = validate_image_file(original_path)
+    if not original_validation["valid"]:
+        return {
+            "success": False,
+            "error": f"Original image invalid: {original_validation['error']}",
+            "should_flag": True,
+            "flag_reason": "original_corrupted"
+        }
+    
+    results = {
+        "success": True,
+        "photo_id": photo_id,
+        "thumbnails": {},
+        "regenerated": []
+    }
+    
+    # Check/repair each thumbnail size
+    for size_name in ['small', 'medium']:
+        thumb_validation = validate_thumbnail(photo_id, size_name)
+        
+        if not thumb_validation["valid"] or force_regenerate:
+            # Attempt to regenerate
+            thumb_url = generate_thumbnail(original_path, photo_id, size_name)
+            if thumb_url:
+                results["regenerated"].append(size_name)
+                results["thumbnails"][size_name] = {"status": "regenerated", "url": thumb_url}
+                
+                # Update photo record with new thumbnail URL
+                update_field = "thumbnail_url" if size_name == "small" else "thumbnail_medium_url"
+                await db.photos.update_one(
+                    {"id": photo_id},
+                    {"$set": {update_field: thumb_url}}
+                )
+            else:
+                results["thumbnails"][size_name] = {"status": "failed", "error": "Regeneration failed"}
+                results["success"] = False
+        else:
+            results["thumbnails"][size_name] = {"status": "valid"}
+    
+    return results
 
 # Google Drive OAuth configuration
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
