@@ -2407,6 +2407,11 @@ const GalleryDetail = () => {
                     <Upload className="w-3 h-3" /> Contributor
                   </div>
                 )}
+                
+                {/* Drop indicator - after */}
+                {dropTargetId === section.id && dropPosition === 'after' && (
+                  <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-zinc-900 z-10" />
+                )}
               </div>
             ))}
           </div>
