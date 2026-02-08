@@ -4386,20 +4386,21 @@ async def refresh_pcloud_section(
     new_photos = []
     
     for photo in pcloud_data['photos']:
-        if photo['fileid'] not in existing_fileids:
+        fileid_str = str(photo['fileid'])
+        if fileid_str not in existing_fileids:
             new_photos.append({
                 "id": str(uuid.uuid4()),
                 "gallery_id": gallery_id,
                 "section_id": section_id,
                 "pcloud_code": code,
-                "fileid": photo['fileid'],
+                "fileid": fileid_str,  # Store as string
                 "name": photo['name'],
                 "size": photo.get('size', 0),
                 "width": photo.get('width'),
                 "height": photo.get('height'),
                 "contenttype": photo.get('contenttype', 'image/jpeg'),
                 "supplier_name": photo.get('supplier_name'),
-                "hash": photo.get('hash'),
+                "hash": str(photo.get('hash', '')) if photo.get('hash') else None,
                 "created_at_source": photo.get('created'),
                 "order": existing_count + len(new_photos),
                 "synced_at": sync_time
