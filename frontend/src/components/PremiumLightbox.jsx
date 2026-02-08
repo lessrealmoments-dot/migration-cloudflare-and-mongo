@@ -238,7 +238,7 @@ const PremiumLightbox = ({
               }}
             >
               <img
-                src={`${backendUrl}${photo.url}`}
+                src={`${backendUrl}${photo.thumbnail_url || photo.url}`}
                 alt={`Thumbnail ${actualIndex + 1}`}
                 className="w-full h-full object-cover"
               />
