@@ -1110,6 +1110,55 @@ const GalleryDetail = () => {
     }
   };
 
+  // Fetch pCloud photos
+  const fetchPcloudPhotos = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/galleries/${id}/pcloud-photos`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPcloudPhotos(response.data);
+    } catch (error) {
+      console.error('Failed to fetch pCloud photos');
+    }
+  };
+
+  // Refresh pCloud section
+  const handleRefreshPcloud = async (sectionId) => {
+    setRefreshingSection(sectionId);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/galleries/${id}/pcloud-sections/${sectionId}/refresh`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        toast.success(`Refreshed! ${response.data.photos_added} new photos found.`);
+        fetchPcloudPhotos();
+        // Update section sync timestamp
+        setSections(sections.map(s => 
+          s.id === sectionId 
+            ? { ...s, pcloud_last_sync: new Date().toISOString(), pcloud_error: null }
+            : s
+        ));
+      } else {
+        toast.error(response.data.error || 'Failed to refresh');
+        setSections(sections.map(s => 
+          s.id === sectionId ? { ...s, pcloud_error: response.data.error } : s
+        ));
+      }
+    } catch (error) {
+      toast.error('Failed to refresh section');
+    } finally {
+      setRefreshingSection(null);
+    }
+  };
+
+  // Get pCloud photos by section
+  const getPcloudPhotosBySection = (sectionId) => {
+    return pcloudPhotos.filter(p => p.section_id === sectionId);
+  };
+
   // Get fotoshare videos by section
   const getFotoshareVideosBySection = (sectionId) => {
     return fotoshareVideos.filter(v => v.section_id === sectionId);
