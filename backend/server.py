@@ -6473,7 +6473,9 @@ async def update_billing_settings(data: BillingSettings, admin: dict = Depends(g
     update_data = {
         "type": "billing_settings",
         "billing_enforcement_enabled": data.billing_enforcement_enabled,
-        "pricing": data.pricing
+        "pricing": data.pricing,
+        "paid_gallery_expiration_months": data.paid_gallery_expiration_months,
+        "paid_storage_limit_gb": data.paid_storage_limit_gb
     }
     # Include payment_methods if provided
     if data.payment_methods:
