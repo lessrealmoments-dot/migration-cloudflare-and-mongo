@@ -290,8 +290,9 @@ const FeatureTogglePage = () => {
   const renderModeCard = (section, modeKey, info) => {
     const ModeIcon = info.icon;
     const features = toggles[section][modeKey].features;
-    const enabledCount = Object.values(features).filter(Boolean).length;
-    const totalCount = Object.keys(features).length;
+    const enabledCount = Object.entries(features).filter(([k, v]) => typeof v === 'boolean' && v).length;
+    const totalCount = Object.keys(FEATURE_INFO).length;
+    const isOverrideMode = section === 'override_modes';
     
     return (
       <div 
@@ -315,6 +316,49 @@ const FeatureTogglePage = () => {
         <div className="p-3 space-y-1">
           {Object.keys(FEATURE_INFO).map(featureKey => 
             renderFeatureRow(section, modeKey, featureKey)
+          )}
+          
+          {/* Storage and Expiration controls for Override Modes only */}
+          {isOverrideMode && (
+            <div className="mt-4 pt-4 border-t border-zinc-700 space-y-3">
+              <div className="flex items-center justify-between py-2 px-3 bg-zinc-700/30 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <HardDrive className="w-4 h-4 text-zinc-400" />
+                  <div>
+                    <span className="text-sm text-white">Storage Limit</span>
+                    <p className="text-xs text-zinc-500">Maximum storage per account</p>
+                  </div>
+                </div>
+                <select
+                  value={features.storage_limit_gb ?? -1}
+                  onChange={(e) => handleStorageChange(section, modeKey, e.target.value)}
+                  className="bg-zinc-600 text-white text-sm rounded-lg px-3 py-1.5 border border-zinc-500"
+                >
+                  {STORAGE_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="flex items-center justify-between py-2 px-3 bg-zinc-700/30 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-4 h-4 text-zinc-400" />
+                  <div>
+                    <span className="text-sm text-white">Gallery Expiration</span>
+                    <p className="text-xs text-zinc-500">Days until auto-delete</p>
+                  </div>
+                </div>
+                <select
+                  value={features.gallery_expiration_days ?? 180}
+                  onChange={(e) => handleExpirationChange(section, modeKey, e.target.value)}
+                  className="bg-zinc-600 text-white text-sm rounded-lg px-3 py-1.5 border border-zinc-500"
+                >
+                  {EXPIRATION_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           )}
         </div>
       </div>
