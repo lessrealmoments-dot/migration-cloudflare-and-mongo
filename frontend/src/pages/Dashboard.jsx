@@ -966,10 +966,16 @@ const Dashboard = ({ user, setUser }) => {
                   </div>
                   {g.days_until_deletion !== null && (
                     <div className={`text-xs mt-2 flex items-center gap-1 ${
-                      g.days_until_deletion <= 30 ? 'text-red-600' : 'text-zinc-400'
+                      g.days_until_deletion > 36000 
+                        ? 'text-green-600' 
+                        : g.days_until_deletion <= 30 
+                          ? 'text-red-600' 
+                          : 'text-zinc-400'
                     }`}>
                       <Clock className="w-3 h-3" />
-                      {g.days_until_deletion} days until auto-delete
+                      {g.days_until_deletion > 36000 
+                        ? 'Never expires' 
+                        : `${g.days_until_deletion} days until auto-delete`}
                     </div>
                   )}
                 </div>
