@@ -1202,7 +1202,7 @@ class Section(BaseModel):
     id: str
     name: str
     order: int
-    type: str = "photo"  # "photo", "video", or "fotoshare"
+    type: str = "photo"  # "photo", "video", "fotoshare", or "pcloud"
     contributor_link: Optional[str] = None  # Unique link for contributor uploads
     contributor_name: Optional[str] = None  # Company/contributor name
     contributor_enabled: bool = False  # Whether contributor uploads are enabled
@@ -1210,6 +1210,11 @@ class Section(BaseModel):
     fotoshare_url: Optional[str] = None  # The fotoshare.co event URL
     fotoshare_last_sync: Optional[str] = None  # Last sync timestamp
     fotoshare_expired: bool = False  # Whether the link has expired
+    # pCloud-specific fields
+    pcloud_code: Optional[str] = None  # The pCloud share link code
+    pcloud_folder_name: Optional[str] = None  # Name of the linked folder
+    pcloud_last_sync: Optional[str] = None  # Last sync timestamp
+    pcloud_error: Optional[str] = None  # Last error message if any
 
 class FotoshareVideo(BaseModel):
     """Video entry from fotoshare.co / 360 booth providers"""
