@@ -3203,7 +3203,7 @@ const GalleryDetail = () => {
                             <button
                               onClick={() => {
                                 if (window.confirm('Permanently delete this photo?')) {
-                                  handleDeletePhoto(photo.id);
+                                  handleDelete(photo.id);
                                   fetchFlaggedPhotos();
                                 }
                               }}
