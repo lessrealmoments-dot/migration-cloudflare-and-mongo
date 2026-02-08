@@ -4509,9 +4509,9 @@ async def get_public_pcloud_photos(share_link: str, section_id: Optional[str] = 
     photos = await db.pcloud_photos.find(query, {"_id": 0}).to_list(10000)
     photos.sort(key=lambda p: p.get("order", 0))
     
-    # Add proxy URLs for each photo
+    # Add proxy URLs for each photo (without /api prefix since frontend adds it)
     for photo in photos:
-        photo["proxy_url"] = f"/api/pcloud/serve/{photo['pcloud_code']}/{photo['fileid']}"
+        photo["proxy_url"] = f"/pcloud/serve/{photo['pcloud_code']}/{photo['fileid']}"
     
     return photos
 
