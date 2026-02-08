@@ -658,3 +658,78 @@ Note: server.py remains monolithic (~5300 lines) but modules are ready for Phase
   - Extra credit purchases from Dashboard
 - Modal dynamically loads payment methods from admin configuration
 - Fixed missing imports (X, Upload from lucide-react) that caused blank page
+
+## Fail-Safe Image Upload & Thumbnail System ✅ (COMPLETED - February 8, 2026)
+
+### Problem Solved
+Users reported broken thumbnails in galleries and black/perpetually loading images in collage mode. This feature implements a robust image pipeline with automatic error detection, retry, and recovery.
+
+### Features Implemented
+
+**1. Thumbnail Generation with Retry Logic**
+- 3 retry attempts with 0.5s delay between retries
+- Validates thumbnail file exists and is not empty after generation
+- Logs detailed warnings/errors for debugging
+
+**2. Image Validation Service**
+- `validate_image_file()`: Checks if file exists, is readable, and can be opened by PIL
+- `validate_thumbnail()`: Checks specific thumbnail file health
+- Returns detailed validation results for diagnostics
+
+**3. Auto-Flagging System**
+- Photos with failed thumbnail generation are automatically flagged
+- Flag reason: `auto:thumbnail_generation_failed`
+- Auto-flagged photos hidden from public gallery automatically (existing filter)
+- Photographer can see flagged photos and decide to unflag/delete
+
+**4. Photo Health Check Endpoint**
+- `GET /api/galleries/{gallery_id}/photos/health`
+- Scans all photos in gallery, validates original + thumbnails
+- Returns total issues count, auto-flagged count, and per-photo status
+
+**5. Thumbnail Repair Endpoint**
+- `POST /api/galleries/{gallery_id}/photos/repair-thumbnails`
+- Scans and regenerates missing/broken thumbnails
+- Auto-unflags photos that were flagged due to thumbnail failures
+- Returns repair results (repaired, failed, already_valid, unflagged)
+
+**6. Single Photo Repair/Flag/Unflag**
+- `POST /api/photos/{photo_id}/repair-thumbnail`
+- `POST /api/photos/{photo_id}/flag?reason=xxx`
+- `POST /api/photos/{photo_id}/unflag`
+- `GET /api/galleries/{gallery_id}/flagged-photos`
+
+**7. Enhanced Thumbnail Serving**
+- `/api/photos/thumb/{filename}` now validates file integrity
+- Removes empty files and attempts on-the-fly regeneration
+- Returns proper 404 for corrupted thumbnails
+
+**8. Frontend UI Components**
+- **Flagged Photos Warning Banner**: Amber warning box showing hidden photo count
+- **"Repair Thumbnails" Button**: One-click thumbnail repair for entire gallery
+- **"View Hidden Photos" Button**: Opens modal to review flagged photos
+- **Flagged Photos Modal**: Grid view with Show/Delete actions per photo
+- **Status Badges**: "Auto" (system flagged) vs "Manual" (user flagged)
+
+**9. Collage Mode Protection**
+- Photos without thumbnail URLs are filtered out before display
+- Prevents black boxes and loading spinners in collage
+
+### Database Schema Changes
+- Added `auto_flagged: bool` field to Photo model
+- Existing `is_flagged`, `flagged_at`, `flagged_reason` fields now used for auto-flagging
+
+### API Endpoints Added
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/galleries/{id}/photos/health` | GET | Check health status of all photos |
+| `/api/galleries/{id}/photos/repair-thumbnails` | POST | Repair all thumbnails in gallery |
+| `/api/photos/{id}/repair-thumbnail` | POST | Repair single photo thumbnail |
+| `/api/photos/{id}/flag` | POST | Flag a photo (hide from gallery) |
+| `/api/photos/{id}/unflag` | POST | Unflag a photo (show in gallery) |
+| `/api/galleries/{id}/flagged-photos` | GET | List all flagged photos |
+
+### Files Modified
+- `/app/backend/server.py`: Added thumbnail retry logic, validation functions, new endpoints
+- `/app/frontend/src/pages/GalleryDetail.jsx`: Added flagged photos section, repair UI, modal
+- `/app/frontend/src/pages/CollageDisplay.jsx`: Added thumbnail URL filter for photos
