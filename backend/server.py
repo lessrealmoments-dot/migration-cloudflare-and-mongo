@@ -6811,8 +6811,8 @@ async def track_download(gallery_id: str, photo_id: Optional[str] = None):
     return {"message": "Download tracked"}
 
 @api_router.post("/analytics/track-view/{gallery_id}")
-async def track_gallery_view(gallery_id: str):
-    """Track a gallery view"""
+async def track_gallery_view_by_id(gallery_id: str):
+    """Track a gallery view by gallery ID"""
     gallery = await db.galleries.find_one({"id": gallery_id})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
