@@ -1234,12 +1234,18 @@ const PublicGallery = () => {
                             }}
                           >
                             <img
-                              src={`${API}${photo.proxy_url}`}
+                              src={`${API}${photo.thumbnail_url || photo.proxy_url}`}
                               alt={photo.name}
                               className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
                               loading="lazy"
                               onError={(e) => {
-                                e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23e5e7eb" width="100" height="100"/><text fill="%2371717a" x="50" y="50" text-anchor="middle" dy=".3em" font-size="10">Error</text></svg>';
+                                // If thumbnail fails, try full image
+                                if (photo.thumbnail_url && !e.target.dataset.triedFull) {
+                                  e.target.dataset.triedFull = 'true';
+                                  e.target.src = `${API}${photo.proxy_url}`;
+                                } else {
+                                  e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23e5e7eb" width="100" height="100"/><text fill="%2371717a" x="50" y="50" text-anchor="middle" dy=".3em" font-size="10">Error</text></svg>';
+                                }
                               }}
                             />
                             {photo.supplier_name && (
@@ -1257,7 +1263,7 @@ const PublicGallery = () => {
                           <button
                             onClick={() => toggleSectionExpand(section.id)}
                             className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105"
-                            style={{ 
+                            style={{
                               backgroundColor: currentTheme.colors.accent + '10',
                               color: currentTheme.colors.accent,
                               border: `1px solid ${currentTheme.colors.accent}30`
