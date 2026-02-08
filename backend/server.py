@@ -2667,14 +2667,17 @@ async def update_single_mode_features(
 ):
     """
     Update features for a single mode or plan.
-    mode_or_plan: one of founders_circle, early_partner_beta, comped_pro, comped_standard, free, standard, pro
+    mode_or_plan: one of founders_circle, early_partner_beta, comped_pro, comped_standard, enterprise_access, free, standard, pro
     """
     valid_keys = ALL_OVERRIDE_MODES + ALL_PAYMENT_PLANS
     if mode_or_plan not in valid_keys:
         raise HTTPException(status_code=400, detail=f"Invalid mode/plan. Must be one of: {valid_keys}")
     
-    # Validate feature keys
+    # Validate feature keys - include new storage and expiration fields for override modes
     valid_features = ["unlimited_token", "copy_share_link", "qr_code", "view_public_gallery", "display_mode", "collaboration_link"]
+    if mode_or_plan in ALL_OVERRIDE_MODES:
+        valid_features.extend(["storage_limit_gb", "gallery_expiration_days"])
+    
     for key in features.keys():
         if key not in valid_features:
             raise HTTPException(status_code=400, detail=f"Invalid feature key: {key}. Valid keys: {valid_features}")
