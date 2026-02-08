@@ -2195,6 +2195,12 @@ async def login(credentials: UserLogin):
 
 @api_router.get("/auth/me", response_model=User)
 async def get_me(current_user: dict = Depends(get_current_user)):
+    # Get full user data for effective quota calculation
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    
+    # Calculate effective storage quota from global toggles
+    effective_storage = await get_effective_storage_quota(user)
+    
     return User(
         id=current_user["id"],
         email=current_user["email"],
@@ -2202,7 +2208,7 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         business_name=current_user.get("business_name"),
         max_galleries=current_user.get("max_galleries", DEFAULT_MAX_GALLERIES),
         galleries_created_total=current_user.get("galleries_created_total", 0),
-        storage_quota=current_user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
+        storage_quota=effective_storage if effective_storage != -1 else 999999999999,  # -1 means unlimited
         storage_used=current_user.get("storage_used", 0),
         created_at=current_user["created_at"]
     )
