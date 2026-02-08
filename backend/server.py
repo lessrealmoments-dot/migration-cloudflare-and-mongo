@@ -8113,6 +8113,89 @@ async def get_all_transactions(
         })
     return result
 
+@api_router.post("/admin/repair-thumbnails")
+async def repair_all_thumbnails(
+    admin: dict = Depends(get_admin_user),
+    batch_size: int = 50
+):
+    """Repair all missing thumbnails for photos in database"""
+    # Find all photos missing thumbnails
+    missing_photos = await db.photos.find(
+        {"$or": [{"thumbnail_url": None}, {"thumbnail_url": ""}]},
+        {"_id": 0, "id": 1, "url": 1}
+    ).to_list(10000)
+    
+    total = len(missing_photos)
+    repaired = 0
+    failed = 0
+    errors = []
+    
+    for photo in missing_photos:
+        photo_id = photo["id"]
+        url = photo.get("url", "")
+        
+        # Extract filename from URL
+        filename = url.split("/")[-1] if url else f"{photo_id}.jpg"
+        file_path = UPLOAD_DIR / filename
+        
+        # Try different extensions
+        if not file_path.exists():
+            for ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'JPG', 'JPEG', 'PNG']:
+                test_path = UPLOAD_DIR / f"{photo_id}.{ext}"
+                if test_path.exists():
+                    file_path = test_path
+                    break
+        
+        if not file_path.exists():
+            failed += 1
+            errors.append(f"{photo_id}: Original file not found")
+            continue
+        
+        try:
+            # Generate both thumbnail sizes
+            thumb_small = generate_thumbnail(file_path, photo_id, 'small')
+            thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
+            
+            update = {}
+            if thumb_small:
+                update["thumbnail_url"] = thumb_small
+            if thumb_medium:
+                update["thumbnail_medium_url"] = thumb_medium
+            
+            if update:
+                await db.photos.update_one(
+                    {"id": photo_id},
+                    {"$set": update}
+                )
+                repaired += 1
+            else:
+                failed += 1
+                errors.append(f"{photo_id}: Thumbnail generation returned None")
+                
+        except Exception as e:
+            failed += 1
+            errors.append(f"{photo_id}: {str(e)}")
+    
+    return {
+        "total_missing": total,
+        "repaired": repaired,
+        "failed": failed,
+        "errors": errors[:20]  # Return first 20 errors only
+    }
+
+@api_router.get("/admin/thumbnail-status")
+async def get_thumbnail_status(admin: dict = Depends(get_admin_user)):
+    """Get status of thumbnails in the system"""
+    total = await db.photos.count_documents({})
+    missing = await db.photos.count_documents({"$or": [{"thumbnail_url": None}, {"thumbnail_url": ""}]})
+    
+    return {
+        "total_photos": total,
+        "missing_thumbnails": missing,
+        "has_thumbnails": total - missing,
+        "percentage_missing": round(missing / total * 100, 1) if total > 0 else 0
+    }
+
 app.include_router(api_router)
 
 # Mount static files for uploads (payment proofs, QR codes, etc.)
