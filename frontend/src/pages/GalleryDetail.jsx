@@ -1028,6 +1028,19 @@ const GalleryDetail = () => {
         toast.success(`360 Booth section created with ${response.data.videos_count} videos!`);
         // Fetch the fotoshare videos
         fetchFotoshareVideos();
+      } else if (newSectionType === 'pcloud' && newPcloudUrl.trim()) {
+        // Create pCloud section with URL - dedicated endpoint
+        const response = await axios.post(`${API}/galleries/${id}/pcloud-sections`, {
+          pcloud_url: newPcloudUrl,
+          section_name: newSectionName
+        }, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        
+        setSections([...sections, response.data.section]);
+        toast.success(`pCloud section created with ${response.data.photo_count} photos!`);
+        // Fetch the pCloud photos
+        fetchPcloudPhotos();
       } else {
         // Create regular section (photo, video, or fotoshare without URL)
         const formData = new FormData();
@@ -1046,6 +1059,7 @@ const GalleryDetail = () => {
       setNewSectionName('');
       setNewSectionType('photo');
       setNewFotoshareUrl('');
+      setNewPcloudUrl('');
       setShowSectionForm(false);
     } catch (error) {
       const errorMsg = error.response?.data?.detail || 'Failed to create section';
