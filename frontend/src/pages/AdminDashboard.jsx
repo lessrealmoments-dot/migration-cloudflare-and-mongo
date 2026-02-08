@@ -1125,61 +1125,6 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            {/* Universal Paid Plan Settings */}
-            <div className="bg-zinc-800 rounded-lg p-6">
-              <h3 className="text-lg font-medium text-white mb-2">Paid Plan Settings (Universal)</h3>
-              <p className="text-sm text-zinc-400 mb-4">These settings apply to ALL Standard and Pro plan users. Experiment freely before locking final inclusions.</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-sm text-zinc-400 block mb-2">Gallery Expiration</label>
-                  <select
-                    value={billingSettings.paid_gallery_expiration_months || 6}
-                    onChange={(e) => setBillingSettings(prev => ({
-                      ...prev,
-                      paid_gallery_expiration_months: parseInt(e.target.value)
-                    }))}
-                    className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2"
-                  >
-                    <option value={1}>1 Month</option>
-                    <option value={2}>2 Months</option>
-                    <option value={3}>3 Months</option>
-                    <option value={4}>4 Months</option>
-                    <option value={5}>5 Months</option>
-                    <option value={6}>6 Months</option>
-                  </select>
-                  <p className="text-xs text-zinc-500 mt-1">Galleries auto-delete after this period</p>
-                </div>
-                
-                <div>
-                  <label className="text-sm text-zinc-400 block mb-2">Storage Allocation</label>
-                  <select
-                    value={billingSettings.paid_storage_limit_gb || -1}
-                    onChange={(e) => setBillingSettings(prev => ({
-                      ...prev,
-                      paid_storage_limit_gb: parseInt(e.target.value)
-                    }))}
-                    className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2"
-                  >
-                    <option value={-1}>Unlimited</option>
-                    <option value={10}>10 GB</option>
-                    <option value={20}>20 GB</option>
-                    <option value={30}>30 GB</option>
-                    <option value={40}>40 GB</option>
-                    <option value={50}>50 GB</option>
-                    <option value={100}>100 GB</option>
-                    <option value={200}>200 GB</option>
-                    <option value={500}>500 GB</option>
-                  </select>
-                  <p className="text-xs text-zinc-500 mt-1">Maximum storage per account</p>
-                </div>
-              </div>
-              
-              <div className="mt-4 text-xs text-amber-400 bg-amber-400/10 px-3 py-2 rounded">
-                Current: {billingSettings.paid_gallery_expiration_months || 6} month expiration • {billingSettings.paid_storage_limit_gb === -1 ? 'Unlimited' : `${billingSettings.paid_storage_limit_gb}GB`} storage
-              </div>
-            </div>
-
             {/* Payment Methods Configuration */}
             <div className="bg-zinc-800 rounded-lg p-6">
               <h3 className="text-lg font-medium text-white mb-4">Payment Methods</h3>
