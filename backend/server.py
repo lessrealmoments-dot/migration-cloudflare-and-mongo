@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Request, Response, BackgroundTasks, Query, Body
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Request, BackgroundTasks, Query, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse, FileResponse
 from dotenv import load_dotenv
@@ -13,9 +13,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import bcrypt
 from jose import JWTError, jwt
-import base64
 import shutil
-import httpx
 import secrets
 import string
 import asyncio
