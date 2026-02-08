@@ -113,6 +113,11 @@ const GalleryDetail = () => {
   // Video management state
   const [editingVideo, setEditingVideo] = useState(null);
   const [showVideoThumbnailCropper, setShowVideoThumbnailCropper] = useState(false);
+  // Photo health/repair state
+  const [flaggedPhotos, setFlaggedPhotos] = useState([]);
+  const [showFlaggedPhotosModal, setShowFlaggedPhotosModal] = useState(false);
+  const [repairingThumbnails, setRepairingThumbnails] = useState(false);
+  const [photoHealthStatus, setPhotoHealthStatus] = useState(null);
 
   // Section drag handlers
   const handleSectionDragStart = (e, section) => {
