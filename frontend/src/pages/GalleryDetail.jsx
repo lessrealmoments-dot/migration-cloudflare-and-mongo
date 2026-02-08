@@ -3053,6 +3053,204 @@ const GalleryDetail = () => {
         </div>
         )}
 
+        {/* Flagged/Problem Photos Section */}
+        {(flaggedPhotos.length > 0 || (photoHealthStatus && photoHealthStatus.total_issues > 0)) && (
+          <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-xl" data-testid="flagged-photos-section">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-lg font-semibold text-amber-800">
+                    {flaggedPhotos.length > 0 ? `${flaggedPhotos.length} Photo(s) Hidden from Gallery` : 'Photo Issues Detected'}
+                  </h3>
+                  <p className="text-sm text-amber-700 mt-1">
+                    {flaggedPhotos.length > 0 
+                      ? 'These photos are not visible to guests. They may have broken thumbnails or were manually hidden.'
+                      : `${photoHealthStatus?.total_issues || 0} photo(s) have thumbnail issues that may cause display problems.`
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRepairThumbnails}
+                  disabled={repairingThumbnails}
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50 transition-colors"
+                  data-testid="repair-thumbnails-btn"
+                >
+                  {repairingThumbnails ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Repairing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      Repair Thumbnails
+                    </>
+                  )}
+                </button>
+                {flaggedPhotos.length > 0 && (
+                  <button
+                    onClick={() => setShowFlaggedPhotosModal(true)}
+                    className="px-4 py-2 bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-sm font-medium transition-colors"
+                    data-testid="view-flagged-photos-btn"
+                  >
+                    View Hidden Photos
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Quick preview of flagged photos */}
+            {flaggedPhotos.length > 0 && (
+              <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
+                {flaggedPhotos.slice(0, 6).map(photo => (
+                  <div key={photo.id} className="relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 border-amber-300 bg-zinc-100">
+                    {photo.thumbnail_url ? (
+                      <img 
+                        src={`${BACKEND_URL}${photo.thumbnail_url}`} 
+                        alt="" 
+                        className="w-full h-full object-cover opacity-60"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="w-6 h-6 text-zinc-400" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <EyeOff className="w-5 h-5 text-amber-600" />
+                    </div>
+                  </div>
+                ))}
+                {flaggedPhotos.length > 6 && (
+                  <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-amber-200 flex items-center justify-center text-amber-800 font-medium text-sm">
+                    +{flaggedPhotos.length - 6}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Flagged Photos Modal */}
+        {showFlaggedPhotosModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" data-testid="flagged-photos-modal">
+            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col">
+              <div className="p-6 border-b border-zinc-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold">Hidden Photos ({flaggedPhotos.length})</h2>
+                    <p className="text-sm text-zinc-500 mt-1">
+                      These photos are hidden from your public gallery. Click "Show in Gallery" to make them visible again.
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => setShowFlaggedPhotosModal(false)}
+                    className="p-2 hover:bg-zinc-100 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6 overflow-y-auto flex-1">
+                {flaggedPhotos.length === 0 ? (
+                  <div className="text-center py-12 text-zinc-500">
+                    <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
+                    <p>No hidden photos! All photos are visible in your gallery.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {flaggedPhotos.map(photo => (
+                      <div key={photo.id} className="relative group">
+                        <div className="aspect-square rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200">
+                          {photo.thumbnail_medium_url || photo.thumbnail_url ? (
+                            <img 
+                              src={`${BACKEND_URL}${photo.thumbnail_medium_url || photo.thumbnail_url}`}
+                              alt={photo.original_filename || 'Photo'}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { 
+                                e.target.onerror = null; 
+                                e.target.src = ''; 
+                                e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center"><svg class="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ImageIcon className="w-8 h-8 text-zinc-400" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Photo info and actions overlay */}
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex flex-col items-center justify-center gap-2 p-2">
+                          <p className="text-white text-xs text-center truncate w-full px-2">
+                            {photo.original_filename || 'Unknown'}
+                          </p>
+                          <p className="text-amber-400 text-xs">
+                            {photo.flagged_reason?.startsWith('auto:') ? 'Auto-hidden (thumbnail issue)' : 'Manually hidden'}
+                          </p>
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => handleUnflagPhoto(photo.id)}
+                              className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium flex items-center gap-1"
+                            >
+                              <Eye className="w-3 h-3" />
+                              Show
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (window.confirm('Permanently delete this photo?')) {
+                                  handleDeletePhoto(photo.id);
+                                  fetchFlaggedPhotos();
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium flex items-center gap-1"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Status badge */}
+                        <div className="absolute top-2 left-2">
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            photo.auto_flagged 
+                              ? 'bg-amber-500 text-white' 
+                              : 'bg-zinc-700 text-white'
+                          }`}>
+                            {photo.auto_flagged ? 'Auto' : 'Manual'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex justify-between items-center">
+                <button
+                  onClick={handleRepairThumbnails}
+                  disabled={repairingThumbnails}
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                >
+                  {repairingThumbnails ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  Repair All Thumbnails
+                </button>
+                <button
+                  onClick={() => setShowFlaggedPhotosModal(false)}
+                  className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 rounded-lg text-sm font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Guest Photos Section */}
         {getGuestPhotos().length > 0 && (
           <div className="mt-12 pt-12 border-t border-zinc-200" data-testid="guest-photos-section">
