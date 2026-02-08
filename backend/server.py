@@ -1933,8 +1933,9 @@ async def get_effective_storage_quota(user: dict) -> int:
     """
     Calculate effective storage quota for a user based on:
     1. Override mode settings (if active)
-    2. Billing settings for paid plans
-    3. User-specific override (if set by admin)
+    2. Plan-specific settings from global toggles
+    3. Billing settings fallback for paid plans
+    4. User-specific override (if set by admin)
     Returns storage in bytes. -1 means unlimited.
     """
     # Check for user-specific storage quota override (set by admin)
@@ -1959,14 +1960,25 @@ async def get_effective_storage_quota(user: dict) -> int:
         except:
             pass
     
-    # For paid plans, use billing settings
+    # For paid plans, check global toggles first, then fall back to billing settings
     plan = user.get("plan", PLAN_FREE)
     if plan in [PLAN_STANDARD, PLAN_PRO]:
-        billing_settings = await get_billing_settings()
-        storage_gb = billing_settings.get("paid_storage_limit_gb", -1)
-        if storage_gb == -1:
-            return -1  # Unlimited
-        return storage_gb * 1024 * 1024 * 1024  # Convert GB to bytes
+        global_toggles = await get_global_feature_toggles()
+        plan_config = global_toggles.get(plan, {})
+        
+        if plan_config.get("storage_limit_gb") is not None:
+            # Use plan-specific storage from global toggles
+            storage_gb = plan_config.get("storage_limit_gb")
+            if storage_gb == -1:
+                return -1  # Unlimited
+            return int(storage_gb * 1024 * 1024 * 1024)  # Convert GB to bytes
+        else:
+            # Fall back to billing settings
+            billing_settings = await get_billing_settings()
+            storage_gb = billing_settings.get("paid_storage_limit_gb", -1)
+            if storage_gb == -1:
+                return -1  # Unlimited
+            return storage_gb * 1024 * 1024 * 1024  # Convert GB to bytes
     
     # Default for free users
     return DEFAULT_STORAGE_QUOTA
