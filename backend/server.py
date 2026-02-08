@@ -4372,22 +4372,15 @@ async def upload_contributor_photo(
     with open(file_path, 'wb') as f:
         shutil.copyfileobj(file.file, f)
     
-    # Generate thumbnail
-    thumbnail_filename = None
-    try:
-        thumbnail_filename = await generate_thumbnail(file_path, filename)
-    except Exception as e:
-        logger.error(f"Failed to generate thumbnail: {e}")
-    
-    # Create photo document
+    # Create photo document with generated ID first
     photo_id = str(uuid.uuid4())
+    
     photo = {
         "id": photo_id,
         "gallery_id": gallery["id"],
         "filename": filename,
         "original_filename": file.filename,
         "url": f"/api/photos/serve/{filename}",
-        "thumbnail_url": f"/api/photos/{photo_id}/thumbnail" if thumbnail_filename else None,
         "uploaded_by": "contributor",
         "contributor_name": company_name.strip(),
         "section_id": section["id"],
@@ -4395,8 +4388,39 @@ async def upload_contributor_photo(
         "order": photo_count,
         "is_highlight": False,
         "is_hidden": False,
-        "is_flagged": False
+        "is_flagged": False,
+        "auto_flagged": False
     }
+    
+    # Generate thumbnails with retry logic - auto-flag if all retries fail
+    thumbnail_failed = False
+    try:
+        thumb_small = generate_thumbnail(file_path, photo_id, 'small')
+        thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
+        
+        if thumb_small:
+            photo["thumbnail_url"] = thumb_small
+        else:
+            thumbnail_failed = True
+            logger.warning(f"Small thumbnail generation failed for contributor photo {photo_id} after retries")
+            
+        if thumb_medium:
+            photo["thumbnail_medium_url"] = thumb_medium
+        else:
+            thumbnail_failed = True
+            logger.warning(f"Medium thumbnail generation failed for contributor photo {photo_id} after retries")
+            
+    except Exception as e:
+        thumbnail_failed = True
+        logger.warning(f"Thumbnail generation exception for contributor photo {photo_id}: {e}")
+    
+    # Auto-flag photo if thumbnails failed - it will be hidden from public gallery
+    if thumbnail_failed:
+        photo["is_flagged"] = True
+        photo["auto_flagged"] = True
+        photo["flagged_at"] = datetime.now(timezone.utc).isoformat()
+        photo["flagged_reason"] = "auto:thumbnail_generation_failed"
+        logger.info(f"Auto-flagged contributor photo {photo_id} due to thumbnail generation failure")
     
     await db.photos.insert_one(photo)
     
