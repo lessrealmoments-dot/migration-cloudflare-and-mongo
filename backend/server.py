@@ -1275,6 +1275,7 @@ class Photo(BaseModel):
     is_highlight: bool = False
     is_hidden: bool = False
     is_flagged: bool = False
+    auto_flagged: bool = False  # True if system auto-flagged (e.g., thumbnail failure)
     flagged_at: Optional[str] = None
     flagged_reason: Optional[str] = None
 
