@@ -284,7 +284,16 @@ const LandingPage = ({ user }) => {
               {renderHeroTitle()}
             </h1>
             <p className="text-base sm:text-lg md:text-xl font-light leading-relaxed text-zinc-600 mb-8 sm:mb-12 max-w-xl mx-auto lg:mx-0">
-              {config.hero_subtitle}
+              {/* Format subtitle with line breaks for phrases ending with periods */}
+              {config.hero_subtitle && config.hero_subtitle.includes('. ') ? (
+                config.hero_subtitle.split('. ').map((phrase, index, arr) => (
+                  <span key={index} className="block">
+                    {phrase}{index < arr.length - 1 ? '.' : ''}
+                  </span>
+                ))
+              ) : (
+                config.hero_subtitle
+              )}
             </p>
             <button
               data-testid="hero-get-started-button"
