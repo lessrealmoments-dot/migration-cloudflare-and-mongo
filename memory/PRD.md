@@ -8,6 +8,32 @@ Build a photo-sharing application for event photographers with:
 - **Complete subscription system with plans, credits, billing, and pricing page**
 - **Professional, cinematic public gallery experience**
 
+## Admin Storage & Expiration Controls (NEW - December 2025) ✅
+
+### Override Mode Controls
+Each override mode now has configurable:
+- **Storage Limit**: Unlimited, 10GB, 20GB, 30GB, 50GB, 100GB, 200GB, 500GB
+- **Gallery Expiration**: 1-6 months, 1 year, or Never (100 years)
+
+Default settings per mode:
+| Mode | Storage | Gallery Expiration |
+|------|---------|-------------------|
+| Founders Circle | Unlimited | Never (100 years) |
+| Early Partner Beta | 50 GB | 6 Months |
+| Comped Pro | 50 GB | 6 Months |
+| Comped Standard | 20 GB | 3 Months |
+| Enterprise Access | Unlimited | Never (100 years) |
+
+### Universal Paid Plan Settings
+Admin can set global defaults for Standard and Pro plans:
+- **Gallery Expiration**: 1, 2, 3, 4, 5, or 6 months
+- **Storage Allocation**: 10GB increments up to 500GB, or Unlimited
+
+### UI Updates
+- Dashboard shows "Never expires" (green) for galleries with >36000 days remaining
+- Feature Toggles page includes Storage Limit and Gallery Expiration dropdowns for each Override Mode
+- Billing tab includes "Paid Plan Settings (Universal)" section
+
 ## Public Gallery Redesign (NEW - February 2026) ✅
 
 ### Design Philosophy
@@ -17,7 +43,7 @@ Created a premium, photographer-worthy gallery experience that impresses guests 
 - **Bento Grid Highlights**: Featured photos displayed in an asymmetric magazine layout
 - **Animated Photo Cards**: Smooth reveal animations as users scroll
 - **Elegant Sections**: Each section with subtle headers and themed styling
-- **Guest Upload Experience**: Redesigned upload section with camera icon and call-to-action
+- **Guest Upload Experience**: Clean modal-based upload from Hero CTA and navbar
 - **Professional Footer**: Heartfelt thank-you message with photographer credit
 
 ### Key UI Components
@@ -28,7 +54,7 @@ Created a premium, photographer-worthy gallery experience that impresses guests 
 | Bento Grid | 4-column asymmetric layout for highlight photos |
 | AnimatedPhotoCard | Staggered fade-in animation, hover zoom, download overlay |
 | Section Headers | Centered titles with accent color labels and photo counts |
-| Guest Upload | Full-width call-to-action with subtle background |
+| Upload Modal | Unified upload experience via Hero button or Navbar |
 | Footer | Thank you message with heart icon and branding |
 
 ### Framer Motion Animations
