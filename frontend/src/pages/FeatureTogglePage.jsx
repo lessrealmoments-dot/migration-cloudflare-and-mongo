@@ -155,13 +155,34 @@ const FeatureTogglePage = () => {
         enterprise_access: { storage_limit_gb: -1, gallery_expiration_days: 36500 }
       };
       
+      // Default settings for payment plans
+      const defaultPlanSettings = {
+        free: { storage_limit_gb: 0.5, gallery_expiration_days: 1 }, // 500MB, 1 day (demo)
+        standard: { storage_limit_gb: -1, gallery_expiration_days: 180 }, // Unlimited, 6 months
+        pro: { storage_limit_gb: -1, gallery_expiration_days: 180 } // Unlimited, 6 months
+      };
+      
       const data = response.data;
+      
+      // Merge override modes with defaults
       if (data.override_modes) {
         Object.keys(data.override_modes).forEach(mode => {
           if (defaultModeSettings[mode]) {
             data.override_modes[mode].features = {
               ...defaultModeSettings[mode],
               ...data.override_modes[mode].features
+            };
+          }
+        });
+      }
+      
+      // Merge payment plans with defaults
+      if (data.payment_plans) {
+        Object.keys(data.payment_plans).forEach(plan => {
+          if (defaultPlanSettings[plan]) {
+            data.payment_plans[plan].features = {
+              ...defaultPlanSettings[plan],
+              ...data.payment_plans[plan].features
             };
           }
         });
