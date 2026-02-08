@@ -161,6 +161,9 @@ const PublicGallery = () => {
   // Removed guestUploadExpanded - using modal-based upload instead
   const [showUploadModal, setShowUploadModal] = useState(false); // Modal for quick upload
   const [showDownloadAllModal, setShowDownloadAllModal] = useState(false);
+  const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+  const [downloadInfo, setDownloadInfo] = useState(null);
+  const [downloadingSection, setDownloadingSection] = useState(null);
   
   // Scroll tracking for parallax effects
   const heroRef = useRef(null);
