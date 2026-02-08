@@ -664,6 +664,95 @@ const GalleryDetail = () => {
     }
   };
 
+  // Fetch flagged photos for this gallery
+  const fetchFlaggedPhotos = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/galleries/${id}/flagged-photos`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFlaggedPhotos(response.data.photos || []);
+    } catch (error) {
+      console.error('Failed to fetch flagged photos:', error);
+    }
+  };
+
+  // Check photo health status
+  const checkPhotoHealth = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/galleries/${id}/photos/health`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPhotoHealthStatus(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to check photo health:', error);
+      return null;
+    }
+  };
+
+  // Repair all thumbnails in the gallery
+  const handleRepairThumbnails = async () => {
+    setRepairingThumbnails(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/galleries/${id}/photos/repair-thumbnails`, 
+        { force_regenerate: false },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      const result = response.data;
+      if (result.repaired > 0) {
+        toast.success(`Repaired ${result.repaired} photo(s)! ${result.unflagged > 0 ? `${result.unflagged} photo(s) restored to gallery.` : ''}`);
+        // Refresh photos and flagged photos
+        fetchGalleryData();
+        fetchFlaggedPhotos();
+      } else if (result.already_valid > 0) {
+        toast.success('All photos are already healthy!');
+      } else if (result.failed > 0) {
+        toast.warning(`${result.failed} photo(s) could not be repaired.`);
+      }
+      
+      // Refresh health status
+      checkPhotoHealth();
+    } catch (error) {
+      toast.error('Failed to repair thumbnails');
+    } finally {
+      setRepairingThumbnails(false);
+    }
+  };
+
+  // Unflag a single photo
+  const handleUnflagPhoto = async (photoId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/photos/${photoId}/unflag`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Photo restored to gallery');
+      fetchFlaggedPhotos();
+      fetchGalleryData();
+    } catch (error) {
+      toast.error('Failed to unflag photo');
+    }
+  };
+
+  // Flag a single photo (hide from gallery)
+  const handleFlagPhoto = async (photoId, reason = 'manual') => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/photos/${photoId}/flag?reason=${encodeURIComponent(reason)}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Photo hidden from gallery');
+      fetchFlaggedPhotos();
+      fetchGalleryData();
+    } catch (error) {
+      toast.error('Failed to flag photo');
+    }
+  };
+
   const handleCoverPhotoUpload = async (file) => {
     try {
       const token = localStorage.getItem('token');
