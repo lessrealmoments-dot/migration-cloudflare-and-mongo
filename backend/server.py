@@ -1929,6 +1929,48 @@ async def get_billing_settings() -> dict:
         "paid_storage_limit_gb": settings.get("paid_storage_limit_gb", -1)
     }
 
+async def get_effective_storage_quota(user: dict) -> int:
+    """
+    Calculate effective storage quota for a user based on:
+    1. Override mode settings (if active)
+    2. Billing settings for paid plans
+    3. User-specific override (if set by admin)
+    Returns storage in bytes. -1 means unlimited.
+    """
+    # Check for user-specific storage quota override (set by admin)
+    if user.get("storage_quota_override"):
+        return user.get("storage_quota_override")
+    
+    override_mode = user.get("override_mode")
+    override_expires = user.get("override_expires")
+    
+    # Check if override mode is active and not expired
+    if override_mode and override_expires:
+        try:
+            expires = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
+            if expires > datetime.now(timezone.utc):
+                # Get mode-specific storage limit
+                global_toggles = await get_global_feature_toggles()
+                if override_mode in global_toggles:
+                    storage_gb = global_toggles[override_mode].get("storage_limit_gb", 50)
+                    if storage_gb == -1:
+                        return -1  # Unlimited
+                    return storage_gb * 1024 * 1024 * 1024  # Convert GB to bytes
+        except:
+            pass
+    
+    # For paid plans, use billing settings
+    plan = user.get("plan", PLAN_FREE)
+    if plan in [PLAN_STANDARD, PLAN_PRO]:
+        billing_settings = await get_billing_settings()
+        storage_gb = billing_settings.get("paid_storage_limit_gb", -1)
+        if storage_gb == -1:
+            return -1  # Unlimited
+        return storage_gb * 1024 * 1024 * 1024  # Convert GB to bytes
+    
+    # Default for free users
+    return DEFAULT_STORAGE_QUOTA
+
 # ============================================
 # NOTIFICATION HELPER FUNCTIONS
 # ============================================
