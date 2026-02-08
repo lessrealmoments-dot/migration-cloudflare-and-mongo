@@ -587,6 +587,11 @@ const PublicGallery = () => {
     return fotoshareVideos.filter(v => v.section_id === sectionId);
   };
 
+  // Get pCloud photos by section
+  const getPcloudPhotosBySection = (sectionId) => {
+    return pcloudPhotos.filter(p => p.section_id === sectionId);
+  };
+
   // Get highlighted photos (shown in grid)
   const getHighlightPhotos = () => {
     return photos.filter(p => p.is_highlight && (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor'));
