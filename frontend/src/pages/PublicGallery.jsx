@@ -517,6 +517,118 @@ const PublicGallery = () => {
     }
   };
 
+  // Fetch download info (sections, photo counts, chunks)
+  const fetchDownloadInfo = async () => {
+    try {
+      const response = await axios.post(
+        `${API}/public/gallery/${shareLink}/download-info`,
+        { password: downloadAllPassword || null }
+      );
+      setDownloadInfo(response.data);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        // Password required but not provided or invalid
+        setDownloadInfo(null);
+      } else {
+        console.error('Failed to fetch download info:', error);
+      }
+    }
+  };
+
+  // Download a specific section or all photos
+  const handleSectionDownload = async (sectionId = null, sectionTitle = 'All Photos') => {
+    if (downloadingSection) return;
+    
+    setDownloadingSection(sectionId || 'all');
+    const toastId = `download-${sectionId || 'all'}`;
+    
+    try {
+      // First get download info to check for chunks
+      const infoResponse = await axios.post(
+        `${API}/public/gallery/${shareLink}/download-info`,
+        { password: downloadAllPassword || null, section_id: sectionId }
+      );
+      
+      const { chunk_count, total_photos, sections } = infoResponse.data;
+      
+      if (total_photos === 0) {
+        toast.error('No photos available for download', { id: toastId });
+        return;
+      }
+      
+      // Download each chunk
+      for (let chunk = 1; chunk <= chunk_count; chunk++) {
+        if (chunk_count > 1) {
+          toast.loading(`Downloading part ${chunk} of ${chunk_count}...`, { id: toastId });
+        } else {
+          toast.loading(`Downloading ${total_photos} photos...`, { id: toastId });
+        }
+        
+        const response = await axios.post(
+          `${API}/public/gallery/${shareLink}/download-section?chunk=${chunk}`,
+          { password: downloadAllPassword || null, section_id: sectionId },
+          { 
+            responseType: 'blob',
+            onDownloadProgress: (progressEvent) => {
+              const percent = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+              if (percent < 100) {
+                const chunkText = chunk_count > 1 ? ` (Part ${chunk}/${chunk_count})` : '';
+                toast.loading(`Downloading${chunkText}... ${percent}%`, { id: toastId });
+              }
+            }
+          }
+        );
+        
+        // Create blob and trigger download
+        const blob = new Blob([response.data], { type: 'application/zip' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Get filename from header
+        const contentDisposition = response.headers['content-disposition'];
+        let filename = `${gallery?.title || 'gallery'}_${sectionTitle.replace(/\s+/g, '_')}.zip`;
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (match && match[1]) {
+            filename = match[1].replace(/['"]/g, '');
+          }
+        }
+        
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+        
+        // Small delay between chunks
+        if (chunk < chunk_count) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      const successMsg = chunk_count > 1 
+        ? `Downloaded ${total_photos} photos in ${chunk_count} parts!`
+        : `Downloaded ${total_photos} photos!`;
+      toast.success(successMsg, { id: toastId });
+      setShowDownloadDropdown(false);
+      
+    } catch (error) {
+      console.error('Section download error:', error);
+      if (error.response?.status === 401) {
+        toast.error('Invalid download password', { id: toastId });
+        setShowDownloadAllModal(true);
+      } else {
+        toast.error('Download failed. Please try again.', { id: toastId });
+      }
+    } finally {
+      setDownloadingSection(null);
+    }
+  };
+
   const getPhotosBySection = (sectionId) => {
     return photos.filter(p => p.section_id === sectionId && (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor'));
   };
