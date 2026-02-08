@@ -315,6 +315,8 @@ const FeatureTogglePage = () => {
     const enabledCount = Object.entries(features).filter(([k, v]) => typeof v === 'boolean' && v).length;
     const totalCount = Object.keys(FEATURE_INFO).length;
     const isOverrideMode = section === 'override_modes';
+    const isPaidPlan = section === 'payment_plans' && (modeKey === 'standard' || modeKey === 'pro');
+    const showStorageControls = isOverrideMode || isPaidPlan;
     
     return (
       <div 
@@ -340,9 +342,14 @@ const FeatureTogglePage = () => {
             renderFeatureRow(section, modeKey, featureKey)
           )}
           
-          {/* Storage and Expiration controls for Override Modes only */}
-          {isOverrideMode && (
+          {/* Storage and Expiration controls for Override Modes AND Paid Plans */}
+          {showStorageControls && (
             <div className="mt-4 pt-4 border-t border-zinc-700 space-y-3">
+              {isPaidPlan && (
+                <div className="text-xs text-amber-400 bg-amber-400/10 px-3 py-2 rounded-lg mb-3">
+                  <strong>Universal Settings:</strong> These apply to all {info.label} plan users
+                </div>
+              )}
               <div className="flex items-center justify-between py-2 px-3 bg-zinc-700/30 rounded-lg">
                 <div className="flex items-center gap-3">
                   <HardDrive className="w-4 h-4 text-zinc-400" />
