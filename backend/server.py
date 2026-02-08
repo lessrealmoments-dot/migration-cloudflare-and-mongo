@@ -1408,14 +1408,14 @@ class PCloudPhoto(BaseModel):
     gallery_id: str
     section_id: str
     pcloud_code: str  # The share link code
-    fileid: int  # pCloud file ID
+    fileid: str  # pCloud file ID (stored as string to avoid MongoDB int overflow)
     name: str  # Original filename
     size: int = 0  # File size in bytes
     width: Optional[int] = None
     height: Optional[int] = None
     contenttype: str = "image/jpeg"
     supplier_name: Optional[str] = None  # Supplier folder name
-    hash: Optional[int] = None  # pCloud file hash
+    hash: Optional[str] = None  # pCloud file hash (stored as string)
     created_at_source: Optional[str] = None
     order: int = 0
     synced_at: str  # When we synced this photo
