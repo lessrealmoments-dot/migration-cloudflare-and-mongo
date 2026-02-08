@@ -4695,9 +4695,12 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
     if not file.filename:
         raise HTTPException(status_code=400, detail="File must have a filename")
     
-    # Check storage quota
+    # Get full user data for storage quota calculation
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    
+    # Check storage quota using effective quota (considers override modes and billing settings)
     storage_used = current_user.get("storage_used", 0)
-    storage_quota = current_user.get("storage_quota", DEFAULT_STORAGE_QUOTA)
+    storage_quota = await get_effective_storage_quota(user or current_user)
     
     # Read file content with size limit (50MB max per file)
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
