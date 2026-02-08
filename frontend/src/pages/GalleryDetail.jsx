@@ -2315,6 +2315,18 @@ const GalleryDetail = () => {
                   <Camera className="w-4 h-4 text-pink-500" />
                   <span className="text-sm">360 Booth</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sectionType"
+                    value="pcloud"
+                    checked={newSectionType === 'pcloud'}
+                    onChange={() => setNewSectionType('pcloud')}
+                    className="accent-blue-500"
+                  />
+                  <Cloud className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm">pCloud</span>
+                </label>
               </div>
               
               {/* Fotoshare URL input - only shown when fotoshare type selected */}
@@ -2338,6 +2350,27 @@ const GalleryDetail = () => {
                 </div>
               )}
               
+              {/* pCloud URL input - only shown when pcloud type selected */}
+              {newSectionType === 'pcloud' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <label className="flex items-center gap-2 text-sm text-blue-700 font-medium mb-2">
+                    <Cloud className="w-4 h-4" />
+                    pCloud Share Link
+                  </label>
+                  <input
+                    type="url"
+                    data-testid="pcloud-url-input"
+                    value={newPcloudUrl}
+                    onChange={(e) => setNewPcloudUrl(e.target.value)}
+                    placeholder="https://u.pcloud.link/publink/show?code=..."
+                    className="flex h-10 w-full rounded-sm border border-blue-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-blue-600 mt-1">
+                    Paste your pCloud share link. Photos from supplier subfolders will be imported automatically.
+                  </p>
+                </div>
+              )}
+              
               <div className="flex gap-3">
                 <button
                   type="submit"
@@ -2348,7 +2381,7 @@ const GalleryDetail = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowSectionForm(false); setNewSectionType('photo'); setNewFotoshareUrl(''); }}
+                  onClick={() => { setShowSectionForm(false); setNewSectionType('photo'); setNewFotoshareUrl(''); setNewPcloudUrl(''); }}
                   className="border border-input h-10 px-6 rounded-sm"
                 >
                   Cancel
