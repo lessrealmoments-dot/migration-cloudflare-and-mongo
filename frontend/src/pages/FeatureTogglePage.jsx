@@ -145,7 +145,29 @@ const FeatureTogglePage = () => {
       const response = await axios.get(`${API}/admin/global-feature-toggles`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setToggles(response.data);
+      
+      // Merge with default storage/expiration values for override modes
+      const defaultModeSettings = {
+        founders_circle: { storage_limit_gb: -1, gallery_expiration_days: 36500 },
+        early_partner_beta: { storage_limit_gb: 50, gallery_expiration_days: 180 },
+        comped_pro: { storage_limit_gb: 50, gallery_expiration_days: 180 },
+        comped_standard: { storage_limit_gb: 20, gallery_expiration_days: 90 },
+        enterprise_access: { storage_limit_gb: -1, gallery_expiration_days: 36500 }
+      };
+      
+      const data = response.data;
+      if (data.override_modes) {
+        Object.keys(data.override_modes).forEach(mode => {
+          if (defaultModeSettings[mode]) {
+            data.override_modes[mode].features = {
+              ...defaultModeSettings[mode],
+              ...data.override_modes[mode].features
+            };
+          }
+        });
+      }
+      
+      setToggles(data);
     } catch (error) {
       toast.error('Failed to load feature toggles');
     } finally {
