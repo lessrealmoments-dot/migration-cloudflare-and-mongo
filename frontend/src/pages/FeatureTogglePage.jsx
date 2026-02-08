@@ -45,6 +45,30 @@ const FEATURE_INFO = {
   }
 };
 
+// Storage options in GB
+const STORAGE_OPTIONS = [
+  { value: -1, label: 'Unlimited' },
+  { value: 10, label: '10 GB' },
+  { value: 20, label: '20 GB' },
+  { value: 30, label: '30 GB' },
+  { value: 50, label: '50 GB' },
+  { value: 100, label: '100 GB' },
+  { value: 200, label: '200 GB' },
+  { value: 500, label: '500 GB' }
+];
+
+// Gallery expiration options in days
+const EXPIRATION_OPTIONS = [
+  { value: 30, label: '1 Month' },
+  { value: 60, label: '2 Months' },
+  { value: 90, label: '3 Months' },
+  { value: 120, label: '4 Months' },
+  { value: 150, label: '5 Months' },
+  { value: 180, label: '6 Months' },
+  { value: 365, label: '1 Year' },
+  { value: 36500, label: 'Never (100 years)' }
+];
+
 // Mode/Plan display info
 const MODE_INFO = {
   founders_circle: {
