@@ -3480,16 +3480,55 @@ async def delete_gallery(gallery_id: str, current_user: dict = Depends(get_curre
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(1000)
+    # Track total storage freed
+    total_storage_freed = 0
+    
+    # Delete all photo files and thumbnails
+    photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(None)
     for photo in photos:
+        # Delete original file
         file_path = UPLOAD_DIR / photo["filename"]
         if file_path.exists():
+            total_storage_freed += file_path.stat().st_size
             file_path.unlink()
+        
+        # Delete thumbnails (small and medium)
+        photo_id = photo.get("id", "")
+        for size in ["small", "medium"]:
+            thumb_path = THUMBNAILS_DIR / f"{photo_id}_{size}.jpg"
+            if thumb_path.exists():
+                try:
+                    thumb_path.unlink()
+                except:
+                    pass
     
+    # Delete cover photo if exists
+    if gallery.get("cover_photo_url"):
+        cover_filename = gallery["cover_photo_url"].split('/')[-1]
+        cover_path = UPLOAD_DIR / cover_filename
+        if cover_path.exists():
+            try:
+                total_storage_freed += cover_path.stat().st_size
+                cover_path.unlink()
+            except:
+                pass
+    
+    # Delete all database records for this gallery
     await db.photos.delete_many({"gallery_id": gallery_id})
+    await db.gallery_videos.delete_many({"gallery_id": gallery_id})
+    await db.fotoshare_videos.delete_many({"gallery_id": gallery_id})
     await db.galleries.delete_one({"id": gallery_id})
     
-    return {"message": "Gallery deleted"}
+    # Update user's storage used
+    if total_storage_freed > 0:
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$inc": {"storage_used": -total_storage_freed}}
+        )
+    
+    logger.info(f"Deleted gallery {gallery_id}, freed {total_storage_freed / (1024*1024):.2f}MB storage")
+    
+    return {"message": "Gallery deleted", "storage_freed": total_storage_freed}
 
 @api_router.post("/galleries/{gallery_id}/cover-photo")
 async def upload_cover_photo(gallery_id: str, file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
