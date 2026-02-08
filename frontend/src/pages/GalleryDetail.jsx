@@ -466,6 +466,8 @@ const GalleryDetail = () => {
     fetchGoogleDriveStatus();
     fetchSubscriptionStatus();
     fetchFotoshareVideos();
+    fetchFlaggedPhotos();
+    checkPhotoHealth();
   }, [id]);
 
   const fetchSubscriptionStatus = async () => {
