@@ -5787,6 +5787,192 @@ async def download_gallery_chunk(gallery_id: str, chunk_number: int, current_use
         }
     )
 
+# ============ SECTION-BASED DOWNLOAD (Guest & Photographer) ============
+
+# Max size per zip chunk (250MB as requested)
+SECTION_ZIP_CHUNK_SIZE = 250 * 1024 * 1024
+
+class SectionDownloadRequest(BaseModel):
+    password: Optional[str] = None
+    section_id: Optional[str] = None  # None means download all
+
+@api_router.post("/public/gallery/{share_link}/download-info")
+async def get_public_download_info(share_link: str, request: SectionDownloadRequest):
+    """Get download info for public gallery - sections, photo counts, and chunk info"""
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Verify password if download requires it
+    if gallery.get("download_all_password"):
+        if not request.password or not verify_password(request.password, gallery["download_all_password"]):
+            raise HTTPException(status_code=401, detail="Invalid download password")
+    
+    # Get all visible photos (not hidden, not flagged)
+    photo_filter = {
+        "gallery_id": gallery["id"],
+        "is_hidden": {"$ne": True},
+        "is_flagged": {"$ne": True}
+    }
+    
+    if request.section_id:
+        photo_filter["section_id"] = request.section_id
+    
+    photos = await db.photos.find(photo_filter, {"_id": 0}).to_list(None)
+    
+    # Get sections for the gallery
+    sections = await db.sections.find({"gallery_id": gallery["id"]}, {"_id": 0}).to_list(None)
+    sections_dict = {s["id"]: s for s in sections}
+    
+    # Calculate chunks based on 250MB limit
+    chunks = []
+    current_chunk = []
+    current_chunk_size = 0
+    chunk_number = 1
+    
+    for photo in photos:
+        file_path = UPLOAD_DIR / photo["filename"]
+        if file_path.exists():
+            file_size = file_path.stat().st_size
+            
+            if current_chunk_size + file_size > SECTION_ZIP_CHUNK_SIZE and current_chunk:
+                chunks.append({
+                    "chunk_number": chunk_number,
+                    "photo_count": len(current_chunk),
+                    "size_bytes": current_chunk_size,
+                    "size_mb": round(current_chunk_size / (1024 * 1024), 1)
+                })
+                chunk_number += 1
+                current_chunk = []
+                current_chunk_size = 0
+            
+            current_chunk.append(photo["id"])
+            current_chunk_size += file_size
+    
+    if current_chunk:
+        chunks.append({
+            "chunk_number": chunk_number,
+            "photo_count": len(current_chunk),
+            "size_bytes": current_chunk_size,
+            "size_mb": round(current_chunk_size / (1024 * 1024), 1)
+        })
+    
+    # Build section info with photo counts
+    section_info = []
+    for section in sorted(sections, key=lambda s: s.get("order", 0)):
+        section_photos = [p for p in photos if p.get("section_id") == section["id"]]
+        if section_photos:
+            section_size = sum(
+                (UPLOAD_DIR / p["filename"]).stat().st_size 
+                for p in section_photos 
+                if (UPLOAD_DIR / p["filename"]).exists()
+            )
+            section_info.append({
+                "id": section["id"],
+                "title": section.get("title", "Untitled"),
+                "photo_count": len(section_photos),
+                "size_mb": round(section_size / (1024 * 1024), 1)
+            })
+    
+    total_size = sum(c["size_bytes"] for c in chunks)
+    
+    return {
+        "gallery_id": gallery["id"],
+        "gallery_title": gallery.get("title", "Gallery"),
+        "total_photos": len(photos),
+        "total_size_mb": round(total_size / (1024 * 1024), 1),
+        "chunk_count": len(chunks),
+        "chunks": chunks,
+        "sections": section_info
+    }
+
+@api_router.post("/public/gallery/{share_link}/download-section")
+async def download_section(share_link: str, request: SectionDownloadRequest, chunk: int = 1):
+    """Download photos from a specific section or all photos, with chunking support"""
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Verify password if required
+    if gallery.get("download_all_password"):
+        if not request.password or not verify_password(request.password, gallery["download_all_password"]):
+            raise HTTPException(status_code=401, detail="Invalid download password")
+    
+    # Build photo filter - only visible photos
+    photo_filter = {
+        "gallery_id": gallery["id"],
+        "is_hidden": {"$ne": True},
+        "is_flagged": {"$ne": True}
+    }
+    
+    section_title = "All_Photos"
+    if request.section_id:
+        photo_filter["section_id"] = request.section_id
+        section = await db.sections.find_one({"id": request.section_id}, {"_id": 0})
+        if section:
+            section_title = section.get("title", "Section").replace(" ", "_").replace("/", "-")
+    
+    photos = await db.photos.find(photo_filter, {"_id": 0}).to_list(None)
+    
+    if not photos:
+        raise HTTPException(status_code=404, detail="No photos found")
+    
+    # Organize into chunks
+    chunks = []
+    current_chunk = []
+    current_chunk_size = 0
+    
+    for photo in photos:
+        file_path = UPLOAD_DIR / photo["filename"]
+        if file_path.exists():
+            file_size = file_path.stat().st_size
+            
+            if current_chunk_size + file_size > SECTION_ZIP_CHUNK_SIZE and current_chunk:
+                chunks.append(current_chunk)
+                current_chunk = []
+                current_chunk_size = 0
+            
+            current_chunk.append(photo)
+            current_chunk_size += file_size
+    
+    if current_chunk:
+        chunks.append(current_chunk)
+    
+    # Validate chunk number
+    if chunk < 1 or chunk > len(chunks):
+        raise HTTPException(status_code=404, detail=f"Chunk {chunk} not found. Download has {len(chunks)} chunks.")
+    
+    # Get the requested chunk
+    chunk_photos = chunks[chunk - 1]
+    
+    # Create zip file
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for photo in chunk_photos:
+            file_path = UPLOAD_DIR / photo["filename"]
+            if file_path.exists():
+                archive_name = photo.get("original_filename", photo["filename"])
+                zip_file.write(file_path, archive_name)
+    
+    zip_buffer.seek(0)
+    
+    # Create filename
+    safe_gallery = gallery.get('title', 'Gallery').replace(' ', '_').replace('/', '-')
+    if len(chunks) > 1:
+        filename = f"{safe_gallery}_{section_title}_part{chunk}_of_{len(chunks)}.zip"
+    else:
+        filename = f"{safe_gallery}_{section_title}.zip"
+    
+    return StreamingResponse(
+        iter([zip_buffer.getvalue()]),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
+    )
+
 import mimetypes
 
 # Initialize mimetypes
