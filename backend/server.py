@@ -3179,11 +3179,11 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     # Override modes: Use mode-specific gallery_expiration_days
     # Paid plans: Use billing settings (paid_gallery_expiration_months)
     billing_settings = await get_billing_settings()
-    mode_features = await get_mode_features()
+    global_toggles = await get_global_feature_toggles()
     
-    if override_mode and override_mode in mode_features:
+    if override_mode and override_mode in global_toggles:
         # Use override mode settings
-        mode_config = mode_features[override_mode]
+        mode_config = global_toggles[override_mode]
         gallery_expiration_days = mode_config.get("gallery_expiration_days", 180)
         auto_delete_date = (created_at + timedelta(days=gallery_expiration_days)).isoformat()
     elif is_demo:
