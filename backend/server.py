@@ -5235,8 +5235,39 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
         "uploaded_by": "guest",
         "section_id": None,
         "file_size": file_size,
-        "uploaded_at": datetime.now(timezone.utc).isoformat()
+        "uploaded_at": datetime.now(timezone.utc).isoformat(),
+        "is_flagged": False,
+        "is_hidden": False,
+        "auto_flagged": False
     }
+    
+    # Generate thumbnails with retry logic - auto-flag if all retries fail
+    thumbnail_failed = False
+    try:
+        thumb_small = generate_thumbnail(file_path, photo_id, 'small')
+        thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
+        
+        if thumb_small:
+            photo_doc["thumbnail_url"] = thumb_small
+        else:
+            thumbnail_failed = True
+            
+        if thumb_medium:
+            photo_doc["thumbnail_medium_url"] = thumb_medium
+        else:
+            thumbnail_failed = True
+            
+    except Exception as e:
+        thumbnail_failed = True
+        logger.warning(f"Guest upload thumbnail generation exception for {photo_id}: {e}")
+    
+    # Auto-flag photo if thumbnails failed
+    if thumbnail_failed:
+        photo_doc["is_flagged"] = True
+        photo_doc["auto_flagged"] = True
+        photo_doc["flagged_at"] = datetime.now(timezone.utc).isoformat()
+        photo_doc["flagged_reason"] = "auto:thumbnail_generation_failed"
+        logger.info(f"Auto-flagged guest photo {photo_id} due to thumbnail generation failure")
     
     try:
         await db.photos.insert_one(photo_doc)
