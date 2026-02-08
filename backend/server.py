@@ -3174,16 +3174,24 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         except:
             pass
     
-    # Set auto-delete date based on plan
+    # Set auto-delete date based on plan and settings
     # Free/Demo: 6 hours
-    # Paid plans: 6 months
-    # Unlimited token users: Never (set to 100 years)
-    if has_unlimited_credits:
-        auto_delete_date = (created_at + timedelta(days=36500)).isoformat()  # ~100 years
+    # Override modes: Use mode-specific gallery_expiration_days
+    # Paid plans: Use billing settings (paid_gallery_expiration_months)
+    billing_settings = await get_billing_settings()
+    mode_features = await get_mode_features()
+    
+    if override_mode and override_mode in mode_features:
+        # Use override mode settings
+        mode_config = mode_features[override_mode]
+        gallery_expiration_days = mode_config.get("gallery_expiration_days", 180)
+        auto_delete_date = (created_at + timedelta(days=gallery_expiration_days)).isoformat()
     elif is_demo:
         auto_delete_date = (created_at + timedelta(hours=FREE_GALLERY_EXPIRATION_HOURS)).isoformat()
     else:
-        auto_delete_date = (created_at + timedelta(days=GALLERY_EXPIRATION_DAYS)).isoformat()
+        # Paid plans - use universal billing settings
+        expiration_months = billing_settings.get("paid_gallery_expiration_months", 6)
+        auto_delete_date = (created_at + timedelta(days=expiration_months * 30)).isoformat()
     
     # Demo gallery feature expiry (6 hours) - only for free plan
     demo_features_expire = None
