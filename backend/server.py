@@ -325,6 +325,184 @@ async def auto_refresh_fotoshare_sections():
         # Check every 5 minutes for sections that need refreshing
         await asyncio.sleep(300)
 
+# ============ pCloud Integration ============
+
+def extract_pcloud_code(url: str) -> Optional[str]:
+    """Extract the share code from various pCloud URL formats"""
+    patterns = [
+        r'code=([a-zA-Z0-9]+)',  # ?code=xxx or &code=xxx
+        r'publink/show\?code=([a-zA-Z0-9]+)',
+        r'#page=publink&code=([a-zA-Z0-9]+)',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    # If it's just the code itself (no URL)
+    if re.match(r'^[a-zA-Z0-9]+$', url):
+        return url
+    return None
+
+async def fetch_pcloud_folder(code: str) -> dict:
+    """
+    Fetch folder contents from pCloud using their public API.
+    Returns dict with 'success', 'folder_name', 'photos', 'subfolders', 'error' keys.
+    """
+    import aiohttp
+    
+    result = {
+        'success': False,
+        'folder_name': None,
+        'photos': [],
+        'subfolders': [],
+        'error': None
+    }
+    
+    try:
+        api_url = f"https://api.pcloud.com/showpublink?code={code}"
+        
+        timeout = aiohttp.ClientTimeout(total=30)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(api_url) as response:
+                if response.status != 200:
+                    result['error'] = f'pCloud API returned status {response.status}'
+                    return result
+                
+                data = await response.json()
+        
+        # Check for pCloud API errors
+        if data.get('result') != 0:
+            error_codes = {
+                7001: 'Invalid link code',
+                7002: 'Link deleted by owner',
+                7004: 'Link has expired',
+                7005: 'Link reached traffic limit',
+                7006: 'Link reached maximum downloads'
+            }
+            error_code = data.get('result', 0)
+            result['error'] = error_codes.get(error_code, f'pCloud error code {error_code}')
+            return result
+        
+        metadata = data.get('metadata', {})
+        if not metadata.get('isfolder'):
+            result['error'] = 'Link does not point to a folder'
+            return result
+        
+        result['folder_name'] = metadata.get('name', 'Unknown')
+        
+        def extract_photos_recursive(contents: list, supplier_name: str = None) -> list:
+            """Recursively extract photos from folder contents"""
+            photos = []
+            for item in contents:
+                if item.get('isfolder'):
+                    # This is a subfolder - use its name as supplier name
+                    subfolder_name = item.get('name', 'Unknown')
+                    subfolder_contents = item.get('contents', [])
+                    # Add subfolder to result
+                    result['subfolders'].append({
+                        'name': subfolder_name,
+                        'folderid': item.get('folderid'),
+                        'photo_count': sum(1 for c in subfolder_contents if not c.get('isfolder') and c.get('category') == 1)
+                    })
+                    # Recursively get photos from subfolder
+                    photos.extend(extract_photos_recursive(subfolder_contents, subfolder_name))
+                elif item.get('category') == 1:  # category 1 = image
+                    photos.append({
+                        'fileid': item.get('fileid'),
+                        'name': item.get('name'),
+                        'size': item.get('size', 0),
+                        'width': item.get('width'),
+                        'height': item.get('height'),
+                        'contenttype': item.get('contenttype', 'image/jpeg'),
+                        'created': item.get('created'),
+                        'modified': item.get('modified'),
+                        'supplier_name': supplier_name,
+                        'hash': item.get('hash')
+                    })
+            return photos
+        
+        contents = metadata.get('contents', [])
+        result['photos'] = extract_photos_recursive(contents)
+        result['success'] = True
+        
+        logger.info(f"pCloud: Found {len(result['photos'])} photos in {len(result['subfolders'])} supplier folders")
+        
+    except aiohttp.ClientError as e:
+        result['error'] = f'Network error: {str(e)}'
+    except Exception as e:
+        logger.error(f"Error fetching pCloud folder: {e}")
+        result['error'] = f'Error: {str(e)}'
+    
+    return result
+
+async def get_pcloud_download_url(code: str, fileid: int) -> Optional[dict]:
+    """
+    Get direct download URL for a pCloud file.
+    Returns dict with 'url', 'expires' or None on error.
+    """
+    import aiohttp
+    
+    try:
+        api_url = f"https://api.pcloud.com/getpublinkdownload?code={code}&fileid={fileid}"
+        
+        timeout = aiohttp.ClientTimeout(total=15)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(api_url) as response:
+                if response.status != 200:
+                    return None
+                
+                data = await response.json()
+        
+        if data.get('result') != 0:
+            logger.warning(f"pCloud download URL error: {data}")
+            return None
+        
+        # Construct full URL from host + path
+        hosts = data.get('hosts', [])
+        path = data.get('path', '')
+        
+        if not hosts or not path:
+            return None
+        
+        # Use first host
+        url = f"https://{hosts[0]}{path}"
+        
+        return {
+            'url': url,
+            'expires': data.get('expires'),
+            'hosts': hosts,
+            'path': path
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting pCloud download URL: {e}")
+        return None
+
+async def proxy_pcloud_image(code: str, fileid: int) -> Optional[bytes]:
+    """
+    Fetch image content from pCloud and return bytes.
+    This allows us to proxy images for users on networks that block pCloud.
+    """
+    import aiohttp
+    
+    try:
+        # Get the download URL
+        download_info = await get_pcloud_download_url(code, fileid)
+        if not download_info:
+            return None
+        
+        # Fetch the actual image
+        timeout = aiohttp.ClientTimeout(total=60)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(download_info['url']) as response:
+                if response.status != 200:
+                    return None
+                return await response.read()
+                
+    except Exception as e:
+        logger.error(f"Error proxying pCloud image: {e}")
+        return None
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
