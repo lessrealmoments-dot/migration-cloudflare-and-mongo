@@ -1691,6 +1691,13 @@ const AdminDashboard = () => {
                               } 
                               alt={`Hero ${num}`} 
                               className="w-full h-24 object-cover rounded"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '';
+                                e.target.className = 'hidden';
+                                e.target.parentElement.classList.add('broken-image');
+                                console.error(`Failed to load hero image ${num}:`, imageUrl);
+                              }}
                             />
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded">
                               <button
