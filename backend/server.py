@@ -736,42 +736,67 @@ def generate_thumbnail_single(source_path: Path, photo_id: str, size_name: str =
     thumb_filename = f"{photo_id}_{size_name}.jpg"
     thumb_path = THUMBNAILS_DIR / thumb_filename
     
-    with Image.open(source_path) as img:
-        # Convert to RGB if necessary (handles PNG with transparency, HEIC, etc.)
-        if img.mode in ('RGBA', 'LA', 'P'):
-            background = Image.new('RGB', img.size, (255, 255, 255))
-            if img.mode == 'P':
-                img = img.convert('RGBA')
-            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-            img = background
-        elif img.mode != 'RGB':
-            img = img.convert('RGB')
+    try:
+        # Use context manager to ensure image is closed and memory freed
+        with Image.open(source_path) as img:
+            # Limit image size to prevent memory issues with very large images
+            max_pixels = 50_000_000  # 50MP max
+            if img.width * img.height > max_pixels:
+                # Calculate scale factor to fit within max_pixels
+                scale = (max_pixels / (img.width * img.height)) ** 0.5
+                new_size = (int(img.width * scale), int(img.height * scale))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+            
+            # Convert to RGB if necessary (handles PNG with transparency, HEIC, etc.)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Auto-rotate based on EXIF first (before resizing)
+            try:
+                from PIL import ExifTags
+                for orientation in ExifTags.TAGS.keys():
+                    if ExifTags.TAGS[orientation] == 'Orientation':
+                        break
+                exif = img._getexif()
+                if exif:
+                    orientation_value = exif.get(orientation)
+                    if orientation_value == 3:
+                        img = img.rotate(180, expand=True)
+                    elif orientation_value == 6:
+                        img = img.rotate(270, expand=True)
+                    elif orientation_value == 8:
+                        img = img.rotate(90, expand=True)
+            except (AttributeError, KeyError, IndexError, TypeError):
+                pass
+            
+            # Preserve aspect ratio and resize
+            img.thumbnail(size, Image.Resampling.LANCZOS)
+            
+            # Save optimized JPEG
+            img.save(thumb_path, 'JPEG', quality=JPEG_QUALITY, optimize=True)
         
-        # Preserve aspect ratio
-        img.thumbnail(size, Image.Resampling.LANCZOS)
-        
-        # Auto-rotate based on EXIF
-        try:
-            from PIL import ExifTags
-            for orientation in ExifTags.TAGS.keys():
-                if ExifTags.TAGS[orientation] == 'Orientation':
-                    break
-            exif = img._getexif()
-            if exif:
-                orientation_value = exif.get(orientation)
-                if orientation_value == 3:
-                    img = img.rotate(180, expand=True)
-                elif orientation_value == 6:
-                    img = img.rotate(270, expand=True)
-                elif orientation_value == 8:
-                    img = img.rotate(90, expand=True)
-        except (AttributeError, KeyError, IndexError):
-            pass
-        
-        # Save optimized JPEG
-        img.save(thumb_path, 'JPEG', quality=JPEG_QUALITY, optimize=True)
-    
-    return f"/api/photos/thumb/{thumb_filename}"
+        # Verify the file was created
+        if thumb_path.exists() and thumb_path.stat().st_size > 0:
+            return f"/api/photos/thumb/{thumb_filename}"
+        else:
+            logger.error(f"Thumbnail file not created or empty: {thumb_filename}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Error generating thumbnail for {photo_id}: {e}")
+        # Clean up partial file if it exists
+        if thumb_path.exists():
+            try:
+                thumb_path.unlink()
+            except:
+                pass
+        return None
 
 def generate_thumbnail(source_path: Path, photo_id: str, size_name: str = 'medium') -> Optional[str]:
     """Generate optimized thumbnail with retry logic"""
