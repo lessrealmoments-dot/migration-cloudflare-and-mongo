@@ -419,8 +419,13 @@ const CollageDisplay = () => {
             newPhotos.forEach(p => imagePreloader.preload(getPhotoUrl(p)));
           }
         } else {
-          const shuffled = [...data.photos].sort(() => Math.random() - 0.5);
+          // Filter out photos without thumbnails (they may be broken)
+          const validPhotos = data.photos.filter(p => p.thumbnail_medium_url || p.thumbnail_url);
+          const shuffled = [...validPhotos].sort(() => Math.random() - 0.5);
           setPhotos(shuffled);
+          if (validPhotos.length < data.photos.length) {
+            console.log(`[Collage] Filtered out ${data.photos.length - validPhotos.length} photos without thumbnails`);
+          }
         }
         lastPhotoCount.current = newPhotoCount;
       }
