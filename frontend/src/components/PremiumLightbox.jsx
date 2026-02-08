@@ -24,8 +24,15 @@ const PremiumLightbox = ({
   useEffect(() => {
     const preloadImage = (index) => {
       if (index >= 0 && index < photos.length) {
+        const photo = photos[index];
         const img = new Image();
-        img.src = `${backendUrl}${photos[index].url}`;
+        // Preload full image for viewing
+        img.src = `${backendUrl}${photo.url}`;
+        // Also preload thumbnail for filmstrip
+        if (photo.thumbnail_url && photo.thumbnail_url !== photo.url) {
+          const thumbImg = new Image();
+          thumbImg.src = `${backendUrl}${photo.thumbnail_url}`;
+        }
       }
     };
     
