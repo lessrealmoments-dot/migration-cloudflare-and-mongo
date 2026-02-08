@@ -1394,6 +1394,25 @@ class Section(BaseModel):
     pcloud_last_sync: Optional[str] = None  # Last sync timestamp
     pcloud_error: Optional[str] = None  # Last error message if any
 
+class PCloudPhoto(BaseModel):
+    """Photo entry from pCloud shared folder"""
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    gallery_id: str
+    section_id: str
+    pcloud_code: str  # The share link code
+    fileid: int  # pCloud file ID
+    name: str  # Original filename
+    size: int = 0  # File size in bytes
+    width: Optional[int] = None
+    height: Optional[int] = None
+    contenttype: str = "image/jpeg"
+    supplier_name: Optional[str] = None  # Supplier folder name
+    hash: Optional[int] = None  # pCloud file hash
+    created_at_source: Optional[str] = None
+    order: int = 0
+    synced_at: str  # When we synced this photo
+
 class FotoshareVideo(BaseModel):
     """Video entry from fotoshare.co / 360 booth providers"""
     model_config = ConfigDict(extra="ignore")
