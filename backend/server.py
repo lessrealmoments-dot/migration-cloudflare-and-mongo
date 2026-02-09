@@ -31,8 +31,8 @@ from PIL import Image
 
 import re
 
-# Import storage service for R2/local storage
-from services.storage import get_storage_service, StorageService
+# Import storage service for R2/local storage - use direct import to avoid circular deps
+import services.storage as storage_module
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
