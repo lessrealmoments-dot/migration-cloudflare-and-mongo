@@ -3,10 +3,10 @@ FROM node:18-alpine as builder
 WORKDIR /app
 
 # Copy package files
-COPY package.json yarn.lock ./
+COPY package.json package-lock.json* ./
 
 # Install dependencies
-RUN yarn install --frozen-lockfile
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -16,7 +16,7 @@ ARG REACT_APP_BACKEND_URL
 ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 
 # Build the application
-RUN yarn build
+RUN npm run build
 
 # Production stage
 FROM nginx:alpine
