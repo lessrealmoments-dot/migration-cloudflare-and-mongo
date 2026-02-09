@@ -543,7 +543,7 @@ Integrated with **Resend** email service.
 - `transactions` - Payment transaction history with proof URLs
 
 ## Access URLs
-- Preview: https://photoshare-app-66.preview.emergentagent.com
+- Preview: https://imgshare-30.preview.emergentagent.com
 - Pricing: /pricing
 - Admin: /admin
 
