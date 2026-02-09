@@ -31,11 +31,26 @@ from PIL import Image
 
 import re
 
-# Import storage service directly to avoid circular imports through services/__init__.py
+# Import storage service - handle both local dev and Docker paths
 import importlib.util
-_storage_spec = importlib.util.spec_from_file_location("storage", "/app/backend/services/storage.py")
-storage_module = importlib.util.module_from_spec(_storage_spec)
-_storage_spec.loader.exec_module(storage_module)
+from pathlib import Path
+
+# Try multiple paths for storage.py
+_storage_paths = [
+    Path(__file__).parent / "services" / "storage.py",  # Local: /app/backend/services/storage.py
+    Path("/app/services/storage.py"),  # Docker: /app/services/storage.py
+]
+
+storage_module = None
+for _storage_path in _storage_paths:
+    if _storage_path.exists():
+        _storage_spec = importlib.util.spec_from_file_location("storage", str(_storage_path))
+        storage_module = importlib.util.module_from_spec(_storage_spec)
+        _storage_spec.loader.exec_module(storage_module)
+        break
+
+if storage_module is None:
+    raise ImportError(f"Could not find storage.py in any of: {_storage_paths}")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
