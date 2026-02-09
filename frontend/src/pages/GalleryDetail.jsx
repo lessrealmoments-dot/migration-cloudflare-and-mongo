@@ -1048,6 +1048,21 @@ const GalleryDetail = () => {
         toast.success(`pCloud section created with ${response.data.photo_count} photos!`);
         // Fetch the pCloud photos
         fetchPcloudPhotos();
+      } else if (newSectionType === 'gdrive' && newGdriveUrl.trim()) {
+        // Create Google Drive section with URL - dedicated endpoint
+        const response = await axios.post(`${API}/galleries/${id}/gdrive-sections`, {
+          gdrive_url: newGdriveUrl,
+          section_name: newSectionName,
+          contributor_name: newGdriveContributorName || null,
+          contributor_role: newGdriveContributorRole || null
+        }, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        
+        setSections([...sections, response.data.section]);
+        toast.success(`Google Drive section created with ${response.data.photo_count} photos!`);
+        // Fetch Google Drive photos
+        fetchGdrivePhotos();
       } else {
         // Create regular section (photo, video, or fotoshare without URL)
         const formData = new FormData();
@@ -1067,6 +1082,9 @@ const GalleryDetail = () => {
       setNewSectionType('photo');
       setNewFotoshareUrl('');
       setNewPcloudUrl('');
+      setNewGdriveUrl('');
+      setNewGdriveContributorName('');
+      setNewGdriveContributorRole('');
       setShowSectionForm(false);
     } catch (error) {
       const errorMsg = error.response?.data?.detail || 'Failed to create section';
