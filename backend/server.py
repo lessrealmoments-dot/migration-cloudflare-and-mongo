@@ -8330,8 +8330,16 @@ async def get_thumbnail_status(admin: dict = Depends(get_admin_user)):
 
 @api_router.get("/admin/storage-status")
 async def get_storage_status(admin: dict = Depends(get_admin_user)):
-    """Get comprehensive storage status - find orphaned files"""
+    """Get comprehensive storage status - find orphaned files and R2 status"""
     import glob
+    
+    # R2 Storage status
+    r2_status = {
+        "enabled": storage.r2_enabled,
+        "endpoint": os.environ.get('R2_ENDPOINT_URL', 'Not configured'),
+        "bucket": os.environ.get('R2_BUCKET_NAME', 'Not configured'),
+        "public_url": os.environ.get('R2_PUBLIC_URL', 'Not configured')
+    }
     
     # Get all photo IDs from database
     db_photos = await db.photos.find({}, {"_id": 0, "id": 1, "filename": 1}).to_list(100000)
