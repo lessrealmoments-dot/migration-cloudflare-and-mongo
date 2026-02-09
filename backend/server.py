@@ -8392,6 +8392,7 @@ async def get_storage_status(admin: dict = Depends(get_admin_user)):
     orphaned_thumb_size = sum(f["size"] for f in orphaned_thumbs)
     
     return {
+        "r2_storage": r2_status,
         "database": {
             "total_photos": len(db_photo_ids)
         },
