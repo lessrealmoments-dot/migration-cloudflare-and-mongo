@@ -6625,88 +6625,142 @@ mimetypes.init()
 
 @api_router.get("/photos/serve/{filename}")
 async def serve_photo(filename: str, download: bool = False):
+    """
+    Serve photos - works with both R2 and local storage.
+    For R2, this endpoint serves as a fallback/proxy if direct R2 URL fails.
+    """
+    # First try local filesystem
     file_path = UPLOAD_DIR / filename
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Photo not found")
     
-    # Get correct media type based on file extension
-    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
-    media_types = {
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'png': 'image/png',
-        'gif': 'image/gif',
-        'webp': 'image/webp',
-        'heic': 'image/heic',
-        'heif': 'image/heif'
-    }
-    media_type = media_types.get(ext, 'image/jpeg')
-    
-    # Get file size for Content-Length header
-    file_size = file_path.stat().st_size
-    
-    # Determine content disposition based on download parameter
-    disposition = "attachment" if download else "inline"
-    
-    # Return file with proper caching and headers
-    return FileResponse(
-        file_path,
-        media_type=media_type,
-        headers={
-            "Content-Disposition": f"{disposition}; filename={filename}",
-            "Content-Length": str(file_size),
-            "Cache-Control": "public, max-age=31536000, immutable",  # Cache for 1 year (images don't change)
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
+    if file_path.exists():
+        # Serve from local filesystem
+        ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
+        media_types = {
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'webp': 'image/webp',
+            'heic': 'image/heic',
+            'heif': 'image/heif'
         }
-    )
+        media_type = media_types.get(ext, 'image/jpeg')
+        file_size = file_path.stat().st_size
+        disposition = "attachment" if download else "inline"
+        
+        return FileResponse(
+            file_path,
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f"{disposition}; filename={filename}",
+                "Content-Length": str(file_size),
+                "Cache-Control": "public, max-age=31536000, immutable",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
+            }
+        )
+    
+    # If R2 is enabled, try to fetch from R2
+    if storage.r2_enabled:
+        # Extract photo_id from filename to construct R2 key
+        photo_id = filename.rsplit('.', 1)[0] if '.' in filename else filename
+        ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
+        r2_key = f"photos/{photo_id}.{ext}"
+        
+        content = await storage.get_file(r2_key)
+        if content:
+            media_types = {
+                'jpg': 'image/jpeg',
+                'jpeg': 'image/jpeg',
+                'png': 'image/png',
+                'gif': 'image/gif',
+                'webp': 'image/webp',
+                'heic': 'image/heic',
+                'heif': 'image/heif'
+            }
+            media_type = media_types.get(ext, 'image/jpeg')
+            disposition = "attachment" if download else "inline"
+            
+            return Response(
+                content=content,
+                media_type=media_type,
+                headers={
+                    "Content-Disposition": f"{disposition}; filename={filename}",
+                    "Content-Length": str(len(content)),
+                    "Cache-Control": "public, max-age=31536000, immutable",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
+                }
+            )
+    
+    raise HTTPException(status_code=404, detail="Photo not found")
 
 @api_router.get("/photos/thumb/{filename}")
 async def serve_thumbnail(filename: str):
-    """Serve optimized thumbnail images with validation and fallback"""
+    """
+    Serve optimized thumbnail images with validation and fallback.
+    Works with both R2 and local storage.
+    """
+    # First try local filesystem
     file_path = THUMBNAILS_DIR / filename
     
-    # Check if thumbnail exists and is valid
+    # Check if thumbnail exists locally and is valid
     if file_path.exists():
         file_size = file_path.stat().st_size
         if file_size == 0:
-            # Empty file - try to regenerate
             logger.warning(f"Empty thumbnail found: {filename}")
-            file_path.unlink()  # Remove the empty file
+            file_path.unlink()
+        else:
+            return FileResponse(
+                file_path,
+                media_type="image/jpeg",
+                headers={
+                    "Content-Length": str(file_size),
+                    "Cache-Control": "public, max-age=31536000, immutable",
+                    "Access-Control-Allow-Origin": "*"
+                }
+            )
     
+    # If R2 is enabled, try to fetch from R2
+    if storage.r2_enabled:
+        r2_key = f"thumbnails/{filename}"
+        content = await storage.get_file(r2_key)
+        if content:
+            return Response(
+                content=content,
+                media_type="image/jpeg",
+                headers={
+                    "Content-Length": str(len(content)),
+                    "Cache-Control": "public, max-age=31536000, immutable",
+                    "Access-Control-Allow-Origin": "*"
+                }
+            )
+    
+    # Try to generate thumbnail on-the-fly if original exists locally
     if not file_path.exists():
-        # Try to generate thumbnail on-the-fly if original exists
         parts = filename.rsplit('_', 1)
         if len(parts) == 2:
             photo_id = parts[0]
             size_name = parts[1].replace('.jpg', '')
-            # Find original file
             for ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif']:
                 original = UPLOAD_DIR / f"{photo_id}.{ext}"
                 if original.exists():
                     thumb_url = generate_thumbnail(original, photo_id, size_name)
                     if thumb_url and file_path.exists():
                         logger.info(f"Regenerated missing thumbnail: {filename}")
-                        break
-        
-        if not file_path.exists():
-            # Return a placeholder or error
-            raise HTTPException(status_code=404, detail="Thumbnail not found")
+                        file_size = file_path.stat().st_size
+                        return FileResponse(
+                            file_path,
+                            media_type="image/jpeg",
+                            headers={
+                                "Content-Length": str(file_size),
+                                "Cache-Control": "public, max-age=31536000, immutable",
+                                "Access-Control-Allow-Origin": "*"
+                            }
+                        )
+                    break
     
-    # Final validation - ensure file is readable and not corrupt
-    file_size = file_path.stat().st_size
-    if file_size == 0:
-        raise HTTPException(status_code=404, detail="Thumbnail corrupted")
-    
-    return FileResponse(
-        file_path,
-        media_type="image/jpeg",
-        headers={
-            "Content-Length": str(file_size),
-            "Cache-Control": "public, max-age=31536000, immutable",
-            "Access-Control-Allow-Origin": "*"
-        }
-    )
+    raise HTTPException(status_code=404, detail="Thumbnail not found")
 
 # ============ GOOGLE DRIVE INTEGRATION ============
 
