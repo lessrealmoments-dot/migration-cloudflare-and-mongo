@@ -55,17 +55,22 @@ class StorageService:
             logger.warning("R2 not configured - using local filesystem")
     
     def get_public_url(self, key: str) -> str:
-        """Get the public URL for a file"""
+        """Get the public URL for a file - uses API proxy for reliability"""
+        # Use API proxy to serve R2 files - more reliable than public URL
+        # The API endpoint will fetch from R2 and serve to client
+        filename = key.split('/')[-1] if '/' in key else key
+        return f"/api/photos/serve/{filename}"
+    
+    def get_direct_r2_url(self, key: str) -> str:
+        """Get direct R2 public URL (for when custom domain is configured)"""
         if self.r2_enabled and R2_PUBLIC_URL:
             return f"{R2_PUBLIC_URL}/{key}"
-        return f"/api/photos/serve/{key}"
+        return self.get_public_url(key)
     
     def get_thumbnail_url(self, key: str) -> str:
-        """Get URL for a thumbnail"""
-        if self.r2_enabled and R2_PUBLIC_URL:
-            return f"{R2_PUBLIC_URL}/{key}"
-        # For local, extract just the filename
-        filename = key.split('/')[-1]
+        """Get URL for a thumbnail - uses API proxy for reliability"""
+        # Use API proxy for thumbnails too
+        filename = key.split('/')[-1] if '/' in key else key
         return f"/api/photos/thumb/{filename}"
     
     async def upload_file(
