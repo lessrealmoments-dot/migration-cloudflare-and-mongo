@@ -5481,20 +5481,30 @@ async def delete_photo(photo_id: str, current_user: dict = Depends(get_current_u
     if not gallery:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    # Delete original file
-    file_path = UPLOAD_DIR / photo["filename"]
-    file_size = 0
-    if file_path.exists():
-        file_size = file_path.stat().st_size
-        file_path.unlink()
-        logger.info(f"Deleted photo file: {file_path}")
+    file_size = photo.get("file_size", 0)
+    filename = photo.get("filename", "")
     
-    # Delete thumbnails
+    # Delete from R2 if enabled
+    if storage.r2_enabled:
+        # Get file extension
+        file_ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
+        await storage.delete_photo_with_thumbnails(photo_id, file_ext)
+        logger.info(f"Deleted photo from R2: {photo_id}")
+    
+    # Also delete from local filesystem (for migration/fallback)
+    file_path = UPLOAD_DIR / filename
+    if file_path.exists():
+        if file_size == 0:
+            file_size = file_path.stat().st_size
+        file_path.unlink()
+        logger.info(f"Deleted local photo file: {file_path}")
+    
+    # Delete local thumbnails
     for size_name in ['small', 'medium']:
         thumb_path = THUMBNAILS_DIR / f"{photo_id}_{size_name}.jpg"
         if thumb_path.exists():
             thumb_path.unlink()
-            logger.info(f"Deleted thumbnail: {thumb_path}")
+            logger.info(f"Deleted local thumbnail: {thumb_path}")
     
     # Update storage used
     if file_size > 0:
