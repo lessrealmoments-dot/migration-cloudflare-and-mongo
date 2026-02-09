@@ -4806,6 +4806,267 @@ async def get_public_pcloud_photos(share_link: str, section_id: Optional[str] = 
     
     return photos
 
+# ============ Google Drive Section Endpoints ============
+
+class GoogleDriveSectionCreate(BaseModel):
+    gdrive_url: str
+    section_name: Optional[str] = None
+    contributor_name: Optional[str] = None
+    contributor_role: Optional[str] = None
+
+@api_router.post("/galleries/{gallery_id}/gdrive-sections")
+async def create_gdrive_section(
+    gallery_id: str,
+    data: GoogleDriveSectionCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new Google Drive section by linking to a public Google Drive folder"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Extract folder ID from URL
+    folder_id = extract_gdrive_folder_id(data.gdrive_url)
+    if not folder_id:
+        raise HTTPException(status_code=400, detail="Invalid Google Drive URL. Please provide a valid folder link.")
+    
+    # Fetch folder contents from Google Drive
+    gdrive_data = await get_gdrive_photos(folder_id)
+    if not gdrive_data['success']:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch Google Drive folder: {gdrive_data['error']}")
+    
+    if not gdrive_data['photos']:
+        raise HTTPException(status_code=400, detail="No photos found in the Google Drive folder. Make sure it contains images and is publicly shared.")
+    
+    # Create section
+    sections = gallery.get("sections", [])
+    new_order = max([s.get("order", 0) for s in sections], default=-1) + 1
+    
+    section_id = str(uuid.uuid4())
+    new_section = {
+        "id": section_id,
+        "name": data.section_name or gdrive_data['folder_name'],
+        "order": new_order,
+        "type": "gdrive",
+        "gdrive_folder_id": folder_id,
+        "gdrive_folder_name": gdrive_data['folder_name'],
+        "gdrive_last_sync": datetime.now(timezone.utc).isoformat(),
+        "gdrive_error": None,
+        "contributor_name": data.contributor_name,
+        "contributor_role": data.contributor_role or "Photos"
+    }
+    
+    sections.append(new_section)
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    # Store photos in database
+    sync_time = datetime.now(timezone.utc).isoformat()
+    gdrive_photos = []
+    for idx, photo in enumerate(gdrive_data['photos']):
+        gdrive_photos.append({
+            "id": str(uuid.uuid4()),
+            "gallery_id": gallery_id,
+            "section_id": section_id,
+            "gdrive_folder_id": folder_id,
+            "file_id": photo['file_id'],
+            "name": photo['name'],
+            "mime_type": photo.get('mime_type', 'image/jpeg'),
+            "size": photo.get('size', 0),
+            "width": photo.get('width'),
+            "height": photo.get('height'),
+            "thumbnail_url": photo['thumbnail_url'],
+            "view_url": photo['view_url'],
+            "created_time": photo.get('created_time'),
+            "order": idx,
+            "is_highlight": False,
+            "synced_at": sync_time
+        })
+    
+    if gdrive_photos:
+        await db.gdrive_photos.insert_many(gdrive_photos)
+    
+    return {
+        "section": new_section,
+        "photo_count": len(gdrive_photos)
+    }
+
+@api_router.post("/galleries/{gallery_id}/gdrive-sections/{section_id}/refresh")
+async def refresh_gdrive_section(
+    gallery_id: str,
+    section_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Manually refresh a Google Drive section to sync new photos"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    section = next((s for s in gallery.get("sections", []) if s["id"] == section_id and s.get("type") == "gdrive"), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="Google Drive section not found")
+    
+    folder_id = section.get("gdrive_folder_id")
+    if not folder_id:
+        raise HTTPException(status_code=400, detail="Section has no Google Drive folder ID")
+    
+    # Fetch updated folder contents
+    gdrive_data = await get_gdrive_photos(folder_id)
+    if not gdrive_data['success']:
+        # Update section with error
+        await db.galleries.update_one(
+            {"id": gallery_id, "sections.id": section_id},
+            {"$set": {
+                "sections.$.gdrive_error": gdrive_data['error'],
+                "sections.$.gdrive_last_sync": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        raise HTTPException(status_code=400, detail=f"Failed to refresh: {gdrive_data['error']}")
+    
+    # Get existing photos to preserve highlight status
+    existing_photos = await db.gdrive_photos.find(
+        {"gallery_id": gallery_id, "section_id": section_id},
+        {"_id": 0}
+    ).to_list(10000)
+    existing_highlights = {p['file_id']: p.get('is_highlight', False) for p in existing_photos}
+    
+    # Delete old photos
+    await db.gdrive_photos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    
+    # Insert new photos
+    sync_time = datetime.now(timezone.utc).isoformat()
+    gdrive_photos = []
+    for idx, photo in enumerate(gdrive_data['photos']):
+        file_id = photo['file_id']
+        gdrive_photos.append({
+            "id": str(uuid.uuid4()),
+            "gallery_id": gallery_id,
+            "section_id": section_id,
+            "gdrive_folder_id": folder_id,
+            "file_id": file_id,
+            "name": photo['name'],
+            "mime_type": photo.get('mime_type', 'image/jpeg'),
+            "size": photo.get('size', 0),
+            "width": photo.get('width'),
+            "height": photo.get('height'),
+            "thumbnail_url": photo['thumbnail_url'],
+            "view_url": photo['view_url'],
+            "created_time": photo.get('created_time'),
+            "order": idx,
+            "is_highlight": existing_highlights.get(file_id, False),  # Preserve highlight
+            "synced_at": sync_time
+        })
+    
+    if gdrive_photos:
+        await db.gdrive_photos.insert_many(gdrive_photos)
+    
+    # Update section
+    await db.galleries.update_one(
+        {"id": gallery_id, "sections.id": section_id},
+        {"$set": {
+            "sections.$.gdrive_last_sync": sync_time,
+            "sections.$.gdrive_error": None
+        }}
+    )
+    
+    return {
+        "message": "Google Drive section refreshed",
+        "photo_count": len(gdrive_photos)
+    }
+
+@api_router.delete("/galleries/{gallery_id}/gdrive-sections/{section_id}")
+async def delete_gdrive_section(
+    gallery_id: str,
+    section_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a Google Drive section and its photos"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Remove section from gallery
+    sections = [s for s in gallery.get("sections", []) if s["id"] != section_id]
+    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+    
+    # Delete photos from database
+    await db.gdrive_photos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    
+    return {"message": "Google Drive section deleted"}
+
+@api_router.post("/galleries/{gallery_id}/gdrive-sections/{section_id}/photos/{photo_id}/highlight")
+async def toggle_gdrive_photo_highlight(
+    gallery_id: str,
+    section_id: str,
+    photo_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Toggle highlight status for a Google Drive photo"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    photo = await db.gdrive_photos.find_one({"id": photo_id, "section_id": section_id}, {"_id": 0})
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    new_highlight = not photo.get("is_highlight", False)
+    await db.gdrive_photos.update_one(
+        {"id": photo_id},
+        {"$set": {"is_highlight": new_highlight}}
+    )
+    
+    return {"is_highlight": new_highlight}
+
+@api_router.get("/public/gallery/{share_link}/gdrive-photos")
+async def get_public_gdrive_photos(share_link: str, section_id: Optional[str] = None):
+    """Get Google Drive photos for a public gallery"""
+    gallery = await db.galleries.find_one({"share_link": share_link, "is_published": True}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    query = {"gallery_id": gallery["id"]}
+    if section_id:
+        query["section_id"] = section_id
+    
+    photos = await db.gdrive_photos.find(query, {"_id": 0}).to_list(10000)
+    
+    # Sort: highlights first, then by order
+    photos.sort(key=lambda p: (not p.get("is_highlight", False), p.get("order", 0)))
+    
+    return photos
+
+@api_router.get("/gdrive/proxy/{file_id}")
+async def proxy_gdrive_image(file_id: str, thumb: bool = False):
+    """Proxy Google Drive images to avoid CORS issues"""
+    try:
+        if thumb:
+            url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w800"
+        else:
+            url = f"https://drive.google.com/uc?export=view&id={file_id}"
+        
+        async with aiohttp.ClientSession() as session:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            async with session.get(url, headers=headers, allow_redirects=True) as response:
+                if response.status == 200:
+                    content = await response.read()
+                    content_type = response.headers.get('Content-Type', 'image/jpeg')
+                    
+                    return Response(
+                        content=content,
+                        media_type=content_type,
+                        headers={
+                            "Cache-Control": "public, max-age=86400",
+                            "Access-Control-Allow-Origin": "*"
+                        }
+                    )
+                else:
+                    raise HTTPException(status_code=response.status, detail="Failed to fetch image")
+    except Exception as e:
+        logger.error(f"Error proxying Google Drive image: {e}")
+        raise HTTPException(status_code=500, detail="Failed to proxy image")
+
 # ============ Gallery Videos Endpoints ============
 
 @api_router.get("/galleries/{gallery_id}/videos")
