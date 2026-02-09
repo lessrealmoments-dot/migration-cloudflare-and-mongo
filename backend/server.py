@@ -1,6 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Request, BackgroundTasks, Query, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse, FileResponse
+from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse, FileResponse, Response
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -30,6 +30,9 @@ import aiofiles
 from PIL import Image
 
 import re
+
+# Import storage service for R2/local storage
+from services.storage import get_storage_service, StorageService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
