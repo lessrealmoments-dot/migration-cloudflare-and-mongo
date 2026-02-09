@@ -107,7 +107,11 @@ class StorageService:
                     Body=content,
                     ContentType=content_type,
                 )
-                url = self.get_public_url(key)
+                # Use appropriate URL function based on file type
+                if key.startswith('thumbnails/'):
+                    url = self.get_thumbnail_url(key)
+                else:
+                    url = self.get_public_url(key)
                 logger.info(f"Uploaded to R2: {key}")
                 return True, url
         except Exception as e:
