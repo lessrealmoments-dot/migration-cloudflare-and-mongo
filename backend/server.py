@@ -31,8 +31,11 @@ from PIL import Image
 
 import re
 
-# Import storage service for R2/local storage - use direct import to avoid circular deps
-import services.storage as storage_module
+# Import storage service directly to avoid circular imports through services/__init__.py
+import importlib.util
+_storage_spec = importlib.util.spec_from_file_location("storage", "/app/backend/services/storage.py")
+storage_module = importlib.util.module_from_spec(_storage_spec)
+_storage_spec.loader.exec_module(storage_module)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
