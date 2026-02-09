@@ -1251,6 +1251,12 @@ app = FastAPI(lifespan=lifespan)
 api_router = APIRouter(prefix="/api")
 security = HTTPBearer()
 
+# Root-level health check for Kubernetes liveness/readiness probes
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Kubernetes probes"""
+    return {"status": "healthy", "service": "photoshare-backend"}
+
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
