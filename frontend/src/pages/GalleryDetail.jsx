@@ -55,6 +55,11 @@ const GalleryDetail = () => {
   // pCloud section state
   const [newPcloudUrl, setNewPcloudUrl] = useState('');
   const [pcloudPhotos, setPcloudPhotos] = useState([]);
+  // Google Drive section state
+  const [newGdriveUrl, setNewGdriveUrl] = useState('');
+  const [newGdriveContributorName, setNewGdriveContributorName] = useState('');
+  const [newGdriveContributorRole, setNewGdriveContributorRole] = useState('');
+  const [gdrivePhotos, setGdrivePhotos] = useState([]);
   // Section rename state
   const [editingSectionId, setEditingSectionId] = useState(null);
   const [editingSectionName, setEditingSectionName] = useState('');
