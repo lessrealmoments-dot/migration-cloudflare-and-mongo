@@ -523,7 +523,7 @@ client = AsyncIOMotorClient(
 db = client[os.environ['DB_NAME']]
 
 # Initialize storage service (R2 or local filesystem)
-storage = get_storage_service()
+storage = storage_module.get_storage_service()
 logger.info(f"Storage backend: {'Cloudflare R2' if storage.r2_enabled else 'Local Filesystem'}")
 
 UPLOAD_DIR = ROOT_DIR / 'uploads'
