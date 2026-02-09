@@ -591,6 +591,200 @@ GALLERY_EDIT_LOCK_DAYS = 7
 # Demo gallery feature window (in hours) - same as expiration for free
 DEMO_FEATURE_WINDOW_HOURS = 6
 
+# ============ Google Drive Integration ============
+
+def extract_gdrive_folder_id(url: str) -> Optional[str]:
+    """Extract folder ID from various Google Drive URL formats"""
+    patterns = [
+        r'drive\.google\.com/drive/folders/([a-zA-Z0-9_-]+)',
+        r'drive\.google\.com/drive/u/\d+/folders/([a-zA-Z0-9_-]+)',
+        r'drive\.google\.com/open\?id=([a-zA-Z0-9_-]+)',
+        r'drive\.google\.com/folderview\?id=([a-zA-Z0-9_-]+)',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return None
+
+async def fetch_gdrive_folder_photos(folder_id: str) -> dict:
+    """
+    Fetch photos from a public Google Drive folder.
+    Uses the Google Drive API to list files.
+    """
+    result = {
+        'success': False,
+        'folder_name': 'Google Drive Photos',
+        'photos': [],
+        'error': None
+    }
+    
+    try:
+        # Google Drive API endpoint for listing files in a folder
+        # For public folders, we can use the API key-less approach
+        api_url = f"https://www.googleapis.com/drive/v3/files"
+        params = {
+            "q": f"'{folder_id}' in parents and mimeType contains 'image/' and trashed=false",
+            "fields": "files(id,name,mimeType,size,imageMediaMetadata,thumbnailLink,webContentLink,createdTime)",
+            "pageSize": 1000,
+            "key": os.environ.get('GOOGLE_API_KEY', '')  # Optional API key
+        }
+        
+        # Try using public access first (works for "Anyone with link" folders)
+        async with aiohttp.ClientSession() as session:
+            # First, try to get folder metadata
+            folder_url = f"https://www.googleapis.com/drive/v3/files/{folder_id}"
+            folder_params = {
+                "fields": "name",
+                "key": os.environ.get('GOOGLE_API_KEY', '')
+            }
+            
+            async with session.get(folder_url, params=folder_params) as folder_response:
+                if folder_response.status == 200:
+                    folder_data = await folder_response.json()
+                    result['folder_name'] = folder_data.get('name', 'Google Drive Photos')
+            
+            # Now get the files
+            async with session.get(api_url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    files = data.get('files', [])
+                    
+                    for file in files:
+                        # Build thumbnail URL - Google provides thumbnails for images
+                        file_id = file.get('id')
+                        thumbnail_url = file.get('thumbnailLink', '')
+                        
+                        # Higher quality thumbnail
+                        if thumbnail_url:
+                            thumbnail_url = thumbnail_url.replace('=s220', '=s400')
+                        else:
+                            thumbnail_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w400"
+                        
+                        # Full image URL for viewing
+                        view_url = f"https://drive.google.com/uc?export=view&id={file_id}"
+                        
+                        photo_data = {
+                            'file_id': file_id,
+                            'name': file.get('name', 'Untitled'),
+                            'mime_type': file.get('mimeType', 'image/jpeg'),
+                            'size': int(file.get('size', 0)) if file.get('size') else 0,
+                            'thumbnail_url': thumbnail_url,
+                            'view_url': view_url,
+                            'width': file.get('imageMediaMetadata', {}).get('width'),
+                            'height': file.get('imageMediaMetadata', {}).get('height'),
+                            'created_time': file.get('createdTime')
+                        }
+                        result['photos'].append(photo_data)
+                    
+                    result['success'] = True
+                    result['photo_count'] = len(result['photos'])
+                    logger.info(f"Fetched {len(result['photos'])} photos from Google Drive folder {folder_id}")
+                    
+                elif response.status == 404:
+                    result['error'] = "Folder not found. Make sure the folder is shared publicly."
+                elif response.status == 403:
+                    result['error'] = "Access denied. Please make sure the folder is set to 'Anyone with the link can view'."
+                else:
+                    error_text = await response.text()
+                    result['error'] = f"Failed to fetch folder: {error_text[:200]}"
+                    logger.error(f"Google Drive API error: {response.status} - {error_text}")
+                    
+    except Exception as e:
+        result['error'] = f"Error fetching Google Drive folder: {str(e)}"
+        logger.error(f"Google Drive fetch error: {e}")
+    
+    return result
+
+async def scrape_gdrive_folder_html(folder_id: str) -> dict:
+    """
+    Alternative method: Scrape Google Drive folder HTML page for public folders.
+    This works when the folder is publicly shared but API access is restricted.
+    """
+    result = {
+        'success': False,
+        'folder_name': 'Google Drive Photos',
+        'photos': [],
+        'error': None
+    }
+    
+    try:
+        url = f"https://drive.google.com/drive/folders/{folder_id}"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    
+                    # Extract file IDs from the page
+                    # Google Drive uses a specific pattern for file IDs in the HTML
+                    file_pattern = r'\["([a-zA-Z0-9_-]{25,})"[^\]]*"([^"]+\.(jpg|jpeg|png|gif|webp|heic))"'
+                    matches = re.findall(file_pattern, html, re.IGNORECASE)
+                    
+                    seen_ids = set()
+                    for match in matches:
+                        file_id = match[0]
+                        file_name = match[1]
+                        
+                        if file_id in seen_ids:
+                            continue
+                        seen_ids.add(file_id)
+                        
+                        photo_data = {
+                            'file_id': file_id,
+                            'name': file_name,
+                            'mime_type': 'image/jpeg',
+                            'size': 0,
+                            'thumbnail_url': f"https://drive.google.com/thumbnail?id={file_id}&sz=w400",
+                            'view_url': f"https://drive.google.com/uc?export=view&id={file_id}",
+                            'width': None,
+                            'height': None,
+                            'created_time': None
+                        }
+                        result['photos'].append(photo_data)
+                    
+                    # Try to extract folder name
+                    title_match = re.search(r'<title>([^<]+)</title>', html)
+                    if title_match:
+                        title = title_match.group(1).replace(' - Google Drive', '').strip()
+                        if title:
+                            result['folder_name'] = title
+                    
+                    if result['photos']:
+                        result['success'] = True
+                        result['photo_count'] = len(result['photos'])
+                    else:
+                        result['error'] = "No photos found in folder. Make sure it contains images and is publicly shared."
+                        
+                elif response.status == 404:
+                    result['error'] = "Folder not found"
+                else:
+                    result['error'] = f"Could not access folder (status {response.status})"
+                    
+    except Exception as e:
+        result['error'] = f"Error scraping folder: {str(e)}"
+        logger.error(f"Google Drive scrape error: {e}")
+    
+    return result
+
+async def get_gdrive_photos(folder_id: str) -> dict:
+    """
+    Try multiple methods to get photos from a Google Drive folder.
+    First tries API, then falls back to HTML scraping.
+    """
+    # First try the API method
+    result = await fetch_gdrive_folder_photos(folder_id)
+    
+    # If API fails, try HTML scraping
+    if not result['success']:
+        logger.info(f"API method failed for folder {folder_id}, trying HTML scrape")
+        result = await scrape_gdrive_folder_html(folder_id)
+    
+    return result
+
 # ============================================
 # SUBSCRIPTION & BILLING SYSTEM
 # ============================================
