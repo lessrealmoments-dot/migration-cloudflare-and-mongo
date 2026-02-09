@@ -8230,6 +8230,191 @@ async def get_thumbnail_status(admin: dict = Depends(get_admin_user)):
         "percentage_missing": round(missing / total * 100, 1) if total > 0 else 0
     }
 
+@api_router.get("/admin/storage-status")
+async def get_storage_status(admin: dict = Depends(get_admin_user)):
+    """Get comprehensive storage status - find orphaned files"""
+    import glob
+    
+    # Get all photo IDs from database
+    db_photos = await db.photos.find({}, {"_id": 0, "id": 1, "filename": 1}).to_list(100000)
+    db_photo_ids = {p["id"] for p in db_photos}
+    db_filenames = {p.get("filename", "") for p in db_photos}
+    
+    # Get all files on disk (excluding system files)
+    upload_files = []
+    for ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'JPG', 'JPEG', 'PNG', 'GIF', 'WEBP']:
+        upload_files.extend(glob.glob(str(UPLOAD_DIR / f"*.{ext}")))
+    
+    # Exclude landing images and other system files
+    photo_files = [f for f in upload_files if not Path(f).name.startswith(('landing_', 'favicon_', 'logo_', 'payment_'))]
+    
+    # Get all thumbnails on disk
+    thumb_files = glob.glob(str(THUMBNAILS_DIR / "*.jpg"))
+    
+    # Find orphaned files (on disk but not in database)
+    orphaned_uploads = []
+    for file_path in photo_files:
+        filename = Path(file_path).name
+        # Check if filename matches any database entry
+        if filename not in db_filenames:
+            # Also check by photo_id pattern (uuid.ext)
+            photo_id = filename.rsplit('.', 1)[0] if '.' in filename else filename
+            if photo_id not in db_photo_ids:
+                orphaned_uploads.append({
+                    "path": file_path,
+                    "filename": filename,
+                    "size": Path(file_path).stat().st_size
+                })
+    
+    # Find orphaned thumbnails
+    orphaned_thumbs = []
+    for thumb_path in thumb_files:
+        filename = Path(thumb_path).name
+        # Extract photo_id from thumb filename (format: {photo_id}_{size}.jpg)
+        parts = filename.rsplit('_', 1)
+        if len(parts) == 2:
+            photo_id = parts[0]
+            if photo_id not in db_photo_ids:
+                orphaned_thumbs.append({
+                    "path": thumb_path,
+                    "filename": filename,
+                    "size": Path(thumb_path).stat().st_size
+                })
+    
+    # Calculate sizes
+    orphaned_upload_size = sum(f["size"] for f in orphaned_uploads)
+    orphaned_thumb_size = sum(f["size"] for f in orphaned_thumbs)
+    
+    return {
+        "database": {
+            "total_photos": len(db_photo_ids)
+        },
+        "disk": {
+            "total_photo_files": len(photo_files),
+            "total_thumbnail_files": len(thumb_files)
+        },
+        "orphaned": {
+            "upload_files": len(orphaned_uploads),
+            "upload_size_mb": round(orphaned_upload_size / (1024 * 1024), 2),
+            "thumbnail_files": len(orphaned_thumbs),
+            "thumbnail_size_mb": round(orphaned_thumb_size / (1024 * 1024), 2),
+            "total_files": len(orphaned_uploads) + len(orphaned_thumbs),
+            "total_size_mb": round((orphaned_upload_size + orphaned_thumb_size) / (1024 * 1024), 2)
+        },
+        "sample_orphaned_uploads": orphaned_uploads[:10],
+        "sample_orphaned_thumbs": orphaned_thumbs[:10]
+    }
+
+@api_router.post("/admin/cleanup-orphaned-files")
+async def cleanup_orphaned_files(
+    admin: dict = Depends(get_admin_user),
+    dry_run: bool = True
+):
+    """Delete orphaned files from disk that aren't in the database.
+    Use dry_run=true first to see what would be deleted."""
+    import glob
+    
+    # Get all photo IDs and filenames from database
+    db_photos = await db.photos.find({}, {"_id": 0, "id": 1, "filename": 1}).to_list(100000)
+    db_photo_ids = {p["id"] for p in db_photos}
+    db_filenames = {p.get("filename", "") for p in db_photos}
+    
+    # Get all files on disk
+    upload_files = []
+    for ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'JPG', 'JPEG', 'PNG', 'GIF', 'WEBP']:
+        upload_files.extend(glob.glob(str(UPLOAD_DIR / f"*.{ext}")))
+    
+    # Exclude system files
+    photo_files = [f for f in upload_files if not Path(f).name.startswith(('landing_', 'favicon_', 'logo_', 'payment_'))]
+    thumb_files = glob.glob(str(THUMBNAILS_DIR / "*.jpg"))
+    
+    deleted_uploads = []
+    deleted_thumbs = []
+    total_freed = 0
+    
+    # Process orphaned uploads
+    for file_path in photo_files:
+        filename = Path(file_path).name
+        photo_id = filename.rsplit('.', 1)[0] if '.' in filename else filename
+        
+        if filename not in db_filenames and photo_id not in db_photo_ids:
+            file_size = Path(file_path).stat().st_size
+            if not dry_run:
+                Path(file_path).unlink()
+                logger.info(f"Deleted orphaned upload: {filename}")
+            deleted_uploads.append({"filename": filename, "size": file_size})
+            total_freed += file_size
+    
+    # Process orphaned thumbnails
+    for thumb_path in thumb_files:
+        filename = Path(thumb_path).name
+        parts = filename.rsplit('_', 1)
+        if len(parts) == 2:
+            photo_id = parts[0]
+            if photo_id not in db_photo_ids:
+                file_size = Path(thumb_path).stat().st_size
+                if not dry_run:
+                    Path(thumb_path).unlink()
+                    logger.info(f"Deleted orphaned thumbnail: {filename}")
+                deleted_thumbs.append({"filename": filename, "size": file_size})
+                total_freed += file_size
+    
+    return {
+        "dry_run": dry_run,
+        "message": "Files would be deleted" if dry_run else "Files deleted",
+        "uploads_deleted": len(deleted_uploads),
+        "thumbnails_deleted": len(deleted_thumbs),
+        "total_files_deleted": len(deleted_uploads) + len(deleted_thumbs),
+        "space_freed_mb": round(total_freed / (1024 * 1024), 2),
+        "deleted_uploads": deleted_uploads[:20],
+        "deleted_thumbs": deleted_thumbs[:20]
+    }
+
+@api_router.get("/admin/orphaned-db-photos")
+async def get_orphaned_db_photos(admin: dict = Depends(get_admin_user)):
+    """Find photos in database whose files don't exist on disk"""
+    db_photos = await db.photos.find({}, {"_id": 0, "id": 1, "filename": 1, "gallery_id": 1}).to_list(100000)
+    
+    orphaned = []
+    for photo in db_photos:
+        file_path = UPLOAD_DIR / photo.get("filename", "")
+        if not file_path.exists():
+            orphaned.append({
+                "id": photo["id"],
+                "filename": photo.get("filename"),
+                "gallery_id": photo.get("gallery_id")
+            })
+    
+    return {
+        "total_db_photos": len(db_photos),
+        "orphaned_db_records": len(orphaned),
+        "orphaned_photos": orphaned[:50]
+    }
+
+@api_router.post("/admin/cleanup-orphaned-db-photos")
+async def cleanup_orphaned_db_photos(
+    admin: dict = Depends(get_admin_user),
+    dry_run: bool = True
+):
+    """Delete database records for photos whose files don't exist on disk"""
+    db_photos = await db.photos.find({}, {"_id": 0, "id": 1, "filename": 1}).to_list(100000)
+    
+    deleted = []
+    for photo in db_photos:
+        file_path = UPLOAD_DIR / photo.get("filename", "")
+        if not file_path.exists():
+            if not dry_run:
+                await db.photos.delete_one({"id": photo["id"]})
+                logger.info(f"Deleted orphaned DB record: {photo['id']}")
+            deleted.append(photo["id"])
+    
+    return {
+        "dry_run": dry_run,
+        "message": "Records would be deleted" if dry_run else "Records deleted",
+        "records_deleted": len(deleted),
+        "deleted_ids": deleted[:50]
+    }
+
 app.include_router(api_router)
 
 # Mount static files for uploads (payment proofs, QR codes, etc.)
