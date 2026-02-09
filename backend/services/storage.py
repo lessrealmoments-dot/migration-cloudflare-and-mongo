@@ -11,6 +11,10 @@ from typing import Optional, Tuple, BinaryIO
 from io import BytesIO
 from pathlib import Path
 from PIL import Image
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
