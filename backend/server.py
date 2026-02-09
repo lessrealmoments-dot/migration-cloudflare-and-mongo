@@ -8415,6 +8415,51 @@ async def get_storage_status(admin: dict = Depends(get_admin_user)):
         "sample_orphaned_thumbs": orphaned_thumbs[:10]
     }
 
+@api_router.post("/admin/test-r2-upload")
+async def test_r2_upload(admin: dict = Depends(get_admin_user)):
+    """Test R2 connectivity by uploading a small test file"""
+    if not storage.r2_enabled:
+        return {
+            "success": False,
+            "error": "R2 is not enabled. Check environment variables.",
+            "config": {
+                "R2_ACCESS_KEY_ID": bool(os.environ.get('R2_ACCESS_KEY_ID')),
+                "R2_SECRET_ACCESS_KEY": bool(os.environ.get('R2_SECRET_ACCESS_KEY')),
+                "R2_ENDPOINT_URL": os.environ.get('R2_ENDPOINT_URL', 'Not set'),
+                "R2_BUCKET_NAME": os.environ.get('R2_BUCKET_NAME', 'Not set'),
+            }
+        }
+    
+    try:
+        # Create a tiny test file
+        test_content = b"R2 connectivity test - " + datetime.now(timezone.utc).isoformat().encode()
+        test_key = f"test/connectivity_test_{uuid.uuid4().hex[:8]}.txt"
+        
+        # Try to upload
+        success, result = await storage.upload_file(test_key, test_content, "text/plain")
+        
+        if success:
+            # Try to delete the test file
+            await storage.delete_file(test_key)
+            return {
+                "success": True,
+                "message": "R2 upload and delete successful!",
+                "test_key": test_key,
+                "public_url": result
+            }
+        else:
+            return {
+                "success": False,
+                "error": result,
+                "hint": "Check that your API token has 'Object Read & Write' permission for this bucket"
+            }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "hint": "Check R2 credentials and bucket configuration"
+        }
+
 @api_router.post("/admin/cleanup-orphaned-files")
 async def cleanup_orphaned_files(
     admin: dict = Depends(get_admin_user),
