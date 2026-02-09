@@ -5346,26 +5346,50 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
     allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif']
     file_ext = original_ext if original_ext in allowed_extensions else 'jpg'
     filename = f"{photo_id}.{file_ext}"
-    file_path = UPLOAD_DIR / filename
     
-    # Use semaphore for concurrency control and async file I/O
+    # Use R2 storage service if available, otherwise fall back to local
     async with upload_semaphore:
-        try:
-            async with aiofiles.open(file_path, 'wb') as f:
-                await f.write(file_content)
+        if storage.r2_enabled:
+            # Upload to R2 with automatic thumbnail generation
+            upload_result = await storage.upload_with_thumbnails(
+                photo_id=photo_id,
+                content=file_content,
+                file_ext=file_ext,
+                content_type=file.content_type or 'image/jpeg'
+            )
             
-            # Verify file was written correctly (sync check is fast)
-            if not file_path.exists() or file_path.stat().st_size != file_size:
-                raise Exception("File verification failed")
-        except Exception as e:
-            logger.error(f"Error writing file {filename}: {e}")
-            # Clean up partial file
-            if file_path.exists():
-                try:
-                    file_path.unlink()
-                except:
-                    pass
-            raise HTTPException(status_code=500, detail="Failed to save photo. Please try again.")
+            if not upload_result['success']:
+                logger.error(f"R2 upload failed for {photo_id}: {upload_result.get('error')}")
+                raise HTTPException(status_code=500, detail="Failed to save photo. Please try again.")
+            
+            photo_url = upload_result['original_url']
+            thumb_small = upload_result.get('thumbnail_url')
+            thumb_medium = upload_result.get('thumbnail_medium_url')
+            storage_key = upload_result['original_key']  # Store R2 key for deletion
+        else:
+            # Fallback to local filesystem
+            file_path = UPLOAD_DIR / filename
+            try:
+                async with aiofiles.open(file_path, 'wb') as f:
+                    await f.write(file_content)
+                
+                if not file_path.exists() or file_path.stat().st_size != file_size:
+                    raise Exception("File verification failed")
+            except Exception as e:
+                logger.error(f"Error writing file {filename}: {e}")
+                if file_path.exists():
+                    try:
+                        file_path.unlink()
+                    except:
+                        pass
+                raise HTTPException(status_code=500, detail="Failed to save photo. Please try again.")
+            
+            photo_url = f"/api/photos/serve/{filename}"
+            storage_key = filename  # For local, just use filename
+            
+            # Generate thumbnails locally
+            thumb_small = generate_thumbnail(file_path, photo_id, 'small')
+            thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
     
     # Update storage used
     await db.users.update_one(
@@ -5378,7 +5402,8 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
         "gallery_id": gallery_id,
         "filename": filename,
         "original_filename": file.filename,
-        "url": f"/api/photos/serve/{filename}",
+        "url": photo_url,
+        "storage_key": storage_key,  # Store key for R2 deletion
         "uploaded_by": "photographer",
         "section_id": section_id,
         "file_size": file_size,
@@ -5388,27 +5413,19 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
         "auto_flagged": False
     }
     
-    # Generate thumbnails with retry logic - auto-flag if all retries fail
+    # Add thumbnail URLs if available
     thumbnail_failed = False
-    try:
-        thumb_small = generate_thumbnail(file_path, photo_id, 'small')
-        thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
-        
-        if thumb_small:
-            photo_doc["thumbnail_url"] = thumb_small
-        else:
-            thumbnail_failed = True
-            logger.warning(f"Small thumbnail generation failed for {photo_id} after retries")
-            
-        if thumb_medium:
-            photo_doc["thumbnail_medium_url"] = thumb_medium
-        else:
-            thumbnail_failed = True
-            logger.warning(f"Medium thumbnail generation failed for {photo_id} after retries")
-            
-    except Exception as e:
+    if thumb_small:
+        photo_doc["thumbnail_url"] = thumb_small
+    else:
         thumbnail_failed = True
-        logger.warning(f"Thumbnail generation exception for {photo_id}: {e}")
+        logger.warning(f"Small thumbnail generation failed for {photo_id}")
+        
+    if thumb_medium:
+        photo_doc["thumbnail_medium_url"] = thumb_medium
+    else:
+        thumbnail_failed = True
+        logger.warning(f"Medium thumbnail generation failed for {photo_id}")
     
     # Auto-flag photo if thumbnails failed - it will be hidden from public gallery
     if thumbnail_failed:
@@ -5423,11 +5440,15 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
     except Exception as e:
         logger.error(f"Error saving photo to database: {e}")
         # Clean up file if DB insert fails
-        if file_path.exists():
-            try:
-                file_path.unlink()
-            except:
-                pass
+        if storage.r2_enabled:
+            await storage.delete_photo_with_thumbnails(photo_id, file_ext)
+        else:
+            file_path = UPLOAD_DIR / filename
+            if file_path.exists():
+                try:
+                    file_path.unlink()
+                except:
+                    pass
         # Revert storage
         await db.users.update_one(
             {"id": current_user["id"]},
