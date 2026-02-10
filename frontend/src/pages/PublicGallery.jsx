@@ -726,15 +726,11 @@ const PublicGallery = () => {
   // Get cover photo URL for OG tags
   const getCoverPhotoUrl = () => {
     if (gallery?.cover_photo_url) {
-      const coverUrl = gallery.cover_photo_url;
-      if (coverUrl.startsWith('http')) return coverUrl;
-      return `${BACKEND_URL}${coverUrl}`;
+      return getImageUrl(gallery.cover_photo_url);
     }
     // Fallback to first photo
     if (photos.length > 0 && photos[0]?.url) {
-      const photoUrl = photos[0].url;
-      if (photoUrl.startsWith('http')) return photoUrl;
-      return `${BACKEND_URL}${photoUrl}`;
+      return getImageUrl(photos[0].url);
     }
     return null;
   };
