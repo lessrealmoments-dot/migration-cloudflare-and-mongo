@@ -3902,7 +3902,7 @@ const GalleryDetail = () => {
                   <div key={photo.id} className="relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 border-amber-300 bg-zinc-100">
                     {photo.thumbnail_url ? (
                       <img 
-                        src={`${BACKEND_URL}${photo.thumbnail_url}`} 
+                        src={getImageUrl(photo.thumbnail_url)} 
                         alt="" 
                         className="w-full h-full object-cover opacity-60"
                         onError={(e) => { e.target.style.display = 'none'; }}
