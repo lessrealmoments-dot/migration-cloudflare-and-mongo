@@ -4675,7 +4675,7 @@ const PhotoItem = ({ photo, photoIndex, onDelete, onView, selectMode, selected, 
     onDrop={reorderMode ? (e) => onDrop(e, photo) : undefined}
   >
     <OptimizedImage
-      src={`${BACKEND_URL}${photo.url}`}
+      src={getImageUrl(photo.url)}
       alt="Gallery photo"
       className="w-full h-auto cursor-pointer rounded-sm"
     />
