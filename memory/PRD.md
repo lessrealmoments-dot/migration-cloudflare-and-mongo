@@ -543,7 +543,7 @@ Integrated with **Resend** email service.
 - `transactions` - Payment transaction history with proof URLs
 
 ## Access URLs
-- Preview: https://gallery-sync.preview.emergentagent.com
+- Preview: https://pixelport-12.preview.emergentagent.com
 - Pricing: /pricing
 - Admin: /admin
 
