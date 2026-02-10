@@ -7156,6 +7156,81 @@ async def get_public_download_info(share_link: str, request: SectionDownloadRequ
     
     total_size = sum(c["size_bytes"] for c in chunks)
     
+    # Build integration sources list (only shown after password verification)
+    integration_sources = []
+    
+    for section in sorted(sections, key=lambda s: s.get("order", 0)):
+        section_type = section.get("type", "photo")
+        section_name = section.get("name", section.get("title", "Untitled"))
+        
+        # Google Drive sections
+        if section_type == "gdrive" and section.get("gdrive_folder_id"):
+            gdrive_photo_count = await db.gdrive_photos.count_documents({
+                "gallery_id": gallery["id"],
+                "section_id": section["id"]
+            })
+            if gdrive_photo_count > 0:
+                # Build Google Drive folder URL
+                folder_url = section.get("gdrive_folder_url") or f"https://drive.google.com/drive/folders/{section['gdrive_folder_id']}"
+                integration_sources.append({
+                    "type": "gdrive",
+                    "icon": "google-drive",
+                    "label": "Google Drive",
+                    "section_name": section_name,
+                    "url": folder_url,
+                    "photo_count": gdrive_photo_count
+                })
+        
+        # pCloud sections
+        elif section_type == "pcloud" and section.get("pcloud_code"):
+            pcloud_photo_count = await db.pcloud_photos.count_documents({
+                "gallery_id": gallery["id"],
+                "section_id": section["id"]
+            })
+            if pcloud_photo_count > 0:
+                pcloud_url = f"https://e.pcloud.link/publink/show?code={section['pcloud_code']}"
+                integration_sources.append({
+                    "type": "pcloud",
+                    "icon": "cloud",
+                    "label": "pCloud",
+                    "section_name": section_name,
+                    "url": pcloud_url,
+                    "photo_count": pcloud_photo_count
+                })
+        
+        # Fotoshare/360Glam sections
+        elif section_type == "fotoshare" and section.get("fotoshare_url"):
+            fotoshare_video_count = await db.fotoshare_videos.count_documents({
+                "gallery_id": gallery["id"],
+                "section_id": section["id"]
+            })
+            if fotoshare_video_count > 0:
+                integration_sources.append({
+                    "type": "fotoshare",
+                    "icon": "video",
+                    "label": "360Glam",
+                    "section_name": section_name,
+                    "url": section["fotoshare_url"],
+                    "video_count": fotoshare_video_count
+                })
+        
+        # Video/YouTube sections
+        elif section_type == "video":
+            youtube_video_count = await db.gallery_videos.count_documents({
+                "gallery_id": gallery["id"],
+                "section_id": section["id"]
+            })
+            if youtube_video_count > 0:
+                # For YouTube, we don't have a single link, but we can link to the gallery
+                integration_sources.append({
+                    "type": "youtube",
+                    "icon": "youtube",
+                    "label": "YouTube Videos",
+                    "section_name": section_name,
+                    "url": None,  # Videos are embedded in gallery
+                    "video_count": youtube_video_count
+                })
+    
     return {
         "gallery_id": gallery["id"],
         "gallery_title": gallery.get("title", "Gallery"),
@@ -7163,7 +7238,8 @@ async def get_public_download_info(share_link: str, request: SectionDownloadRequ
         "total_size_mb": round(total_size / (1024 * 1024), 1),
         "chunk_count": len(chunks),
         "chunks": chunks,
-        "sections": section_info
+        "sections": section_info,
+        "integration_sources": integration_sources
     }
 
 @api_router.post("/public/gallery/{share_link}/download-section")
