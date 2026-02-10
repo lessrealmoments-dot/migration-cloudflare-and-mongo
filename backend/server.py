@@ -1695,20 +1695,31 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown"""
     # Create database indexes for optimized performance
     await create_database_indexes()
-    # Start background sync task
-    asyncio.create_task(auto_sync_drive_task())
-    # Start auto-delete task
+    
+    # Initialize background tasks module with dependencies
+    init_tasks(
+        db=db,
+        storage=storage,
+        logger=logger,
+        scrape_fotoshare_videos=scrape_fotoshare_videos,
+        fetch_pcloud_folder=fetch_pcloud_folder,
+        get_gdrive_photos=get_gdrive_photos,
+        get_drive_service_for_user=get_drive_service_for_user,
+        UPLOAD_DIR=UPLOAD_DIR,
+        DRIVE_SYNC_INTERVAL=DRIVE_SYNC_INTERVAL
+    )
+    
+    # Start background tasks (imported from tasks module)
+    asyncio.create_task(auto_sync_drive_backup_task())
     asyncio.create_task(auto_delete_expired_galleries())
-    # Start fotoshare auto-refresh task
     asyncio.create_task(auto_refresh_fotoshare_sections())
-    # Start Google Drive sections auto-sync task
     asyncio.create_task(auto_sync_gdrive_sections())
-    # Start pCloud sections auto-sync task
     asyncio.create_task(auto_sync_pcloud_sections())
+    
     yield
-    # Stop background task
-    global sync_task_running
-    sync_task_running = False
+    
+    # Stop all background tasks
+    stop_tasks()
 
 app = FastAPI(lifespan=lifespan)
 api_router = APIRouter(prefix="/api")
