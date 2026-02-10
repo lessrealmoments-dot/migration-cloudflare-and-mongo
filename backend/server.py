@@ -5401,17 +5401,30 @@ async def get_contributor_upload_info(contributor_link: str):
         ).to_list(100)
         existing_fotoshare_videos = fvideos
     
+    # Get existing gdrive photos if this is a gdrive section
+    existing_gdrive_photos = []
+    if section.get("type") == "gdrive":
+        gphotos = await db.gdrive_photos.find(
+            {"gallery_id": gallery["id"], "section_id": section["id"]},
+            {"_id": 0}
+        ).to_list(500)
+        existing_gdrive_photos = gphotos
+    
     return {
         "gallery_id": gallery["id"],
         "gallery_title": gallery["title"],
         "section_id": section["id"],
         "section_name": section["name"],
-        "section_type": section.get("type", "photo"),  # NEW: Return section type
+        "section_type": section.get("type", "photo"),  # Return section type
         "photographer_name": photographer.get("business_name") or photographer.get("name", "Photographer"),
         "existing_contributor_name": section.get("contributor_name"),
+        "existing_contributor_role": section.get("contributor_role"),
         "existing_videos": existing_videos,  # For video sections
         "existing_fotoshare_videos": existing_fotoshare_videos,  # For fotoshare sections
-        "fotoshare_url": section.get("fotoshare_url")  # Existing fotoshare URL if any
+        "existing_gdrive_photos": existing_gdrive_photos,  # For gdrive sections
+        "fotoshare_url": section.get("fotoshare_url"),  # Existing fotoshare URL if any
+        "gdrive_folder_id": section.get("gdrive_folder_id"),  # Existing gdrive folder if any
+        "gdrive_folder_name": section.get("gdrive_folder_name")
     }
 
 @api_router.post("/contributor/{contributor_link}/set-name")
