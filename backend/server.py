@@ -4444,12 +4444,7 @@ async def get_public_pcloud_photos(share_link: str, section_id: Optional[str] = 
     return photos
 
 # ============ Google Drive Section Endpoints ============
-
-class GoogleDriveSectionCreate(BaseModel):
-    gdrive_url: Optional[str] = None  # Now optional - can create empty section first
-    section_name: Optional[str] = None
-    contributor_name: Optional[str] = None
-    contributor_role: Optional[str] = None
+# NOTE: GoogleDriveSectionCreate model is now imported from models/video.py
 
 @api_router.post("/galleries/{gallery_id}/gdrive-sections")
 async def create_gdrive_section(
