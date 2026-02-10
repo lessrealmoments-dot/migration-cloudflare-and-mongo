@@ -8629,7 +8629,7 @@ async def track_gallery_view(share_link: str):
 # ============ AUTO-DELETE TASK ============
 
 async def auto_delete_expired_galleries():
-    """Background task to delete galleries older than 6 months"""
+    """Background task to delete galleries past their auto_delete_date (6 months default)"""
     global sync_task_running
     
     while sync_task_running:
@@ -8644,36 +8644,75 @@ async def auto_delete_expired_galleries():
             for gallery in expired_galleries:
                 gallery_id = gallery["id"]
                 photographer_id = gallery["photographer_id"]
+                gallery_title = gallery.get("title", "Unknown")
                 
-                # Delete photos
-                photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(None)
-                for photo in photos:
-                    file_path = UPLOAD_DIR / photo["filename"]
-                    if file_path.exists():
+                logger.info(f"Auto-deleting expired gallery: {gallery_title} ({gallery_id})")
+                
+                try:
+                    # Delete photos from storage (R2 or local)
+                    photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(None)
+                    total_size_freed = 0
+                    
+                    for photo in photos:
                         try:
-                            file_size = file_path.stat().st_size
-                            file_path.unlink()
-                            # Update storage used
-                            await db.users.update_one(
-                                {"id": photographer_id},
-                                {"$inc": {"storage_used": -file_size}}
-                            )
+                            # Delete from R2 storage
+                            if STORAGE_BACKEND == "r2" and photo.get("filename"):
+                                await delete_from_r2(f"photos/{photo['filename']}")
+                                if photo.get("thumbnail_filename"):
+                                    await delete_from_r2(f"thumbnails/{photo['thumbnail_filename']}")
+                            else:
+                                # Delete from local storage
+                                file_path = UPLOAD_DIR / photo.get("filename", "")
+                                if file_path.exists():
+                                    total_size_freed += file_path.stat().st_size
+                                    file_path.unlink()
+                                thumb_path = THUMBNAIL_DIR / photo.get("thumbnail_filename", "")
+                                if thumb_path.exists():
+                                    thumb_path.unlink()
                         except Exception as e:
-                            logger.error(f"Failed to delete photo file: {e}")
-                
-                await db.photos.delete_many({"gallery_id": gallery_id})
-                await db.drive_backups.delete_many({"gallery_id": gallery_id})
-                await db.galleries.delete_one({"id": gallery_id})
-                
-                logger.info(f"Auto-deleted expired gallery: {gallery['title']} ({gallery_id})")
+                            logger.error(f"Failed to delete photo file {photo.get('filename')}: {e}")
+                    
+                    # Delete cover photo if exists
+                    if gallery.get("cover_photo_url"):
+                        cover_filename = gallery["cover_photo_url"].split("/")[-1]
+                        try:
+                            if STORAGE_BACKEND == "r2":
+                                await delete_from_r2(f"photos/{cover_filename}")
+                            else:
+                                cover_path = UPLOAD_DIR / cover_filename
+                                if cover_path.exists():
+                                    cover_path.unlink()
+                        except:
+                            pass
+                    
+                    # Delete all related database records
+                    await db.photos.delete_many({"gallery_id": gallery_id})
+                    await db.gallery_videos.delete_many({"gallery_id": gallery_id})
+                    await db.fotoshare_videos.delete_many({"gallery_id": gallery_id})
+                    await db.gdrive_photos.delete_many({"gallery_id": gallery_id})
+                    await db.pcloud_photos.delete_many({"gallery_id": gallery_id})
+                    await db.drive_backups.delete_many({"gallery_id": gallery_id})
+                    await db.galleries.delete_one({"id": gallery_id})
+                    
+                    # Update storage used for the photographer
+                    if total_size_freed > 0:
+                        await db.users.update_one(
+                            {"id": photographer_id},
+                            {"$inc": {"storage_used": -total_size_freed}}
+                        )
+                    
+                    logger.info(f"Successfully auto-deleted gallery: {gallery_title} ({gallery_id})")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to auto-delete gallery {gallery_id}: {e}")
             
             if expired_galleries:
-                logger.info(f"Auto-deleted {len(expired_galleries)} expired galleries")
+                logger.info(f"Auto-delete task completed: {len(expired_galleries)} galleries removed")
         
         except Exception as e:
             logger.error(f"Auto-delete task error: {e}")
         
-        # Check daily
+        # Check daily at midnight-ish
         await asyncio.sleep(24 * 60 * 60)
 
 # ============================================
