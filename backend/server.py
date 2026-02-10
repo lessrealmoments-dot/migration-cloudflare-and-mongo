@@ -3767,10 +3767,7 @@ async def upload_cover_photo(gallery_id: str, file: UploadFile = File(...), curr
     
     return {"cover_photo_url": cover_url}
 
-class CoverPhotoPosition(BaseModel):
-    scale: float = 1.0
-    positionX: float = 50.0
-    positionY: float = 50.0
+# NOTE: CoverPhotoPosition model is now imported from models/gallery.py
 
 @api_router.put("/galleries/{gallery_id}/cover-photo-position")
 async def update_cover_photo_position(gallery_id: str, position: CoverPhotoPosition, current_user: dict = Depends(get_current_user)):
