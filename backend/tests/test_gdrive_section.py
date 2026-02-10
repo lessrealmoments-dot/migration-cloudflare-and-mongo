@@ -203,7 +203,10 @@ class TestGoogleDriveSectionAPI:
         if response.status_code != 200:
             pytest.skip("Could not get gallery details")
         
-        share_link = response.json().get("share_link")
+        gallery_data = response.json()
+        share_link = gallery_data.get("share_link")
+        is_published = gallery_data.get("is_published", False)
+        
         if not share_link:
             pytest.skip("Gallery has no share link")
         
@@ -212,11 +215,16 @@ class TestGoogleDriveSectionAPI:
             f"{BASE_URL}/api/public/gallery/{share_link}/gdrive-photos"
         )
         
-        # Should return 200 with empty array or photos
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-        data = response.json()
-        assert isinstance(data, list), "Response should be a list"
-        print(f"Got {len(data)} Google Drive photos for gallery")
+        # If gallery is not published, it will return 404
+        if not is_published:
+            assert response.status_code == 404, f"Expected 404 for unpublished gallery, got {response.status_code}"
+            print("Unpublished gallery correctly returns 404 for public endpoint")
+        else:
+            # Should return 200 with empty array or photos
+            assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+            data = response.json()
+            assert isinstance(data, list), "Response should be a list"
+            print(f"Got {len(data)} Google Drive photos for gallery")
     
     # ============ Google Drive Proxy Tests ============
     
@@ -226,9 +234,10 @@ class TestGoogleDriveSectionAPI:
             f"{BASE_URL}/api/gdrive/proxy/invalid-file-id"
         )
         
-        # Should return error (404 or 500) for invalid file ID
+        # Should return error for invalid file ID
         # The proxy might return various error codes depending on Google's response
-        assert response.status_code in [400, 404, 500, 502, 503], f"Expected error code, got {response.status_code}"
+        # 520 is Cloudflare's "Web server is returning an unknown error"
+        assert response.status_code in [400, 404, 500, 502, 503, 520], f"Expected error code, got {response.status_code}"
         print(f"Invalid file ID correctly returns error: {response.status_code}")
     
     # ============ Delete Google Drive Section Tests ============
