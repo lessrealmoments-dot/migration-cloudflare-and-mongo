@@ -1,0 +1,93 @@
+{
+  "summary": "Tested three bug fixes: 1) Download button visibility on public gallery, 2) Password Settings in Edit modal, 3) Coordinator Name field. Found and fixed a backend bug where coordinator_name was not being returned in GET /api/galleries/{id} response.",
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "test_report_links": [
+    "/app/backend/tests/test_bug_fixes_iteration20.py",
+    "/app/test_reports/pytest/bug_fixes_iteration20_results.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [
+    "FIXED: GET /api/galleries/{id} was missing coordinator_name in response - added line 4161 in server.py"
+  ],
+  
+  "updated_files": [
+    "/app/backend/server.py",
+    "/app/backend/tests/test_bug_fixes_iteration20.py"
+  ],
+  
+  "success_rate": {
+    "backend": "100% (7/7 tests passed)",
+    "frontend": "100% - All UI flows verified via Playwright"
+  },
+  
+  "test_credentials": {
+    "email": "lessrealmoments@gmail.com",
+    "password": "3tfL99B%u2qw"
+  },
+  
+  "seed_data_creation": "Set test password on gallery during testing (may need manual removal)",
+  
+  "retest_needed": false,
+  
+  "should_main_agent_self_test": false,
+  
+  "context_for_next_testing_agent": "Gallery 'THE WEDDING OF DENHAR AND YASMEN' (ID: 5e2a7d5d-ffe1-4d4f-8982-60b7ce1d3132, share_link: 465f44a9) now has a gallery access password set from testing. The password is 'TEST_password_123'. All three bug fixes verified working.",
+  
+  "features_tested": {
+    "bug1_download_button_visibility": {
+      "status": "PASS",
+      "details": "Download button shows on public gallery when photos.length > 0, regardless of download password setting"
+    },
+    "bug1_download_no_password": {
+      "status": "PASS",
+      "details": "Clicking Download without password fetches download info directly and shows dropdown"
+    },
+    "bug2_password_settings_section": {
+      "status": "PASS",
+      "details": "Edit Gallery modal has 'Password Settings' section with both password fields"
+    },
+    "bug2_gallery_access_password": {
+      "status": "PASS",
+      "details": "Gallery Access Password field can be edited and saved"
+    },
+    "bug2_download_password": {
+      "status": "PASS",
+      "details": "Download Password field can be edited and saved"
+    },
+    "bug3_coordinator_name": {
+      "status": "PASS",
+      "details": "Coordinator Name field is present in edit modal and can be edited"
+    },
+    "bug3_coordinator_name_persistence": {
+      "status": "PASS",
+      "details": "Coordinator name changes persist after save (fixed backend bug)"
+    }
+  },
+  
+  "bugs_found_and_fixed": {
+    "coordinator_name_not_returned": {
+      "description": "GET /api/galleries/{id} endpoint was not returning coordinator_name field",
+      "root_cause": "Missing coordinator_name=gallery.get('coordinator_name') in the Gallery response construction at line 4152-4178",
+      "fix_applied": "Added coordinator_name=gallery.get('coordinator_name') at line 4161 in server.py",
+      "verification": "Tested via API - coordinator_name now returned correctly after update"
+    }
+  },
+  
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
