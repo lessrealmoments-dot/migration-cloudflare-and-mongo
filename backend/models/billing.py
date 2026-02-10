@@ -237,7 +237,7 @@ class UserFeatureToggle(BaseModel):
 
 class UpgradeRequest(BaseModel):
     requested_plan: str
-    proof_url: str
+    proof_url: Optional[str] = None  # Payment proof can be submitted with upgrade request
 
 
 class ExtraCreditRequest(BaseModel):
