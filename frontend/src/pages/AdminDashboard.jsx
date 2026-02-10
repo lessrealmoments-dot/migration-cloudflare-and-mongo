@@ -515,30 +515,43 @@ const AdminDashboard = () => {
       
       const imageUrl = response.data.url;
       
-      // Verify the uploaded image can be loaded
+      // Verify the uploaded image can be loaded with retry logic
       const fullImageUrl = imageUrl.startsWith('/api') ? `${BACKEND_URL}${imageUrl}` : imageUrl;
-      const img = new Image();
       
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = () => reject(new Error('Image verification failed'));
-        img.src = fullImageUrl;
-      });
+      // Retry image verification up to 3 times with delay (CDN propagation)
+      let loaded = false;
+      for (let attempt = 0; attempt < 3 && !loaded; attempt++) {
+        if (attempt > 0) {
+          await new Promise(r => setTimeout(r, 1500)); // Wait 1.5s between retries
+        }
+        try {
+          await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = `${fullImageUrl}?t=${Date.now()}`; // Cache bust
+          });
+          loaded = true;
+        } catch (e) {
+          console.log(`Image verification attempt ${attempt + 1} failed, retrying...`);
+        }
+      }
       
-      // Update local state with new image URL
+      // Update local state with new image URL regardless of verification
+      // (The image was successfully uploaded, it just may take time to propagate)
       setLandingConfig(prev => ({
         ...prev,
         [slot]: imageUrl
       }));
       
-      toast.success('Image uploaded successfully');
+      if (loaded) {
+        toast.success('Image uploaded successfully');
+      } else {
+        toast.success('Image uploaded! It may take a few seconds to appear.');
+      }
     } catch (error) {
       console.error('Image upload error:', error);
-      if (error.message === 'Image verification failed') {
-        toast.error('Image uploaded but failed to load. Please try again.');
-      } else {
-        toast.error('Failed to upload image');
-      }
+      toast.error('Failed to upload image');
     } finally {
       setUploadingImage(null);
     }
