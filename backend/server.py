@@ -9518,6 +9518,9 @@ async def cleanup_orphaned_db_photos(
 
 app.include_router(api_router)
 
+# Include modular routes (Phase 4 refactoring)
+app.include_router(health_router, prefix="/api")
+
 # Mount static files for uploads (payment proofs, QR codes, etc.)
 from fastapi.staticfiles import StaticFiles
 uploads_path = ROOT_DIR / "uploads"
