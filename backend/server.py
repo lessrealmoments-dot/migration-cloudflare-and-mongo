@@ -102,6 +102,9 @@ from tasks import (
     auto_delete_expired_galleries,
 )
 
+# Import routes from routes package (Phase 4 refactoring)
+from routes import health_router
+
 # YouTube URL patterns and utilities - NOW IMPORTED FROM utils.helpers
 # Keeping local definitions as fallback for backward compatibility
 def _extract_youtube_video_id(url: str) -> Optional[str]:
