@@ -7026,6 +7026,78 @@ async def get_gallery_opengraph(share_link: str, request: Request):
     
     return HTMLResponse(content=html)
 
+@api_router.get("/og/gallery/{share_link}")
+async def get_gallery_og_meta(share_link: str, request: Request):
+    """Get Open Graph meta tags for a gallery (for Facebook/social media sharing)"""
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    
+    # Default values
+    site_name = "EventsGallery"
+    default_title = "Photo Gallery"
+    default_description = "View and download photos from this special event"
+    default_image = f"{request.base_url}api/photos/serve/default_og_image.jpg"
+    
+    if not gallery:
+        return {
+            "title": default_title,
+            "description": default_description,
+            "image": default_image,
+            "url": str(request.url).replace("/api/og/", "/g/"),
+            "site_name": site_name
+        }
+    
+    # Get photographer info for site name
+    photographer = await db.users.find_one({"id": gallery.get("photographer_id")}, {"_id": 0, "business_name": 1})
+    if photographer and photographer.get("business_name"):
+        site_name = photographer["business_name"]
+    
+    # Build title
+    title = gallery.get("event_title") or gallery.get("title") or default_title
+    
+    # Build description
+    description = gallery.get("description")
+    if not description:
+        photographer_name = gallery.get("photographer_name", "")
+        if photographer_name:
+            description = f"Photos by {photographer_name}"
+        else:
+            description = default_description
+    
+    # Get cover image URL
+    cover_photo_url = gallery.get("cover_photo_url")
+    if cover_photo_url:
+        if cover_photo_url.startswith("/api"):
+            image_url = f"{str(request.base_url).rstrip('/')}{cover_photo_url}"
+        elif cover_photo_url.startswith("http"):
+            image_url = cover_photo_url
+        else:
+            image_url = f"{str(request.base_url).rstrip('/')}/api/photos/serve/{cover_photo_url}"
+    else:
+        # Try to get first photo as fallback
+        first_photo = await db.photos.find_one(
+            {"gallery_id": gallery.get("id")},
+            {"_id": 0, "url": 1}
+        )
+        if first_photo and first_photo.get("url"):
+            photo_url = first_photo["url"]
+            if photo_url.startswith("/api"):
+                image_url = f"{str(request.base_url).rstrip('/')}{photo_url}"
+            else:
+                image_url = f"{str(request.base_url).rstrip('/')}/api/photos/serve/{photo_url}"
+        else:
+            image_url = default_image
+    
+    gallery_url = str(request.url).replace("/api/og/", "/g/")
+    
+    return {
+        "title": title,
+        "description": description[:160] if description else default_description,
+        "image": image_url,
+        "url": gallery_url,
+        "site_name": site_name,
+        "type": "website"
+    }
+
 @api_router.get("/public/gallery/{share_link}", response_model=PublicGallery)
 async def get_public_gallery(share_link: str):
     gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
