@@ -1038,16 +1038,21 @@ const PublicGallery = () => {
             </section>
           )}
 
-        {/* Download Button with Dropdown */}
-        {gallery?.has_download_all_password && (
+        {/* Download Button with Dropdown - Show when gallery has photos */}
+        {photos.length > 0 && (
           <div className="py-8 text-center relative">
             <div className="inline-block relative">
               <button
                 data-testid="download-all-button"
                 onClick={() => {
-                  if (!downloadInfo) {
+                  if (gallery?.has_download_all_password && !downloadInfo) {
+                    // Password required - show modal
                     setShowDownloadAllModal(true);
+                  } else if (!gallery?.has_download_all_password && !downloadInfo) {
+                    // No password required - fetch download info directly
+                    handleVerifyDownloadPassword();
                   } else {
+                    // Already verified - toggle dropdown
                     setShowDownloadDropdown(!showDownloadDropdown);
                   }
                 }}
