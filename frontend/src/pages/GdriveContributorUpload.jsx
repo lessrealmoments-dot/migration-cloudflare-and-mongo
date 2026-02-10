@@ -161,7 +161,7 @@ const GdriveContributorUpload = () => {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => window.history.back()}
+                onClick={goBackToHub}
                 className="flex-1 bg-zinc-100 text-zinc-700 py-3 rounded-xl font-medium hover:bg-zinc-200 transition-colors"
               >
                 No, Go Back
