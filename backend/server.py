@@ -3923,10 +3923,7 @@ async def rename_section(gallery_id: str, section_id: str, data: dict = Body(...
     return {"message": "Section renamed", "name": new_name.strip()}
 
 # ============ Fotoshare / 360 Booth Section Endpoints ============
-
-class FotoshareSectionCreate(BaseModel):
-    name: str
-    fotoshare_url: str
+# NOTE: FotoshareSectionCreate model is now imported from models/video.py
 
 @api_router.post("/galleries/{gallery_id}/fotoshare-sections")
 async def create_fotoshare_section(
