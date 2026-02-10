@@ -1126,3 +1126,46 @@ Each section type stores contributor info:
 
 When contributors submit via their respective upload pages (/c/, /v/, /f/, /d/, /p/), their name and role are automatically saved to the section and displayed in the public gallery.
 
+## Theme Typography & Contrast Enhancement ✅ (COMPLETED - February 2026)
+
+### Feature Overview
+Comprehensive text readability and typography enhancement across all 40+ gallery themes. All text in the public gallery now uses dynamic contrast calculation to ensure readability on any background color.
+
+### Technical Implementation
+Three key helper functions in `/app/frontend/src/themes.js`:
+
+| Function | Purpose |
+|----------|---------|
+| `getContrastTextColor(hexColor)` | Returns white (#ffffff) for dark backgrounds, dark (#1a1a1a) for light backgrounds based on luminance |
+| `getSubtleTextColor(hexColor, opacity)` | Returns RGBA color with specified opacity for secondary/subtle text |
+| `getTextColorForBackground(theme, bgType)` | Combines theme info with contrast calculation for specific background types |
+
+### Elements Updated in PublicGallery.jsx
+- Password page text (photographer name, "password protected" message)
+- Navigation bar text (photographer name on glass nav)
+- Description text
+- Guest upload CTA text
+- Section headers and photo count labels
+- Contributor names ("by [name]")
+- Download dropdown text
+- Footer text ("Thank you for being part of this special day", copyright)
+- Empty state message
+- View All buttons
+
+### Themes Verified
+Tested on multiple theme types:
+- **Dark themes**: neon (purple), modern (dark blue), blackgold, midnight
+- **Light themes**: romantic (pink), party (vibrant pink), classic (white)
+- **Nature themes**: ocean (blue/white), garden (green/white)
+
+### Google Fonts Added
+Extended font collection for theme variety:
+- Lato, Lora, Raleway, Source Sans Pro
+- Cinzel, DM Serif Display, DM Sans
+- Quicksand, Nunito, Poppins, Open Sans
+
+### Test Results
+- 100% frontend tests passed
+- All text elements readable on all tested themes
+- Test report: `/app/test_reports/iteration_21.json`
+
