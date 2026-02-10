@@ -67,11 +67,12 @@ def extract_pcloud_code(url: str) -> Optional[str]:
 # ============ Google Drive Utilities ============
 
 def extract_gdrive_folder_id(url: str) -> Optional[str]:
-    """Extract folder ID from Google Drive URL"""
+    """Extract folder ID from various Google Drive URL formats"""
     patterns = [
         r'drive\.google\.com/drive/folders/([a-zA-Z0-9_-]+)',
         r'drive\.google\.com/drive/u/\d+/folders/([a-zA-Z0-9_-]+)',
         r'drive\.google\.com/open\?id=([a-zA-Z0-9_-]+)',
+        r'drive\.google\.com/folderview\?id=([a-zA-Z0-9_-]+)',
     ]
     for pattern in patterns:
         match = re.search(pattern, url)
