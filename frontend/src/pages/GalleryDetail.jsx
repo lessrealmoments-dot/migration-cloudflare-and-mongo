@@ -61,6 +61,8 @@ const GalleryDetail = () => {
   const [newGdriveContributorRole, setNewGdriveContributorRole] = useState('');
   const [gdrivePhotos, setGdrivePhotos] = useState([]);
   const [refreshingGdrive, setRefreshingGdrive] = useState(null);
+  // pCloud upload link state
+  const [newPcloudUploadLink, setNewPcloudUploadLink] = useState('');
   // Section rename state
   const [editingSectionId, setEditingSectionId] = useState(null);
   const [editingSectionName, setEditingSectionName] = useState('');
