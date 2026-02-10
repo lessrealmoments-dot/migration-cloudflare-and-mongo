@@ -1959,7 +1959,7 @@ const HighlightPhotoItem = ({ photo, photoIndex, onView, onDownload }) => (
     onClick={() => onView(photoIndex)}
   >
     <OptimizedImage
-      src={`${BACKEND_URL}${photo.url}`}
+      src={getImageUrl(photo.url)}
       alt="Highlight photo"
       className="w-full h-full object-cover rounded-sm"
     />
