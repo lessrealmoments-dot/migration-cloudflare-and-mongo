@@ -79,22 +79,23 @@ class GoogleDriveSectionCreate(BaseModel):
 
 
 class PCloudPhoto(BaseModel):
-    """Photo entry from pCloud"""
+    """Photo entry from pCloud shared folder"""
     model_config = ConfigDict(extra="ignore")
     id: str
     gallery_id: str
     section_id: str
-    pcloud_code: str
-    file_id: int  # pCloud file ID
-    name: str
-    url: str  # Direct pCloud URL
-    thumbnail_url: Optional[str] = None
+    pcloud_code: str  # The share link code
+    fileid: str  # pCloud file ID (stored as string to avoid MongoDB int overflow)
+    name: str  # Original filename
+    size: int = 0  # File size in bytes
     width: Optional[int] = None
     height: Optional[int] = None
-    size: Optional[int] = None
-    created_at: Optional[str] = None
-    synced_at: str
+    contenttype: str = "image/jpeg"
+    supplier_name: Optional[str] = None  # Supplier folder name
+    hash: Optional[str] = None  # pCloud file hash (stored as string)
+    created_at_source: Optional[str] = None
     order: int = 0
+    synced_at: str  # When we synced this photo
 
 
 class SectionDownloadRequest(BaseModel):
