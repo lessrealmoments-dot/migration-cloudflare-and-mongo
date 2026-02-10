@@ -233,13 +233,7 @@ const VideographerUpload = () => {
             
             <div className="flex gap-3">
               <button
-                onClick={() => {
-                  if (window.history.length > 1) {
-                    window.history.back();
-                  } else {
-                    window.close();
-                  }
-                }}
+                onClick={goBackToHub}
                 className="flex-1 bg-white/10 text-white py-3 rounded-xl font-medium hover:bg-white/20 transition-colors"
               >
                 No, Go Back
