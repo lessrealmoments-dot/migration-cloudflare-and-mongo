@@ -6339,18 +6339,42 @@ async def upload_contributor_photo(
     
     # Generate unique filename
     file_ext = file.filename.split('.')[-1].lower()
-    filename = f"{uuid.uuid4().hex}.{file_ext}"
-    file_path = UPLOAD_DIR / filename
+    photo_id = str(uuid.uuid4())
+    filename = f"{photo_id}.{file_ext}"
     
     # Get current photo count for order
     photo_count = await db.photos.count_documents({"gallery_id": gallery["id"], "section_id": section["id"]})
     
-    # Save the file
-    with open(file_path, 'wb') as f:
-        shutil.copyfileobj(file.file, f)
+    # Read file content
+    file_content = await file.read()
+    file_size = len(file_content)
     
-    # Create photo document with generated ID first
-    photo_id = str(uuid.uuid4())
+    # Use R2 storage if enabled, otherwise local
+    if storage.r2_enabled:
+        upload_result = await storage.upload_with_thumbnails(
+            photo_id=photo_id,
+            content=file_content,
+            file_ext=file_ext,
+            content_type=file.content_type or 'image/jpeg'
+        )
+        
+        if not upload_result['success']:
+            logger.error(f"R2 upload failed for contributor photo {photo_id}: {upload_result.get('error')}")
+            raise HTTPException(status_code=500, detail="Failed to save photo. Please try again.")
+        
+        photo_url = upload_result['original_url']
+        thumb_small = upload_result.get('thumbnail_url')
+        thumb_medium = upload_result.get('thumbnail_medium_url')
+        storage_key = upload_result['original_key']
+    else:
+        # Fallback to local filesystem
+        file_path = UPLOAD_DIR / filename
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+        photo_url = f"/api/photos/serve/{filename}"
+        storage_key = filename
+        thumb_small = generate_thumbnail(file_path, photo_id, 'small')
+        thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
     
     photo = {
         "id": photo_id,
