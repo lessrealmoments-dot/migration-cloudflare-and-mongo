@@ -4528,6 +4528,14 @@ async def create_section(
     current_user: dict = Depends(get_current_user)
 ):
     """Create a new section (photo or video type)"""
+    # Check subscription status
+    subscription_active = await is_subscription_active(current_user)
+    if not subscription_active:
+        raise HTTPException(
+            status_code=403, 
+            detail="Your subscription has expired. Please renew to create new sections."
+        )
+    
     gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
