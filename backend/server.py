@@ -5682,6 +5682,14 @@ async def upload_video_thumbnail(file: UploadFile = File(...), user: dict = Depe
 @api_router.post("/galleries/{gallery_id}/sections/{section_id}/contributor-link")
 async def generate_contributor_link(gallery_id: str, section_id: str, current_user: dict = Depends(get_current_user)):
     """Generate a unique contributor upload link for a section"""
+    # Check subscription status
+    subscription_active = await is_subscription_active(current_user)
+    if not subscription_active:
+        raise HTTPException(
+            status_code=403, 
+            detail="Your subscription has expired. Please renew to create new contributor links."
+        )
+    
     gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
