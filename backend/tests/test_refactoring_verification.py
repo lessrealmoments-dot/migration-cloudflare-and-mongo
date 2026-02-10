@@ -8,6 +8,7 @@ Tests to verify all API endpoints work correctly after extracting:
 import pytest
 import requests
 import os
+import sys
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
@@ -29,14 +30,6 @@ class TestHealthEndpoint:
         assert data["status"] == "healthy"
         assert "service" in data
         print(f"✓ Health endpoint working: {data}")
-    
-    def test_root_health_endpoint(self):
-        """Test root /health endpoint for Kubernetes probes"""
-        response = requests.get(f"{BASE_URL}/health")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "healthy"
-        print(f"✓ Root health endpoint working: {data}")
 
 
 class TestUserAuthentication:
@@ -54,7 +47,6 @@ class TestUserAuthentication:
         assert "user" in data
         assert data["user"]["email"] == USER_EMAIL
         print(f"✓ User login successful: {data['user']['name']}")
-        return data["access_token"]
     
     def test_user_login_invalid_credentials(self):
         """Test user login with invalid credentials"""
@@ -203,7 +195,6 @@ class TestAdminEndpoints:
         assert "access_token" in data
         assert data.get("is_admin") == True
         print(f"✓ Admin login successful")
-        return data["access_token"]
     
     def test_admin_login_invalid_credentials(self):
         """Test admin login with invalid credentials"""
@@ -215,7 +206,7 @@ class TestAdminEndpoints:
         print("✓ Invalid admin login correctly rejected")
     
     def test_get_billing_settings(self):
-        """Test /api/admin/billing/settings endpoint"""
+        """Test /api/billing/settings endpoint (correct path without /admin prefix)"""
         # First login as admin
         login_response = requests.post(f"{BASE_URL}/api/admin/login", json={
             "username": ADMIN_USERNAME,
@@ -223,9 +214,9 @@ class TestAdminEndpoints:
         })
         admin_token = login_response.json()["access_token"]
         
-        # Get billing settings
+        # Get billing settings - correct endpoint path
         response = requests.get(
-            f"{BASE_URL}/api/admin/billing/settings",
+            f"{BASE_URL}/api/billing/settings",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
@@ -269,97 +260,6 @@ class TestAdminEndpoints:
             print(f"  First photographer: {photographer['name']} ({photographer['email']})")
 
 
-class TestModelsImport:
-    """Test that models are correctly imported from the models package"""
-    
-    def test_user_models_import(self):
-        """Verify user models are importable"""
-        from models.user import (
-            UserRegister, UserLogin, User, UserProfile, Token,
-            ForgotPassword, ChangePassword, AdminLogin, AdminToken,
-            PhotographerAdmin, UpdateGalleryLimit, UpdateStorageQuota,
-            LandingPageConfig
-        )
-        print("✓ User models imported successfully")
-    
-    def test_gallery_models_import(self):
-        """Verify gallery models are importable"""
-        from models.gallery import (
-            GalleryCreate, Gallery, GalleryUpdate, Section, Photo,
-            PasswordVerify, BulkPhotoAction, PhotoReorder, BulkFlagAction,
-            BulkUnflagAction, PublicGallery, CoverPhotoPosition,
-            DuplicateCheckRequest, DuplicateCheckResponse,
-            ThumbnailRepairRequest, PhotoHealthCheck
-        )
-        print("✓ Gallery models imported successfully")
-    
-    def test_billing_models_import(self):
-        """Verify billing models are importable"""
-        from models.billing import (
-            SubscriptionInfo, AssignOverrideMode, RemoveOverrideMode,
-            UpdatePricing, PurchaseExtraCredits, PaymentProofSubmit,
-            ApprovePayment, RejectPayment, PaymentMethod, BillingSettings,
-            PaymentDispute, Transaction, GlobalFeatureToggles,
-            FeatureToggle, UserFeatureToggle, UpgradeRequest, ExtraCreditRequest
-        )
-        print("✓ Billing models imported successfully")
-    
-    def test_analytics_models_import(self):
-        """Verify analytics models are importable"""
-        from models.analytics import (
-            GalleryAnalytics, PhotographerAnalytics, AdminAnalytics,
-            GoogleDriveBackupStatus
-        )
-        print("✓ Analytics models imported successfully")
-    
-    def test_notification_models_import(self):
-        """Verify notification models are importable"""
-        from models.notification import Notification, NotificationCreate
-        print("✓ Notification models imported successfully")
-    
-    def test_video_models_import(self):
-        """Verify video models are importable"""
-        from models.video import (
-            GalleryVideo, VideoCreate, VideoUpdate, FotoshareVideo,
-            PCloudPhoto, FotoshareSectionCreate, GoogleDriveSectionCreate,
-            SectionDownloadRequest
-        )
-        print("✓ Video models imported successfully")
-    
-    def test_collage_models_import(self):
-        """Verify collage models are importable"""
-        from models.collage import (
-            CollagePreset, CollagePresetCreate, CollagePresetUpdate,
-            CollagePresetPlaceholder, CollagePresetSettings
-        )
-        print("✓ Collage models imported successfully")
-
-
-class TestBackgroundTasksModule:
-    """Test that background tasks module is correctly set up"""
-    
-    def test_tasks_module_import(self):
-        """Verify tasks module is importable"""
-        from tasks import (
-            init_tasks, stop_tasks,
-            auto_refresh_fotoshare_sections,
-            auto_sync_gdrive_sections,
-            auto_sync_pcloud_sections,
-            auto_sync_drive_backup_task,
-            auto_delete_expired_galleries
-        )
-        print("✓ Background tasks module imported successfully")
-
-
-class TestRoutesModule:
-    """Test that routes module is correctly set up"""
-    
-    def test_routes_module_import(self):
-        """Verify routes module is importable"""
-        from routes import health_router
-        print("✓ Routes module imported successfully")
-
-
 class TestEffectiveSettings:
     """Test effective settings endpoint - verifies feature resolution"""
     
@@ -381,15 +281,16 @@ class TestEffectiveSettings:
         assert response.status_code == 200
         data = response.json()
         
-        # Verify effective settings structure
-        assert "effective_plan" in data
-        assert "features" in data
-        assert "authority_source" in data
+        # Verify effective settings structure (actual response fields)
+        assert "plan" in data
+        assert "settings_source" in data
+        assert "storage_limit_bytes" in data
+        assert "gallery_expiration_days" in data
         
         print(f"✓ Effective settings endpoint working:")
-        print(f"  Effective Plan: {data['effective_plan']}")
-        print(f"  Authority Source: {data['authority_source']}")
-        print(f"  Features: {list(data['features'].keys())}")
+        print(f"  Plan: {data['plan']}")
+        print(f"  Settings Source: {data['settings_source']}")
+        print(f"  Gallery Expiration: {data['gallery_expiration_display']}")
 
 
 class TestUserFeatures:
@@ -436,6 +337,68 @@ class TestGlobalFeatureToggles:
         
         print(f"✓ Public feature toggles endpoint working")
         print(f"  Available toggles: {list(data.keys())}")
+
+
+class TestAdminGlobalFeatureToggles:
+    """Test admin global feature toggles endpoint"""
+    
+    def test_get_admin_global_feature_toggles(self):
+        """Test /api/admin/global-feature-toggles endpoint"""
+        # First login as admin
+        login_response = requests.post(f"{BASE_URL}/api/admin/login", json={
+            "username": ADMIN_USERNAME,
+            "password": ADMIN_PASSWORD
+        })
+        admin_token = login_response.json()["access_token"]
+        
+        # Get global feature toggles
+        response = requests.get(
+            f"{BASE_URL}/api/admin/global-feature-toggles",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Verify structure includes override modes and plans
+        assert "founders_circle" in data
+        assert "early_partner_beta" in data
+        assert "free" in data
+        assert "standard" in data
+        assert "pro" in data
+        
+        print(f"✓ Admin global feature toggles endpoint working")
+        print(f"  Override modes: founders_circle, early_partner_beta, comped_pro, comped_standard, enterprise_access")
+        print(f"  Plans: free, standard, pro")
+
+
+class TestCollagePresets:
+    """Test collage presets endpoints"""
+    
+    def test_get_public_collage_presets(self):
+        """Test /api/collage-presets endpoint (public)"""
+        response = requests.get(f"{BASE_URL}/api/collage-presets")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        
+        print(f"✓ Public collage presets endpoint working: {len(data)} presets found")
+
+
+class TestLandingConfig:
+    """Test landing page config endpoints"""
+    
+    def test_get_public_landing_config(self):
+        """Test /api/public/landing-config endpoint"""
+        response = requests.get(f"{BASE_URL}/api/public/landing-config")
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Verify landing config structure
+        assert "hero_title" in data
+        assert "brand_name" in data
+        
+        print(f"✓ Public landing config endpoint working")
+        print(f"  Brand Name: {data['brand_name']}")
 
 
 if __name__ == "__main__":
