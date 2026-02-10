@@ -99,6 +99,11 @@ const GalleryDetail = () => {
   const [showContributorQR, setShowContributorQR] = useState(false);
   const [contributorQRLink, setContributorQRLink] = useState('');
   const contributorQrRef = useRef(null);
+  // Coordinator Hub state
+  const [showCoordinatorHubModal, setShowCoordinatorHubModal] = useState(false);
+  const [coordinatorHubLink, setCoordinatorHubLink] = useState('');
+  const [coordinatorHubLoading, setCoordinatorHubLoading] = useState(false);
+  const coordinatorQrRef = useRef(null);
   // Embed code state
   const [showEmbedModal, setShowEmbedModal] = useState(false);
   // Multi-select state
