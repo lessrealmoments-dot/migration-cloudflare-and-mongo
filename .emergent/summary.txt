@@ -1,69 +1,99 @@
-<analysis>**original_problem_statement**: The user initially wanted to build a comprehensive photo-sharing application. The primary goal pivoted to migrating the entire application from the Emergent platform to a personal Hostinger KVM VPS, using Cloudflare R2 for photo storage and MongoDB Atlas for the database. After successfully completing the migration, the user has requested a new feature: an integration to allow photographers to create gallery sections from Google Drive shared folders.
+<analysis>**original_problem_statement**: The user's goal is a comprehensive photo-sharing application. The project began with a migration from the Emergent platform to a personal Hostinger KVM VPS. The core focus has been on adding features, improving the UI/UX, and ensuring stable deployment.
+
+**PRODUCT REQUIREMENTS**:
+- A professional contributor link workflow for Google Drive and pCloud.
+- Auto-syncing for cloud storage sections.
+- A comprehensive theme and typography overhaul for better aesthetics and readability.
+- Correction of deployment configuration files for stable, repeatable deployments.
+- A Coordinator Hub page for photographers to manage all supplier/contributor uploads for an event in one place.
+- A confirmation step for suppliers to prevent uploading to the wrong section.
+- Fix for an image upload bug in the admin section.
+- Dynamic pricing page that reflects settings configured in the admin dashboard.
+- Consistent copyright year display across the application.
+- Dynamic Open Graph (OG) meta tags for better social media sharing previews.
+- A robust subscription and credit system with specific expiration rules for different credit types.
+- An auto-delete mechanism for galleries after 6 months.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack React/FastAPI app that has been successfully migrated to the user's Hostinger KVM 4 VPS.
--   **Storage**: Cloudflare R2, served via a custom domain ().
--   **Database**: MongoDB Atlas, with all data migrated from the previous local instance.
--   **Deployment**: The application is containerized with Docker and runs on the user's Ubuntu 24.04 server, managed via . An Nginx container acts as a reverse proxy.
--   **Live Site**: The application is live and accessible at the user's domain.
--   **In-progress Feature**: The agent has started implementing a new Google Drive integration. Backend logic and API endpoints have been added to , and a placeholder frontend component () has been created.
+The application is a full-stack React/FastAPI app deployed on the user's Hostinger VPS using Docker Compose. It uses Cloudflare R2 for file storage and MongoDB Atlas for the database.
+- **Completed Features**:
+    - Google Drive & pCloud contributor workflows with auto-sync.
+    - A full UI theme and contrast overhaul with 40+ themes and improved fonts.
+    - A Coordinator Hub feature for managing supplier contributions.
+    - A confirmation step (Are you the OFFICIAL [ROLE]?) for all contributor uploads.
+    - Dynamic pricing page and consistent copyright years.
+    - Dynamic Open Graph meta tags for social sharing.
+- **Deployment**: The deployment configuration files (, ) have been corrected, and the user has successfully deployed the latest changes to their live server at .
 
 **Last working item**:
-- Last item agent was working: Beginning the frontend implementation for the new Google Drive integration feature. The agent created the file  and was analyzing  to add the UI for creating a Google Drive type section.
+- Last item agent was working: Implementing a complex subscription and credit expiration logic based on new user requirements. This involved modifying backend models and creating a new function () to handle how different credit types expire.
+    - **Event Credits**: Expire when the monthly subscription cycle ends.
+    - **Extra Credits**: Expire 12 months after purchase and do not reset with the monthly subscription.
+    - **Subscription Expiry**: Blocks the owner from creating new sections/galleries and disables uploads, but allows guests/collaborators a grace period.
+    - The agent also updated the existing  background job to ensure it properly cleans up all related data and R2 storage files.
 - Status: IN PROGRESS
 - Agent Testing Done: N
-- Which testing method agent to use? both. Once the feature is code-complete, the backend endpoints should be tested with  and the full user flow should be tested with the .
+- Which testing method agent to use? both
 - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Complete the Google Drive integration feature. (P0)
-  - Issue 2: Deployment configuration files in the repository are incorrect. (P1)
+  - Issue 1: Finalize and test the new subscription and credit system. (P0)
+  - Issue 2: Fix broken images on the live server. (P1)
+  - Issue 3: The  background job needs monitoring. (P2)
   
   Issues Detail:
   - Issue 1: 
-     - Description: Implement a feature for photographers to create gallery sections from Google Drive links. Key requirements include: auto-sync with a manual refresh option, using Google's thumbnails, allowing users to highlight specific photos, and displaying photos in a collapsible section that shows the photo count. The UI/UX should follow the pattern of the existing Fotoshare (YouTube) integration.
-     - Attempted fixes: Backend logic and API endpoints have been added to . A placeholder file  has been created.
-     - Next debug checklist: 
-        1.  Add the necessary state and UI elements to  to allow users to select Google Drive as a section type and provide a URL.
-        2.  Implement the  component to fetch and display photos, handle user interactions like highlighting, and manage the collapsible view.
-        3.  Integrate the new  component into .
-        4.  Thoroughly test the entire feature flow: creation, viewing, highlighting, and deletion.
+     - Description: The backend logic for the new subscription and credit expiration rules has been implemented in , but it is completely untested. Furthermore, no frontend changes have been made to inform users about their subscription status, when their plan expires, or when their different types of credits expire.
+     - Attempted fixes: The agent has written all the necessary backend code in , including updating the User model and creating the  function.
+     - Next debug checklist:
+        1. Write and execute backend tests to verify the  function correctly handles all scenarios (subscription expiry, event credit reset, extra credit persistence).
+        2. Test the endpoints that now check for an active subscription (, , ) to ensure they block actions for expired users.
+        3. Implement UI components in the frontend (e.g., in the user's dashboard or billing page) to display  and the expiration for .
+     - Why fix this issue and what will be achieved with the fix? This is a critical business logic feature. Without it, the user's subscription model is incomplete and users have no visibility into their account status.
      - Status:  IN PROGRESS
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? both
      - Blocked on other issue: None
   - Issue 2: 
-     - Description: The Dockerfiles, , and  in the Git repository are out of sync with the actual working configuration on the user's server. The live deployment was achieved through a series of manual, on-the-fly fixes (, , direct  commands) that were not committed back to the repo.
-     - Attempted fixes: Ad-hoc commands during the live deployment session.
+     - Description: The user reported that some images, specifically cover photos for certain galleries, are broken on the live site. The agent diagnosed this as a 404 error, indicating the image record exists in the database, but the actual file is missing from Cloudflare R2 storage.
+     - Attempted fixes: The agent confirmed via  that the API returns a 404 for the image URL.
      - Next debug checklist:
-        1.  Review the working container configurations on the user's server.
-        2.  Correct the  to properly handle  without errors (e.g., resolving peer dependencies in  instead of using ).
-        3.  Correct the  to be a clean, well-formatted file that uses HTTP and relies on Cloudflare for SSL, as was the final working setup.
-        4.  Ensure all deployment-related files in the repository are accurate so that a future deployment from a fresh  will succeed without manual intervention.
-     - Why fix this issue and what will be achieved with the fix? To ensure stable, repeatable, and maintainable deployments. Currently, updating the live server is risky and error-prone.
+        1. The root cause is a data-consistency issue, not a code bug. The images were likely uploaded in a temporary environment and not migrated to the production R2 bucket.
+        2. Implement a user-facing solution, such as adding a Re-upload Cover Photo button in the  page. This would allow the user to fix the broken images themselves without needing database intervention.
+     - Why fix this issue and what will be achieved with the fix? To restore visual integrity to the affected galleries and provide the user with a tool to self-service similar issues in the future.
      - Status:  NOT STARTED
-     - Is recurring issue? Y (It caused significant delays during the initial deployment).
-     - Should Test frontend/backend/both after fix? both (A full deployment test would be required).
-     - Blocked on other issue: None, but should be addressed before or alongside the next feature deployment.
+     - Is recurring issue? Y
+     - Should Test frontend/backend/both after fix? frontend
+     - Blocked on other issue: None
+  - Issue 3: 
+     - Description: An  background job exists and was updated to be more thorough, but its execution and effectiveness on the live server have not been verified.
+     - Next debug checklist:
+        1. On the live server, check the Docker logs for the backend service to see if the background task is running and if it logs any activity or errors.
+        2. Manually create a test gallery and set its  to a time in the past to confirm the job picks it up and deletes it correctly.
+     - Why fix this issue and what will be achieved with the fix? To confirm that the automated cleanup of old galleries is working, which is essential for managing storage costs and data retention policies.
+     - Status:  NOT STARTED
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? backend
+     - Blocked on other issue: None.
 
 **In progress Task List**:
-  - Task 1:  Google Drive Integration Frontend Implementation (P0)
+  - Task 1:  Complete the Subscription & Credit System Overhaul (P0)
  
  Task Detail:
   - Task 1: 
-     - Where to resume: Modify  to add state management and UI for creating a Google Drive section.
-     - What will be achieved with this? This will continue the implementation of the user's requested feature, moving towards a functional frontend for the Google Drive integration.
+     - Where to resume: The backend code is written in . The next step is to create backend tests for the new credit logic. After confirming the backend works, create the necessary frontend components in the React app to display subscription and credit expiration information to the user.
+     - What will be achieved with this? This will complete the user's requested business logic for subscriptions, making the pricing model functional and transparent to end-users.
      - Status:  IN PROGRESS
      - Should Test frontend/backend/both after fix? both
-     - Blocked on something: None.
+     - Blocked on something: None
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **Backend Refactoring (P1)**: The monolithic  is becoming increasingly unmanageable. It's critical to start breaking it down into a proper  and  structure.
+    *   **Backend Refactoring (P1)**: The monolithic  is becoming unmanageable. It's critical to start breaking it down into a proper  and  structure.
     *   **Payment Gateway Integration (P1)**: Integrate a payment provider as discussed with the user (Stripe or PayMongo).
-    *   **Refactor pCloud Integration (P2)**: The user requested that the pCloud integration's UI/UX be updated to match the more streamlined Fotoshare/YouTube integration pattern.
+    *   **User-facing fix for broken images (P1)**: Implement a way for the user to re-upload missing cover photos.
 *   **Future Tasks:**
     *   Enable Live Billing Mode (P1).
     *   Photographer-Side Section Downloads (P2).
@@ -72,143 +102,103 @@ The application is a full-stack React/FastAPI app that has been successfully mig
     *   User Notifications for Plan Changes (P2).
 
 **Completed work in this session**
-- **Full Application Migration to User's Infrastructure (DONE)**:
-  - **Cloudflare R2 Integration**: Configured and deployed the app to use R2 for all photo storage, including setting up a  custom domain.
-  - **MongoDB Atlas Integration**: Migrated the database to a free-tier Atlas cluster and updated the application to connect to it.
-  - **Production Deployment on Hostinger**: Successfully deployed the entire full-stack application to the user's KVM 4 VPS using Docker Compose, Nginx, and custom deployment scripts.
-  - **Live Deployment Debugging**: Interactively troubleshooted and resolved numerous build and runtime errors related to Python/Node dependencies, file paths, and Nginx configuration to bring the site online.
-- **Google Drive Integration (Backend Started)**: Created the necessary database models, API endpoints, and scraping logic in  to support Google Drive sections.
+- **Theme & Contrast Overhaul (DONE)**: Completed the comprehensive text contrast and font enhancement for the public gallery page, ensuring readability across all themes.
+- **Deployment Configuration Fix (DONE)**: Corrected the , , , and other deployment files. Authored a  guide and successfully guided the user through a live deployment.
+- **Coordinator Hub Feature (DONE)**: Implemented a full-featured Coordinator Hub page allowing photographers to manage all supplier uploads from a single, shareable link with QR codes and status tracking.
+- **Contributor Upload Flow (DONE)**: Added a mandatory confirmation step (Are you the OFFICIAL [ROLE]?) to all contributor upload pages to prevent errors.
+- **Admin & Pricing Enhancements (DONE)**:
+    - Fixed an image upload bug in the admin dashboard.
+    - Made the pricing page fully dynamic, fetching plan details and features from a new backend API endpoint.
+    - Standardized copyright year formatting across the application.
+- **Social Sharing (DONE)**: Updated the backend to dynamically generate Open Graph (OG) meta tags, ensuring galleries show the correct title and cover image when shared on platforms like Facebook.
 
 **Earlier issues found/mentioned but not fixed**
-   - The deployment configuration files in the git repository are incorrect. The live production server was set up using a series of manual commands that are not reflected in the source-controlled files (, , ). This poses a significant risk for future updates and deployments.
+   - The monolithic backend  file remains a significant piece of technical debt that needs to be refactored.
 
 **Known issue recurrence from previous fork**
-  - None.
+  - **Incorrect deployment files:** This was a major recurring issue that has been fully **RESOLVED** in this session.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Full-Stack Deployment on VPS**: Deploying a multi-container (React, FastAPI, Nginx) application on a bare-metal Linux server using Docker Compose.
-- **Decoupled Cloud Architecture**: Using separate, best-in-class cloud services for each part of the stack: Hostinger (compute), Cloudflare R2 (storage), and MongoDB Atlas (database).
-- **DNS & SSL Management**: Configuring domain A records and using Cloudflare's Flexible SSL mode to secure the application without managing certificates on the origin server.
-- **Live Debugging**: Interactively troubleshooting Docker build failures, dependency conflicts (npm <command>
-
-Usage:
-
-npm install        install all the dependencies in your project
-npm install <foo>  add the <foo> dependency to your project
-npm test           run this project's tests
-npm run <foo>      run the script named <foo>
-npm <command> -h   quick help on <command>
-npm -l             display usage info for all commands
-npm help <term>    search for help on <term>
-npm help npm       more involved overview
-
-All commands:
-
-    access, adduser, audit, bugs, cache, ci, completion,
-    config, dedupe, deprecate, diff, dist-tag, docs, doctor,
-    edit, exec, explain, explore, find-dupes, fund, get, help,
-    help-search, hook, init, install, install-ci-test,
-    install-test, link, ll, login, logout, ls, org, outdated,
-    owner, pack, ping, pkg, prefix, profile, prune, publish,
-    query, rebuild, repo, restart, root, run-script, sbom,
-    search, set, shrinkwrap, star, stars, start, stop, team,
-    test, token, uninstall, unpublish, unstar, update, version,
-    view, whoami
-
-Specify configs in the ini-formatted file:
-    /root/.npmrc
-or on the command line via: npm <command> --key=value
-
-More configuration info: npm help config
-Configuration fields: npm help 7 config
-
-npm@10.8.2 /usr/lib/node_modules/npm), and runtime configuration issues (Nginx) via SSH on a production server.
+- **Dynamic Theming & Accessibility**: Using JS helpers to programmatically ensure WCAG-compliant text contrast.
+- **Decoupled Contributor Workflow**: A system allowing third-party suppliers to submit content via unique URLs.
+- **Background  Tasks**: Used for auto-syncing cloud storage and the new auto-delete gallery job.
+- **Dynamic Open Graph (OG) Tags**: Using a backend endpoint to serve HTML with dynamic meta tags for social media crawlers.
+- **Live Deployment Configuration**: Using Docker Compose with an  file for a repeatable and maintainable deployment process on a live VPS.
+- **Subscription Business Logic**: Implementing time-based logic for subscription status, credit expiration, and feature access control.
 
 **key DB schema**
-  - **gdrive_photos (New Collection)**: Caches metadata for photos scraped from Google Drive.
-  - **sections**: A new section  of  will be added, which will store the .
+  - **users**: Added , and  to manage new subscription and credit expiration rules.
 
 **changes in tech stack**
-- **Hosting**: Migrated from Emergent Platform to **Hostinger KVM VPS**.
-- **Database**: Migrated from local MongoDB to **MongoDB Atlas**.
-- **File Storage**: Migrated from local filesystem to **Cloudflare R2**.
-- **Deployment Strategy**: Switched to a **Docker Compose** based workflow on a bare-metal server.
+  - Added  to the frontend to assist with managing dynamic meta tags.
 
 **All files of reference**
-- : Modified to add Google Drive backend logic and APIs.
-- : New file created for the GDrive feature.
-- : Inspected, and is the next file to be modified.
-- : Will need modification to display the new GDrive sections.
-- **Deployment Files**: , , , , . **Note**: These files in the repository are likely incorrect and do not reflect the working server configuration.
+- : The central file for all new backend logic. Key functions to review are , , and the new checks in  and .
+- : The new frontend page for the coordinator feature.
+- : Contains the UI for triggering the Coordinator Hub modal.
+- : Now fetches all its data from the  endpoint.
+- : The new deployment guide for the user's live server.
+- : The corrected composition file for production.
 
 **Areas that need refactoring**:
-- **CRITICAL**: The deployment files (s, , ) must be corrected in the Git repository to match the working configuration on the user's server. Without this, future deployments are guaranteed to fail.
-- **HIGH PRIORITY**: The  monolith is growing and becoming harder to maintain. The backend refactoring task is now more urgent than ever.
-- The frontend build process relies on . The underlying dependency conflict with  and  should be properly resolved in .
+- **CRITICAL**: The monolithic  file urgently needs to be broken down into a more maintainable structure (e.g., separate files for routes, services, models). This is the project's largest source of technical debt.
 
 **key api endpoints**
-- **Google Drive Integration (NEW)**:
-  - 
-  - 
-  - 
-  - 
-  - 
+- **Coordinator Hub Endpoints (NEW)**:
+  - : Generates the unique link for the hub.
+  - : Fetches the data for the hub page.
+- **Pricing Endpoint (MODIFIED)**:
+  - : Now includes dynamic plan features and retention policies from admin settings.
 
 **Critical Info for New Agent**
-- **Your immediate priority is to implement the frontend for the Google Drive integration.** Start with  to add the section creation UI, then build out the  component.
-- **The deployment files in the repository are broken.** The live site works due to manual fixes applied directly on the server. Before attempting another deployment, these files MUST be corrected. The user's server () is the source of truth for the working configuration.
-- **The development and deployment workflow has changed.** You will develop features here. The user will then use Save to GitHub to push your changes. Finally, you must guide the user to run  and  on their server to deploy the updates. Be mindful of the broken deployment files when guiding this process.
-- The user is now sensitive about their code being public. Guide them on how to use a Personal Access Token for  if they make their repository private.
+- **Your immediate task is to finalize the new subscription and credit system.** The backend logic is written but is completely untested. You must start by writing thorough backend tests. Once the backend is verified, you need to implement the corresponding frontend UI to show users their subscription status and credit expiration dates.
+- **The user's live site has broken images.** This is a data issue, not a code bug. The best path forward is to build a UI feature (e.g., a Re-upload Cover Photo button in gallery settings) so the user can fix this themselves.
+- **The backend  file is a monolith.** After completing the current P0 task, prioritize discussing a refactoring plan with the user.
 
 **documents and test reports created in this job**
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
+  - 
+  - 
+  -  (Theme contrast test)
+  -  (Coordinator Hub test)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1.  **User**: Asks to implement a Google Drive integration for photographers, similar to the existing YouTube feature. (IN PROGRESS)
-2.  **Agent**: Asks clarifying questions on the requirements for the Google Drive feature.
-3.  **User**: Provides detailed requirements: support any viewable link, auto-sync with manual refresh, simple text credits, use Google's thumbnails, allow photo highlighting, and have collapsible sections. (IN PROGRESS)
-4.  **Agent**: Acknowledges and begins reviewing the existing codebase.
-5.  **User**: Corrects the agent, specifying the YouTube/Fotoshare integration is the preferred pattern, not pCloud. (DONE)
-6.  **Agent**: Acknowledges and reviews the correct Fotoshare component pattern.
-7.  **Agent**: Lays out the plan for backend and frontend implementation.
-8.  **Agent**: Begins backend work by adding GDrive scraping logic to .
-9.  **Agent**: Adds the GDrive API endpoints to .
-10. **Agent**: Creates the  frontend component and starts analyzing where to add the UI.
+1.  **User**: Asks about dynamic pricing, credit carry-over, and AI analysis of the pricing structure. (COMPLETE)
+2.  **User**: Clarifies that credits should expire and not carry over, but wants verification on how the system works. (COMPLETE)
+3.  **User**: Asks for clarification on what share link expiration does and expresses desired behavior for gallery lifecycle. (IN PROGRESS)
+4.  **User**: Defines the new desired subscription and credit expiration rules. (IN PROGRESS - CURRENT TASK)
+5.  **User**: Reports that some images on the live site are broken after deployment. (PENDING - ISSUE #2)
+6.  **User**: Proposes a new Coordinator Hub feature for managing supplier uploads. (COMPLETE)
+7.  **User**: Provides clarification for the Coordinator Hub: photographer-only access, confirmation prompts for suppliers, and status updates with timestamps. (COMPLETE)
+8.  **User**: Reports a bug with the Go Back button on supplier pages and requests personalization on the Coordinator Hub. (COMPLETE)
+9.  **User**: Changes their mind on the Go Back button behavior, requesting it to return to the Coordinator Hub. (COMPLETE)
+10. **User**: Reports more issues: an upload bug, a desire for dynamic pricing, inconsistent copyright years, and incorrect social media sharing previews. (COMPLETE)
 
 **Project Health Check:**
-- **Broken**: The deployment configuration files (s, , etc.) in the Git repository are incorrect and will fail a fresh deployment. The live server works only due to manual on-server fixes.
-- **Mocked**:
-    - The payment and billing system is not integrated.
+- **Broken**: Some live galleries have broken cover images because the files are missing from Cloudflare R2. This is a data integrity issue affecting user experience.
+- **Mocked**: The application does not have a live, automated payment gateway integration. Billing state changes (like plan upgrades) are still a manual admin process.
 
 **3rd Party Integrations**
 - **Cloudflare R2**: Active, for all photo storage.
 - **MongoDB Atlas**: Active, as the primary database.
-- **pCloud**: Active, for photo gallery imports.
+- **pCloud**: Active, with contributor workflow and auto-sync.
 - **Resend**: Active, for emails.
 - **Docker/Nginx**: Active, for deployment on Hostinger.
-- **Google Drive**: In progress, for photo gallery imports.
-- **Stripe/PayMongo**: Planned for payment integration.
+- **Google Drive**: Active, with contributor workflow and auto-sync.
+- **react-helmet-async**: Added for dynamic meta tags.
 
 **Testing status**
-  - Testing agent used after significant changes: NO
-  - Troubleshoot agent used after agent stuck in loop: NO (but the agent did get stuck in a loop of deployment failures which were resolved manually).
-  - Test files created: None.
-  - Known regressions: None.
+  - Testing agent used after significant changes: YES. Used to verify the theme/contrast overhaul and the Coordinator Hub feature.
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: None manually created. Agent-generated reports exist.
+  - Known regressions: Broken cover images on some galleries post-deployment, though this is likely a data migration issue rather than a code regression.
 
 **Credentials to test flow:**
-- **Admin**:  / 
-- **Server SSH**: The user has access and credentials. The agent must guide the user to execute commands.
+- **Email**: 
+- **Password**: 
 
 **What agent forgot to execute**
-- The agent failed to circle back and correct the deployment configuration files in the Git repository after applying manual fixes to get the user's server online. This has left the project in a fragile state for future deployments.
-- The  monolith continues to grow, and the critical refactoring task is still being deferred.</analysis>
+- The agent implemented the backend logic for the new subscription and credit system but did not create any corresponding frontend UI for users to see their status.
+- The agent has not yet implemented a user-facing solution for the broken cover images issue.</analysis>
