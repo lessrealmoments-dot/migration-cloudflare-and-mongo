@@ -8912,12 +8912,29 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
     resolved = await resolve_user_features(db_user)
     override_mode = db_user.get("override_mode")
     
+    # Calculate extra credits expiration
+    extra_credits_purchased_at = db_user.get("extra_credits_purchased_at")
+    extra_credits_expires_at = None
+    if extra_credits_purchased_at and db_user.get("extra_credits", 0) > 0:
+        try:
+            purchased_at = datetime.fromisoformat(extra_credits_purchased_at.replace('Z', '+00:00'))
+            extra_credits_expires_at = (purchased_at + timedelta(days=365)).isoformat()
+        except:
+            pass
+    
+    # Check subscription status
+    is_subscription_active_flag = await is_subscription_active(db_user)
+    
     return {
         "plan": db_user.get("plan", PLAN_FREE),
         "effective_plan": resolved["effective_plan"],
         "billing_cycle_start": db_user.get("billing_cycle_start"),
+        "subscription_expires": db_user.get("subscription_expires"),  # When subscription period ends
+        "subscription_active": is_subscription_active_flag,  # Whether subscription is currently active
         "event_credits": db_user.get("event_credits", 0),
         "extra_credits": db_user.get("extra_credits", 0),
+        "extra_credits_purchased_at": extra_credits_purchased_at,  # When extra credits were bought
+        "extra_credits_expires_at": extra_credits_expires_at,  # When extra credits will expire
         "total_credits": resolved["credits_available"],
         "is_unlimited_credits": resolved["has_unlimited_credits"],
         "requested_plan": db_user.get("requested_plan"),  # Pending upgrade
