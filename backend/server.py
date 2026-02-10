@@ -5879,6 +5879,95 @@ async def submit_contributor_gdrive(contributor_link: str, data: dict = Body(...
         "contributor_role": contributor_role
     }
 
+@api_router.post("/contributor/{contributor_link}/pcloud")
+async def submit_contributor_pcloud(contributor_link: str, data: dict = Body(...)):
+    """Submit pCloud viewing link as a contributor for pCloud section"""
+    company_name = data.get("company_name", "").strip()
+    contributor_role = data.get("contributor_role", "").strip() or "Photos"
+    pcloud_viewing_url = data.get("pcloud_viewing_url", "").strip()
+    
+    if not company_name:
+        raise HTTPException(status_code=400, detail="Your name/company name is required")
+    
+    if not pcloud_viewing_url:
+        raise HTTPException(status_code=400, detail="pCloud viewing link is required")
+    
+    # Extract code from URL
+    code = extract_pcloud_code(pcloud_viewing_url)
+    if not code:
+        raise HTTPException(status_code=400, detail="Invalid pCloud URL. Please provide a valid share/viewing link.")
+    
+    # Find gallery with this contributor link
+    gallery = await db.galleries.find_one(
+        {"sections.contributor_link": contributor_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid contributor link")
+    
+    # Find the section
+    section = next((s for s in gallery.get("sections", []) if s.get("contributor_link") == contributor_link), None)
+    if not section or not section.get("contributor_enabled", False):
+        raise HTTPException(status_code=404, detail="Contributor uploads are not enabled")
+    
+    if section.get("type") != "pcloud":
+        raise HTTPException(status_code=400, detail="This link is not for pCloud uploads")
+    
+    # Fetch folder contents from pCloud
+    pcloud_data = await fetch_pcloud_folder(code)
+    if not pcloud_data['success']:
+        raise HTTPException(status_code=400, detail=f"Failed to access pCloud folder: {pcloud_data['error']}. Make sure the link is valid and publicly accessible.")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Update section with pCloud details and contributor info
+    sections = gallery.get("sections", [])
+    section_idx = next((i for i, s in enumerate(sections) if s.get("contributor_link") == contributor_link), None)
+    if section_idx is not None:
+        sections[section_idx]["pcloud_code"] = code
+        sections[section_idx]["pcloud_folder_name"] = pcloud_data['folder_name']
+        sections[section_idx]["pcloud_last_sync"] = now
+        sections[section_idx]["pcloud_error"] = None
+        sections[section_idx]["contributor_name"] = company_name
+        sections[section_idx]["contributor_role"] = contributor_role
+        
+        await db.galleries.update_one({"id": gallery["id"]}, {"$set": {"sections": sections}})
+    
+    # Delete any existing photos for this section (in case of re-submission)
+    await db.pcloud_photos.delete_many({"gallery_id": gallery["id"], "section_id": section["id"]})
+    
+    # Store the photos
+    pcloud_photos = []
+    for idx, photo in enumerate(pcloud_data['photos']):
+        pcloud_photos.append({
+            "id": str(uuid.uuid4()),
+            "gallery_id": gallery["id"],
+            "section_id": section["id"],
+            "pcloud_code": code,
+            "fileid": str(photo['fileid']),
+            "name": photo['name'],
+            "size": photo.get('size', 0),
+            "width": photo.get('width'),
+            "height": photo.get('height'),
+            "contenttype": photo.get('contenttype', 'image/jpeg'),
+            "supplier_name": company_name,
+            "hash": str(photo.get('hash', '')) if photo.get('hash') else None,
+            "created_at_source": photo.get('created'),
+            "order": idx,
+            "synced_at": now
+        })
+    
+    if pcloud_photos:
+        await db.pcloud_photos.insert_many(pcloud_photos)
+    
+    return {
+        "success": True,
+        "photo_count": len(pcloud_photos),
+        "folder_name": pcloud_data['folder_name'],
+        "contributor_name": company_name,
+        "contributor_role": contributor_role
+    }
+
 @api_router.post("/contributor/{contributor_link}/upload")
 async def upload_contributor_photo(
     contributor_link: str,
