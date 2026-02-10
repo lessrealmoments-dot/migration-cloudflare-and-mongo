@@ -96,10 +96,7 @@ from models.billing import (
     PaymentDispute,
     Transaction,
     GlobalFeatureToggles,
-    FeatureToggle,
-    UserFeatureToggle,
-    UpgradeRequest,
-    ExtraCreditRequest,
+    # Note: FeatureToggle and UserFeatureToggle in server.py have different fields
 )
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
