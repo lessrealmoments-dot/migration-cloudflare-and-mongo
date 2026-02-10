@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { 
@@ -23,6 +23,8 @@ const SUGGESTED_TAGS = [
 const VideographerUpload = () => {
   const { contributorLink } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const hubLink = searchParams.get('hub');
   
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
