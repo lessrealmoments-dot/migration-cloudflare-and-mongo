@@ -57,11 +57,11 @@ class GoogleDriveBackupRequest(BaseModel):
 
 class GoogleDriveBackupStatus(BaseModel):
     """Status of a Google Drive backup operation"""
-    status: str
-    progress: int = 0
-    total: int = 0
-    message: str = ""
+    gallery_id: str
+    status: str  # 'pending', 'in_progress', 'completed', 'failed'
+    folder_id: Optional[str] = None
     folder_url: Optional[str] = None
-    last_backup: Optional[str] = None
     photos_backed_up: int = 0
-    error: Optional[str] = None
+    total_photos: int = 0
+    error_message: Optional[str] = None
+    last_updated: str
