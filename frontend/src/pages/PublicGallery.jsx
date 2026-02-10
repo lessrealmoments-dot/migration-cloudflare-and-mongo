@@ -457,7 +457,7 @@ const PublicGallery = () => {
       toast.loading('Preparing download...', { id: 'download-photo' });
       
       // Use backend URL with download parameter
-      const downloadUrl = `${BACKEND_URL}${photo.url}?download=true`;
+      const downloadUrl = `${getImageUrl(photo.url)}?download=true`;
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = photo.filename || 'photo.jpg';
