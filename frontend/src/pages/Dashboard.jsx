@@ -637,7 +637,7 @@ const Dashboard = ({ user, setUser }) => {
                 {gallery.cover_photo_url ? (
                   <div className="w-full h-48 overflow-hidden">
                     <img
-                      src={`${process.env.REACT_APP_BACKEND_URL}${gallery.cover_photo_url}`}
+                      src={getImageUrl(gallery.cover_photo_url)}
                       alt={gallery.title}
                       className="w-full h-full object-cover"
                     />
