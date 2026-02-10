@@ -7549,32 +7549,57 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
     allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif']
     file_ext = original_ext if original_ext in allowed_extensions else 'jpg'
     filename = f"{photo_id}.{file_ext}"
-    file_path = UPLOAD_DIR / filename
     
-    # Use semaphore for concurrency control and async file I/O
+    # Use semaphore for concurrency control
     async with upload_semaphore:
-        try:
-            async with aiofiles.open(file_path, 'wb') as f:
-                await f.write(file_content)
+        # Use R2 storage if enabled, otherwise local
+        if storage.r2_enabled:
+            upload_result = await storage.upload_with_thumbnails(
+                photo_id=photo_id,
+                content=file_content,
+                file_ext=file_ext,
+                content_type=file.content_type or 'image/jpeg'
+            )
             
-            # Verify file was written correctly
-            if not file_path.exists() or file_path.stat().st_size != file_size:
-                raise Exception("File verification failed")
-        except Exception as e:
-            logger.error(f"Error writing guest upload {filename}: {e}")
-            if file_path.exists():
-                try:
-                    file_path.unlink()
-                except:
-                    pass
-            raise HTTPException(status_code=500, detail="Failed to save photo. Please try again.")
+            if not upload_result['success']:
+                logger.error(f"R2 upload failed for guest photo {photo_id}: {upload_result.get('error')}")
+                raise HTTPException(status_code=500, detail="Failed to save photo. Please try again.")
+            
+            photo_url = upload_result['original_url']
+            thumb_small = upload_result.get('thumbnail_url')
+            thumb_medium = upload_result.get('thumbnail_medium_url')
+            storage_key = upload_result['original_key']
+        else:
+            # Fallback to local filesystem
+            file_path = UPLOAD_DIR / filename
+            try:
+                async with aiofiles.open(file_path, 'wb') as f:
+                    await f.write(file_content)
+                
+                # Verify file was written correctly
+                if not file_path.exists() or file_path.stat().st_size != file_size:
+                    raise Exception("File verification failed")
+            except Exception as e:
+                logger.error(f"Error writing guest upload {filename}: {e}")
+                if file_path.exists():
+                    try:
+                        file_path.unlink()
+                    except:
+                        pass
+                raise HTTPException(status_code=500, detail="Failed to save photo. Please try again.")
+            
+            photo_url = f"/api/photos/serve/{filename}"
+            storage_key = filename
+            thumb_small = generate_thumbnail(file_path, photo_id, 'small')
+            thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
     
     photo_doc = {
         "id": photo_id,
         "gallery_id": gallery["id"],
         "filename": filename,
         "original_filename": file.filename,
-        "url": f"/api/photos/serve/{filename}",
+        "url": photo_url,
+        "storage_key": storage_key,
         "uploaded_by": "guest",
         "section_id": None,
         "file_size": file_size,
@@ -7584,33 +7609,11 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
         "auto_flagged": False
     }
     
-    # Generate thumbnails with retry logic - auto-flag if all retries fail
-    thumbnail_failed = False
-    try:
-        thumb_small = generate_thumbnail(file_path, photo_id, 'small')
-        thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
-        
-        if thumb_small:
-            photo_doc["thumbnail_url"] = thumb_small
-        else:
-            thumbnail_failed = True
-            
-        if thumb_medium:
-            photo_doc["thumbnail_medium_url"] = thumb_medium
-        else:
-            thumbnail_failed = True
-            
-    except Exception as e:
-        thumbnail_failed = True
-        logger.warning(f"Guest upload thumbnail generation exception for {photo_id}: {e}")
-    
-    # Auto-flag photo if thumbnails failed
-    if thumbnail_failed:
-        photo_doc["is_flagged"] = True
-        photo_doc["auto_flagged"] = True
-        photo_doc["flagged_at"] = datetime.now(timezone.utc).isoformat()
-        photo_doc["flagged_reason"] = "auto:thumbnail_generation_failed"
-        logger.info(f"Auto-flagged guest photo {photo_id} due to thumbnail generation failure")
+    # Add thumbnails if available
+    if thumb_small:
+        photo_doc["thumbnail_url"] = thumb_small
+    if thumb_medium:
+        photo_doc["thumbnail_medium_url"] = thumb_medium
     
     try:
         await db.photos.insert_one(photo_doc)
