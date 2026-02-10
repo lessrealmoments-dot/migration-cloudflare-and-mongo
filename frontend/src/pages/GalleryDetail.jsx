@@ -3128,8 +3128,153 @@ const GalleryDetail = () => {
           </div>
         )}
 
-        {/* Photo Upload Section - Hide when viewing video, fotoshare, or pcloud section */}
-        {!(selectedSection && (sections.find(s => s.id === selectedSection)?.type === 'video' || sections.find(s => s.id === selectedSection)?.type === 'fotoshare' || sections.find(s => s.id === selectedSection)?.type === 'pcloud')) && (
+        {/* Google Drive Section Management - Show when a gdrive section is selected */}
+        {selectedSection && sections.find(s => s.id === selectedSection)?.type === 'gdrive' && (
+          <div className="mb-12 bg-green-50 rounded-xl p-6 border border-green-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-normal flex items-center gap-3" style={{ fontFamily: 'Playfair Display, serif' }}>
+                <HardDrive className="w-6 h-6 text-green-600" />
+                Google Drive: {sections.find(s => s.id === selectedSection)?.name}
+              </h3>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-green-600 bg-green-100 px-3 py-1 rounded-full">
+                  {getGdrivePhotosBySection(selectedSection).length} photos
+                </span>
+                {sections.find(s => s.id === selectedSection)?.gdrive_folder_id && (
+                  <button
+                    onClick={() => handleRefreshGdrive(selectedSection)}
+                    disabled={refreshingGdrive === selectedSection}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                    data-testid="refresh-gdrive-btn"
+                  >
+                    {refreshingGdrive === selectedSection ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RotateCcw className="w-4 h-4" />
+                    )}
+                    Refresh
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Contributor Link for Google Drive Suppliers */}
+            {sections.find(s => s.id === selectedSection)?.contributor_link ? (
+              <div className="bg-white rounded-lg p-4 mb-6 border border-green-200">
+                <p className="text-sm text-zinc-600 mb-2">
+                  Share this link with your supplier to submit their Google Drive folder:
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-green-100 px-3 py-2 rounded text-sm font-mono text-green-800 truncate">
+                    {window.location.origin}/d/{sections.find(s => s.id === selectedSection)?.contributor_link}
+                  </code>
+                  <button
+                    onClick={() => copyContributorLink(sections.find(s => s.id === selectedSection)?.contributor_link, selectedSection)}
+                    className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    title="Copy link"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => showContributorQRCode(sections.find(s => s.id === selectedSection)?.contributor_link, selectedSection)}
+                    className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    title="Show QR Code"
+                  >
+                    <QrCode className="w-4 h-4" />
+                  </button>
+                </div>
+                {sections.find(s => s.id === selectedSection)?.contributor_name && (
+                  <p className="text-xs text-green-600 mt-2">
+                    Contributor: {sections.find(s => s.id === selectedSection)?.contributor_name}
+                    {sections.find(s => s.id === selectedSection)?.contributor_role && (
+                      <span className="text-green-500"> ({sections.find(s => s.id === selectedSection)?.contributor_role})</span>
+                    )}
+                  </p>
+                )}
+              </div>
+            ) : !sections.find(s => s.id === selectedSection)?.gdrive_folder_id && (
+              <div className="bg-white rounded-lg p-4 mb-6 border border-green-200 text-center">
+                <p className="text-zinc-600 mb-3">Generate a contributor link to let suppliers submit their Google Drive folder</p>
+                <button
+                  onClick={() => generateContributorLink(selectedSection)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 inline-flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Generate Google Drive Upload Link
+                </button>
+              </div>
+            )}
+            
+            {/* Google Drive folder info - show if folder is linked */}
+            {sections.find(s => s.id === selectedSection)?.gdrive_folder_id && (
+              <div className="bg-white rounded-lg p-4 mb-6 border border-green-200">
+                <p className="text-sm text-zinc-600 mb-2">
+                  Folder: <span className="font-medium text-green-700">{sections.find(s => s.id === selectedSection)?.gdrive_folder_name || 'Google Drive Folder'}</span>
+                </p>
+                {sections.find(s => s.id === selectedSection)?.gdrive_last_sync && (
+                  <p className="text-xs text-zinc-500">
+                    Last synced: {new Date(sections.find(s => s.id === selectedSection)?.gdrive_last_sync).toLocaleString()}
+                  </p>
+                )}
+                {sections.find(s => s.id === selectedSection)?.gdrive_error && (
+                  <div className="mt-2 flex items-center gap-2 text-amber-600 bg-amber-50 p-2 rounded-md">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span className="text-sm">{sections.find(s => s.id === selectedSection)?.gdrive_error}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Google Drive Photos Grid */}
+            {getGdrivePhotosBySection(selectedSection).length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {getGdrivePhotosBySection(selectedSection).map((photo) => (
+                  <div 
+                    key={photo.id}
+                    className="relative group bg-white rounded-lg overflow-hidden border border-green-200 hover:border-green-400 transition-colors"
+                  >
+                    {/* Thumbnail */}
+                    <div className="aspect-square bg-zinc-100 relative">
+                      <img
+                        src={photo.thumbnail_url || `${API}/gdrive/proxy/${photo.file_id}?thumb=true`}
+                        alt={photo.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23e5e7eb" width="100" height="100"/><text fill="%2371717a" x="50" y="50" text-anchor="middle" dy=".3em" font-size="10">Error</text></svg>';
+                        }}
+                      />
+                      {/* Overlay with info */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2">
+                        <p className="text-white text-xs text-center truncate w-full">{photo.name}</p>
+                      </div>
+                      {/* Highlight indicator */}
+                      {photo.is_highlight && (
+                        <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full">
+                          <Star className="w-3 h-3 fill-current" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-lg border border-green-200">
+                <HardDrive className="w-12 h-12 mx-auto text-green-300 mb-4" />
+                <p className="text-zinc-600">No photos yet</p>
+                <p className="text-sm text-zinc-500 mt-1">
+                  {sections.find(s => s.id === selectedSection)?.gdrive_folder_id 
+                    ? 'Click Refresh to sync photos from Google Drive'
+                    : 'Generate a contributor link and share with your supplier'
+                  }
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Photo Upload Section - Hide when viewing video, fotoshare, pcloud, or gdrive section */}
+        {!(selectedSection && (sections.find(s => s.id === selectedSection)?.type === 'video' || sections.find(s => s.id === selectedSection)?.type === 'fotoshare' || sections.find(s => s.id === selectedSection)?.type === 'pcloud' || sections.find(s => s.id === selectedSection)?.type === 'gdrive')) && (
         <div className="mb-12">
           <h3 className="text-2xl font-normal mb-6" style={{ fontFamily: 'Playfair Display, serif' }}>
             Upload Photos {selectedSection && `to ${sections.find(s => s.id === selectedSection)?.name}`}
