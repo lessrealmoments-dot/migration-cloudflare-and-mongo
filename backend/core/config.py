@@ -1,23 +1,23 @@
 """
 Application configuration and constants
-Note: Environment-dependent config is loaded at runtime in server.py
-This module contains constants only.
 """
+import os
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# JWT config - loaded from environment
+SECRET_KEY = os.environ.get('JWT_SECRET_KEY', '')
+ALGORITHM = 'HS256'
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+
 # Default gallery limits
 DEFAULT_MAX_GALLERIES = 1
 
 # Default storage quota (in bytes) - 500 MB for Free
 DEFAULT_STORAGE_QUOTA = 500 * 1024 * 1024
-
-# JWT config (values set at runtime)
-ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 
 # Plan-based storage quotas (in bytes)
 PLAN_STORAGE_QUOTAS = {
