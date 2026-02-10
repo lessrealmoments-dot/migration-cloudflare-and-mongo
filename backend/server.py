@@ -8099,9 +8099,7 @@ async def submit_payment_proof(data: PaymentProofSubmit, user: dict = Depends(ge
     )
     return {"message": "Payment proof submitted. Awaiting admin approval."}
 
-class UpgradeRequest(BaseModel):
-    requested_plan: str
-    proof_url: Optional[str] = None  # Payment proof can be submitted with upgrade request
+# NOTE: UpgradeRequest model is now imported from models/billing.py
 
 @api_router.post("/user/upgrade-request")
 async def submit_upgrade_request(data: UpgradeRequest, background_tasks: BackgroundTasks, user: dict = Depends(get_current_user)):
