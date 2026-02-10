@@ -671,10 +671,10 @@ const PublicGallery = () => {
             >
               {gallery?.title}
             </h1>
-            <p className="text-base font-light mb-2" style={{ color: currentTheme.colors.textLight }}>
+            <p className="text-base font-light mb-2" style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.7) }}>
               by {gallery?.photographer_name}
             </p>
-            <p className="text-sm" style={{ color: currentTheme.colors.textLight }}>This gallery is password protected</p>
+            <p className="text-sm" style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.6) }}>This gallery is password protected</p>
           </div>
 
           <form onSubmit={handlePasswordSubmit} className="space-y-6" data-testid="password-form">
@@ -737,7 +737,7 @@ const PublicGallery = () => {
             </div>
             <span 
               className="text-sm font-medium hidden md:block"
-              style={{ color: currentTheme.colors.text, fontFamily: currentTheme.fonts.heading }}
+              style={{ color: isDarkTheme ? '#ffffff' : currentTheme.colors.text, fontFamily: currentTheme.fonts.heading }}
             >
               {gallery?.photographer_name}
             </span>
@@ -747,7 +747,7 @@ const PublicGallery = () => {
           
           <span 
             className="text-xs uppercase tracking-[0.15em] font-medium"
-            style={{ color: currentTheme.colors.textLight }}
+            style={{ color: isDarkTheme ? 'rgba(255,255,255,0.7)' : currentTheme.colors.textLight }}
           >
             {photos.length} Photos
           </span>
@@ -988,7 +988,7 @@ const PublicGallery = () => {
                 <Camera className="w-5 h-5" />
                 Share Your Photos
               </motion.button>
-              <p className="mt-3 text-sm" style={{ color: currentTheme.colors.textLight }}>
+              <p className="mt-3 text-sm" style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.7) }}>
                 Captured a moment? Add it to the gallery!
               </p>
             </motion.div>
@@ -1006,7 +1006,7 @@ const PublicGallery = () => {
               <div className="max-w-2xl mx-auto text-center">
                 <p 
                   className="text-lg md:text-xl leading-relaxed font-light"
-                  style={{ color: currentTheme.colors.textLight, fontFamily: currentTheme.fonts.body }}
+                  style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.8), fontFamily: currentTheme.fonts.body }}
                 >
                   {gallery.description}
                 </p>
