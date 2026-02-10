@@ -8052,39 +8052,7 @@ async def get_backup_status(gallery_id: str, current_user: dict = Depends(get_cu
     )
 
 # ============ ANALYTICS ENDPOINTS ============
-
-class GalleryAnalytics(BaseModel):
-    gallery_id: str
-    gallery_title: str
-    view_count: int = 0
-    total_photos: int = 0
-    photographer_photos: int = 0
-    guest_photos: int = 0
-    created_at: str
-    days_until_deletion: Optional[int] = None
-    qr_scans: int = 0
-    download_count: int = 0
-
-class PhotographerAnalytics(BaseModel):
-    total_galleries: int = 0
-    total_photos: int = 0
-    total_views: int = 0
-    total_qr_scans: int = 0
-    total_downloads: int = 0
-    storage_used: int = 0
-    storage_quota: int = DEFAULT_STORAGE_QUOTA
-    galleries: List[GalleryAnalytics] = []
-    # Time-based stats
-    views_today: int = 0
-    views_this_week: int = 0
-    views_this_month: int = 0
-
-class AdminAnalytics(BaseModel):
-    total_photographers: int = 0
-    total_galleries: int = 0
-    total_photos: int = 0
-    total_storage_used: int = 0
-    top_galleries: List[GalleryAnalytics] = []
+# NOTE: GalleryAnalytics, PhotographerAnalytics, AdminAnalytics models moved to models/analytics.py
 
 @api_router.get("/analytics/photographer", response_model=PhotographerAnalytics)
 async def get_photographer_analytics(current_user: dict = Depends(get_current_user)):
