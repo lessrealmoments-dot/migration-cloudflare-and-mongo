@@ -2379,7 +2379,7 @@ const GalleryDetail = () => {
                   style={{ paddingBottom: '33.33%', position: 'relative' }}
                 >
                   <img
-                    src={`${BACKEND_URL}${gallery.cover_photo_url}`}
+                    src={getImageUrl(gallery.cover_photo_url)}
                     alt="Cover"
                     className="absolute inset-0 w-full h-full"
                     style={{
@@ -2409,7 +2409,7 @@ const GalleryDetail = () => {
         {/* Cover Photo Editor Modal */}
         {showCoverEditor && gallery.cover_photo_url && (
           <CoverPhotoEditor
-            imageUrl={`${BACKEND_URL}${gallery.cover_photo_url}`}
+            imageUrl={getImageUrl(gallery.cover_photo_url)}
             initialSettings={coverPhotoPosition}
             onSave={handleSaveCoverPosition}
             onCancel={() => setShowCoverEditor(false)}
