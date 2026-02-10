@@ -4954,14 +4954,11 @@ async def set_featured_video(gallery_id: str, video_id: str, current_user: dict 
 
 @api_router.post("/upload-video-thumbnail")
 async def upload_video_thumbnail(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
-    """Upload custom thumbnail for a video"""
+    """Upload custom thumbnail for a video - stores in R2"""
     if not file.content_type or not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400, detail="Only image files allowed")
     
     MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-    
-    thumbnails_dir = Path("uploads/video_thumbnails")
-    thumbnails_dir.mkdir(parents=True, exist_ok=True)
     
     try:
         content = await file.read()
@@ -4973,7 +4970,6 @@ async def upload_video_thumbnail(file: UploadFile = File(...), user: dict = Depe
             raise HTTPException(status_code=400, detail="Empty file received")
         
         filename = f"{user['id']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
-        file_path = thumbnails_dir / filename
         
         # Process and optimize thumbnail
         try:
@@ -4996,14 +4992,30 @@ async def upload_video_thumbnail(file: UploadFile = File(...), user: dict = Depe
                 new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
                 img = img.resize(new_size, Image.Resampling.LANCZOS)
             
-            img.save(file_path, 'JPEG', quality=90, optimize=True)
+            # Save to bytes buffer
+            buffer = io.BytesIO()
+            img.save(buffer, 'JPEG', quality=90, optimize=True)
+            optimized_content = buffer.getvalue()
             
         except Exception as img_error:
             logger.error(f"Image processing error: {img_error}")
-            with open(file_path, "wb") as f:
-                f.write(content)
+            optimized_content = content
         
-        return {"url": f"/api/files/video_thumbnails/{filename}"}
+        # Upload to R2 if enabled, otherwise save locally
+        if storage.r2_enabled:
+            file_key = f"video_thumbnails/{filename}"
+            url = await storage.upload_file(optimized_content, file_key, "image/jpeg")
+            logger.info(f"Video thumbnail uploaded to R2: {filename}")
+            return {"url": url}
+        else:
+            # Fallback to local storage
+            thumbnails_dir = Path("uploads/video_thumbnails")
+            thumbnails_dir.mkdir(parents=True, exist_ok=True)
+            file_path = thumbnails_dir / filename
+            with open(file_path, "wb") as f:
+                f.write(optimized_content)
+            logger.info(f"Video thumbnail uploaded locally: {filename}")
+            return {"url": f"/api/files/video_thumbnails/{filename}"}
         
     except HTTPException:
         raise
