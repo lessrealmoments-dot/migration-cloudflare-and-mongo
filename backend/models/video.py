@@ -102,5 +102,5 @@ class PCloudPhoto(BaseModel):
 
 class SectionDownloadRequest(BaseModel):
     """Request model for downloading a section"""
-    section_id: str
-    include_thumbnails: bool = False
+    password: Optional[str] = None
+    section_id: Optional[str] = None  # None means download all
