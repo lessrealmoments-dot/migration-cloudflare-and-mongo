@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { ArrowLeft, AlertCircle, Plus, CreditCard } from 'lucide-react';
-import { themes } from '@/themes';
+import { themes, getThemesByCategory } from '@/themes';
 import useBrandConfig from '../hooks/useBrandConfig';
 import PaymentMethodsModal from '../components/PaymentMethodsModal';
 
