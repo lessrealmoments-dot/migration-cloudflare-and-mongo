@@ -901,21 +901,6 @@ const PublicGallery = () => {
                             </div>
                           </div>
                         )}
-                        
-                        {/* Photo & Video Count */}
-                        <div className="mt-8 pt-6 border-t border-white/10">
-                          <p className="text-sm tracking-wide text-white/60">
-                            {gallery?.photo_count > 0 && (
-                              <span>{gallery.photo_count} photo{gallery.photo_count !== 1 ? 's' : ''}</span>
-                            )}
-                            {gallery?.photo_count > 0 && gallery?.video_count > 0 && (
-                              <span className="mx-2">•</span>
-                            )}
-                            {gallery?.video_count > 0 && (
-                              <span>{gallery.video_count} video{gallery.video_count !== 1 ? 's' : ''}</span>
-                            )}
-                          </p>
-                        </div>
                       </>
                     );
                   })()}
