@@ -2645,6 +2645,21 @@ const GalleryDetail = () => {
                         )}
                       </button>
                     )}
+                    {/* Refresh button for Google Drive sections */}
+                    {section.type === 'gdrive' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRefreshGdrive(section.id); }}
+                        disabled={refreshingGdrive === section.id}
+                        className="absolute -top-2 left-6 bg-green-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center disabled:opacity-50"
+                        title="Refresh from Google Drive"
+                      >
+                        {refreshingGdrive === section.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <RotateCcw className="w-3 h-3" strokeWidth={2} />
+                        )}
+                      </button>
+                    )}
                     <button
                       onClick={(e) => { e.stopPropagation(); startEditingSection(section); }}
                       className="absolute -top-2 -left-2 bg-blue-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
