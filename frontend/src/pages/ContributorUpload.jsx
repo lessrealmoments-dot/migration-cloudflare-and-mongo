@@ -322,13 +322,7 @@ const ContributorUpload = () => {
             
             <div className="flex gap-3">
               <button
-                onClick={() => {
-                  if (window.history.length > 1) {
-                    window.history.back();
-                  } else {
-                    window.close();
-                  }
-                }}
+                onClick={goBackToHub}
                 className="flex-1 bg-zinc-100 text-zinc-700 py-3 rounded-lg font-medium hover:bg-zinc-200 transition-colors"
               >
                 No, Go Back
