@@ -4821,75 +4821,100 @@ async def create_gdrive_section(
     data: GoogleDriveSectionCreate,
     current_user: dict = Depends(get_current_user)
 ):
-    """Create a new Google Drive section by linking to a public Google Drive folder"""
+    """Create a new Google Drive section - either with URL or empty for contributor to fill"""
     gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    # Extract folder ID from URL
-    folder_id = extract_gdrive_folder_id(data.gdrive_url)
-    if not folder_id:
-        raise HTTPException(status_code=400, detail="Invalid Google Drive URL. Please provide a valid folder link.")
-    
-    # Fetch folder contents from Google Drive
-    gdrive_data = await get_gdrive_photos(folder_id)
-    if not gdrive_data['success']:
-        raise HTTPException(status_code=400, detail=f"Failed to fetch Google Drive folder: {gdrive_data['error']}")
-    
-    if not gdrive_data['photos']:
-        raise HTTPException(status_code=400, detail="No photos found in the Google Drive folder. Make sure it contains images and is publicly shared.")
-    
-    # Create section
     sections = gallery.get("sections", [])
     new_order = max([s.get("order", 0) for s in sections], default=-1) + 1
-    
     section_id = str(uuid.uuid4())
-    new_section = {
-        "id": section_id,
-        "name": data.section_name or gdrive_data['folder_name'],
-        "order": new_order,
-        "type": "gdrive",
-        "gdrive_folder_id": folder_id,
-        "gdrive_folder_name": gdrive_data['folder_name'],
-        "gdrive_last_sync": datetime.now(timezone.utc).isoformat(),
-        "gdrive_error": None,
-        "contributor_name": data.contributor_name,
-        "contributor_role": data.contributor_role or "Photos"
-    }
     
-    sections.append(new_section)
-    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
-    
-    # Store photos in database
-    sync_time = datetime.now(timezone.utc).isoformat()
-    gdrive_photos = []
-    for idx, photo in enumerate(gdrive_data['photos']):
-        gdrive_photos.append({
-            "id": str(uuid.uuid4()),
-            "gallery_id": gallery_id,
-            "section_id": section_id,
+    # If URL is provided, fetch photos immediately
+    if data.gdrive_url and data.gdrive_url.strip():
+        # Extract folder ID from URL
+        folder_id = extract_gdrive_folder_id(data.gdrive_url)
+        if not folder_id:
+            raise HTTPException(status_code=400, detail="Invalid Google Drive URL. Please provide a valid folder link.")
+        
+        # Fetch folder contents from Google Drive
+        gdrive_data = await get_gdrive_photos(folder_id)
+        if not gdrive_data['success']:
+            raise HTTPException(status_code=400, detail=f"Failed to fetch Google Drive folder: {gdrive_data['error']}")
+        
+        if not gdrive_data['photos']:
+            raise HTTPException(status_code=400, detail="No photos found in the Google Drive folder. Make sure it contains images and is publicly shared.")
+        
+        new_section = {
+            "id": section_id,
+            "name": data.section_name or gdrive_data['folder_name'],
+            "order": new_order,
+            "type": "gdrive",
             "gdrive_folder_id": folder_id,
-            "file_id": photo['file_id'],
-            "name": photo['name'],
-            "mime_type": photo.get('mime_type', 'image/jpeg'),
-            "size": photo.get('size', 0),
-            "width": photo.get('width'),
-            "height": photo.get('height'),
-            "thumbnail_url": photo['thumbnail_url'],
-            "view_url": photo['view_url'],
-            "created_time": photo.get('created_time'),
-            "order": idx,
-            "is_highlight": False,
-            "synced_at": sync_time
-        })
-    
-    if gdrive_photos:
-        await db.gdrive_photos.insert_many(gdrive_photos)
-    
-    return {
-        "section": new_section,
-        "photo_count": len(gdrive_photos)
-    }
+            "gdrive_folder_name": gdrive_data['folder_name'],
+            "gdrive_last_sync": datetime.now(timezone.utc).isoformat(),
+            "gdrive_error": None,
+            "contributor_name": data.contributor_name,
+            "contributor_role": data.contributor_role or "Photos"
+        }
+        
+        sections.append(new_section)
+        await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+        
+        # Store photos in database
+        sync_time = datetime.now(timezone.utc).isoformat()
+        gdrive_photos = []
+        for idx, photo in enumerate(gdrive_data['photos']):
+            gdrive_photos.append({
+                "id": str(uuid.uuid4()),
+                "gallery_id": gallery_id,
+                "section_id": section_id,
+                "gdrive_folder_id": folder_id,
+                "file_id": photo['file_id'],
+                "name": photo['name'],
+                "mime_type": photo.get('mime_type', 'image/jpeg'),
+                "size": photo.get('size', 0),
+                "width": photo.get('width'),
+                "height": photo.get('height'),
+                "thumbnail_url": photo['thumbnail_url'],
+                "view_url": photo['view_url'],
+                "created_time": photo.get('created_time'),
+                "order": idx,
+                "is_highlight": False,
+                "synced_at": sync_time
+            })
+        
+        if gdrive_photos:
+            await db.gdrive_photos.insert_many(gdrive_photos)
+        
+        return {
+            "section": new_section,
+            "photo_count": len(gdrive_photos)
+        }
+    else:
+        # Create empty section - contributor will provide URL later via contributor link
+        new_section = {
+            "id": section_id,
+            "name": data.section_name,
+            "order": new_order,
+            "type": "gdrive",
+            "gdrive_folder_id": None,
+            "gdrive_folder_name": None,
+            "gdrive_last_sync": None,
+            "gdrive_error": None,
+            "contributor_name": None,
+            "contributor_role": None,
+            "contributor_link": None  # Will be generated separately
+        }
+        
+        sections.append(new_section)
+        await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+        
+        return {
+            "section": new_section,
+            "photo_count": 0,
+            "message": "Google Drive section created. Generate a contributor link to let your supplier submit their Google Drive folder."
+        }
 
 @api_router.post("/galleries/{gallery_id}/gdrive-sections/{section_id}/refresh")
 async def refresh_gdrive_section(
