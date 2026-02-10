@@ -1218,6 +1218,56 @@ const PublicGallery = () => {
                           </span>
                         </button>
                       ))}
+                      
+                      {/* Integration Sources Section */}
+                      {downloadInfo.integration_sources?.length > 0 && (
+                        <>
+                          <div className="border-t my-2" style={{ borderColor: getSubtleTextColor(currentTheme.colors.secondary, 0.2) }} />
+                          <div className="px-4 py-2">
+                            <p className="text-xs uppercase tracking-wider opacity-50 mb-2" style={{ color: getContrastTextColor(currentTheme.colors.secondary) }}>
+                              External Sources
+                            </p>
+                          </div>
+                          {downloadInfo.integration_sources.map((source, idx) => (
+                            <a
+                              key={idx}
+                              href={source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-white/10 transition-colors text-left"
+                              style={{ color: getContrastTextColor(currentTheme.colors.secondary) }}
+                              onClick={(e) => {
+                                if (!source.url) {
+                                  e.preventDefault();
+                                  toast.info('Videos are embedded in the gallery');
+                                }
+                              }}
+                            >
+                              <div className="flex items-center gap-3">
+                                {source.type === 'gdrive' && (
+                                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M7.71 3.5L1.15 15l3.43 5.5L11.14 9 7.71 3.5zM16.29 3.5H9.14l6.43 11h7.14l-6.42-11zM8.57 16l-3.43 4.5h13.72l3.43-4.5H8.57z"/>
+                                  </svg>
+                                )}
+                                {source.type === 'pcloud' && <Cloud className="w-4 h-4" />}
+                                {source.type === 'fotoshare' && <Film className="w-4 h-4" />}
+                                {source.type === 'youtube' && <Youtube className="w-4 h-4" />}
+                                <div>
+                                  <span className="text-sm block">{source.section_name}</span>
+                                  <span className="text-xs opacity-60">{source.label}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs opacity-60">
+                                  {source.photo_count ? `${source.photo_count} photos` : ''}
+                                  {source.video_count ? `${source.video_count} videos` : ''}
+                                </span>
+                                {source.url && <ExternalLink className="w-3 h-3 opacity-60" />}
+                              </div>
+                            </a>
+                          ))}
+                        </>
+                      )}
                     </div>
                     
                     {/* Chunk Info */}
