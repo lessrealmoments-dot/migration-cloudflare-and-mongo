@@ -8597,15 +8597,51 @@ async def track_gallery_view_by_id(gallery_id: str):
 
 @api_router.get("/billing/pricing")
 async def get_public_pricing():
-    """Get current pricing and payment methods (public)"""
+    """Get current pricing, plan features, and retention settings (public)"""
     settings = await get_billing_settings()
+    global_toggles = await get_global_feature_toggles()
+    
+    # Get plan-specific settings
+    standard_config = global_toggles.get(PLAN_STANDARD, {})
+    pro_config = global_toggles.get(PLAN_PRO, {})
+    
+    # Calculate retention in months
+    standard_retention_days = standard_config.get("gallery_expiration_days", 180)
+    pro_retention_days = pro_config.get("gallery_expiration_days", 180)
+    
+    def days_to_months_text(days):
+        if days >= 36500:
+            return "Unlimited"
+        months = days // 30
+        if months <= 0:
+            return f"{days} days"
+        return f"{months} months"
+    
     return {
         **settings.get("pricing", DEFAULT_PRICING),
         "payment_methods": settings.get("payment_methods", {
             "gcash": {"enabled": True, "name": "GCash", "account_name": "Less Real Moments", "account_number": "09952568450"},
             "maya": {"enabled": True, "name": "Maya", "account_name": "Less Real Moments", "account_number": "09952568450"},
             "bank": {"enabled": False, "name": "Bank Transfer", "account_name": "", "account_number": "", "bank_name": ""}
-        })
+        }),
+        "plan_features": {
+            "standard": {
+                "display_mode": standard_config.get("display_mode", False),
+                "collaboration_link": standard_config.get("collaboration_link", False),
+                "qr_code": standard_config.get("qr_code", True),
+                "storage_limit_gb": standard_config.get("storage_limit_gb", 10),
+                "gallery_retention": days_to_months_text(standard_retention_days),
+                "gallery_expiration_days": standard_retention_days
+            },
+            "pro": {
+                "display_mode": pro_config.get("display_mode", True),
+                "collaboration_link": pro_config.get("collaboration_link", True),
+                "qr_code": pro_config.get("qr_code", True),
+                "storage_limit_gb": pro_config.get("storage_limit_gb", 10),
+                "gallery_retention": days_to_months_text(pro_retention_days),
+                "gallery_expiration_days": pro_retention_days
+            }
+        }
     }
 
 @api_router.get("/user/subscription")
