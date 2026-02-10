@@ -415,7 +415,7 @@ const PricingPage = () => {
       <footer className="border-t border-zinc-200 bg-white py-6 sm:py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs sm:text-sm text-zinc-500 text-center sm:text-left">
-            © 2025 {brandConfig.brand_name || 'PhotoShare'}. All rights reserved.
+            © 2024 {brandConfig.brand_name || 'EventsGallery'}. All rights reserved.
           </p>
           <div className="flex items-center gap-4 sm:gap-6">
             <a href="/" className="text-xs sm:text-sm text-zinc-600 hover:text-zinc-900">Home</a>
