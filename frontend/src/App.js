@@ -11,6 +11,7 @@ import ContributorUpload from '@/pages/ContributorUpload';
 import VideographerUpload from '@/pages/VideographerUpload';
 import FotoshareContributorUpload from '@/pages/FotoshareContributorUpload';
 import GdriveContributorUpload from '@/pages/GdriveContributorUpload';
+import PcloudContributorUpload from '@/pages/PcloudContributorUpload';
 import Display from '@/pages/Display';
 import PricingPage from '@/pages/PricingPage';
 import AdminLogin from '@/pages/AdminLogin';
