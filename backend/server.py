@@ -5538,6 +5538,99 @@ async def submit_contributor_fotoshare(contributor_link: str, data: dict = Body(
         "contributor_name": company_name
     }
 
+@api_router.post("/contributor/{contributor_link}/gdrive")
+async def submit_contributor_gdrive(contributor_link: str, data: dict = Body(...)):
+    """Submit Google Drive folder URL as a contributor"""
+    company_name = data.get("company_name", "").strip()
+    contributor_role = data.get("contributor_role", "").strip() or "Photos"
+    gdrive_url = data.get("gdrive_url", "").strip()
+    
+    if not company_name:
+        raise HTTPException(status_code=400, detail="Your name/company name is required")
+    
+    if not gdrive_url:
+        raise HTTPException(status_code=400, detail="Google Drive folder URL is required")
+    
+    # Validate URL format
+    folder_id = extract_gdrive_folder_id(gdrive_url)
+    if not folder_id:
+        raise HTTPException(status_code=400, detail="Invalid Google Drive URL. Please provide a valid folder link (e.g., https://drive.google.com/drive/folders/...)")
+    
+    # Find gallery with this contributor link
+    gallery = await db.galleries.find_one(
+        {"sections.contributor_link": contributor_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid contributor link")
+    
+    # Find the section
+    section = next((s for s in gallery.get("sections", []) if s.get("contributor_link") == contributor_link), None)
+    if not section or not section.get("contributor_enabled", False):
+        raise HTTPException(status_code=404, detail="Contributor uploads are not enabled")
+    
+    if section.get("type") != "gdrive":
+        raise HTTPException(status_code=400, detail="This link is not for Google Drive uploads")
+    
+    # Fetch folder contents from Google Drive
+    gdrive_data = await get_gdrive_photos(folder_id)
+    if not gdrive_data['success']:
+        raise HTTPException(status_code=400, detail=f"Failed to access Google Drive folder: {gdrive_data['error']}. Make sure the folder is shared with 'Anyone with the link can view'.")
+    
+    if not gdrive_data['photos']:
+        raise HTTPException(status_code=400, detail="No photos found in the Google Drive folder. Make sure it contains images and is publicly shared.")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Update section with Google Drive details and contributor info
+    sections = gallery.get("sections", [])
+    section_idx = next((i for i, s in enumerate(sections) if s.get("contributor_link") == contributor_link), None)
+    if section_idx is not None:
+        sections[section_idx]["gdrive_folder_id"] = folder_id
+        sections[section_idx]["gdrive_folder_name"] = gdrive_data['folder_name']
+        sections[section_idx]["gdrive_last_sync"] = now
+        sections[section_idx]["gdrive_error"] = None
+        sections[section_idx]["contributor_name"] = company_name
+        sections[section_idx]["contributor_role"] = contributor_role
+        
+        await db.galleries.update_one({"id": gallery["id"]}, {"$set": {"sections": sections}})
+    
+    # Delete any existing photos for this section (in case of re-submission)
+    await db.gdrive_photos.delete_many({"gallery_id": gallery["id"], "section_id": section["id"]})
+    
+    # Store the photos
+    gdrive_photos = []
+    for idx, photo in enumerate(gdrive_data['photos']):
+        gdrive_photos.append({
+            "id": str(uuid.uuid4()),
+            "gallery_id": gallery["id"],
+            "section_id": section["id"],
+            "gdrive_folder_id": folder_id,
+            "file_id": photo['file_id'],
+            "name": photo['name'],
+            "mime_type": photo.get('mime_type', 'image/jpeg'),
+            "size": photo.get('size', 0),
+            "width": photo.get('width'),
+            "height": photo.get('height'),
+            "thumbnail_url": photo['thumbnail_url'],
+            "view_url": photo['view_url'],
+            "created_time": photo.get('created_time'),
+            "order": idx,
+            "is_highlight": False,
+            "synced_at": now
+        })
+    
+    if gdrive_photos:
+        await db.gdrive_photos.insert_many(gdrive_photos)
+    
+    return {
+        "success": True,
+        "photo_count": len(gdrive_photos),
+        "folder_name": gdrive_data['folder_name'],
+        "contributor_name": company_name,
+        "contributor_role": contributor_role
+    }
+
 @api_router.post("/contributor/{contributor_link}/upload")
 async def upload_contributor_photo(
     contributor_link: str,
