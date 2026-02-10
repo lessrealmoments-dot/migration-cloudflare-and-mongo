@@ -17,6 +17,17 @@ import useFeatureToggles from '../hooks/useFeatureToggles';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Helper to get the correct image URL (handles both CDN and local URLs)
+const getImageUrl = (url) => {
+  if (!url) return '';
+  // If URL already starts with http(s), it's a CDN URL - use as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // Otherwise, it's a local URL - prepend backend URL
+  return `${BACKEND_URL}${url}`;
+};
+
 // Helper to format bytes
 const formatBytes = (bytes) => {
   if (!bytes || bytes === 0) return '0 B';
