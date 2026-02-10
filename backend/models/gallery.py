@@ -145,3 +145,20 @@ class DuplicateCheckRequest(BaseModel):
 class DuplicateCheckResponse(BaseModel):
     existing_hashes: List[str]
     new_hashes: List[str]
+
+
+class ThumbnailRepairRequest(BaseModel):
+    """Request model for thumbnail repair endpoint"""
+    force_regenerate: bool = False
+
+
+class PhotoHealthCheck(BaseModel):
+    """Result of a photo health check"""
+    photo_id: str
+    original_valid: bool
+    thumbnail_small_valid: bool
+    thumbnail_medium_valid: bool
+    is_flagged: bool
+    flagged_reason: Optional[str] = None
+    needs_repair: bool
+
