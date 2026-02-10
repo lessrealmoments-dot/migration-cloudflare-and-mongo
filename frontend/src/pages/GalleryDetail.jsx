@@ -4118,51 +4118,60 @@ const GalleryDetail = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-4">Gallery Theme</label>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {Object.entries(themes).map(([key, theme]) => (
-                    <div
-                      key={key}
-                      onClick={() => setEditFormData({ ...editFormData, theme: key })}
-                      data-testid={`theme-${key}`}
-                      className={`cursor-pointer border-2 rounded-lg p-3 transition-all duration-300 hover:shadow-md ${
-                        editFormData.theme === key 
-                          ? 'border-primary ring-2 ring-primary/20' 
-                          : 'border-zinc-200 hover:border-zinc-300'
-                      }`}
-                    >
-                      {/* Color Palette Preview */}
-                      <div className="flex gap-1 mb-2">
-                        <div 
-                          className="flex-1 h-8 rounded-l-md" 
-                          style={{ backgroundColor: theme.colors.background }}
-                          title="Background"
-                        />
-                        <div 
-                          className="flex-1 h-8" 
-                          style={{ backgroundColor: theme.colors.primary }}
-                          title="Primary"
-                        />
-                        <div 
-                          className="flex-1 h-8" 
-                          style={{ backgroundColor: theme.colors.accent }}
-                          title="Accent"
-                        />
-                        <div 
-                          className="flex-1 h-8 rounded-r-md" 
-                          style={{ backgroundColor: theme.colors.text }}
-                          title="Text"
-                        />
-                      </div>
-                      {/* Theme Name & Description */}
-                      <h4 className="font-medium text-sm">{theme.name}</h4>
-                      <p className="text-xs text-zinc-500 line-clamp-1">{theme.description}</p>
-                      {/* Selected indicator */}
-                      {editFormData.theme === key && (
-                        <div className="mt-2 text-xs text-primary font-medium flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Selected
+                <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2">
+                  {Object.entries(getThemesByCategory()).map(([categoryKey, category]) => (
+                    category.themes.length > 0 && (
+                      <div key={categoryKey}>
+                        <h5 className="text-xs uppercase tracking-wider text-zinc-500 mb-3 font-medium">{category.name}</h5>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {category.themes.map((theme) => (
+                            <div
+                              key={theme.key}
+                              onClick={() => setEditFormData({ ...editFormData, theme: theme.key })}
+                              data-testid={`theme-${theme.key}`}
+                              className={`cursor-pointer border-2 rounded-lg p-3 transition-all duration-300 hover:shadow-md ${
+                                editFormData.theme === theme.key 
+                                  ? 'border-primary ring-2 ring-primary/20' 
+                                  : 'border-zinc-200 hover:border-zinc-300'
+                              }`}
+                            >
+                              {/* Color Palette Preview */}
+                              <div className="flex gap-1 mb-2">
+                                <div 
+                                  className="flex-1 h-8 rounded-l-md" 
+                                  style={{ backgroundColor: theme.colors.background }}
+                                  title="Background"
+                                />
+                                <div 
+                                  className="flex-1 h-8" 
+                                  style={{ backgroundColor: theme.colors.primary }}
+                                  title="Primary"
+                                />
+                                <div 
+                                  className="flex-1 h-8" 
+                                  style={{ backgroundColor: theme.colors.accent }}
+                                  title="Accent"
+                                />
+                                <div 
+                                  className="flex-1 h-8 rounded-r-md" 
+                                  style={{ backgroundColor: theme.colors.text }}
+                                  title="Text"
+                                />
+                              </div>
+                              {/* Theme Name & Description */}
+                              <h4 className="font-medium text-sm">{theme.name}</h4>
+                              <p className="text-xs text-zinc-500 line-clamp-1">{theme.description}</p>
+                              {/* Selected indicator */}
+                              {editFormData.theme === theme.key && (
+                                <div className="mt-2 text-xs text-primary font-medium flex items-center gap-1">
+                                  <Check className="w-3 h-3" /> Selected
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )
                   ))}
                 </div>
               </div>
