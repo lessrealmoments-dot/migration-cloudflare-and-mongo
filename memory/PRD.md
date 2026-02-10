@@ -1243,3 +1243,42 @@ Extended font collection for theme variety:
 - All text elements readable on all tested themes
 - Test report: `/app/test_reports/iteration_21.json`
 
+
+## Backend Refactoring - Phase 3 Complete ✅ (December 2025)
+
+### Background Tasks Extraction
+Successfully extracted all 5 background tasks from `server.py` to `/app/backend/tasks/background.py`:
+
+| Task | Purpose | Interval |
+|------|---------|----------|
+| `auto_refresh_fotoshare_sections()` | Auto-refresh fotoshare sections based on age | Variable (10m-30d) |
+| `auto_sync_gdrive_sections()` | Sync Google Drive sections for new photos | 15 minutes |
+| `auto_sync_pcloud_sections()` | Sync pCloud sections for new photos | 15 minutes |
+| `auto_sync_drive_backup_task()` | Auto-backup galleries to Google Drive | 5 minutes |
+| `auto_delete_expired_galleries()` | Delete galleries past auto_delete_date | Daily |
+
+### Architecture Pattern Used
+**Dependency Injection**: Tasks receive dependencies via `init_tasks()`:
+- `db` - MongoDB database connection
+- `storage` - R2/local storage service
+- `logger` - Logging instance
+- `scrape_fotoshare_videos` - Fotoshare scraping function
+- `fetch_pcloud_folder` - pCloud API function
+- `get_gdrive_photos` - Google Drive photos function
+- `get_drive_service_for_user` - Drive OAuth service
+- `UPLOAD_DIR` - Upload directory path
+- `DRIVE_SYNC_INTERVAL` - Drive sync interval
+
+### Files Changed
+- `/app/backend/server.py` - Removed duplicate tasks, updated lifespan to use tasks module
+- `/app/backend/tasks/background.py` - All background task implementations
+- `/app/backend/tasks/__init__.py` - Exports for tasks module
+- `/app/backend/REFACTOR_PLAN.md` - Updated progress tracker
+
+### Results
+- **Lines reduced**: 425 lines removed from server.py
+- **Server.py size**: 9,542 lines (down from 9,967)
+- **Total reduction**: 529 lines (from 10,071 original)
+- All background tasks verified running successfully
+- API health check passing
+- All endpoints functional
