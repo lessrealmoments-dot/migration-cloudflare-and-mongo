@@ -1045,9 +1045,10 @@ const GalleryDetail = () => {
         // Fetch the fotoshare videos
         fetchFotoshareVideos();
       } else if (newSectionType === 'pcloud' && newPcloudUrl.trim()) {
-        // Create pCloud section with URL - dedicated endpoint
+        // Create pCloud section with viewing URL - dedicated endpoint
         const response = await axios.post(`${API}/galleries/${id}/pcloud-sections`, {
           pcloud_url: newPcloudUrl,
+          pcloud_upload_link: newPcloudUploadLink || null,
           section_name: newSectionName
         }, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
@@ -1057,6 +1058,22 @@ const GalleryDetail = () => {
         toast.success(`pCloud section created with ${response.data.photo_count} photos!`);
         // Fetch the pCloud photos
         fetchPcloudPhotos();
+      } else if (newSectionType === 'pcloud' && !newPcloudUrl.trim()) {
+        // Create empty pCloud section - supplier will upload and provide viewing link
+        if (!newPcloudUploadLink.trim()) {
+          toast.error('pCloud upload request link is required');
+          return;
+        }
+        const response = await axios.post(`${API}/galleries/${id}/pcloud-sections`, {
+          pcloud_url: null,
+          pcloud_upload_link: newPcloudUploadLink,
+          section_name: newSectionName
+        }, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        
+        setSections([...sections, response.data.section]);
+        toast.success('pCloud section created! Generate a contributor link to let your supplier upload photos.');
       } else if (newSectionType === 'gdrive' && newGdriveUrl.trim()) {
         // Create Google Drive section with URL - dedicated endpoint
         const response = await axios.post(`${API}/galleries/${id}/gdrive-sections`, {
