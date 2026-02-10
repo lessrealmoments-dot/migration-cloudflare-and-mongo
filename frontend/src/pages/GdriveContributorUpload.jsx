@@ -21,6 +21,7 @@ const GdriveContributorUpload = () => {
   const [gdriveUrl, setGdriveUrl] = useState('');
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [submitResult, setSubmitResult] = useState(null);
+  const [roleConfirmed, setRoleConfirmed] = useState(false);
   
   useEffect(() => {
     fetchGalleryInfo();
