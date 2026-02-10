@@ -6983,9 +6983,15 @@ async def get_gallery_opengraph(share_link: str, request: Request):
         if first_photo and first_photo.get("url"):
             og_image = f"{frontend_url}{first_photo['url']}"
     
+    # Get brand name from photographer's settings
+    brand_name = "EventsGallery"
+    photographer = await db.users.find_one({"id": gallery.get("photographer_id")}, {"_id": 0, "business_name": 1})
+    if photographer and photographer.get("business_name"):
+        brand_name = photographer["business_name"]
+    
     # Build description
     description = gallery.get("description") or f"View {photo_count} photos from {display_name}"
-    title = gallery.get("title", "Photo Gallery")
+    title = gallery.get("event_title") or gallery.get("title", "Photo Gallery")
     
     # Generate HTML with Open Graph meta tags
     html = f"""<!DOCTYPE html>
@@ -6995,7 +7001,7 @@ async def get_gallery_opengraph(share_link: str, request: Request):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Primary Meta Tags -->
-    <title>{title} | PhotoShare</title>
+    <title>{title} | {brand_name}</title>
     <meta name="title" content="{title} by {display_name}">
     <meta name="description" content="{description}">
     
@@ -7004,7 +7010,7 @@ async def get_gallery_opengraph(share_link: str, request: Request):
     <meta property="og:url" content="{gallery_url}">
     <meta property="og:title" content="{title}">
     <meta property="og:description" content="{description}">
-    <meta property="og:site_name" content="PhotoShare">
+    <meta property="og:site_name" content="{brand_name}">
     {'<meta property="og:image" content="' + og_image + '">' if og_image else ''}
     {'<meta property="og:image:width" content="1200">' if og_image else ''}
     {'<meta property="og:image:height" content="630">' if og_image else ''}
