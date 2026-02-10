@@ -347,6 +347,206 @@ async def auto_refresh_fotoshare_sections():
         # Check every 5 minutes for sections that need refreshing
         await asyncio.sleep(300)
 
+async def auto_sync_gdrive_sections():
+    """
+    Background task to auto-sync Google Drive sections.
+    Refresh interval: Every 30 minutes for sections with data, every 15 minutes for new sections.
+    """
+    logger.info("Google Drive auto-sync task started")
+    
+    while True:
+        try:
+            now = datetime.now(timezone.utc)
+            
+            # Find all galleries with gdrive sections that have folder_id set
+            galleries = await db.galleries.find(
+                {"sections.type": "gdrive", "sections.gdrive_folder_id": {"$ne": None}},
+                {"_id": 0, "id": 1, "sections": 1}
+            ).to_list(None)
+            
+            synced_count = 0
+            
+            for gallery in galleries:
+                for section in gallery.get("sections", []):
+                    if section.get("type") != "gdrive" or not section.get("gdrive_folder_id"):
+                        continue
+                    
+                    folder_id = section.get("gdrive_folder_id")
+                    last_sync_str = section.get("gdrive_last_sync")
+                    
+                    # Determine if we should sync
+                    should_sync = False
+                    if not last_sync_str:
+                        should_sync = True
+                    else:
+                        try:
+                            last_sync = datetime.fromisoformat(last_sync_str.replace('Z', '+00:00'))
+                            minutes_since_sync = (now - last_sync).total_seconds() / 60
+                            # Sync every 30 minutes
+                            should_sync = minutes_since_sync >= 30
+                        except:
+                            should_sync = True
+                    
+                    if should_sync:
+                        try:
+                            gdrive_data = await get_gdrive_photos(folder_id)
+                            
+                            if gdrive_data['success']:
+                                # Get existing photos
+                                existing = await db.gdrive_photos.find(
+                                    {"gallery_id": gallery["id"], "section_id": section["id"]},
+                                    {"_id": 0, "file_id": 1}
+                                ).to_list(10000)
+                                existing_file_ids = {p["file_id"] for p in existing}
+                                
+                                # Add new photos
+                                sync_time = now.isoformat()
+                                new_photos = []
+                                
+                                for idx, photo in enumerate(gdrive_data['photos']):
+                                    if photo['file_id'] not in existing_file_ids:
+                                        new_photos.append({
+                                            "id": str(uuid.uuid4()),
+                                            "gallery_id": gallery["id"],
+                                            "section_id": section["id"],
+                                            "gdrive_folder_id": folder_id,
+                                            "file_id": photo['file_id'],
+                                            "name": photo['name'],
+                                            "mime_type": photo.get('mime_type', 'image/jpeg'),
+                                            "size": photo.get('size', 0),
+                                            "width": photo.get('width'),
+                                            "height": photo.get('height'),
+                                            "thumbnail_url": photo['thumbnail_url'],
+                                            "view_url": photo['view_url'],
+                                            "created_time": photo.get('created_time'),
+                                            "order": len(existing_file_ids) + idx,
+                                            "is_highlight": False,
+                                            "synced_at": sync_time
+                                        })
+                                
+                                if new_photos:
+                                    await db.gdrive_photos.insert_many(new_photos)
+                                    logger.info(f"Synced {len(new_photos)} new photos for gallery {gallery['id']}")
+                                
+                                # Update last sync time
+                                await db.galleries.update_one(
+                                    {"id": gallery["id"], "sections.id": section["id"]},
+                                    {"$set": {"sections.$.gdrive_last_sync": sync_time, "sections.$.gdrive_error": None}}
+                                )
+                                
+                                synced_count += 1
+                        except Exception as e:
+                            logger.error(f"Auto-sync error for gdrive section {section.get('id')}: {e}")
+            
+            if synced_count > 0:
+                logger.info(f"Google Drive auto-sync: Synced {synced_count} sections")
+                
+        except Exception as e:
+            logger.error(f"Google Drive auto-sync task error: {e}")
+        
+        # Check every 15 minutes
+        await asyncio.sleep(900)
+
+async def auto_sync_pcloud_sections():
+    """
+    Background task to auto-sync pCloud sections.
+    Refresh interval: Every 30 minutes for sections with data.
+    """
+    logger.info("pCloud auto-sync task started")
+    
+    while True:
+        try:
+            now = datetime.now(timezone.utc)
+            
+            # Find all galleries with pcloud sections that have pcloud_code set
+            galleries = await db.galleries.find(
+                {"sections.type": "pcloud", "sections.pcloud_code": {"$ne": None}},
+                {"_id": 0, "id": 1, "sections": 1}
+            ).to_list(None)
+            
+            synced_count = 0
+            
+            for gallery in galleries:
+                for section in gallery.get("sections", []):
+                    if section.get("type") != "pcloud" or not section.get("pcloud_code"):
+                        continue
+                    
+                    code = section.get("pcloud_code")
+                    last_sync_str = section.get("pcloud_last_sync")
+                    
+                    # Determine if we should sync
+                    should_sync = False
+                    if not last_sync_str:
+                        should_sync = True
+                    else:
+                        try:
+                            last_sync = datetime.fromisoformat(last_sync_str.replace('Z', '+00:00'))
+                            minutes_since_sync = (now - last_sync).total_seconds() / 60
+                            # Sync every 30 minutes
+                            should_sync = minutes_since_sync >= 30
+                        except:
+                            should_sync = True
+                    
+                    if should_sync:
+                        try:
+                            pcloud_data = await fetch_pcloud_folder(code)
+                            
+                            if pcloud_data['success']:
+                                # Get existing photos
+                                existing = await db.pcloud_photos.find(
+                                    {"gallery_id": gallery["id"], "section_id": section["id"]},
+                                    {"_id": 0, "fileid": 1}
+                                ).to_list(10000)
+                                existing_fileids = {p["fileid"] for p in existing}
+                                
+                                # Add new photos
+                                sync_time = now.isoformat()
+                                new_photos = []
+                                
+                                for photo in pcloud_data['photos']:
+                                    fileid_str = str(photo['fileid'])
+                                    if fileid_str not in existing_fileids:
+                                        new_photos.append({
+                                            "id": str(uuid.uuid4()),
+                                            "gallery_id": gallery["id"],
+                                            "section_id": section["id"],
+                                            "pcloud_code": code,
+                                            "fileid": fileid_str,
+                                            "name": photo['name'],
+                                            "size": photo.get('size', 0),
+                                            "width": photo.get('width'),
+                                            "height": photo.get('height'),
+                                            "contenttype": photo.get('contenttype', 'image/jpeg'),
+                                            "supplier_name": photo.get('supplier_name'),
+                                            "hash": str(photo.get('hash', '')) if photo.get('hash') else None,
+                                            "created_at_source": photo.get('created'),
+                                            "order": len(existing_fileids) + len(new_photos),
+                                            "synced_at": sync_time
+                                        })
+                                
+                                if new_photos:
+                                    await db.pcloud_photos.insert_many(new_photos)
+                                    logger.info(f"Synced {len(new_photos)} new pCloud photos for gallery {gallery['id']}")
+                                
+                                # Update last sync time
+                                await db.galleries.update_one(
+                                    {"id": gallery["id"], "sections.id": section["id"]},
+                                    {"$set": {"sections.$.pcloud_last_sync": sync_time, "sections.$.pcloud_error": None}}
+                                )
+                                
+                                synced_count += 1
+                        except Exception as e:
+                            logger.error(f"Auto-sync error for pcloud section {section.get('id')}: {e}")
+            
+            if synced_count > 0:
+                logger.info(f"pCloud auto-sync: Synced {synced_count} sections")
+                
+        except Exception as e:
+            logger.error(f"pCloud auto-sync task error: {e}")
+        
+        # Check every 15 minutes
+        await asyncio.sleep(900)
+
 # ============ pCloud Integration ============
 
 def extract_pcloud_code(url: str) -> Optional[str]:
