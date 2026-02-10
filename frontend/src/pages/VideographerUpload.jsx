@@ -33,6 +33,17 @@ const VideographerUpload = () => {
   const [videos, setVideos] = useState([]);
   const [roleConfirmed, setRoleConfirmed] = useState(false);
   
+  // Navigate back to coordinator hub
+  const goBackToHub = () => {
+    if (hubLink) {
+      navigate(`/coordinator/${hubLink}`);
+    } else if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.close();
+    }
+  };
+  
   // Form state
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [tag, setTag] = useState('');
