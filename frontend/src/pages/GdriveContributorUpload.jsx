@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { 
@@ -12,6 +12,8 @@ const API = process.env.REACT_APP_BACKEND_URL + '/api';
 const GdriveContributorUpload = () => {
   const { contributorLink } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const hubLink = searchParams.get('hub');
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -22,6 +24,17 @@ const GdriveContributorUpload = () => {
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [submitResult, setSubmitResult] = useState(null);
   const [roleConfirmed, setRoleConfirmed] = useState(false);
+  
+  // Navigate back to coordinator hub
+  const goBackToHub = () => {
+    if (hubLink) {
+      navigate(`/coordinator/${hubLink}`);
+    } else if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.close();
+    }
+  };
   
   useEffect(() => {
     fetchGalleryInfo();
