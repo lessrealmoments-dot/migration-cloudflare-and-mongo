@@ -11,6 +11,7 @@ import OptimizedImage from '@/components/OptimizedImage';
 import SocialSharePanel from '@/components/SocialSharePanel';
 import VideoSection from '@/components/VideoSection';
 import FotoshareSection from '@/components/FotoshareSection';
+import GoogleDriveSection from '@/components/GoogleDriveSection';
 import useBrandConfig from '../hooks/useBrandConfig';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
