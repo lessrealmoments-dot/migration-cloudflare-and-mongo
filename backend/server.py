@@ -81,25 +81,18 @@ def _extract_youtube_video_id(url: str) -> Optional[str]:
             return match.group(1)
     return None
 
-def get_youtube_thumbnail_url(video_id: str) -> str:
-    """Get the highest quality thumbnail URL for a YouTube video"""
-    # YouTube provides these thumbnail sizes:
-    # maxresdefault.jpg (1280x720) - may not exist
-    # sddefault.jpg (640x480)
-    # hqdefault.jpg (480x360)
-    # mqdefault.jpg (320x180)
-    # default.jpg (120x90)
+def _get_youtube_thumbnail_url(video_id: str) -> str:
+    """DEPRECATED - Use from utils.helpers"""
     return f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
 
-def get_youtube_embed_url(video_id: str) -> str:
-    """Get embeddable YouTube URL"""
+def _get_youtube_embed_url(video_id: str) -> str:
+    """DEPRECATED - Use from utils.helpers"""
     return f"https://www.youtube.com/embed/{video_id}"
 
 # ============ Fotoshare.co / 360 Booth Scraping ============
 
-def extract_fotoshare_event_id(url: str) -> Optional[str]:
-    """Extract event ID from fotoshare.co URL"""
-    # Patterns: fotoshare.co/e/EVENTID or fotoshare.co/event/EVENTID
+def _extract_fotoshare_event_id(url: str) -> Optional[str]:
+    """DEPRECATED - Use from utils.helpers"""
     patterns = [
         r'fotoshare\.co/e/([a-zA-Z0-9_-]+)',
         r'fotoshare\.co/event/([a-zA-Z0-9_-]+)',
