@@ -91,6 +91,17 @@ from utils.helpers import (
     extract_gdrive_folder_id,
 )
 
+# Import background tasks from tasks package (Phase 3 refactoring)
+from tasks import (
+    init_tasks,
+    stop_tasks,
+    auto_refresh_fotoshare_sections,
+    auto_sync_gdrive_sections,
+    auto_sync_pcloud_sections,
+    auto_sync_drive_backup_task,
+    auto_delete_expired_galleries,
+)
+
 # YouTube URL patterns and utilities - NOW IMPORTED FROM utils.helpers
 # Keeping local definitions as fallback for backward compatibility
 def _extract_youtube_video_id(url: str) -> Optional[str]:
