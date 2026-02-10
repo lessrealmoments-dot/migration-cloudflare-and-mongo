@@ -6529,8 +6529,28 @@ async def get_public_gallery(share_link: str):
             pass
     
     photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
-    photo_count = await db.photos.count_documents({"gallery_id": gallery["id"]})
     sections = gallery.get("sections", [])
+    
+    # Count photos from R2 storage
+    r2_photo_count = await db.photos.count_documents({"gallery_id": gallery["id"]})
+    
+    # Count photos from Google Drive sections
+    gdrive_photo_count = await db.gdrive_photos.count_documents({"gallery_id": gallery["id"]})
+    
+    # Count photos from pCloud sections
+    pcloud_photo_count = await db.pcloud_photos.count_documents({"gallery_id": gallery["id"]})
+    
+    # Total photo count (all sources)
+    total_photo_count = r2_photo_count + gdrive_photo_count + pcloud_photo_count
+    
+    # Count videos from Fotoshare/360Glam
+    fotoshare_video_count = await db.fotoshare_videos.count_documents({"gallery_id": gallery["id"]})
+    
+    # Count videos from YouTube (gallery_videos collection)
+    youtube_video_count = await db.gallery_videos.count_documents({"gallery_id": gallery["id"]})
+    
+    # Total video count
+    total_video_count = fotoshare_video_count + youtube_video_count
     
     # Use business_name if available, otherwise use personal name
     display_name = photographer.get("business_name") or photographer.get("name", "Unknown") if photographer else "Unknown"
@@ -6582,7 +6602,8 @@ async def get_public_gallery(share_link: str):
         guest_upload_enabled=guest_upload_enabled,
         has_download_all_password=gallery.get("download_all_password") is not None,
         theme=gallery.get("theme", "classic"),
-        photo_count=photo_count
+        photo_count=total_photo_count,
+        video_count=total_video_count
     )
 
 @api_router.post("/public/gallery/{share_link}/verify-password")
