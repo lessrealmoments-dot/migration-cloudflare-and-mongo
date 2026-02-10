@@ -953,10 +953,10 @@ const PublicGallery = () => {
             style={{ borderColor: currentTheme.colors.accent + '50' }}
           >
             <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: currentTheme.colors.accent }} />
-            <h3 className="text-xl font-medium mb-2" style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}>
+            <h3 className="text-xl font-medium mb-2" style={{ fontFamily: currentTheme.fonts.heading, color: getContrastTextColor(currentTheme.colors.background) }}>
               Gallery Expired
             </h3>
-            <p style={{ color: currentTheme.colors.textLight }}>
+            <p style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.7) }}>
               This gallery is no longer accessible. Please contact the photographer.
             </p>
           </motion.div>
