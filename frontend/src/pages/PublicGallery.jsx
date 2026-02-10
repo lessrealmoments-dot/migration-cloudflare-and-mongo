@@ -894,7 +894,7 @@ const PublicGallery = () => {
             )}
             <h1 
               className="text-4xl md:text-6xl lg:text-7xl font-normal tracking-tight mb-4"
-              style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+              style={{ fontFamily: currentTheme.fonts.heading, color: getContrastTextColor(currentTheme.colors.background) }}
             >
               {gallery?.event_title || gallery?.title}
             </h1>
@@ -905,15 +905,17 @@ const PublicGallery = () => {
                 {(() => {
                   const owner = gallery.contributors.find(c => c.is_owner);
                   const others = gallery.contributors.filter(c => !c.is_owner);
+                  const textColor = getContrastTextColor(currentTheme.colors.background);
+                  const subtleColor = getSubtleTextColor(currentTheme.colors.background, 0.6);
                   
                   return (
                     <>
                       {/* The Story, Curated by */}
                       <div className="mb-6">
-                        <p className="text-xs uppercase tracking-[0.3em] mb-2" style={{ color: currentTheme.colors.textLight, opacity: 0.5 }}>
+                        <p className="text-xs uppercase tracking-[0.3em] mb-2" style={{ color: subtleColor }}>
                           The Story, Curated by
                         </p>
-                        <p className="text-xl md:text-2xl font-light" style={{ fontFamily: 'Playfair Display, serif', color: currentTheme.colors.text }}>
+                        <p className="text-xl md:text-2xl font-light" style={{ fontFamily: currentTheme.fonts.heading, color: textColor }}>
                           {owner?.name || gallery?.photographer_name}
                         </p>
                       </div>
@@ -921,12 +923,12 @@ const PublicGallery = () => {
                       {/* Other Contributors */}
                       {others.length > 0 && (
                         <div className="mt-6">
-                          <p className="text-xs uppercase tracking-[0.2em] mb-4" style={{ color: currentTheme.colors.textLight, opacity: 0.4 }}>with</p>
+                          <p className="text-xs uppercase tracking-[0.2em] mb-4" style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.5) }}>with</p>
                           <div className="flex flex-wrap justify-center gap-x-6 gap-y-3">
                             {others.map((c, i) => (
                               <div key={i} className="text-center">
-                                <p className="text-sm font-medium" style={{ color: currentTheme.colors.text, opacity: 0.85 }}>{c.name}</p>
-                                <p className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: currentTheme.colors.textLight, opacity: 0.5 }}>{c.role}</p>
+                                <p className="text-sm font-medium" style={{ color: textColor }}>{c.name}</p>
+                                <p className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: subtleColor }}>{c.role}</p>
                               </div>
                             ))}
                           </div>
