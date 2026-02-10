@@ -23,6 +23,30 @@ from contextlib import asynccontextmanager
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request as GoogleRequest
+
+# Import models from models package (Phase 1 refactoring)
+# These models are now defined in /app/backend/models/ for better organization
+from models.collage import (
+    CollagePreset,
+    CollagePresetCreate,
+    CollagePresetUpdate,
+    CollagePresetPlaceholder,
+    CollagePresetSettings,
+)
+from models.video import (
+    GalleryVideo,
+    VideoCreate,
+    VideoUpdate,
+    FotoshareVideo,
+    PCloudPhoto,
+    FotoshareSectionCreate,
+    GoogleDriveSectionCreate,
+    SectionDownloadRequest,
+)
+from models.gallery import (
+    ThumbnailRepairRequest,
+    PhotoHealthCheck,
+)
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import io
