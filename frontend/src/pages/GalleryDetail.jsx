@@ -2504,16 +2504,6 @@ const GalleryDetail = () => {
                   </p>
                 </div>
               )}
-                      onChange={(e) => setNewGdriveContributorRole(e.target.value)}
-                      placeholder="Role, e.g., Photography (optional)"
-                      className="flex h-9 w-full rounded-sm border border-green-300 bg-white px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <p className="text-xs text-green-600 mt-1">
-                    Paste the shared Google Drive folder link. Make sure the folder is set to "Anyone with the link can view".
-                  </p>
-                </div>
-              )}
               
               <div className="flex gap-3">
                 <button
