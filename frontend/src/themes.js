@@ -2,6 +2,7 @@
 
 // Helper function to determine if text should be light or dark based on background
 export const getContrastTextColor = (hexColor) => {
+  if (!hexColor) return '#1a1a1a';
   // Remove # if present
   const hex = hexColor.replace('#', '');
   
@@ -17,6 +18,26 @@ export const getContrastTextColor = (hexColor) => {
   return luminance > 0.5 ? '#1a1a1a' : '#ffffff';
 };
 
+// Helper to get appropriate text color for a specific background in a theme
+export const getTextColorForBackground = (theme, bgType = 'background') => {
+  const bgColor = theme.colors[bgType] || theme.colors.background;
+  return getContrastTextColor(bgColor);
+};
+
+// Helper to get a lighter/darker variant of a color for subtle text
+export const getSubtleTextColor = (hexColor, opacity = 0.6) => {
+  const baseColor = getContrastTextColor(hexColor);
+  // Return with opacity for subtle effect
+  const hex = baseColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
+// Professional Google Fonts to include in HTML head
+export const GOOGLE_FONTS_URL = "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Manrope:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=Raleway:wght@300;400;500;600&family=Source+Sans+Pro:wght@300;400;600&family=Cinzel:wght@400;500;600&family=Bodoni+Moda:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@400;500;600&family=Quicksand:wght@400;500;600&display=swap";
+
 export const themes = {
   // ============ CLASSIC & ELEGANT ============
   classic: {
@@ -30,11 +51,11 @@ export const themes = {
       accent: "#18181b",
       background: "#ffffff",
       text: "#18181b",
-      textLight: "#71717a"
+      textLight: "#52525b"
     },
     fonts: {
-      heading: "'Playfair Display', serif",
-      body: "'Manrope', sans-serif"
+      heading: "'Playfair Display', Georgia, serif",
+      body: "'Manrope', -apple-system, BlinkMacSystemFont, sans-serif"
     }
   },
   
