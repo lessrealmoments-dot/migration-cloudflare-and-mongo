@@ -22,6 +22,7 @@ const PcloudContributorUpload = () => {
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [submitResult, setSubmitResult] = useState(null);
   const [showSyncForm, setShowSyncForm] = useState(false);
+  const [roleConfirmed, setRoleConfirmed] = useState(false);
   
   useEffect(() => {
     fetchGalleryInfo();
