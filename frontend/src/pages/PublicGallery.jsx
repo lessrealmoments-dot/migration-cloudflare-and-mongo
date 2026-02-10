@@ -479,6 +479,29 @@ const PublicGallery = () => {
     }
   };
 
+  // Verify download password (or fetch info when no password required)
+  const handleVerifyDownloadPassword = async () => {
+    try {
+      const response = await axios.post(
+        `${API}/public/gallery/${shareLink}/download-info`,
+        { password: downloadAllPassword || null }
+      );
+      setDownloadInfo(response.data);
+      setShowDownloadDropdown(true);
+      if (!gallery?.has_download_all_password) {
+        // No password was needed
+      } else {
+        toast.success('Password verified!');
+      }
+    } catch (error) {
+      if (error.response?.status === 401) {
+        toast.error('Invalid download password');
+      } else {
+        toast.error('Failed to verify download access');
+      }
+    }
+  };
+
   // Download a specific section or all photos
   const handleSectionDownload = async (sectionId = null, sectionTitle = 'All Photos') => {
     if (downloadingSection) return;
