@@ -1,7 +1,7 @@
 # Backend Refactoring Plan
 
-## Current State (February 2026)
-- `server.py`: **9,967 lines** (down from 10,071)
+## Current State (December 2025)
+- `server.py`: **9,542 lines** (down from 10,071 - reduced 529 lines)
 - 200 async functions
 - 26 regular functions  
 - ~50 Pydantic models (reduced after extracting to models/)
@@ -30,17 +30,20 @@
 - ✅ Created `/app/backend/utils/__init__.py`
 - ✅ server.py now imports from utils.helpers
 
+### Phase 3: Background Tasks Extraction - COMPLETED ✅
+- ✅ Created `/app/backend/tasks/background.py` with:
+  - `auto_refresh_fotoshare_sections()` - Auto-refresh fotoshare sections based on age
+  - `auto_sync_gdrive_sections()` - Sync Google Drive sections every 30 minutes
+  - `auto_sync_pcloud_sections()` - Sync pCloud sections every 30 minutes
+  - `auto_sync_drive_backup_task()` - Auto-backup galleries to Google Drive
+  - `auto_delete_expired_galleries()` - Delete galleries past auto_delete_date
+- ✅ Created `/app/backend/tasks/__init__.py` with exports
+- ✅ Implemented dependency injection via `init_tasks()` function
+- ✅ Updated server.py lifespan to initialize and use tasks module
+- ✅ Removed all duplicate task implementations from server.py
+- **Lines reduced**: 425 lines
+
 ## Remaining Work
-
-### Phase 3: Background Tasks (MEDIUM RISK) - NOT STARTED
-Create `/app/backend/tasks/background.py`:
-- `auto_refresh_fotoshare_sections()`
-- `auto_sync_gdrive_sections()`
-- `auto_sync_pcloud_sections()`
-- `auto_sync_drive_task()`
-- `auto_delete_expired_galleries()`
-
-**Complexity**: These tasks have deep dependencies on db, storage, and logging. Need careful extraction.
 
 ### Phase 4: Routes Extraction (HIGH RISK) - NOT STARTED
 Extract routes to separate files:
@@ -55,10 +58,17 @@ Extract routes to separate files:
 
 **Complexity**: Routes use many shared dependencies (db, storage, auth functions). Need to create a shared context module first.
 
+### Phase 5: Services Consolidation - NOT STARTED
+Currently unused service files that could absorb logic from server.py:
+- `/app/backend/services/auth.py` - Could contain auth logic currently in server.py
+- `/app/backend/services/email_service.py` - Could contain email sending logic
+- `/app/backend/services/integrations.py` - Could contain pCloud/GDrive/Fotoshare logic
+- `/app/backend/services/notifications.py` - Could contain notification logic
+
 ## Updated File Structure
 ```
 backend/
-├── server.py           # Main app (9,967 lines - reduced from 10,071)
+├── server.py           # Main app (9,542 lines - reduced from 10,071)
 ├── models/             # ✅ UPDATED - Now used by server.py
 │   ├── __init__.py     # ✅ Exports all models
 │   ├── user.py         
@@ -77,8 +87,10 @@ backend/
 ├── utils/              # ✅ NEW
 │   ├── __init__.py     # ✅ Exports all utils
 │   └── helpers.py      # ✅ URL extraction, string utils
+├── tasks/              # ✅ NEW - Background tasks module
+│   ├── __init__.py     # ✅ Exports all tasks
+│   └── background.py   # ✅ All 5 background tasks with dependency injection
 ├── routes/             # Empty - future use
-├── tasks/              # Empty - future use
 └── core/               # Not used
 ```
 
@@ -87,5 +99,16 @@ All tests passed:
 - ✅ Server module loads successfully
 - ✅ All 168 API routes registered
 - ✅ Storage backend: Cloudflare R2
-- ✅ Background tasks running
+- ✅ Background tasks running via tasks module
+- ✅ Dependency injection working (db, storage, logger injected)
+- ✅ API health check passing
 
+## Summary of Line Reductions
+| Phase | Lines Removed |
+|-------|---------------|
+| Phase 1 (Models) | 104 |
+| Phase 2 (Utils) | ~0 (imports added) |
+| Phase 3 (Tasks) | 425 |
+| **Total** | **529 lines** |
+
+Current `server.py`: **9,542 lines** (target: <5,000 lines)
