@@ -793,7 +793,8 @@ const PublicGallery = () => {
             className="text-xs uppercase tracking-[0.15em] font-medium"
             style={{ color: isDarkTheme ? 'rgba(255,255,255,0.7)' : currentTheme.colors.textLight }}
           >
-            {photos.length} Photos
+            {gallery?.photo_count || photos.length} Photos
+            {gallery?.video_count > 0 && ` • ${gallery.video_count} Videos`}
           </span>
           
           {!isViewOnly && (
