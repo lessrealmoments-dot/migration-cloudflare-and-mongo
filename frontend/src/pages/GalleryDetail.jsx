@@ -1184,6 +1184,56 @@ const GalleryDetail = () => {
     return pcloudPhotos.filter(p => p.section_id === sectionId);
   };
 
+  // Fetch Google Drive photos
+  const fetchGdrivePhotos = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/public/gallery/${gallery?.share_link}/gdrive-photos`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGdrivePhotos(response.data);
+    } catch (error) {
+      console.error('Failed to fetch Google Drive photos');
+    }
+  };
+
+  // Refresh Google Drive section
+  const handleRefreshGdrive = async (sectionId) => {
+    setRefreshingGdrive(sectionId);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/galleries/${id}/gdrive-sections/${sectionId}/refresh`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        toast.success(`Refreshed! ${response.data.photo_count} photos synced.`);
+        fetchGdrivePhotos();
+        // Update section sync timestamp
+        setSections(sections.map(s => 
+          s.id === sectionId 
+            ? { ...s, gdrive_last_sync: new Date().toISOString(), gdrive_error: null }
+            : s
+        ));
+      } else {
+        toast.error(response.data.error || 'Failed to refresh');
+        setSections(sections.map(s => 
+          s.id === sectionId ? { ...s, gdrive_error: response.data.error } : s
+        ));
+      }
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Failed to refresh section';
+      toast.error(errorMsg);
+    } finally {
+      setRefreshingGdrive(null);
+    }
+  };
+
+  // Get Google Drive photos by section
+  const getGdrivePhotosBySection = (sectionId) => {
+    return gdrivePhotos.filter(p => p.section_id === sectionId);
+  };
+
   // Get fotoshare videos by section
   const getFotoshareVideosBySection = (sectionId) => {
     return fotoshareVideos.filter(v => v.section_id === sectionId);
