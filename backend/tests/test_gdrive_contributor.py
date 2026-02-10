@@ -35,7 +35,7 @@ class TestGdriveContributorFeature:
             "password": TEST_PASSWORD
         })
         assert response.status_code == 200, f"Login failed: {response.text}"
-        self.token = response.json().get("token")
+        self.token = response.json().get("access_token")
         self.session.headers.update({"Authorization": f"Bearer {self.token}"})
         return self.token
     
