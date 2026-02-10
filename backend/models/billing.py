@@ -74,7 +74,7 @@ DEFAULT_PLAN_FEATURES = {
         "display_mode": True,
         "collaboration_link": True
     },
-    "standard": {
+    PLAN_STANDARD: {
         "unlimited_token": False,
         "copy_share_link": True,
         "qr_code": True,
@@ -82,7 +82,7 @@ DEFAULT_PLAN_FEATURES = {
         "display_mode": False,
         "collaboration_link": False
     },
-    "pro": {
+    PLAN_PRO: {
         "unlimited_token": False,
         "copy_share_link": True,
         "qr_code": True,
