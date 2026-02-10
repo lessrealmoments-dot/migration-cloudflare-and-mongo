@@ -20,6 +20,7 @@ const FotoshareContributorUpload = () => {
   const [fotoshareUrl, setFotoshareUrl] = useState('');
   const [existingVideos, setExistingVideos] = useState([]);
   const [submitResult, setSubmitResult] = useState(null);
+  const [roleConfirmed, setRoleConfirmed] = useState(false);
   
   useEffect(() => {
     fetchGalleryInfo();
