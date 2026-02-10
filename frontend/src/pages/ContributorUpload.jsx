@@ -19,7 +19,7 @@ const ContributorUpload = () => {
   const [info, setInfo] = useState(null);
   
   // Company name flow
-  const [step, setStep] = useState('name'); // 'name', 'confirm', 'upload'
+  const [step, setStep] = useState('name'); // 'name', 'confirm', 'role_confirm', 'upload'
   const [companyName, setCompanyName] = useState('');
   const [confirmedName, setConfirmedName] = useState('');
   
