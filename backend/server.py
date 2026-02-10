@@ -4810,7 +4810,7 @@ async def get_public_pcloud_photos(share_link: str, section_id: Optional[str] = 
 # ============ Google Drive Section Endpoints ============
 
 class GoogleDriveSectionCreate(BaseModel):
-    gdrive_url: str
+    gdrive_url: Optional[str] = None  # Now optional - can create empty section first
     section_name: Optional[str] = None
     contributor_name: Optional[str] = None
     contributor_role: Optional[str] = None
