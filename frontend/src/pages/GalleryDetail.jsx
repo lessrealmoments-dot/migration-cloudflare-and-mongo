@@ -519,6 +519,13 @@ const GalleryDetail = () => {
     checkPhotoHealth();
   }, [id]);
 
+  // Fetch Google Drive photos once we have gallery data
+  useEffect(() => {
+    if (gallery?.share_link) {
+      fetchGdrivePhotos();
+    }
+  }, [gallery?.share_link]);
+
   const fetchSubscriptionStatus = async () => {
     try {
       const token = localStorage.getItem('token');
