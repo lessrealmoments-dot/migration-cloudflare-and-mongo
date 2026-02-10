@@ -6804,18 +6804,8 @@ async def delete_photo(photo_id: str, current_user: dict = Depends(get_current_u
     return {"message": "Photo deleted"}
 
 # ============ Photo Thumbnail Health & Repair Endpoints ============
-
-class ThumbnailRepairRequest(BaseModel):
-    force_regenerate: bool = False
-
-class PhotoHealthCheck(BaseModel):
-    photo_id: str
-    original_valid: bool
-    thumbnail_small_valid: bool
-    thumbnail_medium_valid: bool
-    is_flagged: bool
-    flagged_reason: Optional[str] = None
-    needs_repair: bool
+# NOTE: ThumbnailRepairRequest and PhotoHealthCheck are now imported from models.gallery
+# See: /app/backend/models/gallery.py
 
 @api_router.get("/galleries/{gallery_id}/photos/health")
 async def get_gallery_photos_health(gallery_id: str, current_user: dict = Depends(get_current_user)):
