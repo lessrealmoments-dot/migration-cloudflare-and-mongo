@@ -1293,6 +1293,25 @@ const PublicGallery = () => {
                 );
               }
               
+              // Check if this is a Google Drive section
+              if (section.type === 'gdrive') {
+                const sectionGdrivePhotos = getGdrivePhotosBySection(section.id);
+                if (sectionGdrivePhotos.length === 0) return null;
+                
+                return (
+                  <div key={section.id} className="py-16 md:py-24" style={{ backgroundColor: currentTheme.colors.background }}>
+                    <div className="max-w-screen-2xl mx-auto px-6 md:px-12 lg:px-24">
+                      <GoogleDriveSection
+                        section={section}
+                        photos={sectionGdrivePhotos}
+                        themeColors={currentTheme.colors}
+                        isEditable={false}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+              
               // Photo section
               const sectionPhotos = getRegularPhotosBySection(section.id);
               if (sectionPhotos.length === 0) return null;
