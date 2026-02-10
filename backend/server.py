@@ -5645,6 +5645,15 @@ async def get_contributor_upload_info(contributor_link: str):
         ).to_list(500)
         existing_gdrive_photos = gphotos
     
+    # Get existing pcloud photos if this is a pcloud section
+    existing_pcloud_photos = []
+    if section.get("type") == "pcloud":
+        pphotos = await db.pcloud_photos.find(
+            {"gallery_id": gallery["id"], "section_id": section["id"]},
+            {"_id": 0}
+        ).to_list(500)
+        existing_pcloud_photos = pphotos
+    
     return {
         "gallery_id": gallery["id"],
         "gallery_title": gallery["title"],
@@ -5657,9 +5666,13 @@ async def get_contributor_upload_info(contributor_link: str):
         "existing_videos": existing_videos,  # For video sections
         "existing_fotoshare_videos": existing_fotoshare_videos,  # For fotoshare sections
         "existing_gdrive_photos": existing_gdrive_photos,  # For gdrive sections
+        "existing_pcloud_photos": existing_pcloud_photos,  # For pcloud sections
         "fotoshare_url": section.get("fotoshare_url"),  # Existing fotoshare URL if any
         "gdrive_folder_id": section.get("gdrive_folder_id"),  # Existing gdrive folder if any
-        "gdrive_folder_name": section.get("gdrive_folder_name")
+        "gdrive_folder_name": section.get("gdrive_folder_name"),
+        "pcloud_code": section.get("pcloud_code"),  # Existing pcloud code if any
+        "pcloud_folder_name": section.get("pcloud_folder_name"),
+        "pcloud_upload_link": section.get("pcloud_upload_link")  # pCloud upload request link
     }
 
 @api_router.post("/contributor/{contributor_link}/set-name")
