@@ -5609,6 +5609,184 @@ async def revoke_contributor_link(gallery_id: str, section_id: str, current_user
     
     return {"message": "Contributor link revoked"}
 
+# ============ Coordinator Hub Endpoints ============
+
+@api_router.post("/galleries/{gallery_id}/coordinator-link")
+async def generate_coordinator_link(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """Generate a unique coordinator hub link for the gallery"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Generate unique coordinator link if not exists
+    coordinator_hub_link = gallery.get("coordinator_hub_link")
+    if not coordinator_hub_link:
+        coordinator_hub_link = secrets.token_urlsafe(16)
+        await db.galleries.update_one(
+            {"id": gallery_id}, 
+            {"$set": {"coordinator_hub_link": coordinator_hub_link}}
+        )
+    
+    return {
+        "coordinator_hub_link": coordinator_hub_link,
+        "gallery_id": gallery_id,
+        "gallery_title": gallery.get("title")
+    }
+
+@api_router.delete("/galleries/{gallery_id}/coordinator-link")
+async def revoke_coordinator_link(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """Revoke the coordinator hub link"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    await db.galleries.update_one(
+        {"id": gallery_id}, 
+        {"$unset": {"coordinator_hub_link": ""}}
+    )
+    
+    return {"message": "Coordinator link revoked"}
+
+@api_router.get("/coordinator-hub/{hub_link}")
+async def get_coordinator_hub(hub_link: str):
+    """Get coordinator hub data - all sections needing contributors with their status"""
+    gallery = await db.galleries.find_one(
+        {"coordinator_hub_link": hub_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid coordinator hub link")
+    
+    # Get photographer info
+    photographer = await db.users.find_one(
+        {"id": gallery["photographer_id"]}, 
+        {"_id": 0, "business_name": 1, "name": 1}
+    )
+    photographer_name = photographer.get("business_name") or photographer.get("name", "Photographer") if photographer else "Photographer"
+    
+    # Build sections data with status
+    sections_data = []
+    for section in gallery.get("sections", []):
+        # Only include sections that can have contributors
+        section_type = section.get("type", "photo")
+        
+        # Determine status and counts
+        status = "pending"
+        item_count = 0
+        last_updated = None
+        
+        if section_type == "photo":
+            # Check for contributor photos
+            photo_count = await db.photos.count_documents({
+                "gallery_id": gallery["id"],
+                "section_id": section["id"],
+                "uploaded_by": "contributor"
+            })
+            if photo_count > 0:
+                status = "submitted"
+                item_count = photo_count
+                # Get last photo timestamp
+                last_photo = await db.photos.find_one(
+                    {"gallery_id": gallery["id"], "section_id": section["id"], "uploaded_by": "contributor"},
+                    {"_id": 0, "created_at": 1},
+                    sort=[("created_at", -1)]
+                )
+                if last_photo:
+                    last_updated = last_photo.get("created_at")
+        
+        elif section_type == "video":
+            # Check for videos
+            video_count = await db.gallery_videos.count_documents({
+                "gallery_id": gallery["id"],
+                "section_id": section["id"]
+            })
+            if video_count > 0:
+                status = "submitted"
+                item_count = video_count
+                last_video = await db.gallery_videos.find_one(
+                    {"gallery_id": gallery["id"], "section_id": section["id"]},
+                    {"_id": 0, "created_at": 1},
+                    sort=[("created_at", -1)]
+                )
+                if last_video:
+                    last_updated = last_video.get("created_at")
+        
+        elif section_type == "fotoshare":
+            # Check for fotoshare videos
+            fs_count = await db.fotoshare_videos.count_documents({
+                "gallery_id": gallery["id"],
+                "section_id": section["id"]
+            })
+            if fs_count > 0 or section.get("fotoshare_url"):
+                status = "submitted"
+                item_count = fs_count
+                last_updated = section.get("fotoshare_last_sync")
+        
+        elif section_type == "gdrive":
+            # Check for gdrive photos
+            gd_count = await db.gdrive_photos.count_documents({
+                "gallery_id": gallery["id"],
+                "section_id": section["id"]
+            })
+            if gd_count > 0 or section.get("gdrive_folder_id"):
+                status = "synced"
+                item_count = gd_count
+                last_updated = section.get("last_synced_at")
+        
+        elif section_type == "pcloud":
+            # Check for pcloud photos
+            pc_count = await db.pcloud_photos.count_documents({
+                "gallery_id": gallery["id"],
+                "section_id": section["id"]
+            })
+            if pc_count > 0 or section.get("pcloud_code"):
+                status = "synced"
+                item_count = pc_count
+                last_updated = section.get("pcloud_last_sync")
+        
+        # Determine the contributor link prefix based on section type
+        link_prefix_map = {
+            "photo": "/c/",
+            "video": "/v/",
+            "fotoshare": "/f/",
+            "gdrive": "/d/",
+            "pcloud": "/p/"
+        }
+        link_prefix = link_prefix_map.get(section_type, "/c/")
+        
+        # Determine role label based on section type
+        role_label_map = {
+            "photo": "Official Photographer",
+            "video": "Official Videographer", 
+            "fotoshare": "Official 360 Booth Operator",
+            "gdrive": "Official Photo Contributor",
+            "pcloud": "Official Photo Contributor"
+        }
+        role_label = role_label_map.get(section_type, "Official Contributor")
+        
+        sections_data.append({
+            "id": section["id"],
+            "name": section.get("name", "Untitled"),
+            "type": section_type,
+            "status": status,
+            "item_count": item_count,
+            "last_updated": last_updated,
+            "contributor_name": section.get("contributor_name"),
+            "contributor_link": section.get("contributor_link"),
+            "contributor_enabled": section.get("contributor_enabled", False),
+            "link_prefix": link_prefix,
+            "role_label": role_label
+        })
+    
+    return {
+        "gallery_id": gallery["id"],
+        "gallery_title": gallery.get("title"),
+        "event_title": gallery.get("event_title"),
+        "event_date": gallery.get("event_date"),
+        "photographer_name": photographer_name,
+        "sections": sections_data
+    }
+
 @api_router.get("/contributor/{contributor_link}")
 async def get_contributor_upload_info(contributor_link: str):
     """Get gallery and section info for contributor upload page"""
