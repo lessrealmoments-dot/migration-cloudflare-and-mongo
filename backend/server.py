@@ -7732,15 +7732,7 @@ class GoogleDriveStatus(BaseModel):
 class GoogleDriveBackupRequest(BaseModel):
     gallery_id: str
 
-class GoogleDriveBackupStatus(BaseModel):
-    gallery_id: str
-    status: str  # 'pending', 'in_progress', 'completed', 'failed'
-    folder_id: Optional[str] = None
-    folder_url: Optional[str] = None
-    photos_backed_up: int = 0
-    total_photos: int = 0
-    error_message: Optional[str] = None
-    last_updated: str
+# NOTE: GoogleDriveBackupStatus model moved to models/analytics.py
 
 # Store temporary state for OAuth flow
 oauth_states = {}
