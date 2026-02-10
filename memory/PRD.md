@@ -910,3 +910,82 @@ Integrated pCloud as a photo source for galleries. This allows photographers to:
 - `/app/backend/server.py`: Added thumbnail proxy endpoint
 - `/app/frontend/src/pages/PublicGallery.jsx`: Use thumbnails in grid
 - `/app/frontend/src/components/PremiumLightbox.jsx`: Use thumbnails in filmstrip
+
+## Google Drive Integration ✅ (COMPLETED - February 10, 2026)
+
+### Feature Overview
+Integrated Google Drive as a photo source for galleries. This allows photographers to:
+1. Link Google Drive shared folders to gallery sections
+2. Import photos automatically with thumbnails
+3. Credit contributors with optional name and role
+4. Allow clients to view and highlight specific photos
+
+### Workflow
+1. **Photographer shares Google Drive folder** with "Anyone with the link can view" permission
+2. **Create Google Drive section** in gallery dashboard
+   - Paste the Google Drive folder link
+   - Add optional contributor name and role
+3. **Photos sync automatically** using Google Drive API
+4. **Manual refresh** available via the refresh button
+
+### UI Components
+- **Section Type Selector**: Green "Google Drive" option with HardDrive icon
+- **Input Form**: URL field, contributor name, and role fields with green theme
+- **Section Button**: Green styling with HardDrive icon, shows error warning if sync failed
+- **Refresh Button**: Appears on hover over section button
+
+### API Endpoints
+- `POST /api/galleries/{id}/gdrive-sections` - Create new Google Drive section
+- `POST /api/galleries/{id}/gdrive-sections/{section_id}/refresh` - Refresh photos from Google Drive
+- `GET /api/public/gallery/{share_link}/gdrive-photos` - Get Google Drive photos for public gallery
+- `DELETE /api/galleries/{id}/gdrive-sections/{section_id}` - Delete section and its photos
+- `POST /api/galleries/{id}/gdrive-sections/{section_id}/photos/{photo_id}/highlight` - Toggle highlight
+- `GET /api/gdrive/proxy/{file_id}` - Proxy Google Drive images to avoid CORS
+
+### Database Schema
+```javascript
+// gdrive_photos collection
+{
+  id: String,
+  gallery_id: String,
+  section_id: String,
+  gdrive_file_id: String,     // Google Drive file ID
+  name: String,               // Original filename
+  mime_type: String,
+  size: Number,               // File size in bytes
+  thumbnail_url: String,      // Google Drive thumbnail URL
+  web_content_link: String,   // Direct download link
+  web_view_link: String,      // View in Google Drive link
+  highlighted: Boolean,       // Whether photo is highlighted
+  synced_at: String
+}
+
+// sections collection (gdrive type)
+{
+  type: "gdrive",
+  gdrive_url: String,         // Original Google Drive URL
+  gdrive_folder_id: String,   // Extracted folder ID
+  gdrive_last_sync: String,   // Last sync timestamp
+  gdrive_error: String,       // Error message if sync failed
+  contributor_name: String,   // Optional contributor credit
+  contributor_role: String    // Optional role (e.g., "Photography")
+}
+```
+
+### Files Modified/Created
+- `/app/backend/server.py`: Added Google Drive helper functions and API endpoints
+- `/app/frontend/src/pages/GalleryDetail.jsx`: Added Google Drive section creation and management
+- `/app/frontend/src/pages/PublicGallery.jsx`: Added Google Drive section rendering
+- `/app/frontend/src/components/GoogleDriveSection.jsx`: NEW - Public display component
+
+### Known Limitations
+- Folder must be shared with "Anyone with the link can view"
+- Large folders may take time to sync
+- Photos must be synced manually with "Refresh" button
+- Google Drive API rate limits may affect large folders
+
+### Testing Results
+- Backend: 16/16 tests passed (100%)
+- Frontend: All UI elements verified (100%)
+- Test file: `/app/backend/tests/test_gdrive_section.py`
+
