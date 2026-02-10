@@ -454,7 +454,7 @@ const AdminPhotoItem = ({ photo, selectMode, selected, onToggleSelect, onView, o
     onClick={() => selectMode ? onToggleSelect(photo.id) : onView()}
   >
     <OptimizedImage
-      src={`${BACKEND_URL}${photo.url}`}
+      src={getImageUrl(photo.url)}
       alt="Gallery photo"
       className="w-full h-full object-cover"
     />
