@@ -169,6 +169,7 @@ class PublicGallery(BaseModel):
     event_title: Optional[str] = None
     event_date: Optional[str] = None
     coordinator_name: Optional[str] = None  # Event coordinator/planner name
+    contributors: List[dict] = []  # List of {name, role} for all contributors
     is_expired: bool = False
     guest_upload_enabled: bool = True
     has_download_all_password: bool = False
