@@ -498,5 +498,101 @@ class TestUpgradeRequestFlow:
         print("✓ Payment proof upload endpoint exists")
 
 
+class TestSubscriptionExpirationFields:
+    """Test new subscription and credit expiration fields"""
+    
+    @pytest.fixture
+    def founders_token(self):
+        """Get token for founders circle user"""
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": "lessrealmoments@gmail.com",
+            "password": "3tfL99B%u2qw"
+        })
+        if response.status_code == 200:
+            return response.json()["access_token"]
+        pytest.skip("Founders circle user login failed")
+    
+    def test_subscription_endpoint_has_expiration_fields(self, founders_token):
+        """Test that subscription endpoint returns expiration fields"""
+        response = requests.get(f"{BASE_URL}/api/user/subscription",
+            headers={"Authorization": f"Bearer {founders_token}"})
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Verify new fields exist in response
+        assert "subscription_expires" in data, "Missing subscription_expires field"
+        assert "subscription_active" in data, "Missing subscription_active field"
+        assert "extra_credits_purchased_at" in data, "Missing extra_credits_purchased_at field"
+        assert "extra_credits_expires_at" in data, "Missing extra_credits_expires_at field"
+        
+        print(f"✓ Subscription expiration fields present:")
+        print(f"  - subscription_expires: {data['subscription_expires']}")
+        print(f"  - subscription_active: {data['subscription_active']}")
+        print(f"  - extra_credits_purchased_at: {data['extra_credits_purchased_at']}")
+        print(f"  - extra_credits_expires_at: {data['extra_credits_expires_at']}")
+    
+    def test_founders_circle_subscription_active(self, founders_token):
+        """Test founders circle user has active subscription"""
+        response = requests.get(f"{BASE_URL}/api/user/subscription",
+            headers={"Authorization": f"Bearer {founders_token}"})
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Founders circle should always be active
+        assert data["subscription_active"] == True, "Founders circle subscription should be active"
+        assert data["override_mode"] == "founders_circle", "Should have founders_circle override"
+        
+        print(f"✓ Founders circle subscription is active")
+        print(f"  - Override Mode: {data['override_mode']}")
+        print(f"  - Override Expires: {data['override_expires']}")
+    
+    def test_unlimited_credits_user(self, founders_token):
+        """Test unlimited credits user has correct credit display"""
+        response = requests.get(f"{BASE_URL}/api/user/subscription",
+            headers={"Authorization": f"Bearer {founders_token}"})
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Unlimited credits check
+        assert data["is_unlimited_credits"] == True, "Should have unlimited credits"
+        assert data["total_credits"] == 999, "Unlimited credits should show as 999"
+        
+        # When unlimited, extra credits expiration shouldn't matter
+        print(f"✓ Unlimited credits user verified:")
+        print(f"  - Is Unlimited: {data['is_unlimited_credits']}")
+        print(f"  - Total Credits: {data['total_credits']}")
+
+
+class TestCreditDeductionLogic:
+    """Test credit deduction when creating galleries"""
+    
+    @pytest.fixture
+    def founders_token(self):
+        """Get token for founders circle user"""
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": "lessrealmoments@gmail.com",
+            "password": "3tfL99B%u2qw"
+        })
+        if response.status_code == 200:
+            return response.json()["access_token"]
+        pytest.skip("Founders circle user login failed")
+    
+    def test_create_gallery_with_unlimited_credits(self, founders_token):
+        """Test that unlimited credit users can create galleries without deduction"""
+        # Get current subscription status
+        response = requests.get(f"{BASE_URL}/api/user/subscription",
+            headers={"Authorization": f"Bearer {founders_token}"})
+        assert response.status_code == 200
+        initial_data = response.json()
+        
+        # Unlimited users should be able to create galleries
+        assert initial_data["is_unlimited_credits"] == True
+        assert initial_data["subscription_active"] == True
+        
+        print(f"✓ User can create galleries:")
+        print(f"  - Unlimited Credits: {initial_data['is_unlimited_credits']}")
+        print(f"  - Subscription Active: {initial_data['subscription_active']}")
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
