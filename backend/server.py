@@ -2701,48 +2701,156 @@ async def reset_user_credits_if_needed(user_id: str):
         return
     
     billing_start = user.get("billing_cycle_start")
+    now = datetime.now(timezone.utc)
+    
     if not billing_start:
         # Initialize billing cycle
+        subscription_expires = (now + timedelta(days=30)).isoformat()
         await db.users.update_one(
             {"id": user_id},
             {"$set": {
-                "billing_cycle_start": datetime.now(timezone.utc).isoformat(),
+                "billing_cycle_start": now.isoformat(),
+                "subscription_expires": subscription_expires,
                 "event_credits": PLAN_CREDITS.get(user.get("plan", PLAN_FREE), 0),
-                "extra_credits": 0
             }}
         )
         return
     
     try:
         start = datetime.fromisoformat(billing_start.replace('Z', '+00:00'))
-        # Check if a month has passed
-        if datetime.now(timezone.utc) >= start + timedelta(days=30):
+        
+        # Check if a month has passed (billing cycle reset)
+        if now >= start + timedelta(days=30):
             plan = user.get("plan", PLAN_FREE)
-            new_credits = PLAN_CREDITS.get(plan, 0)
+            payment_status = user.get("payment_status", PAYMENT_NONE)
+            
+            # Only reset event credits if payment is approved (subscription active)
+            if payment_status == PAYMENT_APPROVED:
+                new_credits = PLAN_CREDITS.get(plan, 0)
+                subscription_expires = (now + timedelta(days=30)).isoformat()
+            else:
+                # Subscription not active - event credits go to 0
+                new_credits = 0
+                subscription_expires = None
             
             # Check override mode
             override_mode = user.get("override_mode")
-            override_expires = user.get("override_expires")
-            if override_mode and override_expires:
+            override_expires_str = user.get("override_expires")
+            if override_mode and override_expires_str:
                 try:
-                    expires = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
-                    if expires > datetime.now(timezone.utc):
+                    override_expires = datetime.fromisoformat(override_expires_str.replace('Z', '+00:00'))
+                    if override_expires > now:
                         new_credits = MODE_CREDITS.get(override_mode, new_credits)
                         if new_credits == -1:
                             new_credits = 999  # Unlimited
+                        subscription_expires = override_expires_str
                 except:
                     pass
             
-            await db.users.update_one(
-                {"id": user_id},
-                {"$set": {
-                    "billing_cycle_start": datetime.now(timezone.utc).isoformat(),
-                    "event_credits": new_credits,
-                    "extra_credits": 0  # Extra credits don't roll over
-                }}
-            )
+            update_data = {
+                "billing_cycle_start": now.isoformat(),
+                "event_credits": new_credits,
+            }
+            
+            if subscription_expires:
+                update_data["subscription_expires"] = subscription_expires
+            
+            await db.users.update_one({"id": user_id}, {"$set": update_data})
+        
+        # Check if extra credits have expired (12 months from purchase)
+        extra_credits_purchased = user.get("extra_credits_purchased_at")
+        if extra_credits_purchased and user.get("extra_credits", 0) > 0:
+            try:
+                purchased_at = datetime.fromisoformat(extra_credits_purchased.replace('Z', '+00:00'))
+                if now >= purchased_at + timedelta(days=365):  # 12 months
+                    await db.users.update_one(
+                        {"id": user_id},
+                        {"$set": {"extra_credits": 0, "extra_credits_purchased_at": None}}
+                    )
+            except:
+                pass
+                
     except:
         pass
+
+async def is_subscription_active(user: dict) -> bool:
+    """Check if user has an active subscription"""
+    # Check override mode first
+    override_mode = user.get("override_mode")
+    override_expires_str = user.get("override_expires")
+    if override_mode and override_expires_str:
+        try:
+            override_expires = datetime.fromisoformat(override_expires_str.replace('Z', '+00:00'))
+            if override_expires > datetime.now(timezone.utc):
+                return True
+        except:
+            pass
+    
+    # Check regular subscription
+    payment_status = user.get("payment_status", PAYMENT_NONE)
+    if payment_status != PAYMENT_APPROVED:
+        return False
+    
+    subscription_expires_str = user.get("subscription_expires")
+    if not subscription_expires_str:
+        return False
+    
+    try:
+        subscription_expires = datetime.fromisoformat(subscription_expires_str.replace('Z', '+00:00'))
+        return subscription_expires > datetime.now(timezone.utc)
+    except:
+        return False
+
+async def check_gallery_access_windows(gallery: dict) -> dict:
+    """
+    Check access windows for a gallery based on event date.
+    Returns dict with:
+    - guest_upload_allowed: bool (7 days from event date)
+    - collaborator_access_allowed: bool (60 days from event date)
+    - days_until_guest_upload_expires: int
+    - days_until_collaborator_expires: int
+    """
+    now = datetime.now(timezone.utc)
+    event_date_str = gallery.get("event_date")
+    
+    result = {
+        "guest_upload_allowed": True,
+        "collaborator_access_allowed": True,
+        "days_until_guest_upload_expires": None,
+        "days_until_collaborator_expires": None
+    }
+    
+    if not event_date_str:
+        return result
+    
+    try:
+        # Parse event date
+        if 'T' in event_date_str:
+            event_date = datetime.fromisoformat(event_date_str.replace('Z', '+00:00'))
+        else:
+            event_date = datetime.fromisoformat(event_date_str + 'T00:00:00+00:00')
+        
+        if event_date.tzinfo is None:
+            event_date = event_date.replace(tzinfo=timezone.utc)
+        
+        # Guest upload window: 7 days from event date
+        guest_upload_deadline = event_date + timedelta(days=7)
+        if now > guest_upload_deadline:
+            result["guest_upload_allowed"] = False
+        else:
+            result["days_until_guest_upload_expires"] = (guest_upload_deadline - now).days
+        
+        # Collaborator access window: 60 days from event date
+        collaborator_deadline = event_date + timedelta(days=60)
+        if now > collaborator_deadline:
+            result["collaborator_access_allowed"] = False
+        else:
+            result["days_until_collaborator_expires"] = (collaborator_deadline - now).days
+            
+    except Exception as e:
+        logger.error(f"Error checking gallery access windows: {e}")
+    
+    return result
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
