@@ -46,6 +46,20 @@ from models.video import (
 from models.gallery import (
     ThumbnailRepairRequest,
     PhotoHealthCheck,
+    GalleryCreate,
+    Gallery,
+    GalleryUpdate,
+    Section,
+    Photo,
+    PasswordVerify,
+    BulkPhotoAction,
+    PhotoReorder,
+    BulkFlagAction,
+    BulkUnflagAction,
+    PublicGallery,
+    CoverPhotoPosition,
+    DuplicateCheckRequest,
+    DuplicateCheckResponse,
 )
 from models.analytics import (
     GalleryAnalytics,
