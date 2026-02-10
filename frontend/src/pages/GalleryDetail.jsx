@@ -1520,7 +1520,9 @@ const GalleryDetail = () => {
       description: gallery.description || '',
       share_link_expiration_days: 30,
       guest_upload_enabled_days: 3,
-      theme: gallery.theme || 'classic'
+      theme: gallery.theme || 'classic',
+      password: '',  // Leave blank - user enters new password to change
+      download_all_password: ''  // Leave blank - user enters new password to change
     });
     setShowEditModal(true);
   };
