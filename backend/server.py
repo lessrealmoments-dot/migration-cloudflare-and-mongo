@@ -1662,6 +1662,10 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(auto_delete_expired_galleries())
     # Start fotoshare auto-refresh task
     asyncio.create_task(auto_refresh_fotoshare_sections())
+    # Start Google Drive sections auto-sync task
+    asyncio.create_task(auto_sync_gdrive_sections())
+    # Start pCloud sections auto-sync task
+    asyncio.create_task(auto_sync_pcloud_sections())
     yield
     # Stop background task
     global sync_task_running
