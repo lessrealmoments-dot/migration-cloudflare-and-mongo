@@ -1432,95 +1432,13 @@ async def health_check():
 # PhotoReorder, BulkFlagAction, BulkUnflagAction, PublicGallery, CoverPhotoPosition,
 # DuplicateCheckRequest, DuplicateCheckResponse models moved to models/gallery.py
 
-# ============================================
-# SUBSCRIPTION & BILLING MODELS
-# ============================================
-
-class SubscriptionInfo(BaseModel):
-    plan: str = PLAN_FREE
-    billing_cycle_start: Optional[str] = None
-    event_credits: int = 0
-    extra_credits: int = 0
-    payment_status: str = PAYMENT_NONE
-    payment_proof_url: Optional[str] = None
-    payment_submitted_at: Optional[str] = None
-    # Override mode
-    override_mode: Optional[str] = None
-    override_expires: Optional[str] = None
-    override_reason: Optional[str] = None
-    override_assigned_at: Optional[str] = None
-
-class AssignOverrideMode(BaseModel):
-    user_id: str
-    mode: str  # founders_circle, early_partner_beta, comped_pro, comped_standard
-    duration_months: int = Field(ge=1, le=24)  # 1-24 months max
-    reason: str
-
-class RemoveOverrideMode(BaseModel):
-    user_id: str
-    reason: str
-
-class UpdatePricing(BaseModel):
-    standard_monthly: Optional[int] = None
-    pro_monthly: Optional[int] = None
-    extra_credit: Optional[int] = None
-
-class PurchaseExtraCredits(BaseModel):
-    quantity: int = Field(ge=1, le=10)
-
-class PaymentProofSubmit(BaseModel):
-    proof_url: str  # URL to uploaded screenshot
-    notes: Optional[str] = None
-
-class ApprovePayment(BaseModel):
-    user_id: str
-    notes: Optional[str] = None
-
-class RejectPayment(BaseModel):
-    user_id: str
-    reason: str
-
-class PaymentMethod(BaseModel):
-    enabled: bool = True
-    name: str
-    account_name: str = ""
-    account_number: str = ""
-    bank_name: Optional[str] = None  # For bank transfer
-    qr_code_url: Optional[str] = None
-
-class BillingSettings(BaseModel):
-    billing_enforcement_enabled: bool = False
-    pricing: dict = Field(default_factory=lambda: DEFAULT_PRICING.copy())
-    payment_methods: dict = Field(default_factory=lambda: {
-        "gcash": {
-            "enabled": True,
-            "name": "GCash",
-            "account_name": "Less Real Moments",
-            "account_number": "09952568450",
-            "qr_code_url": None
-        },
-        "maya": {
-            "enabled": True,
-            "name": "Maya",
-            "account_name": "Less Real Moments",
-            "account_number": "09952568450",
-            "qr_code_url": None
-        },
-        "bank": {
-            "enabled": False,
-            "name": "Bank Transfer",
-            "account_name": "",
-            "account_number": "",
-            "bank_name": "",
-            "qr_code_url": None
-        }
-    })
-    # Universal paid plan settings (applies to Standard and Pro)
-    paid_gallery_expiration_months: int = 6  # 1-6 months
-    paid_storage_limit_gb: int = -1  # -1 = unlimited, or 10, 20, 30, etc.
+# NOTE: Billing models (SubscriptionInfo, AssignOverrideMode, RemoveOverrideMode, UpdatePricing,
+# PurchaseExtraCredits, PaymentProofSubmit, ApprovePayment, RejectPayment, PaymentMethod,
+# BillingSettings, PaymentDispute, Transaction, GlobalFeatureToggles, FeatureToggle,
+# UserFeatureToggle, UpgradeRequest, ExtraCreditRequest) moved to models/billing.py
 
 # ============================================
-# NOTIFICATION SYSTEM MODELS
+# NOTIFICATION SYSTEM MODELS  
 # ============================================
 
 class Notification(BaseModel):
@@ -1539,51 +1457,6 @@ class NotificationCreate(BaseModel):
     title: str
     message: str
     metadata: Optional[dict] = None
-
-# ============================================
-# PAYMENT DISPUTE MODELS
-# ============================================
-
-class PaymentDispute(BaseModel):
-    dispute_message: str
-    new_proof_url: str
-
-# ============================================
-# TRANSACTION HISTORY MODELS
-# ============================================
-
-class Transaction(BaseModel):
-    id: str
-    user_id: str
-    type: str  # "subscription", "upgrade", "extra_credits"
-    amount: int
-    plan: Optional[str] = None
-    extra_credits: Optional[int] = None
-    status: str  # "pending", "approved", "rejected", "disputed"
-    payment_proof_url: Optional[str] = None
-    admin_notes: Optional[str] = None
-    rejection_reason: Optional[str] = None
-    dispute_message: Optional[str] = None
-    dispute_proof_url: Optional[str] = None
-    created_at: str
-    resolved_at: Optional[str] = None
-
-# ============================================
-# GLOBAL FEATURE TOGGLE MODELS
-# ============================================
-
-class GlobalFeatureToggles(BaseModel):
-    """Global feature toggles for all modes and plans - admin controlled"""
-    # Override Modes
-    founders_circle: dict = Field(default_factory=lambda: DEFAULT_MODE_FEATURES[MODE_FOUNDERS_CIRCLE].copy())
-    early_partner_beta: dict = Field(default_factory=lambda: DEFAULT_MODE_FEATURES[MODE_EARLY_PARTNER_BETA].copy())
-    comped_pro: dict = Field(default_factory=lambda: DEFAULT_MODE_FEATURES[MODE_COMPED_PRO].copy())
-    comped_standard: dict = Field(default_factory=lambda: DEFAULT_MODE_FEATURES[MODE_COMPED_STANDARD].copy())
-    enterprise_access: dict = Field(default_factory=lambda: DEFAULT_MODE_FEATURES[MODE_ENTERPRISE_ACCESS].copy())
-    # Payment Plans
-    free: dict = Field(default_factory=lambda: DEFAULT_PLAN_FEATURES[PLAN_FREE].copy())
-    standard: dict = Field(default_factory=lambda: DEFAULT_PLAN_FEATURES[PLAN_STANDARD].copy())
-    pro: dict = Field(default_factory=lambda: DEFAULT_PLAN_FEATURES[PLAN_PRO].copy())
 
 # ============================================
 # COLLAGE LAYOUT PRESET MODELS
