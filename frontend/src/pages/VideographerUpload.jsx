@@ -472,6 +472,7 @@ const VideographerUpload = () => {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };
