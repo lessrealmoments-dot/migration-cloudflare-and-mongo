@@ -1025,13 +1025,13 @@ const PublicGallery = () => {
                 <div className="text-center mb-16">
                   <p 
                     className="text-xs uppercase tracking-[0.3em] mb-3"
-                    style={{ color: currentTheme.colors.accent }}
+                    style={{ color: getContrastTextColor(currentTheme.colors.secondary) === '#ffffff' ? currentTheme.colors.accent : currentTheme.colors.accent }}
                   >
                     Featured Moments
                   </p>
                   <h2 
                     className="text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight"
-                    style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+                    style={{ fontFamily: currentTheme.fonts.heading, color: getContrastTextColor(currentTheme.colors.secondary) }}
                   >
                     Highlights
                   </h2>
