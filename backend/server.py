@@ -8154,9 +8154,7 @@ async def submit_upgrade_request(data: UpgradeRequest, background_tasks: Backgro
     
     return {"message": message, "needs_payment_proof": data.proof_url is None}
 
-class ExtraCreditRequest(BaseModel):
-    quantity: int = 1
-    proof_url: str
+# NOTE: ExtraCreditRequest model is now imported from models/billing.py
 
 @api_router.post("/user/extra-credits-request")
 async def submit_extra_credits_request(data: ExtraCreditRequest, background_tasks: BackgroundTasks, user: dict = Depends(get_current_user)):
