@@ -6381,10 +6381,12 @@ async def upload_contributor_photo(
         "gallery_id": gallery["id"],
         "filename": filename,
         "original_filename": file.filename,
-        "url": f"/api/photos/serve/{filename}",
+        "url": photo_url,
+        "storage_key": storage_key,
         "uploaded_by": "contributor",
         "contributor_name": company_name.strip(),
         "section_id": section["id"],
+        "file_size": file_size,
         "uploaded_at": datetime.now(timezone.utc).isoformat(),
         "order": photo_count,
         "is_highlight": False,
@@ -6393,35 +6395,11 @@ async def upload_contributor_photo(
         "auto_flagged": False
     }
     
-    # Generate thumbnails with retry logic - auto-flag if all retries fail
-    thumbnail_failed = False
-    try:
-        thumb_small = generate_thumbnail(file_path, photo_id, 'small')
-        thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
-        
-        if thumb_small:
-            photo["thumbnail_url"] = thumb_small
-        else:
-            thumbnail_failed = True
-            logger.warning(f"Small thumbnail generation failed for contributor photo {photo_id} after retries")
-            
-        if thumb_medium:
-            photo["thumbnail_medium_url"] = thumb_medium
-        else:
-            thumbnail_failed = True
-            logger.warning(f"Medium thumbnail generation failed for contributor photo {photo_id} after retries")
-            
-    except Exception as e:
-        thumbnail_failed = True
-        logger.warning(f"Thumbnail generation exception for contributor photo {photo_id}: {e}")
-    
-    # Auto-flag photo if thumbnails failed - it will be hidden from public gallery
-    if thumbnail_failed:
-        photo["is_flagged"] = True
-        photo["auto_flagged"] = True
-        photo["flagged_at"] = datetime.now(timezone.utc).isoformat()
-        photo["flagged_reason"] = "auto:thumbnail_generation_failed"
-        logger.info(f"Auto-flagged contributor photo {photo_id} due to thumbnail generation failure")
+    # Add thumbnails if available
+    if thumb_small:
+        photo["thumbnail_url"] = thumb_small
+    if thumb_medium:
+        photo["thumbnail_medium_url"] = thumb_medium
     
     await db.photos.insert_one(photo)
     
