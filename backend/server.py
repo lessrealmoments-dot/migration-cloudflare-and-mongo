@@ -8722,20 +8722,21 @@ async def auto_delete_expired_galleries():
                     
                     for photo in photos:
                         try:
-                            # Delete from R2 storage
-                            if STORAGE_BACKEND == "r2" and photo.get("filename"):
-                                await delete_from_r2(f"photos/{photo['filename']}")
-                                if photo.get("thumbnail_filename"):
-                                    await delete_from_r2(f"thumbnails/{photo['thumbnail_filename']}")
-                            else:
-                                # Delete from local storage
-                                file_path = UPLOAD_DIR / photo.get("filename", "")
-                                if file_path.exists():
-                                    total_size_freed += file_path.stat().st_size
-                                    file_path.unlink()
-                                thumb_path = THUMBNAIL_DIR / photo.get("thumbnail_filename", "")
-                                if thumb_path.exists():
-                                    thumb_path.unlink()
+                            filename = photo.get("filename", "")
+                            if filename:
+                                # Delete original photo
+                                await storage.delete_file(f"photos/{filename}")
+                                
+                                # Delete thumbnails
+                                photo_id = filename.rsplit('.', 1)[0]  # Remove extension
+                                file_ext = filename.rsplit('.', 1)[-1] if '.' in filename else 'jpg'
+                                await storage.delete_photo_with_thumbnails(photo_id, file_ext)
+                                
+                                # Track size for local storage
+                                if not storage.r2_enabled:
+                                    file_path = UPLOAD_DIR / filename
+                                    if file_path.exists():
+                                        total_size_freed += file_path.stat().st_size
                         except Exception as e:
                             logger.error(f"Failed to delete photo file {photo.get('filename')}: {e}")
                     
@@ -8743,14 +8744,9 @@ async def auto_delete_expired_galleries():
                     if gallery.get("cover_photo_url"):
                         cover_filename = gallery["cover_photo_url"].split("/")[-1]
                         try:
-                            if STORAGE_BACKEND == "r2":
-                                await delete_from_r2(f"photos/{cover_filename}")
-                            else:
-                                cover_path = UPLOAD_DIR / cover_filename
-                                if cover_path.exists():
-                                    cover_path.unlink()
-                        except:
-                            pass
+                            await storage.delete_file(f"photos/{cover_filename}")
+                        except Exception as e:
+                            logger.warning(f"Failed to delete cover photo {cover_filename}: {e}")
                     
                     # Delete all related database records
                     await db.photos.delete_many({"gallery_id": gallery_id})
