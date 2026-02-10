@@ -4205,7 +4205,10 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
         update_data["title"] = updates.title
     if updates.description is not None:
         update_data["description"] = updates.description
-    if updates.password is not None:
+    # Handle password - can be set or removed
+    if updates.remove_password:
+        update_data["password"] = None  # Remove password
+    elif updates.password is not None:
         update_data["password"] = hash_password(updates.password)
     if updates.event_title is not None:
         update_data["event_title"] = updates.event_title
@@ -4231,7 +4234,10 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
                 update_data["guest_upload_expiration_date"] = (event_dt + timedelta(days=updates.guest_upload_enabled_days)).isoformat()
             except:
                 pass
-    if updates.download_all_password is not None:
+    # Handle download password - can be set or removed
+    if updates.remove_download_password:
+        update_data["download_all_password"] = None  # Remove download password
+    elif updates.download_all_password is not None:
         update_data["download_all_password"] = hash_password(updates.download_all_password)
     if updates.theme is not None:
         update_data["theme"] = updates.theme
