@@ -66,7 +66,7 @@ const SlideshowDisplay = () => {
 
   const getPhotoUrl = useCallback((photo) => {
     if (!photo) return '';
-    return `${BACKEND_URL}${photo.url}`;
+    return getImageUrl(photo.url);
   }, []);
 
   // Preload next N photos
