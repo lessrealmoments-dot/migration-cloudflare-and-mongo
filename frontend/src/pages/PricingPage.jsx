@@ -138,6 +138,10 @@ const PricingPage = () => {
     }).format(amount);
   };
 
+  // Dynamic plan features from admin settings
+  const standardFeatures = pricing.plan_features?.standard || {};
+  const proFeatures = pricing.plan_features?.pro || {};
+
   const plans = [
     {
       name: 'Free',
@@ -165,13 +169,13 @@ const PricingPage = () => {
       color: 'blue',
       features: [
         { text: '2 Event Credits/month', included: true },
-        { text: '10GB Storage', included: true },
-        { text: 'QR Code Sharing', included: true },
+        { text: `${standardFeatures.storage_limit_gb || 10}GB Storage`, included: true },
+        { text: 'QR Code Sharing', included: standardFeatures.qr_code !== false },
         { text: 'Online Gallery Access', included: true },
         { text: 'Guest Uploads', included: true },
-        { text: '6-month gallery retention', included: true },
-        { text: 'Display Mode', included: false },
-        { text: 'Contributor Links', included: false },
+        { text: `${standardFeatures.gallery_retention || '6 months'} gallery retention`, included: true },
+        { text: 'Display Mode', included: standardFeatures.display_mode === true },
+        { text: 'Contributor Links', included: standardFeatures.collaboration_link === true },
       ],
       cta: 'Get Started',
       popular: false
@@ -184,12 +188,12 @@ const PricingPage = () => {
       color: 'purple',
       features: [
         { text: '2 Event Credits/month', included: true },
-        { text: '10GB Storage', included: true },
+        { text: `${proFeatures.storage_limit_gb || 10}GB Storage`, included: true },
         { text: 'All Standard Features', included: true },
-        { text: 'Display Mode (Slideshow + Collage)', included: true },
-        { text: 'Contributor Upload Links', included: true },
+        { text: 'Display Mode (Slideshow + Collage)', included: proFeatures.display_mode !== false },
+        { text: 'Contributor Upload Links', included: proFeatures.collaboration_link !== false },
         { text: 'Supplier-specific Sections', included: true },
-        { text: '6-month gallery retention', included: true },
+        { text: `${proFeatures.gallery_retention || '6 months'} gallery retention`, included: true },
         { text: 'Priority Support', included: true },
       ],
       cta: 'Go Pro',
