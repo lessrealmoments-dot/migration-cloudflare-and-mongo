@@ -377,47 +377,56 @@ const CreateGallery = () => {
 
           <div>
             <label className="block text-sm font-medium mb-4">Gallery Theme</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {Object.entries(themes).map(([key, theme]) => (
-                <div
-                  key={key}
-                  data-testid={`theme-${key}`}
-                  onClick={() => setFormData({ ...formData, theme: key })}
-                  className={`cursor-pointer border-2 rounded-lg p-4 transition-all duration-300 hover:shadow-md ${
-                    formData.theme === key 
-                      ? 'border-primary ring-2 ring-primary/20' 
-                      : 'border-zinc-200 hover:border-zinc-300'
-                  }`}
-                >
-                  {/* Color palette preview */}
-                  <div className="flex gap-1 mb-3">
-                    <div 
-                      className="w-8 h-8 rounded-full border border-zinc-200"
-                      style={{ backgroundColor: theme.colors.background }}
-                      title="Background"
-                    />
-                    <div 
-                      className="w-8 h-8 rounded-full border border-zinc-200"
-                      style={{ backgroundColor: theme.colors.primary }}
-                      title="Primary"
-                    />
-                    <div 
-                      className="w-8 h-8 rounded-full border border-zinc-200"
-                      style={{ backgroundColor: theme.colors.accent }}
-                      title="Accent"
-                    />
-                    <div 
-                      className="w-8 h-8 rounded-full border border-zinc-200"
-                      style={{ backgroundColor: theme.colors.text }}
-                      title="Text"
-                    />
+            <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2">
+              {Object.entries(getThemesByCategory()).map(([categoryKey, category]) => (
+                category.themes.length > 0 && (
+                  <div key={categoryKey}>
+                    <h5 className="text-xs uppercase tracking-wider text-zinc-500 mb-3 font-medium">{category.name}</h5>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {category.themes.map((theme) => (
+                        <div
+                          key={theme.key}
+                          data-testid={`theme-${theme.key}`}
+                          onClick={() => setFormData({ ...formData, theme: theme.key })}
+                          className={`cursor-pointer border-2 rounded-lg p-3 transition-all duration-300 hover:shadow-md ${
+                            formData.theme === theme.key 
+                              ? 'border-primary ring-2 ring-primary/20' 
+                              : 'border-zinc-200 hover:border-zinc-300'
+                          }`}
+                        >
+                          {/* Color palette preview */}
+                          <div className="flex gap-1 mb-2">
+                            <div 
+                              className="flex-1 h-8 rounded-l-md"
+                              style={{ backgroundColor: theme.colors.background }}
+                              title="Background"
+                            />
+                            <div 
+                              className="flex-1 h-8"
+                              style={{ backgroundColor: theme.colors.primary }}
+                              title="Primary"
+                            />
+                            <div 
+                              className="flex-1 h-8"
+                              style={{ backgroundColor: theme.colors.accent }}
+                              title="Accent"
+                            />
+                            <div 
+                              className="flex-1 h-8 rounded-r-md"
+                              style={{ backgroundColor: theme.colors.text }}
+                              title="Text"
+                            />
+                          </div>
+                          <h4 className="font-medium text-sm">{theme.name}</h4>
+                          <p className="text-xs text-zinc-500 line-clamp-1">{theme.description}</p>
+                          {formData.theme === theme.key && (
+                            <div className="mt-2 text-xs text-primary font-medium">✓ Selected</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <h4 className="font-medium text-sm">{theme.name}</h4>
-                  <p className="text-xs text-zinc-500 line-clamp-1">{theme.description}</p>
-                  {formData.theme === key && (
-                    <div className="mt-2 text-xs text-primary font-medium">✓ Selected</div>
-                  )}
-                </div>
+                )
               ))}
             </div>
             <p className="text-xs text-zinc-500 mt-2">
