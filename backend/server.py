@@ -4520,74 +4520,105 @@ async def delete_fotoshare_section(
 @api_router.post("/galleries/{gallery_id}/pcloud-sections")
 async def create_pcloud_section(
     gallery_id: str,
-    pcloud_url: str = Body(..., embed=True),
+    pcloud_url: Optional[str] = Body(None, embed=True),
+    pcloud_upload_link: Optional[str] = Body(None, embed=True),
     section_name: Optional[str] = Body(None, embed=True),
     current_user: dict = Depends(get_current_user)
 ):
-    """Create a new pCloud section by linking to a pCloud shared folder"""
+    """Create a new pCloud section - either with viewing URL or empty for contributor workflow"""
     gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    # Extract code from URL
-    code = extract_pcloud_code(pcloud_url)
-    if not code:
-        raise HTTPException(status_code=400, detail="Invalid pCloud URL. Please provide a valid share link.")
-    
-    # Fetch folder contents from pCloud
-    pcloud_data = await fetch_pcloud_folder(code)
-    if not pcloud_data['success']:
-        raise HTTPException(status_code=400, detail=f"Failed to fetch pCloud folder: {pcloud_data['error']}")
-    
-    # Create section
     sections = gallery.get("sections", [])
     new_order = max([s.get("order", 0) for s in sections], default=-1) + 1
-    
     section_id = str(uuid.uuid4())
-    new_section = {
-        "id": section_id,
-        "name": section_name or pcloud_data['folder_name'],
-        "order": new_order,
-        "type": "pcloud",
-        "pcloud_code": code,
-        "pcloud_folder_name": pcloud_data['folder_name'],
-        "pcloud_last_sync": datetime.now(timezone.utc).isoformat(),
-        "pcloud_error": None
-    }
     
-    sections.append(new_section)
-    await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
-    
-    # Store photos in database
-    sync_time = datetime.now(timezone.utc).isoformat()
-    pcloud_photos = []
-    for idx, photo in enumerate(pcloud_data['photos']):
-        pcloud_photos.append({
-            "id": str(uuid.uuid4()),
-            "gallery_id": gallery_id,
-            "section_id": section_id,
+    # If viewing URL is provided, fetch photos immediately
+    if pcloud_url and pcloud_url.strip():
+        # Extract code from URL
+        code = extract_pcloud_code(pcloud_url)
+        if not code:
+            raise HTTPException(status_code=400, detail="Invalid pCloud URL. Please provide a valid share link.")
+        
+        # Fetch folder contents from pCloud
+        pcloud_data = await fetch_pcloud_folder(code)
+        if not pcloud_data['success']:
+            raise HTTPException(status_code=400, detail=f"Failed to fetch pCloud folder: {pcloud_data['error']}")
+        
+        new_section = {
+            "id": section_id,
+            "name": section_name or pcloud_data['folder_name'],
+            "order": new_order,
+            "type": "pcloud",
             "pcloud_code": code,
-            "fileid": str(photo['fileid']),  # Convert to string to avoid MongoDB int overflow
-            "name": photo['name'],
-            "size": photo.get('size', 0),
-            "width": photo.get('width'),
-            "height": photo.get('height'),
-            "contenttype": photo.get('contenttype', 'image/jpeg'),
-            "supplier_name": photo.get('supplier_name'),
-            "hash": str(photo.get('hash', '')) if photo.get('hash') else None,  # Convert to string
-            "created_at_source": photo.get('created'),
-            "order": idx,
-            "synced_at": sync_time
-        })
-    
-    if pcloud_photos:
-        await db.pcloud_photos.insert_many(pcloud_photos)
-    
-    return {
-        "section": new_section,
-        "photo_count": len(pcloud_photos),
-        "subfolders": pcloud_data['subfolders']
-    }
+            "pcloud_folder_name": pcloud_data['folder_name'],
+            "pcloud_upload_link": pcloud_upload_link,  # Store upload request link
+            "pcloud_last_sync": datetime.now(timezone.utc).isoformat(),
+            "pcloud_error": None
+        }
+        
+        sections.append(new_section)
+        await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+        
+        # Store photos in database
+        sync_time = datetime.now(timezone.utc).isoformat()
+        pcloud_photos = []
+        for idx, photo in enumerate(pcloud_data['photos']):
+            pcloud_photos.append({
+                "id": str(uuid.uuid4()),
+                "gallery_id": gallery_id,
+                "section_id": section_id,
+                "pcloud_code": code,
+                "fileid": str(photo['fileid']),
+                "name": photo['name'],
+                "size": photo.get('size', 0),
+                "width": photo.get('width'),
+                "height": photo.get('height'),
+                "contenttype": photo.get('contenttype', 'image/jpeg'),
+                "supplier_name": photo.get('supplier_name'),
+                "hash": str(photo.get('hash', '')) if photo.get('hash') else None,
+                "created_at_source": photo.get('created'),
+                "order": idx,
+                "synced_at": sync_time
+            })
+        
+        if pcloud_photos:
+            await db.pcloud_photos.insert_many(pcloud_photos)
+        
+        return {
+            "section": new_section,
+            "photo_count": len(pcloud_photos),
+            "subfolders": pcloud_data['subfolders']
+        }
+    else:
+        # Create empty section - contributor will trigger sync after uploading
+        if not section_name:
+            raise HTTPException(status_code=400, detail="Section name is required when creating without a viewing link")
+        
+        new_section = {
+            "id": section_id,
+            "name": section_name,
+            "order": new_order,
+            "type": "pcloud",
+            "pcloud_code": None,  # Will be set when viewing link is provided
+            "pcloud_folder_name": None,
+            "pcloud_upload_link": pcloud_upload_link,  # Store upload request link for contributors
+            "pcloud_last_sync": None,
+            "pcloud_error": None,
+            "contributor_name": None,
+            "contributor_role": None,
+            "contributor_link": None
+        }
+        
+        sections.append(new_section)
+        await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
+        
+        return {
+            "section": new_section,
+            "photo_count": 0,
+            "message": "pCloud section created. Generate a contributor link to let your supplier upload photos."
+        }
 
 @api_router.post("/galleries/{gallery_id}/pcloud-sections/{section_id}/refresh")
 async def refresh_pcloud_section(
