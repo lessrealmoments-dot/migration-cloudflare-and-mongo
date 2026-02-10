@@ -372,7 +372,7 @@ const AdminGalleryReview = () => {
                       onClick={() => removeFromSelection(photo.id)}
                     >
                       <img
-                        src={`${BACKEND_URL}${photo.url}`}
+                        src={getImageUrl(photo.url)}
                         alt="Photo to flag"
                         className="w-full h-full object-cover rounded-lg"
                       />
