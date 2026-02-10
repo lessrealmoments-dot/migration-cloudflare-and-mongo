@@ -2461,7 +2461,23 @@ const GalleryDetail = () => {
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                   <label className="flex items-center gap-2 text-sm text-blue-700 font-medium mb-2">
                     <Cloud className="w-4 h-4" />
-                    pCloud Share Link
+                    pCloud Upload Request Link *
+                  </label>
+                  <input
+                    type="url"
+                    data-testid="pcloud-upload-link-input"
+                    value={newPcloudUploadLink}
+                    onChange={(e) => setNewPcloudUploadLink(e.target.value)}
+                    placeholder="Paste your pCloud upload request link here..."
+                    className="flex h-10 w-full rounded-sm border border-blue-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 mb-3"
+                  />
+                  <p className="text-xs text-blue-600 mb-3">
+                    This is the link you share with suppliers to upload to your pCloud folder
+                  </p>
+                  
+                  <label className="flex items-center gap-2 text-sm text-blue-700 font-medium mb-2">
+                    <Cloud className="w-4 h-4" />
+                    pCloud Viewing/Share Link (Optional)
                   </label>
                   <input
                     type="url"
@@ -2472,7 +2488,7 @@ const GalleryDetail = () => {
                     className="flex h-10 w-full rounded-sm border border-blue-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                   <p className="text-xs text-blue-600 mt-1">
-                    Paste your pCloud share link. Photos from supplier subfolders will be imported automatically.
+                    Enter now to import photos, or leave blank and generate a contributor link for your supplier
                   </p>
                 </div>
               )}
