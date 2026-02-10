@@ -2469,7 +2469,7 @@ const GalleryDetail = () => {
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
                   <label className="flex items-center gap-2 text-sm text-green-700 font-medium mb-2">
                     <HardDrive className="w-4 h-4" />
-                    Google Drive Folder Link
+                    Google Drive Folder Link (Optional)
                   </label>
                   <input
                     type="url"
@@ -2478,21 +2478,32 @@ const GalleryDetail = () => {
                     onChange={(e) => setNewGdriveUrl(e.target.value)}
                     placeholder="https://drive.google.com/drive/folders/..."
                     className="flex h-10 w-full rounded-sm border border-green-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:ring-green-500 mb-3"
-                    required
                   />
-                  <div className="grid grid-cols-2 gap-3 mb-2">
-                    <input
-                      type="text"
-                      data-testid="gdrive-contributor-name"
-                      value={newGdriveContributorName}
-                      onChange={(e) => setNewGdriveContributorName(e.target.value)}
-                      placeholder="Contributor name (optional)"
-                      className="flex h-9 w-full rounded-sm border border-green-300 bg-white px-3 py-2 text-sm"
-                    />
-                    <input
-                      type="text"
-                      data-testid="gdrive-contributor-role"
-                      value={newGdriveContributorRole}
+                  {newGdriveUrl && (
+                    <div className="grid grid-cols-2 gap-3 mb-2">
+                      <input
+                        type="text"
+                        data-testid="gdrive-contributor-name"
+                        value={newGdriveContributorName}
+                        onChange={(e) => setNewGdriveContributorName(e.target.value)}
+                        placeholder="Contributor name (optional)"
+                        className="flex h-9 w-full rounded-sm border border-green-300 bg-white px-3 py-2 text-sm"
+                      />
+                      <input
+                        type="text"
+                        data-testid="gdrive-contributor-role"
+                        value={newGdriveContributorRole}
+                        onChange={(e) => setNewGdriveContributorRole(e.target.value)}
+                        placeholder="Role, e.g., Photography (optional)"
+                        className="flex h-9 w-full rounded-sm border border-green-300 bg-white px-3 py-2 text-sm"
+                      />
+                    </div>
+                  )}
+                  <p className="text-xs text-green-600 mt-1">
+                    Enter URL now to import photos, or leave blank and generate a contributor link for your supplier to submit their folder.
+                  </p>
+                </div>
+              )}
                       onChange={(e) => setNewGdriveContributorRole(e.target.value)}
                       placeholder="Role, e.g., Photography (optional)"
                       className="flex h-9 w-full rounded-sm border border-green-300 bg-white px-3 py-2 text-sm"
