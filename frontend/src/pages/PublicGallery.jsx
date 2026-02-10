@@ -1883,11 +1883,11 @@ const PublicGallery = () => {
             </div>
             <p 
               className="text-lg md:text-xl font-light mb-2"
-              style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+              style={{ fontFamily: currentTheme.fonts.heading, color: getContrastTextColor(currentTheme.colors.secondary) }}
             >
               Thank you for being part of this special day
             </p>
-            <p className="text-sm" style={{ color: currentTheme.colors.textLight }}>
+            <p className="text-sm" style={{ color: getSubtleTextColor(currentTheme.colors.secondary, 0.7) }}>
               Gathered with love by {gallery?.photographer_name || brandConfig.brand_name || 'PhotoShare'}
             </p>
             <div 
@@ -1896,7 +1896,7 @@ const PublicGallery = () => {
             />
             <p 
               className="text-xs uppercase tracking-[0.2em]"
-              style={{ color: currentTheme.colors.textLight }}
+              style={{ color: getSubtleTextColor(currentTheme.colors.secondary, 0.6) }}
             >
               {brandConfig.brand_name || 'PhotoShare'} © {new Date().getFullYear()}
             </p>
