@@ -1442,7 +1442,7 @@ const PublicGallery = () => {
                           className="group inline-flex items-center gap-3 px-8 py-4 rounded-full transition-all duration-300 border-2"
                           style={{ 
                             borderColor: currentTheme.colors.accent,
-                            color: currentTheme.colors.text 
+                            color: getContrastTextColor(currentTheme.colors.background) 
                           }}
                           data-testid={`show-more-${section.id}`}
                         >
