@@ -2408,6 +2408,18 @@ const GalleryDetail = () => {
                   <Cloud className="w-4 h-4 text-blue-500" />
                   <span className="text-sm">pCloud</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sectionType"
+                    value="gdrive"
+                    checked={newSectionType === 'gdrive'}
+                    onChange={() => setNewSectionType('gdrive')}
+                    className="accent-green-600"
+                  />
+                  <HardDrive className="w-4 h-4 text-green-600" />
+                  <span className="text-sm">Google Drive</span>
+                </label>
               </div>
               
               {/* Fotoshare URL input - only shown when fotoshare type selected */}
@@ -2448,6 +2460,46 @@ const GalleryDetail = () => {
                   />
                   <p className="text-xs text-blue-600 mt-1">
                     Paste your pCloud share link. Photos from supplier subfolders will be imported automatically.
+                  </p>
+                </div>
+              )}
+
+              {/* Google Drive URL input - only shown when gdrive type selected */}
+              {newSectionType === 'gdrive' && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                  <label className="flex items-center gap-2 text-sm text-green-700 font-medium mb-2">
+                    <HardDrive className="w-4 h-4" />
+                    Google Drive Folder Link
+                  </label>
+                  <input
+                    type="url"
+                    data-testid="gdrive-url-input"
+                    value={newGdriveUrl}
+                    onChange={(e) => setNewGdriveUrl(e.target.value)}
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    className="flex h-10 w-full rounded-sm border border-green-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:ring-green-500 mb-3"
+                    required
+                  />
+                  <div className="grid grid-cols-2 gap-3 mb-2">
+                    <input
+                      type="text"
+                      data-testid="gdrive-contributor-name"
+                      value={newGdriveContributorName}
+                      onChange={(e) => setNewGdriveContributorName(e.target.value)}
+                      placeholder="Contributor name (optional)"
+                      className="flex h-9 w-full rounded-sm border border-green-300 bg-white px-3 py-2 text-sm"
+                    />
+                    <input
+                      type="text"
+                      data-testid="gdrive-contributor-role"
+                      value={newGdriveContributorRole}
+                      onChange={(e) => setNewGdriveContributorRole(e.target.value)}
+                      placeholder="Role, e.g., Photography (optional)"
+                      className="flex h-9 w-full rounded-sm border border-green-300 bg-white px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <p className="text-xs text-green-600 mt-1">
+                    Paste the shared Google Drive folder link. Make sure the folder is set to "Anyone with the link can view".
                   </p>
                 </div>
               )}
