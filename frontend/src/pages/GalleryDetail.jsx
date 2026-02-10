@@ -1877,6 +1877,20 @@ const GalleryDetail = () => {
                 Display Mode
               </button>
             )}
+            {/* Coordinator Hub Button */}
+            <button
+              data-testid="coordinator-hub-button"
+              onClick={generateCoordinatorHubLink}
+              disabled={coordinatorHubLoading}
+              className="border border-orange-300 bg-white hover:bg-orange-50 text-orange-700 h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
+            >
+              {coordinatorHubLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <QrCode className="w-4 h-4" strokeWidth={1.5} />
+              )}
+              Coordinator Hub
+            </button>
             {!canDownload ? (
               <div className="relative group">
                 <button
