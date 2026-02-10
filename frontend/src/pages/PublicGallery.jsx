@@ -1375,13 +1375,13 @@ const PublicGallery = () => {
                       </p>
                       <h3 
                         className="text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight"
-                        style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+                        style={{ fontFamily: currentTheme.fonts.heading, color: getContrastTextColor(currentTheme.colors.background) }}
                       >
                         {section.name}
                       </h3>
                       {section.contributor_name && (
-                        <p className="text-sm mt-2 opacity-70" style={{ color: currentTheme.colors.textLight }}>
-                          by <span style={{ color: currentTheme.colors.text, opacity: 0.9 }}>{section.contributor_name}</span>
+                        <p className="text-sm mt-2" style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.6) }}>
+                          by <span style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.8) }}>{section.contributor_name}</span>
                         </p>
                       )}
                       
