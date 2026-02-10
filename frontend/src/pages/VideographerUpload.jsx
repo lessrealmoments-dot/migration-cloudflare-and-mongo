@@ -29,6 +29,7 @@ const VideographerUpload = () => {
   const [galleryInfo, setGalleryInfo] = useState(null);
   const [companyName, setCompanyName] = useState('');
   const [videos, setVideos] = useState([]);
+  const [roleConfirmed, setRoleConfirmed] = useState(false);
   
   // Form state
   const [youtubeUrl, setYoutubeUrl] = useState('');
