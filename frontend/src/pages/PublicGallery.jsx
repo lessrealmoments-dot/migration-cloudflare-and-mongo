@@ -826,7 +826,7 @@ const PublicGallery = () => {
             style={{ y: heroImageY, scale: heroScale }}
           >
             <OptimizedImage
-              src={`${BACKEND_URL}${gallery.cover_photo_url}`}
+              src={getImageUrl(gallery.cover_photo_url)}
               alt="Cover"
               className="w-full h-full object-cover"
               showLoader={true}
