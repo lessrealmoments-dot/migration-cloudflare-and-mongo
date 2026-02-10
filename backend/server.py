@@ -1060,8 +1060,7 @@ GOOGLE_DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive.file']
 # Google Drive sync interval (in seconds)
 DRIVE_SYNC_INTERVAL = 5 * 60  # 5 minutes
 
-# Background task control
-sync_task_running = False
+# NOTE: sync_task_running is now managed in /app/backend/tasks/background.py
 
 def get_google_oauth_flow(redirect_uri: str):
     """Create Google OAuth flow with dynamic redirect URI"""
