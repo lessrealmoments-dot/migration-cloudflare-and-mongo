@@ -2504,17 +2504,54 @@ async def delete_photographer(user_id: str, admin: dict = Depends(get_admin_user
     for gallery in galleries:
         photos = await db.photos.find({"gallery_id": gallery["id"]}, {"_id": 0}).to_list(None)
         for photo in photos:
-            file_path = UPLOAD_DIR / photo["filename"]
+            filename = photo.get("filename", "")
+            photo_id = photo.get("id", "")
+            file_ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
+            
+            # Delete from R2 if enabled
+            if storage.r2_enabled:
+                try:
+                    await storage.delete_photo_with_thumbnails(photo_id, file_ext)
+                except Exception as e:
+                    logger.warning(f"Admin delete: Failed to delete photo {photo_id} from R2: {e}")
+            
+            # Delete from local filesystem
+            file_path = UPLOAD_DIR / filename
             if file_path.exists():
                 file_path.unlink()
+            
+            # Delete local thumbnails
+            for size in ["small", "medium"]:
+                thumb_path = THUMBNAILS_DIR / f"{photo_id}_{size}.jpg"
+                if thumb_path.exists():
+                    try:
+                        thumb_path.unlink()
+                    except:
+                        pass
+        
         await db.photos.delete_many({"gallery_id": gallery["id"]})
         
         # Delete cover photo if exists
         if gallery.get("cover_photo_url"):
             cover_filename = gallery["cover_photo_url"].split('/')[-1]
+            
+            # Delete from R2 if enabled
+            if storage.r2_enabled:
+                try:
+                    await storage.delete_file(f"photos/{cover_filename}")
+                except Exception as e:
+                    logger.warning(f"Admin delete: Failed to delete cover photo from R2: {e}")
+            
+            # Delete from local filesystem
             cover_path = UPLOAD_DIR / cover_filename
             if cover_path.exists():
                 cover_path.unlink()
+        
+        # Delete integration photos
+        await db.gdrive_photos.delete_many({"gallery_id": gallery["id"]})
+        await db.pcloud_photos.delete_many({"gallery_id": gallery["id"]})
+        await db.fotoshare_videos.delete_many({"gallery_id": gallery["id"]})
+        await db.gallery_videos.delete_many({"gallery_id": gallery["id"]})
     
     # Delete galleries
     await db.galleries.delete_many({"photographer_id": user_id})
@@ -2537,6 +2574,8 @@ async def delete_photographer(user_id: str, admin: dict = Depends(get_admin_user
         "details": f"Deleted {len(galleries)} galleries",
         "timestamp": datetime.now(timezone.utc).isoformat()
     })
+    
+    logger.info(f"Admin deleted photographer {user_id} with {len(galleries)} galleries")
     
     return {"message": f"Photographer deleted along with {len(galleries)} galleries"}
 
