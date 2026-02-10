@@ -553,8 +553,8 @@ async def auto_sync_pcloud_sections():
 
 # ============ pCloud Integration ============
 
-def extract_pcloud_code(url: str) -> Optional[str]:
-    """Extract the share code from various pCloud URL formats"""
+def _extract_pcloud_code_deprecated(url: str) -> Optional[str]:
+    """DEPRECATED - Now imported from utils.helpers. Kept for reference."""
     patterns = [
         r'code=([a-zA-Z0-9]+)',  # ?code=xxx or &code=xxx
         r'publink/show\?code=([a-zA-Z0-9]+)',
