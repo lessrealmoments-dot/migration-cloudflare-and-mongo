@@ -4465,21 +4465,39 @@ async def upload_cover_photo(gallery_id: str, file: UploadFile = File(...), curr
     if not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400, detail="Only image files are allowed")
     
+    # Delete old cover photo if exists
     if gallery.get("cover_photo_url"):
         old_filename = gallery["cover_photo_url"].split('/')[-1]
-        old_file_path = UPLOAD_DIR / old_filename
-        if old_file_path.exists():
-            old_file_path.unlink()
+        if storage.r2_enabled:
+            old_key = f"photos/{old_filename}"
+            await storage.delete_file(old_key)
+        else:
+            old_file_path = UPLOAD_DIR / old_filename
+            if old_file_path.exists():
+                old_file_path.unlink()
     
     photo_id = str(uuid.uuid4())
-    file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    file_ext = file.filename.split('.')[-1].lower() if '.' in file.filename else 'jpg'
     filename = f"cover_{photo_id}.{file_ext}"
-    file_path = UPLOAD_DIR / filename
     
-    with open(file_path, 'wb') as f:
-        shutil.copyfileobj(file.file, f)
+    # Read file content
+    file_content = await file.read()
     
-    cover_url = f"/api/photos/serve/{filename}"
+    # Use R2 storage if enabled
+    if storage.r2_enabled:
+        r2_key = f"photos/{filename}"
+        success, url_or_error = await storage.upload_file(r2_key, file_content, file.content_type or 'image/jpeg')
+        if not success:
+            logger.error(f"R2 upload failed for cover photo {filename}: {url_or_error}")
+            raise HTTPException(status_code=500, detail="Failed to save cover photo. Please try again.")
+        cover_url = url_or_error
+    else:
+        # Fallback to local filesystem
+        file_path = UPLOAD_DIR / filename
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+        cover_url = f"/api/photos/serve/{filename}"
+    
     # Reset position when uploading new cover photo
     await db.galleries.update_one({"id": gallery_id}, {"$set": {
         "cover_photo_url": cover_url,
