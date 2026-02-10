@@ -71,11 +71,15 @@ const ContributorUpload = () => {
         company_name: companyName.trim()
       });
       setConfirmedName(companyName.trim());
-      setStep('upload');
+      setStep('role_confirm');
       toast.success('Company name confirmed!');
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to save company name');
     }
+  };
+
+  const handleRoleConfirm = () => {
+    setStep('upload');
   };
 
   const onDrop = useCallback(async (acceptedFiles) => {
