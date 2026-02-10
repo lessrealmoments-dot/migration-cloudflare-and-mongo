@@ -1083,7 +1083,7 @@ const PublicGallery = () => {
                 className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-medium transition-all duration-300"
                 style={{ 
                   backgroundColor: currentTheme.colors.accent,
-                  color: isDarkTheme ? '#000' : '#fff'
+                  color: getContrastTextColor(currentTheme.colors.accent)
                 }}
               >
                 <Download className="w-5 h-5" />
