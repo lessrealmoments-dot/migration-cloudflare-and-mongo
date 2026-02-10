@@ -1245,13 +1245,13 @@ const PublicGallery = () => {
                       >
                         <p 
                           className="text-xs uppercase tracking-[0.3em] mb-3"
-                          style={{ color: currentTheme.colors.accent }}
+                          style={{ color: getContrastTextColor(currentTheme.colors.background) === '#ffffff' ? currentTheme.colors.textLight : currentTheme.colors.accent }}
                         >
                           {sectionPcloudPhotos.length} Photos
                         </p>
                         <h3 
                           className="text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight"
-                          style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+                          style={{ fontFamily: currentTheme.fonts.heading, color: getContrastTextColor(currentTheme.colors.background) }}
                         >
                           {section.name}
                         </h3>
