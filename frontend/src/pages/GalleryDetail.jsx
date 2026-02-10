@@ -1070,6 +1070,17 @@ const GalleryDetail = () => {
         toast.success(`Google Drive section created with ${response.data.photo_count} photos!`);
         // Fetch Google Drive photos
         fetchGdrivePhotos();
+      } else if (newSectionType === 'gdrive' && !newGdriveUrl.trim()) {
+        // Create empty Google Drive section - supplier will provide URL via contributor link
+        const response = await axios.post(`${API}/galleries/${id}/gdrive-sections`, {
+          gdrive_url: null,
+          section_name: newSectionName
+        }, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        
+        setSections([...sections, response.data.section]);
+        toast.success('Google Drive section created! Generate a contributor link to let your supplier submit their folder.');
       } else {
         // Create regular section (photo, video, or fotoshare without URL)
         const formData = new FormData();
