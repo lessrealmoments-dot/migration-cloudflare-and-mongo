@@ -154,6 +154,9 @@ const PublicGallery = () => {
   const [pcloudPhotos, setPcloudPhotos] = useState([]);
   const [pcloudLightboxPhotos, setPcloudLightboxPhotos] = useState([]);
   const [pcloudLightboxIndex, setPcloudLightboxIndex] = useState(null);
+  const [gdrivePhotos, setGdrivePhotos] = useState([]);
+  const [gdriveLightboxPhotos, setGdriveLightboxPhotos] = useState([]);
+  const [gdriveLightboxIndex, setGdriveLightboxIndex] = useState(null);
   const [loading, setLoading] = useState(true);
   const [passwordRequired, setPasswordRequired] = useState(false);
   const [password, setPassword] = useState('');
