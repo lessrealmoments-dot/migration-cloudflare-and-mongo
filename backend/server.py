@@ -7049,9 +7049,7 @@ async def download_gallery_chunk(gallery_id: str, chunk_number: int, current_use
 # Max size per zip chunk (250MB as requested)
 SECTION_ZIP_CHUNK_SIZE = 250 * 1024 * 1024
 
-class SectionDownloadRequest(BaseModel):
-    password: Optional[str] = None
-    section_id: Optional[str] = None  # None means download all
+# NOTE: SectionDownloadRequest model is now imported from models/video.py
 
 @api_router.post("/public/gallery/{share_link}/download-info")
 async def get_public_download_info(share_link: str, request: SectionDownloadRequest):
