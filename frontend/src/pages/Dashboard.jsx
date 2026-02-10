@@ -449,23 +449,40 @@ const Dashboard = ({ user, setUser }) => {
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-zinc-500 flex items-center gap-3">
-                    {subscription.total_credits === 999 ? (
-                      <span className="text-green-600 font-medium">Unlimited Credits</span>
-                    ) : (
-                      <>
-                        <span>{subscription.total_credits} event credits remaining</span>
-                        {subscription.effective_plan !== 'free' && subscription.payment_status !== 'pending' && (
-                          <button
-                            onClick={() => setShowBuyCreditsModal(true)}
-                            className="text-xs text-purple-600 hover:text-purple-700 hover:underline flex items-center gap-1"
-                          >
-                            <ShoppingCart className="w-3 h-3" />
-                            Need more? (₱{pricing?.extra_credit || 500})
-                          </button>
-                        )}
-                      </>
-                    )}
+                  <div className="text-sm text-zinc-500 flex flex-col gap-1">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {subscription.total_credits === 999 ? (
+                        <span className="text-green-600 font-medium">Unlimited Credits</span>
+                      ) : (
+                        <>
+                          <span>{subscription.event_credits} event credits + {subscription.extra_credits || 0} extra</span>
+                          {subscription.effective_plan !== 'free' && subscription.payment_status !== 'pending' && (
+                            <button
+                              onClick={() => setShowBuyCreditsModal(true)}
+                              className="text-xs text-purple-600 hover:text-purple-700 hover:underline flex items-center gap-1"
+                            >
+                              <ShoppingCart className="w-3 h-3" />
+                              Buy more (₱{pricing?.extra_credit || 500})
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    {/* Subscription & Credit Expiration Info */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                      {subscription.subscription_expires && !subscription.is_unlimited_credits && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          Renews: {new Date(subscription.subscription_expires).toLocaleDateString()}
+                        </span>
+                      )}
+                      {subscription.extra_credits > 0 && subscription.extra_credits_expires_at && (
+                        <span className="flex items-center gap-1 text-amber-600">
+                          <AlertCircle className="w-3 h-3" />
+                          Extra credits expire: {new Date(subscription.extra_credits_expires_at).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
