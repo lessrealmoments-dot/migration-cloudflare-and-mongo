@@ -101,3 +101,7 @@ memory/
 certbot/
 frontend/node_modules/.cache/default-development/1.pack
 frontend/node_modules/.cache/default-development/25.pack
+-e 
+# Environment files
+*.env
+*.env.*
