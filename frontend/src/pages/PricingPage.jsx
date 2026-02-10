@@ -28,7 +28,11 @@ const PricingPage = () => {
   const [pricing, setPricing] = useState({
     standard_monthly: 1000,
     pro_monthly: 1500,
-    extra_credit: 500
+    extra_credit: 500,
+    plan_features: {
+      standard: { display_mode: false, collaboration_link: false, gallery_retention: '6 months' },
+      pro: { display_mode: true, collaboration_link: true, gallery_retention: '6 months' }
+    }
   });
   const [billingCycle, setBillingCycle] = useState('monthly');
   const [user, setUser] = useState(null);
