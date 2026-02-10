@@ -600,6 +600,11 @@ const PublicGallery = () => {
     return pcloudPhotos.filter(p => p.section_id === sectionId);
   };
 
+  // Get Google Drive photos by section
+  const getGdrivePhotosBySection = (sectionId) => {
+    return gdrivePhotos.filter(p => p.section_id === sectionId);
+  };
+
   // Get highlighted photos (shown in grid)
   const getHighlightPhotos = () => {
     return photos.filter(p => p.is_highlight && (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor'));
