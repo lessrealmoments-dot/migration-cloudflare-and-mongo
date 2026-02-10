@@ -109,6 +109,8 @@ function App() {
           <Route path="/f/:contributorLink" element={<FotoshareContributorUpload />} />
           {/* Google Drive Contributor Upload Route */}
           <Route path="/d/:contributorLink" element={<GdriveContributorUpload />} />
+          {/* pCloud Contributor Upload Route */}
+          <Route path="/p/:contributorLink" element={<PcloudContributorUpload />} />
           {/* Display/Slideshow Routes */}
           <Route path="/display/:shareLink" element={<Display />} />
           {/* Admin Routes */}
