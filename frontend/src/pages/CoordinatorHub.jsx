@@ -317,6 +317,7 @@ const CoordinatorHub = () => {
                   key={section.id} 
                   section={section} 
                   baseUrl={baseUrl}
+                  hubLink={hubLink}
                 />
               ))}
             </div>
@@ -336,6 +337,7 @@ const CoordinatorHub = () => {
                   key={section.id} 
                   section={section} 
                   baseUrl={baseUrl}
+                  hubLink={hubLink}
                 />
               ))}
             </div>
