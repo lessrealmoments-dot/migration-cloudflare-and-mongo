@@ -1119,35 +1119,7 @@ async def get_drive_service_for_user(user_id: str):
     
     return build('drive', 'v3', credentials=creds)
 
-async def auto_sync_drive_task():
-    """Background task that auto-syncs galleries to Google Drive every 5 minutes"""
-    global sync_task_running
-    sync_task_running = True
-    logger.info("Google Drive auto-sync task started")
-    
-    while sync_task_running:
-        try:
-            # Find all users with Google Drive connected and auto_sync enabled
-            users_with_drive = await db.drive_credentials.find({
-                "drive_auto_sync": True
-            }, {"_id": 0}).to_list(None)
-            
-            for creds in users_with_drive:
-                user_id = creds["user_id"]
-                # Find galleries that need syncing
-                galleries = await db.galleries.find({
-                    "photographer_id": user_id
-                }, {"_id": 0}).to_list(None)
-                
-                for gallery in galleries:
-                    await sync_gallery_to_drive(user_id, gallery["id"])
-            
-            logger.info(f"Auto-sync completed for {len(users_with_drive)} users")
-        except Exception as e:
-            logger.error(f"Auto-sync error: {e}")
-        
-        # Wait for next sync interval
-        await asyncio.sleep(DRIVE_SYNC_INTERVAL)
+# NOTE: auto_sync_drive_task has been moved to /app/backend/tasks/background.py
 
 async def sync_gallery_to_drive(user_id: str, gallery_id: str):
     """Sync a single gallery to Google Drive using proper OAuth"""
