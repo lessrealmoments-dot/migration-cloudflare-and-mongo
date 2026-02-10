@@ -1557,22 +1557,27 @@ const PublicGallery = () => {
               const isExpanded = isSectionExpanded(sectionId);
               const displayPhotos = isExpanded ? guestPhotos : guestPhotos.slice(0, PREVIEW_COUNT);
               const hasMore = guestPhotos.length > PREVIEW_COUNT;
+              const bgTextColor = getContrastTextColor(currentTheme.colors.background);
+              const subtleColor = getSubtleTextColor(currentTheme.colors.background, 0.6);
               
               return (
-                <div className="mb-12 mt-16 pt-12 border-t-2 border-zinc-200">
+                <div 
+                  className="mb-12 mt-16 pt-12 border-t-2"
+                  style={{ borderColor: getSubtleTextColor(currentTheme.colors.background, 0.2) }}
+                >
                   <div 
                     className="flex items-center justify-center gap-4 mb-6 cursor-pointer"
                     onClick={() => hasMore && toggleSectionExpand(sectionId)}
                   >
                     <h4
                       className="text-2xl md:text-3xl font-normal text-center"
-                      style={{ fontFamily: 'Playfair Display, serif' }}
+                      style={{ fontFamily: currentTheme.fonts.heading, color: bgTextColor }}
                     >
                       Guest Uploads
-                      <span className="text-zinc-400 text-lg ml-2">({guestPhotos.length})</span>
+                      <span className="text-lg ml-2" style={{ color: subtleColor }}>({guestPhotos.length})</span>
                     </h4>
                   </div>
-                  <p className="text-center text-sm text-zinc-500 mb-8">
+                  <p className="text-center text-sm mb-8" style={{ color: subtleColor }}>
                     Photos shared by guests
                   </p>
                   <div className="masonry-grid">
@@ -1590,7 +1595,11 @@ const PublicGallery = () => {
                   {hasMore && (
                     <button 
                       onClick={() => toggleSectionExpand(sectionId)}
-                      className="mt-6 mx-auto block px-6 py-3 border-2 border-zinc-300 rounded-full text-zinc-600 hover:border-zinc-400 hover:text-zinc-800 transition-colors flex items-center gap-2"
+                      className="mt-6 mx-auto block px-6 py-3 border-2 rounded-full transition-colors flex items-center gap-2"
+                      style={{ 
+                        borderColor: currentTheme.colors.accent + '50',
+                        color: bgTextColor
+                      }}
                     >
                       {isExpanded ? (
                         <>Collapse <ChevronUp className="w-4 h-4" /></>
@@ -1605,8 +1614,11 @@ const PublicGallery = () => {
           )}
 
           {photos.length === 0 && (
-            <div className="text-center py-20 border border-zinc-200 rounded-sm">
-              <p className="text-zinc-500">No photos yet. Be the first to upload!</p>
+            <div 
+              className="text-center py-20 border rounded-sm"
+              style={{ borderColor: getSubtleTextColor(currentTheme.colors.background, 0.2) }}
+            >
+              <p style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.6) }}>No photos yet. Be the first to upload!</p>
             </div>
           )}
         </div>
