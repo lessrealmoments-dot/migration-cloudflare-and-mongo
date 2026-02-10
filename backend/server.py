@@ -2460,10 +2460,7 @@ async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(sec
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication")
 
-@api_router.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "service": "photoshare-api"}
+# NOTE: /api/health endpoint moved to routes/health.py
 
 @api_router.post("/auth/register", response_model=Token)
 async def register(user_data: UserRegister, background_tasks: BackgroundTasks):
