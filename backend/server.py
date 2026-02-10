@@ -96,6 +96,8 @@ from models.billing import (
     PaymentDispute,
     Transaction,
     GlobalFeatureToggles,
+    UpgradeRequest,
+    ExtraCreditRequest,
     # Note: FeatureToggle and UserFeatureToggle in server.py have different fields
 )
 from models.notification import (
