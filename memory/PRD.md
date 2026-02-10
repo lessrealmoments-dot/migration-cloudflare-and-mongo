@@ -915,28 +915,46 @@ Integrated pCloud as a photo source for galleries. This allows photographers to:
 
 ### Feature Overview
 Integrated Google Drive as a photo source for galleries. This allows photographers to:
-1. Link Google Drive shared folders to gallery sections
-2. Import photos automatically with thumbnails
-3. Credit contributors with optional name and role
-4. Allow clients to view and highlight specific photos
+1. Create empty Google Drive sections and generate contributor links
+2. Share links with suppliers who submit their Google Drive folder URLs
+3. Import photos automatically with thumbnails
+4. Credit contributors with optional name and role
+5. Allow clients to view and highlight specific photos
 
-### Workflow
-1. **Photographer shares Google Drive folder** with "Anyone with the link can view" permission
-2. **Create Google Drive section** in gallery dashboard
-   - Paste the Google Drive folder link
-   - Add optional contributor name and role
-3. **Photos sync automatically** using Google Drive API
-4. **Manual refresh** available via the refresh button
+### Workflow Options
+
+**Option 1: Direct Import (Photographer has the link)**
+1. Photographer creates Google Drive section with URL
+2. Photos import automatically
+3. Manual refresh available
+
+**Option 2: Contributor Link (Professional workflow - NEW)**
+1. Photographer creates empty Google Drive section (without URL)
+2. Generate contributor link with `/d/` prefix
+3. Share link/QR code with supplier or coordinator
+4. Supplier visits link and submits:
+   - Their name/company name
+   - Their role (optional)
+   - Their Google Drive folder URL
+5. Photos import automatically after submission
 
 ### UI Components
 - **Section Type Selector**: Green "Google Drive" option with HardDrive icon
-- **Input Form**: URL field, contributor name, and role fields with green theme
+- **Input Form**: URL field is now OPTIONAL - leave blank for contributor workflow
+- **Contributor Link**: Uses `/d/{link}` prefix (like `/f/` for fotoshare, `/v/` for video)
 - **Section Button**: Green styling with HardDrive icon, shows error warning if sync failed
 - **Refresh Button**: Appears on hover over section button
 
+### Contributor Upload Page (`/d/{contributorLink}`)
+- Green gradient theme matching Google Drive branding
+- Fields: Name (required), Role (optional), Google Drive URL (required)
+- Step-by-step instructions for making folder public
+- Re-submission replaces existing photos
+
 ### API Endpoints
-- `POST /api/galleries/{id}/gdrive-sections` - Create new Google Drive section
+- `POST /api/galleries/{id}/gdrive-sections` - Create new Google Drive section (URL optional)
 - `POST /api/galleries/{id}/gdrive-sections/{section_id}/refresh` - Refresh photos from Google Drive
+- `POST /api/contributor/{link}/gdrive` - Submit Google Drive folder as contributor (NEW)
 - `GET /api/public/gallery/{share_link}/gdrive-photos` - Get Google Drive photos for public gallery
 - `DELETE /api/galleries/{id}/gdrive-sections/{section_id}` - Delete section and its photos
 - `POST /api/galleries/{id}/gdrive-sections/{section_id}/photos/{photo_id}/highlight` - Toggle highlight
@@ -949,26 +967,28 @@ Integrated Google Drive as a photo source for galleries. This allows photographe
   id: String,
   gallery_id: String,
   section_id: String,
-  gdrive_file_id: String,     // Google Drive file ID
-  name: String,               // Original filename
+  gdrive_folder_id: String,     // Google Drive file ID
+  file_id: String,              // Individual file ID
+  name: String,                 // Original filename
   mime_type: String,
-  size: Number,               // File size in bytes
-  thumbnail_url: String,      // Google Drive thumbnail URL
-  web_content_link: String,   // Direct download link
-  web_view_link: String,      // View in Google Drive link
-  highlighted: Boolean,       // Whether photo is highlighted
+  size: Number,                 // File size in bytes
+  thumbnail_url: String,        // Google Drive thumbnail URL
+  view_url: String,             // View in Google Drive link
+  is_highlight: Boolean,        // Whether photo is highlighted
   synced_at: String
 }
 
 // sections collection (gdrive type)
 {
   type: "gdrive",
-  gdrive_url: String,         // Original Google Drive URL
-  gdrive_folder_id: String,   // Extracted folder ID
-  gdrive_last_sync: String,   // Last sync timestamp
-  gdrive_error: String,       // Error message if sync failed
-  contributor_name: String,   // Optional contributor credit
-  contributor_role: String    // Optional role (e.g., "Photography")
+  gdrive_folder_id: String,     // Extracted folder ID (null if empty section)
+  gdrive_folder_name: String,   // Folder name from Google Drive
+  gdrive_last_sync: String,     // Last sync timestamp
+  gdrive_error: String,         // Error message if sync failed
+  contributor_name: String,     // Optional contributor credit
+  contributor_role: String,     // Optional role (e.g., "Photography")
+  contributor_link: String,     // Contributor upload link
+  contributor_enabled: Boolean  // Whether contributor uploads are enabled
 }
 ```
 
@@ -976,7 +996,14 @@ Integrated Google Drive as a photo source for galleries. This allows photographe
 - `/app/backend/server.py`: Added Google Drive helper functions and API endpoints
 - `/app/frontend/src/pages/GalleryDetail.jsx`: Added Google Drive section creation and management
 - `/app/frontend/src/pages/PublicGallery.jsx`: Added Google Drive section rendering
+- `/app/frontend/src/pages/GdriveContributorUpload.jsx`: NEW - Contributor upload page
 - `/app/frontend/src/components/GoogleDriveSection.jsx`: NEW - Public display component
+- `/app/frontend/src/App.js`: Added route `/d/:contributorLink`
+
+### Routes
+| Route | Purpose |
+|-------|---------|
+| `/d/{link}` | Google Drive contributor upload page |
 
 ### Known Limitations
 - Folder must be shared with "Anyone with the link can view"
@@ -985,7 +1012,7 @@ Integrated Google Drive as a photo source for galleries. This allows photographe
 - Google Drive API rate limits may affect large folders
 
 ### Testing Results
-- Backend: 16/16 tests passed (100%)
+- Backend: 100% tests passed
 - Frontend: All UI elements verified (100%)
-- Test file: `/app/backend/tests/test_gdrive_section.py`
+- Test files: `/app/backend/tests/test_gdrive_section.py`, `/app/backend/tests/test_gdrive_contributor.py`
 
