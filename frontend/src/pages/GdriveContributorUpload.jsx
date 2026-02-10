@@ -310,6 +310,8 @@ const GdriveContributorUpload = () => {
             </p>
           )}
         </div>
+        </>
+        )}
         
         {/* Footer */}
         <p className="text-center text-sm text-zinc-400 mt-8">
