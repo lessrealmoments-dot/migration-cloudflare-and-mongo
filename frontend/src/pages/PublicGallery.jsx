@@ -1496,7 +1496,7 @@ const PublicGallery = () => {
                         </p>
                         <h3 
                           className="text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight"
-                          style={{ fontFamily: currentTheme.fonts.heading, color: currentTheme.colors.text }}
+                          style={{ fontFamily: currentTheme.fonts.heading, color: getContrastTextColor(currentTheme.colors.background) }}
                         >
                           {gallery?.sections?.length > 0 ? 'More Moments' : 'Gallery'}
                         </h3>
@@ -1528,7 +1528,7 @@ const PublicGallery = () => {
                           className="group inline-flex items-center gap-3 px-8 py-4 rounded-full transition-all duration-300 border-2"
                           style={{ 
                             borderColor: currentTheme.colors.accent,
-                            color: currentTheme.colors.text 
+                            color: getContrastTextColor(currentTheme.colors.background) 
                           }}
                         >
                           <span className="font-medium">
