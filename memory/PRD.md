@@ -1309,3 +1309,37 @@ backend/
 - Analytics, admin login, billing settings, photographers list
 - Feature toggles, collage presets, landing config
 - All background tasks running correctly
+
+## Photo/Video Count & Download Integration Sources (December 2025)
+
+### Photo Count Update
+**Before**: Only counted R2 uploaded photos
+**After**: Now counts photos from ALL sources:
+- R2 uploaded photos
+- Google Drive photos
+- pCloud photos
+
+### Video Count (NEW)
+Now shows separate video count from:
+- Fotoshare/360Glam videos
+- YouTube embedded videos
+
+Display format: "X photos • Y videos"
+
+### Download Behavior Change
+After password verification:
+1. **Download ZIP** = Only R2 photos (server uploads)
+2. **External Sources** section shows buttons with links to:
+   - Google Drive folders (with section name)
+   - pCloud folders (with section name)
+   - 360Glam/Fotoshare links (with section name)
+   - YouTube videos indicator
+
+### Backend Changes
+- `/api/public/gallery/{share_link}`: Now returns `photo_count` and `video_count`
+- `/api/public/gallery/{share_link}/download-info`: Now returns `integration_sources` array with links
+
+### Frontend Changes
+- Hero section displays "X photos • Y videos"
+- Download dropdown includes "External Sources" section after password verification
+- Each integration source shows: icon, section name, label, and link to external service
