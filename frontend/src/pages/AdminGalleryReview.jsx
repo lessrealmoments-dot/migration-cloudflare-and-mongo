@@ -428,7 +428,7 @@ const AdminGalleryReview = () => {
             <X className="w-6 h-6" />
           </button>
           <img
-            src={`${BACKEND_URL}${lightboxPhoto.url}`}
+            src={getImageUrl(lightboxPhoto.url)}
             alt="Photo preview"
             className="max-w-full max-h-[90vh] object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
