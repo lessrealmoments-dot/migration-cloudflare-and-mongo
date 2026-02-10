@@ -27,7 +27,7 @@ class TestCoordinatorHub:
             "password": self.password
         })
         if response.status_code == 200:
-            self.token = response.json().get("token")
+            self.token = response.json().get("access_token")
         else:
             pytest.skip(f"Login failed: {response.status_code}")
     
@@ -39,7 +39,7 @@ class TestCoordinatorHub:
         })
         assert response.status_code == 200, f"Login failed: {response.text}"
         data = response.json()
-        assert "token" in data
+        assert "access_token" in data
         print(f"✓ Login successful, token received")
     
     def test_get_galleries(self):
@@ -172,7 +172,7 @@ class TestContributorUploadPages:
             "password": self.password
         })
         if response.status_code == 200:
-            self.token = response.json().get("token")
+            self.token = response.json().get("access_token")
         else:
             pytest.skip("Login failed")
     
