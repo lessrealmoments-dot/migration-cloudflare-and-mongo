@@ -3821,14 +3821,24 @@ async def upload_favicon(
     if file_ext not in ['ico', 'png', 'svg', 'jpg', 'jpeg', 'gif']:
         file_ext = 'png'
     filename = f"favicon_{uuid.uuid4().hex[:8]}.{file_ext}"
-    file_path = UPLOAD_DIR / filename
     
-    # Save the file
-    with open(file_path, 'wb') as f:
-        shutil.copyfileobj(file.file, f)
+    # Read file content
+    file_content = await file.read()
     
-    # Update landing config with new favicon URL
-    favicon_url = f"/api/photos/serve/{filename}"
+    # Use R2 storage if enabled
+    if storage.r2_enabled:
+        r2_key = f"photos/{filename}"
+        success, url_or_error = await storage.upload_file(r2_key, file_content, file.content_type or 'image/png')
+        if not success:
+            logger.error(f"R2 upload failed for favicon {filename}: {url_or_error}")
+            raise HTTPException(status_code=500, detail="Failed to save favicon. Please try again.")
+        favicon_url = url_or_error
+    else:
+        # Fallback to local filesystem
+        file_path = UPLOAD_DIR / filename
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+        favicon_url = f"/api/photos/serve/{filename}"
     
     await db.site_config.update_one(
         {"type": "landing"},
