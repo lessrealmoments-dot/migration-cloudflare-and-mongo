@@ -1898,7 +1898,7 @@ const PublicGallery = () => {
               className="text-xs uppercase tracking-[0.2em]"
               style={{ color: getSubtleTextColor(currentTheme.colors.secondary, 0.6) }}
             >
-              {brandConfig.brand_name || 'PhotoShare'} © {new Date().getFullYear()}
+              {brandConfig.brand_name || 'EventsGallery'} © 2024
             </p>
           </motion.div>
         </div>
