@@ -282,7 +282,50 @@ const ContributorUpload = () => {
           </div>
         )}
 
-        {/* Step 3: Upload Photos */}
+        {/* Step 3: Role Confirmation */}
+        {step === 'role_confirm' && (
+          <div className="bg-white rounded-lg shadow-sm p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <AlertCircle className="w-6 h-6 text-amber-500" />
+              <h3 className="text-xl font-medium">Please Confirm Your Role</h3>
+            </div>
+            
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-6">
+              <p className="text-amber-900 text-lg text-center mb-4">
+                Are you sure you are the
+              </p>
+              <p className="text-2xl font-bold text-center text-amber-800" style={{ fontFamily: 'Playfair Display, serif' }}>
+                OFFICIAL PHOTOGRAPHER
+              </p>
+              <p className="text-amber-900 text-lg text-center mt-4">
+                for the section "<strong>{info?.section_name}</strong>"?
+              </p>
+            </div>
+            
+            <p className="text-zinc-600 text-sm mb-6 text-center">
+              ⚠️ Please make sure you're uploading to the correct section. 
+              If you're not the assigned photographer for this section, please go back and check with your coordinator.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => window.history.back()}
+                className="flex-1 bg-zinc-100 text-zinc-700 py-3 rounded-lg font-medium hover:bg-zinc-200 transition-colors"
+              >
+                No, Go Back
+              </button>
+              <button
+                onClick={handleRoleConfirm}
+                className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                data-testid="confirm-role-btn"
+              >
+                Yes, I Confirm
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Upload Photos */}
         {step === 'upload' && (
           <div className="space-y-6">
             {/* Contributor Badge */}
