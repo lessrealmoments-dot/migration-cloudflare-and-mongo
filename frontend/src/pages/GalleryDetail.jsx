@@ -378,6 +378,49 @@ const GalleryDetail = () => {
     }
   };
 
+  // Coordinator Hub functions
+  const generateCoordinatorHubLink = async () => {
+    setCoordinatorHubLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API}/galleries/${id}/coordinator-link`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      const hubUrl = `${window.location.origin}/coordinator/${response.data.coordinator_hub_link}`;
+      setCoordinatorHubLink(hubUrl);
+      setShowCoordinatorHubModal(true);
+      await navigator.clipboard.writeText(hubUrl);
+      toast.success('Coordinator Hub link created and copied!');
+    } catch (error) {
+      toast.error('Failed to generate coordinator hub link');
+    } finally {
+      setCoordinatorHubLoading(false);
+    }
+  };
+
+  const copyCoordinatorHubLink = async () => {
+    if (coordinatorHubLink) {
+      await navigator.clipboard.writeText(coordinatorHubLink);
+      toast.success('Coordinator Hub link copied!');
+    }
+  };
+
+  const downloadCoordinatorQR = () => {
+    if (coordinatorQrRef.current) {
+      const canvas = coordinatorQrRef.current.querySelector('canvas');
+      if (canvas) {
+        const link = document.createElement('a');
+        link.download = `coordinator-hub-qr-${gallery?.title || 'gallery'}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        toast.success('QR Code downloaded!');
+      }
+    }
+  };
+
   // Bulk action handler
   const handleBulkAction = async (action, sectionId = null) => {
     if (selectedPhotos.size === 0) {
