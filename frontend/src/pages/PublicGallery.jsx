@@ -1110,7 +1110,7 @@ const PublicGallery = () => {
                         onClick={() => handleSectionDownload(null, 'All_Photos')}
                         disabled={downloadingSection}
                         className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-white/10 transition-colors text-left"
-                        style={{ color: currentTheme.colors.text }}
+                        style={{ color: getContrastTextColor(currentTheme.colors.secondary) }}
                       >
                         <div className="flex items-center gap-3">
                           <Download className="w-4 h-4" style={{ color: currentTheme.colors.accent }} />
@@ -1123,7 +1123,7 @@ const PublicGallery = () => {
                       
                       {/* Section Divider */}
                       {downloadInfo.sections?.length > 0 && (
-                        <div className="border-t my-2" style={{ borderColor: currentTheme.colors.text + '20' }} />
+                        <div className="border-t my-2" style={{ borderColor: getSubtleTextColor(currentTheme.colors.secondary, 0.2) }} />
                       )}
                       
                       {/* Individual Sections */}
@@ -1133,7 +1133,7 @@ const PublicGallery = () => {
                           onClick={() => handleSectionDownload(section.id, section.title)}
                           disabled={downloadingSection}
                           className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-white/10 transition-colors text-left"
-                          style={{ color: currentTheme.colors.text }}
+                          style={{ color: getContrastTextColor(currentTheme.colors.secondary) }}
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: currentTheme.colors.accent + '40' }} />
@@ -1149,7 +1149,7 @@ const PublicGallery = () => {
                     {/* Chunk Info */}
                     {downloadInfo.chunk_count > 1 && (
                       <div className="px-4 py-2 text-xs text-center border-t" 
-                           style={{ borderColor: currentTheme.colors.text + '20', color: currentTheme.colors.textLight }}>
+                           style={{ borderColor: getSubtleTextColor(currentTheme.colors.secondary, 0.2), color: getSubtleTextColor(currentTheme.colors.secondary, 0.6) }}>
                         Large downloads split into 250MB parts
                       </div>
                     )}
