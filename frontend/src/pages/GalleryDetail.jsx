@@ -1529,7 +1529,7 @@ const GalleryDetail = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API}/galleries/${id}`, {
+      const updatePayload = {
         title: editFormData.title,
         event_title: editFormData.event_title || null,
         event_date: editFormData.event_date || null,
@@ -1538,7 +1538,17 @@ const GalleryDetail = () => {
         share_link_expiration_days: parseInt(editFormData.share_link_expiration_days),
         guest_upload_enabled_days: parseInt(editFormData.guest_upload_enabled_days),
         theme: editFormData.theme
-      }, {
+      };
+      
+      // Only include password fields if they were changed (not empty)
+      if (editFormData.password && editFormData.password.trim()) {
+        updatePayload.password = editFormData.password;
+      }
+      if (editFormData.download_all_password && editFormData.download_all_password.trim()) {
+        updatePayload.download_all_password = editFormData.download_all_password;
+      }
+      
+      await axios.put(`${API}/galleries/${id}`, updatePayload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Gallery updated successfully!');
