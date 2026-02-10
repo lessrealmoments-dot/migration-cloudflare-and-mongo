@@ -1,94 +1,91 @@
 # Backend Refactoring Plan
 
 ## Current State (February 2026)
-- `server.py`: 10,071 lines
+- `server.py`: **9,967 lines** (down from 10,071)
 - 200 async functions
 - 26 regular functions  
-- 67 Pydantic models
-- 170 API endpoints
+- ~50 Pydantic models (reduced after extracting to models/)
+- 168 API endpoints
 
-## Existing Modular Structure (Partially Used)
-```
-backend/
-├── server.py           # Monolithic (NEEDS REFACTORING)
-├── models/             # EXISTS - partially matches server.py
-│   ├── user.py        # ✅ Has user models
-│   ├── gallery.py     # ✅ Has gallery models
-│   ├── billing.py     # ✅ Has billing models
-│   ├── notification.py # ✅ Has notification models
-│   └── analytics.py   # ✅ Has analytics models
-├── services/           # EXISTS - actively used
-│   ├── storage.py     # ✅ R2/local storage (USED)
-│   ├── auth.py        # ⚠️ NOT imported in server.py
-│   ├── email_service.py # ⚠️ NOT imported in server.py
-│   ├── integrations.py  # ⚠️ NOT imported in server.py
-│   └── notifications.py # ⚠️ NOT imported in server.py
-├── routes/             # EXISTS - empty (placeholder)
-├── core/               # EXISTS - not imported
-│   ├── config.py      # Has config but not used
-│   └── dependencies.py # Has deps but not used
-└── utils/              # NOT EXISTS
-```
+## Progress Tracker ✅
 
-## Phase 1: Safe Cleanup (LOW RISK)
-**Timeline: Can be done now**
+### Phase 1: Models Extraction - COMPLETED ✅
+- ✅ Created `/app/backend/models/video.py` (GalleryVideo, VideoCreate, VideoUpdate, FotoshareVideo, PCloudPhoto)
+- ✅ Created `/app/backend/models/collage.py` (CollagePreset, CollagePresetCreate, CollagePresetUpdate, etc.)
+- ✅ Added ThumbnailRepairRequest, PhotoHealthCheck to `/app/backend/models/gallery.py`
+- ✅ Updated `/app/backend/models/__init__.py` to export all models
+- ✅ Removed duplicate model definitions from server.py
+- **Lines reduced**: 104 lines
 
-1. ✅ Delete unused files:
-   - `/app/=2.0.0` (DONE)
-   
-2. Remove duplicate model definitions:
-   - Compare models in `server.py` with `models/*.py`
-   - Update `models/*.py` to match server.py exactly
-   - Import from models instead of defining in server.py
+### Phase 2: Utils Extraction - COMPLETED ✅
+- ✅ Created `/app/backend/utils/helpers.py` with:
+  - `extract_youtube_video_id()`
+  - `get_youtube_thumbnail_url()`
+  - `get_youtube_embed_url()`
+  - `extract_fotoshare_event_id()`
+  - `extract_pcloud_code()`
+  - `extract_gdrive_folder_id()`
+  - `generate_random_string()`
+  - `format_file_size()`
+- ✅ Created `/app/backend/utils/__init__.py`
+- ✅ server.py now imports from utils.helpers
 
-## Phase 2: Extract Utilities (LOW RISK)
-**Create `/app/backend/utils/helpers.py`**
+## Remaining Work
 
-Move these functions from server.py:
-- `extract_youtube_video_id()`
-- `get_youtube_thumbnail_url()`
-- `get_youtube_embed_url()`
-- `extract_fotoshare_event_id()`
-- `extract_pcloud_code()`
-- `extract_gdrive_folder_id()`
-- `hash_password()` / `verify_password()`
-- `generate_thumbnail()` functions
-
-## Phase 3: Extract Background Tasks (MEDIUM RISK)
-**Create `/app/backend/tasks/background.py`**
-
-Move these functions:
+### Phase 3: Background Tasks (MEDIUM RISK) - NOT STARTED
+Create `/app/backend/tasks/background.py`:
 - `auto_refresh_fotoshare_sections()`
 - `auto_sync_gdrive_sections()`
 - `auto_sync_pcloud_sections()`
 - `auto_sync_drive_task()`
 - `auto_delete_expired_galleries()`
 
-## Phase 4: Extract Routes (HIGH RISK - DO INCREMENTALLY)
-**Create route files one at a time**
+**Complexity**: These tasks have deep dependencies on db, storage, and logging. Need careful extraction.
 
-Priority order:
-1. `/app/backend/routes/health.py` - Simple, low risk
-2. `/app/backend/routes/public.py` - Public gallery endpoints
-3. `/app/backend/routes/auth.py` - Authentication
-4. `/app/backend/routes/admin.py` - Admin endpoints
-5. `/app/backend/routes/galleries.py` - Gallery CRUD
-6. `/app/backend/routes/photos.py` - Photo management
+### Phase 4: Routes Extraction (HIGH RISK) - NOT STARTED
+Extract routes to separate files:
+1. `/app/backend/routes/health.py` - Health check endpoints
+2. `/app/backend/routes/auth.py` - Authentication endpoints
+3. `/app/backend/routes/public.py` - Public gallery endpoints
+4. `/app/backend/routes/galleries.py` - Gallery CRUD
+5. `/app/backend/routes/photos.py` - Photo management
+6. `/app/backend/routes/admin.py` - Admin endpoints
 7. `/app/backend/routes/billing.py` - Subscription/payments
 8. `/app/backend/routes/integrations.py` - Drive, pCloud, Fotoshare
 
-## Testing Strategy
-For each extraction:
-1. Create the new module
-2. Import in server.py (don't remove old code yet)
-3. Test thoroughly
-4. Remove duplicate code from server.py
-5. Deploy and verify
+**Complexity**: Routes use many shared dependencies (db, storage, auth functions). Need to create a shared context module first.
 
-## Current Blockers
-- Production is live - can't risk breaking changes
-- No automated test suite running in CI/CD
-- Manual testing required for each change
+## Updated File Structure
+```
+backend/
+├── server.py           # Main app (9,967 lines - reduced from 10,071)
+├── models/             # ✅ UPDATED - Now used by server.py
+│   ├── __init__.py     # ✅ Exports all models
+│   ├── user.py         
+│   ├── gallery.py      # ✅ Added ThumbnailRepairRequest, PhotoHealthCheck
+│   ├── billing.py      
+│   ├── notification.py 
+│   ├── analytics.py    
+│   ├── video.py        # ✅ NEW - Video/Section models
+│   └── collage.py      # ✅ NEW - Collage preset models
+├── services/           
+│   ├── storage.py      # ✅ Used
+│   ├── auth.py         # ⚠️ Not used
+│   ├── email_service.py # ⚠️ Not used
+│   ├── integrations.py  # ⚠️ Not used
+│   └── notifications.py # ⚠️ Not used
+├── utils/              # ✅ NEW
+│   ├── __init__.py     # ✅ Exports all utils
+│   └── helpers.py      # ✅ URL extraction, string utils
+├── routes/             # Empty - future use
+├── tasks/              # Empty - future use
+└── core/               # Not used
+```
 
-## Recommendation
-Start with Phase 1 and 2 (low risk), then do Phase 3 and 4 incrementally with thorough testing between each step.
+## Testing After Refactoring
+All tests passed:
+- ✅ Server module loads successfully
+- ✅ All 168 API routes registered
+- ✅ Storage backend: Cloudflare R2
+- ✅ Background tasks running
+
