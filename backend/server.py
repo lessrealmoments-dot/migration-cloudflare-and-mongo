@@ -98,6 +98,10 @@ from models.billing import (
     GlobalFeatureToggles,
     # Note: FeatureToggle and UserFeatureToggle in server.py have different fields
 )
+from models.notification import (
+    Notification,
+    NotificationCreate,
+)
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import io
