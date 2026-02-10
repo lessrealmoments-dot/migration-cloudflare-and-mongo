@@ -1988,7 +1988,7 @@ const PublicPhotoItem = ({ photo, photoIndex, onView, onDownload, isGuest }) => 
     onClick={() => onView(photoIndex)}
   >
     <OptimizedImage
-      src={`${BACKEND_URL}${photo.url}`}
+      src={getImageUrl(photo.url)}
       alt="Gallery photo"
       className="w-full h-auto rounded-sm"
     />
