@@ -4159,6 +4159,7 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         cover_photo_url=gallery.get("cover_photo_url"),
         event_title=gallery.get("event_title"),
         event_date=gallery.get("event_date"),
+        coordinator_name=gallery.get("coordinator_name"),
         share_link_expiration_date=gallery.get("share_link_expiration_date"),
         guest_upload_expiration_date=gallery.get("guest_upload_expiration_date"),
         guest_upload_enabled=True,
