@@ -315,6 +315,8 @@ const FotoshareContributorUpload = () => {
             </div>
           )}
         </div>
+        </>
+        )}
         
         {/* Footer */}
         <p className="text-center text-sm text-zinc-500 mt-8">
