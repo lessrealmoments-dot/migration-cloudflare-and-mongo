@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
@@ -12,6 +12,8 @@ const API = `${BACKEND_URL}/api`;
 const ContributorUpload = () => {
   const { contributorLink } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const hubLink = searchParams.get('hub');
   const brandConfig = useBrandConfig();
   
   const [loading, setLoading] = useState(true);
@@ -27,6 +29,17 @@ const ContributorUpload = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState([]);
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
+  
+  // Navigate back to coordinator hub
+  const goBackToHub = () => {
+    if (hubLink) {
+      navigate(`/coordinator/${hubLink}`);
+    } else if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.close();
+    }
+  };
 
   useEffect(() => {
     const fetchInfo = async () => {
