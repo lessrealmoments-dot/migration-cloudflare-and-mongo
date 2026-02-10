@@ -174,7 +174,8 @@ class PublicGallery(BaseModel):
     guest_upload_enabled: bool = True
     has_download_all_password: bool = False
     theme: str = "classic"
-    photo_count: int = 0
+    photo_count: int = 0  # Total photos (R2 + Google Drive + pCloud)
+    video_count: int = 0  # Total videos (Fotoshare/360Glam + YouTube)
     # Display settings for public view
     display_mode: str = "slideshow"
     display_transition: str = "crossfade"
