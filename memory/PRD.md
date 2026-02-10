@@ -1005,14 +1005,124 @@ Integrated Google Drive as a photo source for galleries. This allows photographe
 |-------|---------|
 | `/d/{link}` | Google Drive contributor upload page |
 
+### Auto-Sync
+- Background task runs every **15 minutes**
+- Checks all Google Drive sections with `gdrive_folder_id` set
+- Syncs every **30 minutes** based on `gdrive_last_sync`
+- Adds new photos without removing existing ones
+
 ### Known Limitations
 - Folder must be shared with "Anyone with the link can view"
 - Large folders may take time to sync
-- Photos must be synced manually with "Refresh" button
 - Google Drive API rate limits may affect large folders
 
 ### Testing Results
 - Backend: 100% tests passed
 - Frontend: All UI elements verified (100%)
 - Test files: `/app/backend/tests/test_gdrive_section.py`, `/app/backend/tests/test_gdrive_contributor.py`
+
+## pCloud Integration Enhancement ✅ (COMPLETED - February 10, 2026)
+
+### Feature Overview
+Enhanced pCloud integration to support a professional contributor workflow matching Google Drive:
+1. Photographers create empty pCloud sections with upload request links
+2. Generate contributor links to share with suppliers
+3. Suppliers visit the contributor page, upload to pCloud, then sync
+
+### Workflow
+1. **Create pCloud Section**
+   - Enter section name
+   - Enter **pCloud Upload Request Link** (required) - the link you share with suppliers
+   - Optionally enter **pCloud Viewing Link** to import photos immediately
+2. **Generate Contributor Link**
+   - Click "Generate Link" on the pCloud section
+   - Uses `/p/{link}` prefix
+   - Share link/QR code with suppliers
+3. **Supplier Uploads**
+   - Supplier visits `/p/{link}` page
+   - Enters their name and role
+   - Clicks "Upload Photos to pCloud" → Opens your upload request link
+   - Clicks "Sync Now" → Provides their viewing link
+   - Photos sync to gallery
+
+### Contributor Page (`/p/{contributorLink}`)
+3-step workflow:
+1. **Your Details**: Name (required), Role (optional)
+2. **Upload Photos**: Button opens pCloud upload request link in new tab
+3. **Sync Photos**: Manual sync by providing pCloud viewing/share link
+
+### Auto-Sync
+- Background task runs every **15 minutes**
+- Checks all pCloud sections with `pcloud_code` set
+- Syncs every **30 minutes** based on `pcloud_last_sync`
+- Adds new photos without removing existing ones
+
+### API Endpoints
+- `POST /api/galleries/{id}/pcloud-sections` - Create section (now supports optional viewing URL)
+- `POST /api/contributor/{link}/pcloud` - Submit pCloud viewing link as contributor
+- `POST /api/galleries/{id}/pcloud-sections/{section_id}/refresh` - Manual refresh
+
+### Database Schema Updates
+```javascript
+// sections collection (pcloud type)
+{
+  type: "pcloud",
+  pcloud_code: String,           // Extracted code from viewing link (null if empty)
+  pcloud_folder_name: String,
+  pcloud_upload_link: String,    // NEW: Upload request link for suppliers
+  pcloud_last_sync: String,
+  pcloud_error: String,
+  contributor_name: String,
+  contributor_role: String,
+  contributor_link: String,
+  contributor_enabled: Boolean
+}
+```
+
+### Files Modified/Created
+- `/app/backend/server.py`: Updated pCloud section creation, added contributor endpoint, added auto-sync
+- `/app/frontend/src/pages/GalleryDetail.jsx`: Updated pCloud form with upload link field
+- `/app/frontend/src/pages/PcloudContributorUpload.jsx`: NEW - Contributor upload page
+- `/app/frontend/src/App.js`: Added route `/p/:contributorLink`
+
+### Routes
+| Route | Purpose |
+|-------|---------|
+| `/p/{link}` | pCloud contributor upload page |
+
+### Testing Results
+- Backend: 100% tests passed
+- Frontend: All UI elements verified (100%)
+- Test file: `/app/backend/tests/test_pcloud_contributor.py`
+
+## Contributors Section (Public Gallery)
+
+### How It Works
+The public gallery automatically aggregates contributors from all section types:
+- Photo sections (guest uploads)
+- Video sections (videographers)
+- 360 Booth/Fotoshare (booth suppliers)
+- pCloud (photo suppliers)
+- Google Drive (photo suppliers)
+
+### Display Format
+```
+THE STORY, CURATED BY
+[Gallery Owner Name]
+
+WITH
+[Contributor 1 Name]
+[Contributor 1 Role]
+
+[Contributor 2 Name]
+[Contributor 2 Role]
+...
+```
+
+### How Contributors Are Connected
+Each section type stores contributor info:
+- `contributor_name`: Name/company displayed in "WITH" section
+- `contributor_role`: Role displayed below name
+
+When contributors submit via their respective upload pages (/c/, /v/, /f/, /d/, /p/), their name and role are automatically saved to the section and displayed in the public gallery.
 
