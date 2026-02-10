@@ -48,17 +48,19 @@ def extract_fotoshare_event_id(url: str) -> Optional[str]:
 # ============ pCloud Utilities ============
 
 def extract_pcloud_code(url: str) -> Optional[str]:
-    """Extract the code from a pCloud public folder URL"""
+    """Extract the share code from various pCloud URL formats"""
     patterns = [
-        r'e\.pcloud\.link/publink/show\?code=([a-zA-Z0-9]+)',
-        r'u\.pcloud\.link/publink/show\?code=([a-zA-Z0-9]+)',
-        r'pcloud\.link/publink/show\?code=([a-zA-Z0-9]+)',
-        r'code=([a-zA-Z0-9]+)',
+        r'code=([a-zA-Z0-9]+)',  # ?code=xxx or &code=xxx
+        r'publink/show\?code=([a-zA-Z0-9]+)',
+        r'#page=publink&code=([a-zA-Z0-9]+)',
     ]
     for pattern in patterns:
         match = re.search(pattern, url)
         if match:
             return match.group(1)
+    # If it's just the code itself (no URL)
+    if re.match(r'^[a-zA-Z0-9]+$', url):
+        return url
     return None
 
 
