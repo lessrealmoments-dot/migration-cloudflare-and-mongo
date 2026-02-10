@@ -93,6 +93,7 @@ function App() {
   }
 
   return (
+    <HelmetProvider>
     <div className="App">
       <BrowserRouter>
         <Routes>
@@ -126,6 +127,7 @@ function App() {
       </BrowserRouter>
       <Toaster position="top-right" richColors />
     </div>
+    </HelmetProvider>
   );
 }
 
