@@ -8718,25 +8718,33 @@ async def reject_payment(data: RejectPayment, background_tasks: BackgroundTasks,
 
 @api_router.post("/admin/upload-payment-qr")
 async def upload_payment_qr(file: UploadFile = File(...), method: str = Form(...), admin: dict = Depends(get_admin_user)):
-    """Upload QR code image for a payment method"""
+    """Upload QR code image for a payment method - stores in R2"""
     if method not in ["gcash", "maya", "bank"]:
         raise HTTPException(status_code=400, detail="Invalid payment method")
-    
-    # Create directory if not exists
-    qr_dir = Path("uploads/payment_qr")
-    qr_dir.mkdir(parents=True, exist_ok=True)
     
     # Generate filename with method name
     ext = file.filename.split('.')[-1] if '.' in file.filename else 'png'
     filename = f"{method}_qr_{uuid.uuid4().hex[:8]}.{ext}"
-    file_path = qr_dir / filename
     
-    # Save file
+    # Read file content
     content = await file.read()
-    with open(file_path, "wb") as f:
-        f.write(content)
+    content_type = file.content_type or f"image/{ext}"
     
-    return {"url": f"/api/files/payment_qr/{filename}"}
+    # Upload to R2 if enabled, otherwise save locally
+    if storage.r2_enabled:
+        file_key = f"payment_qr/{filename}"
+        url = await storage.upload_file(content, file_key, content_type)
+        logger.info(f"Payment QR uploaded to R2: {filename}")
+        return {"url": url}
+    else:
+        # Fallback to local storage
+        qr_dir = Path("uploads/payment_qr")
+        qr_dir.mkdir(parents=True, exist_ok=True)
+        file_path = qr_dir / filename
+        with open(file_path, "wb") as f:
+            f.write(content)
+        logger.info(f"Payment QR uploaded locally: {filename}")
+        return {"url": f"/api/files/payment_qr/{filename}"}
 
 @api_router.post("/admin/assign-override")
 async def assign_override_mode(data: AssignOverrideMode, admin: dict = Depends(get_admin_user)):
