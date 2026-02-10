@@ -1544,11 +1544,21 @@ const GalleryDetail = () => {
         theme: editFormData.theme
       };
       
-      // Only include password fields if they were changed (not empty)
-      if (editFormData.password && editFormData.password.trim()) {
+      // Handle gallery access password
+      if (!editFormData.hasGalleryPassword && gallery?.has_password) {
+        // User wants to remove password
+        updatePayload.remove_password = true;
+      } else if (editFormData.hasGalleryPassword && editFormData.password && editFormData.password.trim()) {
+        // User wants to set/change password
         updatePayload.password = editFormData.password;
       }
-      if (editFormData.download_all_password && editFormData.download_all_password.trim()) {
+      
+      // Handle download password
+      if (!editFormData.hasDownloadPassword && gallery?.has_download_all_password) {
+        // User wants to remove download password
+        updatePayload.remove_download_password = true;
+      } else if (editFormData.hasDownloadPassword && editFormData.download_all_password && editFormData.download_all_password.trim()) {
+        // User wants to set/change download password
         updatePayload.download_all_password = editFormData.download_all_password;
       }
       
