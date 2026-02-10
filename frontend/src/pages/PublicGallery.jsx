@@ -712,8 +712,44 @@ const PublicGallery = () => {
   // Determine if theme is dark
   const isDarkTheme = ['modern', 'neon', 'blackgold'].includes(gallery?.theme);
 
+  // Get cover photo URL for OG tags
+  const getCoverPhotoUrl = () => {
+    if (gallery?.cover_photo_url) {
+      const coverUrl = gallery.cover_photo_url;
+      if (coverUrl.startsWith('http')) return coverUrl;
+      return `${BACKEND_URL}${coverUrl}`;
+    }
+    // Fallback to first photo
+    if (photos.length > 0 && photos[0]?.url) {
+      const photoUrl = photos[0].url;
+      if (photoUrl.startsWith('http')) return photoUrl;
+      return `${BACKEND_URL}${photoUrl}`;
+    }
+    return null;
+  };
+
+  const ogTitle = gallery?.event_title || gallery?.title || 'Photo Gallery';
+  const ogDescription = gallery?.description || `Photos by ${gallery?.photographer_name || 'EventsGallery'}`;
+  const ogImage = getCoverPhotoUrl();
+
   return (
     <div className="themed-gallery min-h-screen overflow-x-hidden" style={themeStyles} data-testid="public-gallery">
+      
+      {/* Dynamic Open Graph Meta Tags for Social Sharing */}
+      <Helmet>
+        <title>{ogTitle} | {brandConfig.brand_name || 'EventsGallery'}</title>
+        <meta name="description" content={ogDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={ogTitle} />
+        <meta property="og:description" content={ogDescription} />
+        <meta property="og:site_name" content={brandConfig.brand_name || 'EventsGallery'} />
+        <meta property="og:url" content={window.location.href} />
+        {ogImage && <meta property="og:image" content={ogImage} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={ogTitle} />
+        <meta name="twitter:description" content={ogDescription} />
+        {ogImage && <meta name="twitter:image" content={ogImage} />}
+      </Helmet>
       
       {/* Floating Glass Navigation */}
       <motion.nav 
