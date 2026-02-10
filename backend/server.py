@@ -57,8 +57,19 @@ if storage_module is None:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# YouTube URL patterns and utilities
-def extract_youtube_video_id(url: str) -> Optional[str]:
+# Import utility functions from utils package
+from utils.helpers import (
+    extract_youtube_video_id,
+    get_youtube_thumbnail_url,
+    get_youtube_embed_url,
+    extract_fotoshare_event_id,
+    extract_pcloud_code,
+    extract_gdrive_folder_id,
+)
+
+# YouTube URL patterns and utilities - NOW IMPORTED FROM utils.helpers
+# Keeping local definitions as fallback for backward compatibility
+def _extract_youtube_video_id(url: str) -> Optional[str]:
     """Extract video ID from various YouTube URL formats"""
     patterns = [
         r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})',
