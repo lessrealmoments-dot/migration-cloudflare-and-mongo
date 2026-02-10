@@ -798,8 +798,8 @@ DEMO_FEATURE_WINDOW_HOURS = 6
 
 # ============ Google Drive Integration ============
 
-def extract_gdrive_folder_id(url: str) -> Optional[str]:
-    """Extract folder ID from various Google Drive URL formats"""
+def _extract_gdrive_folder_id_deprecated(url: str) -> Optional[str]:
+    """DEPRECATED - Now imported from utils.helpers. Kept for reference."""
     patterns = [
         r'drive\.google\.com/drive/folders/([a-zA-Z0-9_-]+)',
         r'drive\.google\.com/drive/u/\d+/folders/([a-zA-Z0-9_-]+)',
