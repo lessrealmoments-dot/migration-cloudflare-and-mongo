@@ -4128,7 +4128,7 @@ const GalleryDetail = () => {
                   onClick={guestSelectMode ? () => toggleGuestPhotoSelection(photo.id) : undefined}
                 >
                   <OptimizedImage
-                    src={`${BACKEND_URL}${photo.url}`}
+                    src={getImageUrl(photo.url)}
                     alt="Guest upload"
                     className={`w-full h-auto rounded-sm ${guestSelectMode ? 'cursor-pointer' : 'cursor-pointer'}`}
                     onClick={guestSelectMode ? undefined : () => {
