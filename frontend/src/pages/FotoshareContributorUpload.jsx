@@ -116,6 +116,54 @@ const FotoshareContributorUpload = () => {
           </p>
         </div>
         
+        {/* Role Confirmation */}
+        {!roleConfirmed && (
+          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Camera className="w-7 h-7 text-amber-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-zinc-800 mb-2">Please Confirm Your Role</h2>
+            </div>
+            
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
+              <p className="text-amber-800 text-lg text-center mb-3">
+                Are you sure you are the
+              </p>
+              <p className="text-2xl font-bold text-center text-amber-700" style={{ fontFamily: 'Playfair Display, serif' }}>
+                OFFICIAL 360 BOOTH OPERATOR
+              </p>
+              <p className="text-amber-800 text-lg text-center mt-3">
+                for the section "<strong>{galleryInfo?.section_name}</strong>"?
+              </p>
+            </div>
+            
+            <p className="text-zinc-500 text-sm mb-6 text-center">
+              ⚠️ Please make sure you're uploading to the correct section.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => window.history.back()}
+                className="flex-1 bg-zinc-100 text-zinc-700 py-3 rounded-xl font-medium hover:bg-zinc-200 transition-colors"
+              >
+                No, Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => setRoleConfirmed(true)}
+                className="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors"
+                data-testid="confirm-role-btn"
+              >
+                Yes, I Confirm
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {roleConfirmed && (
+        <>
         {/* Main Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Success Result */}
