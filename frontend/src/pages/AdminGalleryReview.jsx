@@ -8,6 +8,15 @@ import OptimizedImage from '@/components/OptimizedImage';
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Helper to get the correct image URL (handles both CDN and local URLs)
+const getImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  return `${BACKEND_URL}${url}`;
+};
+
 const AdminGalleryReview = () => {
   const { galleryId } = useParams();
   const navigate = useNavigate();
