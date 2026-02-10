@@ -1522,7 +1522,9 @@ const GalleryDetail = () => {
       guest_upload_enabled_days: 3,
       theme: gallery.theme || 'classic',
       password: '',  // Leave blank - user enters new password to change
-      download_all_password: ''  // Leave blank - user enters new password to change
+      download_all_password: '',  // Leave blank - user enters new password to change
+      hasGalleryPassword: gallery.has_password || false,  // Toggle state
+      hasDownloadPassword: gallery.has_download_all_password || false  // Toggle state
     });
     setShowEditModal(true);
   };
