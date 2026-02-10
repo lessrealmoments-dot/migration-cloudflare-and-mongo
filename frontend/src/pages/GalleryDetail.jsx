@@ -2514,7 +2514,7 @@ const GalleryDetail = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowSectionForm(false); setNewSectionType('photo'); setNewFotoshareUrl(''); setNewPcloudUrl(''); }}
+                  onClick={() => { setShowSectionForm(false); setNewSectionType('photo'); setNewFotoshareUrl(''); setNewPcloudUrl(''); setNewGdriveUrl(''); setNewGdriveContributorName(''); setNewGdriveContributorRole(''); }}
                   className="border border-input h-10 px-6 rounded-sm"
                 >
                   Cancel
