@@ -112,6 +112,8 @@ function App() {
           <Route path="/d/:contributorLink" element={<GdriveContributorUpload />} />
           {/* pCloud Contributor Upload Route */}
           <Route path="/p/:contributorLink" element={<PcloudContributorUpload />} />
+          {/* Coordinator Hub Route */}
+          <Route path="/coordinator/:hubLink" element={<CoordinatorHub />} />
           {/* Display/Slideshow Routes */}
           <Route path="/display/:shareLink" element={<Display />} />
           {/* Admin Routes */}
