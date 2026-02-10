@@ -169,6 +169,9 @@ class BillingSettings(BaseModel):
             "qr_code_url": None
         }
     })
+    # Universal paid plan settings (applies to Standard and Pro)
+    paid_gallery_expiration_months: int = 6  # 1-6 months
+    paid_storage_limit_gb: int = -1  # -1 = unlimited, or 10, 20, 30, etc.
 
 
 class PaymentDispute(BaseModel):
