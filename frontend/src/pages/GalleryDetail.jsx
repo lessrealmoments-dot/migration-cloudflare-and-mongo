@@ -4142,6 +4142,44 @@ const GalleryDetail = () => {
                   ))}
                 </div>
               </div>
+              
+              {/* Password Settings Section */}
+              <div className="border-t pt-6 mt-6">
+                <h4 className="text-sm font-medium mb-4">Password Settings</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Gallery Access Password</label>
+                    <input
+                      type="password"
+                      value={editFormData.password || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                      placeholder={gallery?.has_password ? '••••••••' : 'No password set'}
+                      className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
+                    />
+                    <p className="text-xs text-zinc-500 mt-1">
+                      {gallery?.has_password 
+                        ? 'Leave blank to keep current password, or enter new password to change' 
+                        : 'Set a password to restrict access to this gallery'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Download Password</label>
+                    <input
+                      type="password"
+                      value={editFormData.download_all_password || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, download_all_password: e.target.value })}
+                      placeholder={gallery?.has_download_all_password ? '••••••••' : 'No password set'}
+                      className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
+                    />
+                    <p className="text-xs text-zinc-500 mt-1">
+                      {gallery?.has_download_all_password 
+                        ? 'Leave blank to keep current password, or enter new password to change'
+                        : 'Set a password for clients to download photos (leave blank for no password)'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
               <div className="flex gap-3 justify-end">
                 <button
                   type="button"
