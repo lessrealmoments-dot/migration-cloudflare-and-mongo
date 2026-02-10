@@ -6311,11 +6311,34 @@ async def bulk_photo_action(gallery_id: str, data: BulkPhotoAction, current_user
         for photo_id in data.photo_ids:
             photo = await db.photos.find_one({"id": photo_id, "gallery_id": gallery_id}, {"_id": 0})
             if photo:
-                file_path = UPLOAD_DIR / photo["filename"]
-                file_size = 0
+                filename = photo.get("filename", "")
+                file_ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
+                file_size = photo.get("file_size", 0)
+                
+                # Delete from R2 if enabled
+                if storage.r2_enabled:
+                    try:
+                        await storage.delete_photo_with_thumbnails(photo_id, file_ext)
+                        logger.info(f"Bulk delete: Deleted photo from R2: {photo_id}")
+                    except Exception as e:
+                        logger.warning(f"Bulk delete: Failed to delete photo {photo_id} from R2: {e}")
+                
+                # Also delete from local filesystem
+                file_path = UPLOAD_DIR / filename
                 if file_path.exists():
-                    file_size = file_path.stat().st_size
+                    if file_size == 0:
+                        file_size = file_path.stat().st_size
                     file_path.unlink()
+                
+                # Delete local thumbnails
+                for size in ["small", "medium"]:
+                    thumb_path = THUMBNAILS_DIR / f"{photo_id}_{size}.jpg"
+                    if thumb_path.exists():
+                        try:
+                            thumb_path.unlink()
+                        except:
+                            pass
+                
                 if file_size > 0:
                     await db.users.update_one(
                         {"id": current_user["id"]},
