@@ -320,9 +320,9 @@ const CollageDisplay = () => {
   const getPhotoUrl = useCallback((photo) => {
     if (!photo) return '';
     if (photo.thumbnail_medium_url) {
-      return `${BACKEND_URL}${photo.thumbnail_medium_url}`;
+      return getImageUrl(photo.thumbnail_medium_url);
     }
-    return `${BACKEND_URL}${photo.url}`;
+    return getImageUrl(photo.url);
   }, []);
 
   const generateTileSet = useCallback((startIndex = null) => {
