@@ -189,6 +189,55 @@ const VideographerUpload = () => {
         </div>
       </div>
       
+      {/* Role Confirmation Screen */}
+      {!roleConfirmed && (
+        <div className="max-w-xl mx-auto px-4 py-12">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Film className="w-8 h-8 text-amber-400" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">Please Confirm Your Role</h2>
+              <p className="text-zinc-400">Before proceeding, please verify your assignment</p>
+            </div>
+            
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-6 mb-6">
+              <p className="text-amber-200 text-lg text-center mb-3">
+                Are you sure you are the
+              </p>
+              <p className="text-2xl font-bold text-center text-amber-400" style={{ fontFamily: 'Playfair Display, serif' }}>
+                OFFICIAL VIDEOGRAPHER
+              </p>
+              <p className="text-amber-200 text-lg text-center mt-3">
+                for the section "<strong>{galleryInfo?.section_name}</strong>"?
+              </p>
+            </div>
+            
+            <p className="text-zinc-500 text-sm mb-6 text-center">
+              ⚠️ Please make sure you're uploading to the correct section. 
+              If you're not the assigned videographer for this section, please go back.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => window.history.back()}
+                className="flex-1 bg-white/10 text-white py-3 rounded-xl font-medium hover:bg-white/20 transition-colors"
+              >
+                No, Go Back
+              </button>
+              <button
+                onClick={() => setRoleConfirmed(true)}
+                className="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors"
+                data-testid="confirm-role-btn"
+              >
+                Yes, I Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {roleConfirmed && (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="grid md:grid-cols-2 gap-8">
           {/* Upload Form */}
