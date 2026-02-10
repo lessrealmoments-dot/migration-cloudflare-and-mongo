@@ -3776,16 +3776,26 @@ async def upload_landing_image(
         raise HTTPException(status_code=400, detail="File must be an image")
     
     # Generate unique filename
-    file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    file_ext = file.filename.split('.')[-1].lower() if '.' in file.filename else 'jpg'
     filename = f"landing_{image_slot}_{uuid.uuid4().hex[:8]}.{file_ext}"
-    file_path = UPLOAD_DIR / filename
     
-    # Save the file
-    with open(file_path, 'wb') as f:
-        shutil.copyfileobj(file.file, f)
+    # Read file content
+    file_content = await file.read()
     
-    # Update landing config with new image URL
-    image_url = f"/api/photos/serve/{filename}"
+    # Use R2 storage if enabled
+    if storage.r2_enabled:
+        r2_key = f"photos/{filename}"
+        success, url_or_error = await storage.upload_file(r2_key, file_content, file.content_type or 'image/jpeg')
+        if not success:
+            logger.error(f"R2 upload failed for landing image {filename}: {url_or_error}")
+            raise HTTPException(status_code=500, detail="Failed to save image. Please try again.")
+        image_url = url_or_error
+    else:
+        # Fallback to local filesystem
+        file_path = UPLOAD_DIR / filename
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+        image_url = f"/api/photos/serve/{filename}"
     
     await db.site_config.update_one(
         {"type": "landing"},
