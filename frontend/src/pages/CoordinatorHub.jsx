@@ -59,13 +59,14 @@ const StatusBadge = ({ status, count }) => {
 };
 
 // Section Card Component
-const SectionCard = ({ section, baseUrl }) => {
+const SectionCard = ({ section, baseUrl, hubLink }) => {
   const [showQR, setShowQR] = useState(false);
   const config = sectionConfig[section.type] || sectionConfig.photo;
   const Icon = config.icon;
   
+  // Add hub query parameter so supplier can navigate back
   const contributorUrl = section.contributor_link 
-    ? `${baseUrl}${section.link_prefix}${section.contributor_link}`
+    ? `${baseUrl}${section.link_prefix}${section.contributor_link}?hub=${hubLink}`
     : null;
   
   const copyLink = () => {
