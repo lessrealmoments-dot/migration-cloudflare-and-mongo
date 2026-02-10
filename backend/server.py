@@ -47,6 +47,12 @@ from models.gallery import (
     ThumbnailRepairRequest,
     PhotoHealthCheck,
 )
+from models.analytics import (
+    GalleryAnalytics,
+    PhotographerAnalytics,
+    AdminAnalytics,
+    GoogleDriveBackupStatus,
+)
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import io
