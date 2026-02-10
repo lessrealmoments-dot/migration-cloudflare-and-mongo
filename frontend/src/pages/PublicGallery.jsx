@@ -978,7 +978,7 @@ const PublicGallery = () => {
                 className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-medium transition-all duration-300 shadow-lg hover:shadow-xl"
                 style={{ 
                   backgroundColor: currentTheme.colors.accent,
-                  color: isDarkTheme ? '#000' : '#fff'
+                  color: getContrastTextColor(currentTheme.colors.accent)
                 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
