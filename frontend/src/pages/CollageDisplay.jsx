@@ -5,6 +5,15 @@ import { Maximize, Minimize, Pause, Play, Settings, Camera } from 'lucide-react'
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Helper to get the correct image URL (handles both CDN and local URLs)
+const getImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  return `${BACKEND_URL}${url}`;
+};
+
 // Poll interval based on photo count
 const getPollInterval = (photoCount) => {
   if (photoCount < 10) return 10000;
