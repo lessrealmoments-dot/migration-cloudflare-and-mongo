@@ -1832,6 +1832,9 @@ class GalleryUpdate(BaseModel):
     guest_upload_enabled_days: Optional[int] = None
     download_all_password: Optional[str] = None
     theme: Optional[str] = None
+    # Password removal flags
+    remove_password: Optional[bool] = None  # Set to True to remove gallery password
+    remove_download_password: Optional[bool] = None  # Set to True to remove download password
     # Display settings
     display_mode: Optional[str] = None
     display_transition: Optional[str] = None
