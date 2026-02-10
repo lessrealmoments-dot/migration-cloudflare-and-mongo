@@ -212,7 +212,7 @@ const PricingPage = () => {
     },
     {
       q: 'How long are galleries stored?',
-      a: 'All galleries are retained for 6 months from creation date, regardless of your plan. After 6 months, galleries are automatically deleted.'
+      a: `Your albums are safely stored for at least ${proFeatures.gallery_retention || '6 months'} from creation date. After this period, galleries may be automatically archived.`
     },
     {
       q: 'What happens if I downgrade?',
