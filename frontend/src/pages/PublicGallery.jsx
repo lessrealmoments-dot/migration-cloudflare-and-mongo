@@ -1888,7 +1888,7 @@ const PublicGallery = () => {
           onClose={() => setPcloudLightboxIndex(null)}
           onDownload={(photo) => {
             // Download pCloud photo using full URL
-            const downloadUrl = `${BACKEND_URL}${photo.url}`;
+            const downloadUrl = getImageUrl(photo.url);
             const link = document.createElement('a');
             link.href = downloadUrl;
             link.download = photo.name || 'photo.jpg';
