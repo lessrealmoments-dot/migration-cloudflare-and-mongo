@@ -2141,6 +2141,95 @@ const GalleryDetail = () => {
           </div>
         )}
 
+        {/* Coordinator Hub Modal */}
+        {showCoordinatorHubModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" data-testid="coordinator-hub-modal">
+            <div className="bg-white rounded-xl max-w-md w-full overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-zinc-200 bg-gradient-to-r from-orange-500 to-amber-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">Coordinator Hub</h3>
+                    <p className="text-sm text-white/80 mt-1">Share this with your coordinator</p>
+                  </div>
+                  <button
+                    onClick={() => setShowCoordinatorHubModal(false)}
+                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5 text-white" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-orange-800">
+                    <strong>📋 What is this?</strong><br/>
+                    A centralized page where your coordinator can see all sections and share upload links with suppliers (photographer, videographer, 360 booth, etc.)
+                  </p>
+                </div>
+                
+                <div ref={coordinatorQrRef} className="bg-white p-6 rounded-lg flex justify-center border">
+                  <QRCodeSVG 
+                    value={coordinatorHubLink}
+                    size={200}
+                    level="H"
+                    includeMargin={true}
+                  />
+                </div>
+                <p className="text-center text-sm text-zinc-500 mt-4 break-all px-4 select-all">
+                  {coordinatorHubLink}
+                </p>
+              </div>
+              
+              <div className="p-4 border-t border-zinc-200 flex gap-3">
+                <button
+                  onClick={copyCoordinatorHubLink}
+                  className="flex-1 border border-zinc-300 py-3 rounded-lg hover:bg-zinc-50 font-medium flex items-center justify-center gap-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copy Link
+                </button>
+                <button
+                  onClick={() => window.open(coordinatorHubLink, '_blank')}
+                  className="flex-1 border border-zinc-300 py-3 rounded-lg hover:bg-zinc-50 font-medium flex items-center justify-center gap-2"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open Hub
+                </button>
+                <button
+                  onClick={() => {
+                    const svg = coordinatorQrRef.current?.querySelector('svg');
+                    if (svg) {
+                      const svgData = new XMLSerializer().serializeToString(svg);
+                      const canvas = document.createElement('canvas');
+                      const ctx = canvas.getContext('2d');
+                      const img = new Image();
+                      img.onload = () => {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                        const link = document.createElement('a');
+                        link.download = `coordinator-hub-qr-${gallery?.title || 'gallery'}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        toast.success('QR Code downloaded!');
+                      };
+                      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+                    }
+                  }}
+                  data-testid="download-coordinator-qr-btn"
+                  className="flex-1 bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 font-medium flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  QR
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Collage Layout Preset Picker Modal */}
         {showCollagePresetPicker && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" data-testid="collage-preset-picker-modal">
