@@ -8,7 +8,36 @@ Build a photo-sharing application for event photographers with:
 - **Complete subscription system with plans, credits, billing, and pricing page**
 - **Professional, cinematic public gallery experience**
 
-## Enhanced Download Feature (NEW - December 2025) ✅
+## Latest Updates (February 2026)
+
+### R2 Storage Integration Fix ✅
+- Fixed critical bug where uploads went to local storage instead of R2
+- All upload endpoints now correctly use Cloudflare R2:
+  - `upload_photo` (photographer uploads)
+  - `upload_photo_guest` (guest uploads)
+  - `upload_contributor_photo` (contributor uploads)
+  - `upload_cover_photo` (gallery covers)
+  - `upload_landing_image` (admin landing page)
+  - `upload_favicon` (admin favicon)
+- Fixed frontend URL handling for CDN vs local paths
+
+### Auto-Delete Bug Fix ✅
+- Fixed `auto_delete_expired_galleries()` function
+- Was using undefined variables (`STORAGE_BACKEND`, `delete_from_r2`)
+- Now correctly uses the `storage` service for R2 operations
+
+### Subscription UI Enhancement ✅
+- Dashboard now shows subscription expiration dates
+- Extra credits expiration displayed (12 months from purchase)
+- Credits breakdown: "X event credits + Y extra"
+
+### Code Analysis Complete ✅
+- Full codebase audit performed
+- All integrations verified (R2, MongoDB, Email, Drive, pCloud)
+- Created `/app/CODE_ANALYSIS_REPORT.md`
+- Created `/app/backend/REFACTOR_PLAN.md`
+
+## Enhanced Download Feature (December 2025) ✅
 
 ### Section-Based Downloads
 Guests and photographers can now download photos by section:
