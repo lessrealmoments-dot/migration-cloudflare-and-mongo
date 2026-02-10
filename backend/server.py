@@ -1435,29 +1435,9 @@ async def health_check():
 
 # NOTE: Billing models (SubscriptionInfo, AssignOverrideMode, RemoveOverrideMode, UpdatePricing,
 # PurchaseExtraCredits, PaymentProofSubmit, ApprovePayment, RejectPayment, PaymentMethod,
-# BillingSettings, PaymentDispute, Transaction, GlobalFeatureToggles, FeatureToggle,
-# UserFeatureToggle, UpgradeRequest, ExtraCreditRequest) moved to models/billing.py
+# BillingSettings, PaymentDispute, Transaction, GlobalFeatureToggles) moved to models/billing.py
 
-# ============================================
-# NOTIFICATION SYSTEM MODELS  
-# ============================================
-
-class Notification(BaseModel):
-    id: str
-    user_id: str
-    type: str  # "payment_approved", "payment_rejected", "plan_changed", "credits_added"
-    title: str
-    message: str
-    read: bool = False
-    created_at: str
-    metadata: Optional[dict] = None
-
-class NotificationCreate(BaseModel):
-    user_id: str
-    type: str
-    title: str
-    message: str
-    metadata: Optional[dict] = None
+# NOTE: Notification, NotificationCreate models moved to models/notification.py
 
 # ============================================
 # COLLAGE LAYOUT PRESET MODELS
