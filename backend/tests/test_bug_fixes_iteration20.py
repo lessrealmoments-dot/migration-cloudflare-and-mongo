@@ -27,7 +27,7 @@ class TestBugFixes:
             "password": self.password
         })
         if login_response.status_code == 200:
-            self.token = login_response.json().get("token")
+            self.token = login_response.json().get("access_token")
             self.headers = {"Authorization": f"Bearer {self.token}"}
         else:
             pytest.skip("Login failed - skipping authenticated tests")
