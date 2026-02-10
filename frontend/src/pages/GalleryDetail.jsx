@@ -4159,35 +4159,88 @@ const GalleryDetail = () => {
               <div className="border-t pt-6 mt-6">
                 <h4 className="text-sm font-medium mb-4">Password Settings</h4>
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Gallery Access Password</label>
-                    <input
-                      type="password"
-                      value={editFormData.password || ''}
-                      onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
-                      placeholder={gallery?.has_password ? '••••••••' : 'No password set'}
-                      className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
-                    />
-                    <p className="text-xs text-zinc-500 mt-1">
-                      {gallery?.has_password 
-                        ? 'Leave blank to keep current password, or enter new password to change' 
-                        : 'Set a password to restrict access to this gallery'}
-                    </p>
+                  {/* Gallery Access Password */}
+                  <div className="p-4 border border-zinc-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-sm font-medium">Gallery Access Password</label>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editFormData.hasGalleryPassword}
+                          onChange={(e) => setEditFormData({ 
+                            ...editFormData, 
+                            hasGalleryPassword: e.target.checked,
+                            password: e.target.checked ? editFormData.password : ''
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        <span className="ml-2 text-xs text-zinc-500">{editFormData.hasGalleryPassword ? 'Enabled' : 'Disabled'}</span>
+                      </label>
+                    </div>
+                    {editFormData.hasGalleryPassword && (
+                      <>
+                        <input
+                          type="password"
+                          value={editFormData.password || ''}
+                          onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                          placeholder={gallery?.has_password ? 'Enter new password to change' : 'Enter password'}
+                          className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
+                        />
+                        <p className="text-xs text-zinc-500 mt-1">
+                          {gallery?.has_password 
+                            ? 'Leave blank to keep current password, or enter new password to change' 
+                            : 'Set a password to restrict access to this gallery'}
+                        </p>
+                      </>
+                    )}
+                    {!editFormData.hasGalleryPassword && gallery?.has_password && (
+                      <p className="text-xs text-amber-600 mt-1">
+                        ⚠️ Password protection will be removed when you save
+                      </p>
+                    )}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Download Password</label>
-                    <input
-                      type="password"
-                      value={editFormData.download_all_password || ''}
-                      onChange={(e) => setEditFormData({ ...editFormData, download_all_password: e.target.value })}
-                      placeholder={gallery?.has_download_all_password ? '••••••••' : 'No password set'}
-                      className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
-                    />
-                    <p className="text-xs text-zinc-500 mt-1">
-                      {gallery?.has_download_all_password 
-                        ? 'Leave blank to keep current password, or enter new password to change'
-                        : 'Set a password for clients to download photos (leave blank for no password)'}
-                    </p>
+                  
+                  {/* Download Password */}
+                  <div className="p-4 border border-zinc-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-sm font-medium">Download Password</label>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editFormData.hasDownloadPassword}
+                          onChange={(e) => setEditFormData({ 
+                            ...editFormData, 
+                            hasDownloadPassword: e.target.checked,
+                            download_all_password: e.target.checked ? editFormData.download_all_password : ''
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        <span className="ml-2 text-xs text-zinc-500">{editFormData.hasDownloadPassword ? 'Enabled' : 'Disabled'}</span>
+                      </label>
+                    </div>
+                    {editFormData.hasDownloadPassword && (
+                      <>
+                        <input
+                          type="password"
+                          value={editFormData.download_all_password || ''}
+                          onChange={(e) => setEditFormData({ ...editFormData, download_all_password: e.target.value })}
+                          placeholder={gallery?.has_download_all_password ? 'Enter new password to change' : 'Enter password'}
+                          className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
+                        />
+                        <p className="text-xs text-zinc-500 mt-1">
+                          {gallery?.has_download_all_password 
+                            ? 'Leave blank to keep current password, or enter new password to change'
+                            : 'Set a password for clients to download photos'}
+                        </p>
+                      </>
+                    )}
+                    {!editFormData.hasDownloadPassword && gallery?.has_download_all_password && (
+                      <p className="text-xs text-amber-600 mt-1">
+                        ⚠️ Download password will be removed when you save
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
