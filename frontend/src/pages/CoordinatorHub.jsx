@@ -278,8 +278,13 @@ const CoordinatorHub = () => {
               <h1 className="text-2xl font-bold text-zinc-900">
                 {hubData.event_title || hubData.gallery_title}
               </h1>
-              <p className="text-zinc-500">
-                Supplier Coordination Hub • {hubData.photographer_name}
+              {hubData.coordinator_name && (
+                <p className="text-zinc-600 font-medium">
+                  Coordinator: {hubData.coordinator_name}
+                </p>
+              )}
+              <p className="text-zinc-500 text-sm">
+                Supplier Hub by {hubData.photographer_name}
               </p>
               {hubData.event_date && (
                 <p className="text-sm text-zinc-400 mt-1">
