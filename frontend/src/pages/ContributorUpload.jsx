@@ -41,10 +41,10 @@ const ContributorUpload = () => {
         
         setInfo(response.data);
         
-        // If contributor name already exists, skip to upload
+        // If contributor name already exists, skip to role confirmation
         if (response.data.existing_contributor_name) {
           setConfirmedName(response.data.existing_contributor_name);
-          setStep('upload');
+          setStep('role_confirm');
         }
       } catch (err) {
         setError(err.response?.data?.detail || 'Invalid or expired contributor link');
