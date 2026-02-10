@@ -3961,7 +3961,7 @@ const GalleryDetail = () => {
                         <div className="aspect-square rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200">
                           {photo.thumbnail_medium_url || photo.thumbnail_url ? (
                             <img 
-                              src={`${BACKEND_URL}${photo.thumbnail_medium_url || photo.thumbnail_url}`}
+                              src={getImageUrl(photo.thumbnail_medium_url || photo.thumbnail_url)}
                               alt={photo.original_filename || 'Photo'}
                               className="w-full h-full object-cover"
                               onError={(e) => { 
