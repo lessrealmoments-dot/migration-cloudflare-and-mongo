@@ -5784,6 +5784,7 @@ async def get_coordinator_hub(hub_link: str):
         "event_title": gallery.get("event_title"),
         "event_date": gallery.get("event_date"),
         "photographer_name": photographer_name,
+        "coordinator_name": gallery.get("coordinator_name"),
         "sections": sections_data
     }
 
