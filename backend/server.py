@@ -3675,14 +3675,25 @@ async def delete_gallery(gallery_id: str, current_user: dict = Depends(get_curre
     # Delete all photo files and thumbnails
     photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(None)
     for photo in photos:
-        # Delete original file
-        file_path = UPLOAD_DIR / photo["filename"]
+        filename = photo.get("filename", "")
+        photo_id = photo.get("id", "")
+        file_ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
+        
+        # Delete from R2 if enabled
+        if storage.r2_enabled:
+            try:
+                await storage.delete_photo_with_thumbnails(photo_id, file_ext)
+                logger.info(f"Deleted photo from R2: {photo_id}")
+            except Exception as e:
+                logger.warning(f"Failed to delete photo {photo_id} from R2: {e}")
+        
+        # Also delete from local filesystem (for migration/fallback)
+        file_path = UPLOAD_DIR / filename
         if file_path.exists():
             total_storage_freed += file_path.stat().st_size
             file_path.unlink()
         
-        # Delete thumbnails (small and medium)
-        photo_id = photo.get("id", "")
+        # Delete local thumbnails
         for size in ["small", "medium"]:
             thumb_path = THUMBNAILS_DIR / f"{photo_id}_{size}.jpg"
             if thumb_path.exists():
@@ -3694,6 +3705,17 @@ async def delete_gallery(gallery_id: str, current_user: dict = Depends(get_curre
     # Delete cover photo if exists
     if gallery.get("cover_photo_url"):
         cover_filename = gallery["cover_photo_url"].split('/')[-1]
+        
+        # Delete from R2 if enabled
+        if storage.r2_enabled:
+            try:
+                cover_key = f"photos/{cover_filename}"
+                await storage.delete_file(cover_key)
+                logger.info(f"Deleted cover photo from R2: {cover_filename}")
+            except Exception as e:
+                logger.warning(f"Failed to delete cover photo from R2: {e}")
+        
+        # Delete from local filesystem
         cover_path = UPLOAD_DIR / cover_filename
         if cover_path.exists():
             try:
@@ -3706,6 +3728,9 @@ async def delete_gallery(gallery_id: str, current_user: dict = Depends(get_curre
     await db.photos.delete_many({"gallery_id": gallery_id})
     await db.gallery_videos.delete_many({"gallery_id": gallery_id})
     await db.fotoshare_videos.delete_many({"gallery_id": gallery_id})
+    await db.gdrive_photos.delete_many({"gallery_id": gallery_id})
+    await db.pcloud_photos.delete_many({"gallery_id": gallery_id})
+    await db.drive_backups.delete_many({"gallery_id": gallery_id})
     await db.galleries.delete_one({"id": gallery_id})
     
     # Update user's storage used
