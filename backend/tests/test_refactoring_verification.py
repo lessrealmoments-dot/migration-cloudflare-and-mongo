@@ -359,29 +359,48 @@ class TestAdminGlobalFeatureToggles:
         assert response.status_code == 200
         data = response.json()
         
-        # Verify structure includes override modes and plans
-        assert "founders_circle" in data
-        assert "early_partner_beta" in data
-        assert "free" in data
-        assert "standard" in data
-        assert "pro" in data
+        # Verify structure includes override modes and plans (nested structure)
+        assert "override_modes" in data
+        assert "payment_plans" in data
+        assert "feature_definitions" in data
+        
+        # Verify override modes exist
+        assert "founders_circle" in data["override_modes"]
+        assert "early_partner_beta" in data["override_modes"]
+        
+        # Verify payment plans exist
+        assert "free" in data["payment_plans"]
+        assert "standard" in data["payment_plans"]
+        assert "pro" in data["payment_plans"]
         
         print(f"✓ Admin global feature toggles endpoint working")
-        print(f"  Override modes: founders_circle, early_partner_beta, comped_pro, comped_standard, enterprise_access")
-        print(f"  Plans: free, standard, pro")
+        print(f"  Override modes: {list(data['override_modes'].keys())}")
+        print(f"  Plans: {list(data['payment_plans'].keys())}")
 
 
 class TestCollagePresets:
-    """Test collage presets endpoints"""
+    """Test collage presets endpoints - requires authentication"""
     
-    def test_get_public_collage_presets(self):
-        """Test /api/collage-presets endpoint (public)"""
-        response = requests.get(f"{BASE_URL}/api/collage-presets")
+    @pytest.fixture
+    def auth_token(self):
+        """Get authentication token"""
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": USER_EMAIL,
+            "password": USER_PASSWORD
+        })
+        return response.json()["access_token"]
+    
+    def test_get_collage_presets(self, auth_token):
+        """Test /api/collage-presets endpoint (requires auth)"""
+        response = requests.get(
+            f"{BASE_URL}/api/collage-presets",
+            headers={"Authorization": f"Bearer {auth_token}"}
+        )
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
         
-        print(f"✓ Public collage presets endpoint working: {len(data)} presets found")
+        print(f"✓ Collage presets endpoint working: {len(data)} presets found")
 
 
 class TestLandingConfig:
