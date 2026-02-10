@@ -6,6 +6,8 @@ from typing import Optional
 
 # Constants (duplicated from config to avoid circular imports)
 PLAN_FREE = "free"
+PLAN_STANDARD = "standard"
+PLAN_PRO = "pro"
 PAYMENT_NONE = "none"
 
 DEFAULT_PRICING = {
@@ -18,6 +20,7 @@ MODE_FOUNDERS_CIRCLE = "founders_circle"
 MODE_EARLY_PARTNER_BETA = "early_partner_beta"
 MODE_COMPED_PRO = "comped_pro"
 MODE_COMPED_STANDARD = "comped_standard"
+MODE_ENTERPRISE_ACCESS = "enterprise_access"
 
 DEFAULT_MODE_FEATURES = {
     MODE_FOUNDERS_CIRCLE: {
@@ -51,11 +54,19 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": False,
         "collaboration_link": False
+    },
+    MODE_ENTERPRISE_ACCESS: {
+        "unlimited_token": True,
+        "copy_share_link": True,
+        "qr_code": True,
+        "view_public_gallery": True,
+        "display_mode": True,
+        "collaboration_link": True
     }
 }
 
 DEFAULT_PLAN_FEATURES = {
-    "free": {
+    PLAN_FREE: {
         "unlimited_token": False,
         "copy_share_link": True,
         "qr_code": True,
