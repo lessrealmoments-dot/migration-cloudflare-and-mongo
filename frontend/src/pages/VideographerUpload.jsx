@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { 
-  Video, Upload, Trash2, Play, Star, Plus, 
-  ExternalLink, Check, X, Loader2, Film
+  Video, Trash2, Play, Star, Plus, 
+  Loader2, Film, Building2, Users, ChevronRight,
+  CheckCircle, Camera, Sparkles, Check
 } from 'lucide-react';
+import useBrandConfig from '../hooks/useBrandConfig';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
@@ -20,18 +22,56 @@ const SUGGESTED_TAGS = [
   'Trailer'
 ];
 
+// Predefined videographer roles
+const VIDEOGRAPHER_ROLES = {
+  'Video Production': [
+    { value: 'Videographer', icon: Video },
+    { value: 'Cinematographer', icon: Film },
+    { value: 'Director of Photography', icon: Camera },
+    { value: 'Video Editor', icon: Film },
+  ],
+  'Specialized': [
+    { value: 'Same Day Edit (SDE) Specialist', icon: Sparkles },
+    { value: 'Drone Operator', icon: Video },
+    { value: 'Live Streaming Operator', icon: Video },
+    { value: 'Documentary Filmmaker', icon: Film },
+  ],
+};
+
 const VideographerUpload = () => {
   const { contributorLink } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hubLink = searchParams.get('hub');
+  const brandConfig = useBrandConfig();
   
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [galleryInfo, setGalleryInfo] = useState(null);
-  const [companyName, setCompanyName] = useState('');
   const [videos, setVideos] = useState([]);
-  const [roleConfirmed, setRoleConfirmed] = useState(false);
+  
+  // Multi-step flow
+  const [step, setStep] = useState('company'); // 'company', 'role', 'confirm', 'upload'
+  const [companyName, setCompanyName] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
+  const [customRole, setCustomRole] = useState('');
+  const [useCustomRole, setUseCustomRole] = useState(false);
+  
+  // Video form state
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [tag, setTag] = useState('');
+  const [customTag, setCustomTag] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [previewVideoId, setPreviewVideoId] = useState(null);
+  
+  // Get the final role value
+  const getFinalRole = () => {
+    if (useCustomRole && customRole.trim()) {
+      return customRole.trim();
+    }
+    return selectedRole || 'Videographer';
+  };
   
   // Navigate back to coordinator hub
   const goBackToHub = () => {
@@ -43,14 +83,6 @@ const VideographerUpload = () => {
       window.close();
     }
   };
-  
-  // Form state
-  const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [tag, setTag] = useState('');
-  const [customTag, setCustomTag] = useState('');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [previewVideoId, setPreviewVideoId] = useState(null);
   
   useEffect(() => {
     fetchGalleryInfo();
@@ -67,8 +99,16 @@ const VideographerUpload = () => {
       }
       
       setGalleryInfo(response.data);
-      setCompanyName(response.data.existing_contributor_name || '');
       setVideos(response.data.existing_videos || []);
+      
+      // If contributor info already exists, pre-fill and skip to upload
+      if (response.data.existing_contributor_name) {
+        setCompanyName(response.data.existing_contributor_name);
+        if (response.data.existing_contributor_role) {
+          setSelectedRole(response.data.existing_contributor_role);
+        }
+        setStep('upload');
+      }
     } catch (error) {
       toast.error('Invalid or expired upload link');
       navigate('/');
@@ -95,13 +135,45 @@ const VideographerUpload = () => {
     setPreviewVideoId(videoId);
   };
   
-  const handleSubmit = async (e) => {
+  // Step 1: Company name submission
+  const handleCompanySubmit = (e) => {
     e.preventDefault();
-    
     if (!companyName.trim()) {
-      toast.error('Please enter your company/videographer name');
+      toast.error('Please enter your company/business name');
       return;
     }
+    setStep('role');
+  };
+
+  // Step 2: Role selection
+  const handleRoleSubmit = () => {
+    if (!selectedRole && !useCustomRole) {
+      toast.error('Please select your role');
+      return;
+    }
+    if (useCustomRole && !customRole.trim()) {
+      toast.error('Please enter your custom role');
+      return;
+    }
+    setStep('confirm');
+  };
+
+  // Step 3: Confirm and save
+  const handleConfirm = async () => {
+    try {
+      await axios.post(`${API}/contributor/${contributorLink}/set-name`, {
+        company_name: companyName.trim(),
+        contributor_role: getFinalRole()
+      });
+      toast.success('Profile saved! You can now add your videos.');
+      setStep('upload');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to save profile');
+    }
+  };
+  
+  const handleVideoSubmit = async (e) => {
+    e.preventDefault();
     
     if (!youtubeUrl.trim()) {
       toast.error('Please enter a YouTube URL');
@@ -174,318 +246,508 @@ const VideographerUpload = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100">
       {/* Header */}
-      <div className="bg-black/30 border-b border-white/10">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-              <Film className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">Video Upload</h1>
-              <p className="text-zinc-400 text-sm">{galleryInfo?.gallery_title}</p>
-            </div>
+      <header className="bg-white border-b border-zinc-200 sticky top-0 z-10">
+        <div className="max-w-screen-xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {brandConfig.logo_url ? (
+              <img src={brandConfig.logo_url} alt={brandConfig.brand_name} className="h-8" />
+            ) : (
+              <Film className="w-8 h-8 text-zinc-700" />
+            )}
+            <span className="font-semibold text-zinc-800">{brandConfig.brand_name || 'PhotoShare'}</span>
           </div>
-          <p className="text-zinc-500 text-sm mt-2">
-            Section: <span className="text-zinc-300">{galleryInfo?.section_name}</span>
-            {' • '}
-            Photographer: <span className="text-zinc-300">{galleryInfo?.photographer_name}</span>
-          </p>
+          {hubLink && (
+            <button
+              onClick={goBackToHub}
+              className="text-sm text-zinc-600 hover:text-zinc-800 flex items-center gap-1"
+            >
+              ← Back to Hub
+            </button>
+          )}
         </div>
-      </div>
-      
-      {/* Role Confirmation Screen */}
-      {!roleConfirmed && (
-        <div className="max-w-xl mx-auto px-4 py-12">
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Film className="w-8 h-8 text-amber-400" />
+      </header>
+
+      {/* Main Content */}
+      <div className="max-w-2xl mx-auto px-6 py-12">
+        {/* Gallery Info */}
+        <div className="text-center mb-8">
+          <p className="text-sm text-zinc-500 uppercase tracking-wider mb-2">Video Contribution for</p>
+          <h1 className="text-3xl font-light text-zinc-800 mb-1">{galleryInfo?.gallery_title}</h1>
+          <p className="text-lg text-zinc-600">{galleryInfo?.section_name}</p>
+        </div>
+
+        {/* Progress Steps */}
+        <div className="flex items-center justify-center gap-2 mb-10">
+          {['company', 'role', 'confirm', 'upload'].map((s, i) => (
+            <React.Fragment key={s}>
+              <div 
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                  step === s 
+                    ? 'bg-zinc-800 text-white' 
+                    : ['company', 'role', 'confirm', 'upload'].indexOf(step) > i 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-zinc-200 text-zinc-500'
+                }`}
+              >
+                {['company', 'role', 'confirm', 'upload'].indexOf(step) > i ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  i + 1
+                )}
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">Please Confirm Your Role</h2>
-              <p className="text-zinc-400">Before proceeding, please verify your assignment</p>
-            </div>
-            
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-6 mb-6">
-              <p className="text-amber-200 text-lg text-center mb-3">
-                Are you sure you are the
-              </p>
-              <p className="text-2xl font-bold text-center text-amber-400" style={{ fontFamily: 'Playfair Display, serif' }}>
-                OFFICIAL VIDEOGRAPHER
-              </p>
-              <p className="text-amber-200 text-lg text-center mt-3">
-                for the section "<strong>{galleryInfo?.section_name}</strong>"?
-              </p>
-            </div>
-            
-            <p className="text-zinc-500 text-sm mb-6 text-center">
-              ⚠️ Please make sure you're uploading to the correct section. 
-              If you're not the assigned videographer for this section, please go back.
-            </p>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={goBackToHub}
-                className="flex-1 bg-white/10 text-white py-3 rounded-xl font-medium hover:bg-white/20 transition-colors"
-              >
-                No, Go Back
-              </button>
-              <button
-                onClick={() => setRoleConfirmed(true)}
-                className="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors"
-                data-testid="confirm-role-btn"
-              >
-                Yes, I Confirm
-              </button>
-            </div>
-          </div>
+              {i < 3 && (
+                <div className={`w-12 h-0.5 ${['company', 'role', 'confirm', 'upload'].indexOf(step) > i ? 'bg-green-500' : 'bg-zinc-200'}`} />
+              )}
+            </React.Fragment>
+          ))}
         </div>
-      )}
-      
-      {roleConfirmed && (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Upload Form */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-            <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              Add Video
-            </h2>
+
+        {/* Step 1: Company Name */}
+        {step === 'company' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            <div className="text-center mb-8">
+              <Building2 className="w-12 h-12 text-zinc-400 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-zinc-800 mb-2">What's your company name?</h2>
+              <p className="text-zinc-600">This will appear in the gallery credits</p>
+            </div>
             
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Company Name */}
+            <form onSubmit={handleCompanySubmit} className="space-y-6">
               <div>
-                <label className="block text-sm text-zinc-400 mb-2">
-                  Your Company / Videographer Name *
+                <label className="block text-sm font-medium text-zinc-700 mb-2">
+                  Company / Business Name
                 </label>
                 <input
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="e.g., Juan Films"
-                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none"
-                  disabled={galleryInfo?.existing_contributor_name}
-                  data-testid="videographer-name-input"
+                  className="w-full px-4 py-3 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all text-lg"
+                  autoFocus
+                  data-testid="videographer-company-input"
                 />
               </div>
               
-              {/* YouTube URL */}
-              <div>
-                <label className="block text-sm text-zinc-400 mb-2">
-                  YouTube Video URL *
-                </label>
-                <input
-                  type="url"
-                  value={youtubeUrl}
-                  onChange={(e) => handleUrlChange(e.target.value)}
-                  placeholder="https://youtube.com/watch?v=..."
-                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none"
-                  data-testid="youtube-url-input"
-                />
-                
-                {/* Preview */}
-                {previewVideoId && (
-                  <div className="mt-3 rounded-xl overflow-hidden aspect-video bg-black">
-                    <img 
-                      src={`https://img.youtube.com/vi/${previewVideoId}/maxresdefault.jpg`}
-                      alt="Video thumbnail"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.src = `https://img.youtube.com/vi/${previewVideoId}/hqdefault.jpg`;
-                      }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
-                        <Play className="w-8 h-8 text-white ml-1" fill="white" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Video Tag */}
-              <div>
-                <label className="block text-sm text-zinc-400 mb-2">
-                  Video Type / Tag *
-                </label>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {SUGGESTED_TAGS.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => { setTag(t); setCustomTag(''); }}
-                      className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                        tag === t
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-white/10 text-zinc-300 hover:bg-white/20'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setTag('custom')}
-                    className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                      tag === 'custom'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white/10 text-zinc-300 hover:bg-white/20'
-                    }`}
-                  >
-                    + Custom
-                  </button>
-                </div>
-                
-                {tag === 'custom' && (
-                  <input
-                    type="text"
-                    value={customTag}
-                    onChange={(e) => setCustomTag(e.target.value)}
-                    placeholder="Enter custom tag..."
-                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none"
-                  />
-                )}
-              </div>
-              
-              {/* Title (optional) */}
-              <div>
-                <label className="block text-sm text-zinc-400 mb-2">
-                  Video Title <span className="text-zinc-600">(optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Our Perfect Day"
-                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none"
-                  data-testid="video-title-input"
-                />
-              </div>
-              
-              {/* Description (optional) */}
-              <div>
-                <label className="block text-sm text-zinc-400 mb-2">
-                  Description <span className="text-zinc-600">(optional)</span>
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Short description of the video..."
-                  rows={3}
-                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none resize-none"
-                  data-testid="video-description-input"
-                />
-              </div>
-              
-              {/* Submit Button */}
               <button
                 type="submit"
-                disabled={uploading}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                data-testid="add-video-button"
+                className="w-full py-3 bg-zinc-800 text-white rounded-xl font-medium hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
+                data-testid="company-continue-btn"
               >
-                {uploading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Adding Video...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-5 h-5" />
-                    Add Video
-                  </>
-                )}
+                Continue <ChevronRight className="w-5 h-5" />
               </button>
             </form>
           </div>
-          
-          {/* Uploaded Videos */}
-          <div>
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Video className="w-5 h-5" />
-              Your Videos ({videos.length})
-            </h2>
+        )}
+
+        {/* Step 2: Role Selection */}
+        {step === 'role' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            <div className="text-center mb-8">
+              <Users className="w-12 h-12 text-zinc-400 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-zinc-800 mb-2">What's your role?</h2>
+              <p className="text-zinc-600">Select your video production category</p>
+            </div>
             
-            {videos.length === 0 ? (
-              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 text-center">
-                <Film className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                <p className="text-zinc-400">No videos uploaded yet</p>
-                <p className="text-zinc-600 text-sm mt-1">Add your first video using the form</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {videos.map((video) => (
-                  <div 
-                    key={video.id}
-                    className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden group"
-                  >
-                    <div className="flex">
-                      {/* Thumbnail */}
-                      <div className="w-32 h-20 relative flex-shrink-0">
-                        <img 
-                          src={video.thumbnail_url || video.youtube_thumbnail_url}
-                          alt={video.title || video.tag}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = 'https://via.placeholder.com/320x180?text=Video';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                          <Play className="w-8 h-8 text-white" fill="white" />
-                        </div>
-                        {video.is_featured && (
-                          <div className="absolute top-1 left-1 bg-yellow-500 text-black text-xs px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
-                            <Star className="w-3 h-3" fill="currentColor" />
-                            Featured
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Info */}
-                      <div className="flex-1 p-3 flex flex-col justify-between">
-                        <div>
-                          <span className="inline-block px-2 py-0.5 bg-purple-600/30 text-purple-300 text-xs rounded-full mb-1">
-                            {video.tag}
-                          </span>
-                          <h3 className="text-white text-sm font-medium truncate">
-                            {video.title || video.tag}
-                          </h3>
-                        </div>
-                        
+            <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2">
+              {Object.entries(VIDEOGRAPHER_ROLES).map(([category, roles]) => (
+                <div key={category}>
+                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {category}
+                  </h3>
+                  <div className="grid grid-cols-1 gap-2">
+                    {roles.map((role) => {
+                      const Icon = role.icon;
+                      const isSelected = selectedRole === role.value && !useCustomRole;
+                      return (
                         <button
-                          onClick={() => handleDeleteVideo(video.id)}
-                          className="self-end p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                          key={role.value}
+                          type="button"
+                          onClick={() => {
+                            setSelectedRole(role.value);
+                            setUseCustomRole(false);
+                          }}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                            isSelected
+                              ? 'border-zinc-800 bg-zinc-50'
+                              : 'border-zinc-200 hover:border-zinc-300'
+                          }`}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Icon className={`w-5 h-5 ${isSelected ? 'text-zinc-800' : 'text-zinc-400'}`} />
+                          <span className={`font-medium ${isSelected ? 'text-zinc-800' : 'text-zinc-600'}`}>
+                            {role.value}
+                          </span>
+                          {isSelected && (
+                            <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
+                          )}
                         </button>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
-                ))}
+                </div>
+              ))}
+              
+              {/* Custom Role Option */}
+              <div>
+                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+                  Or enter a custom role
+                </h3>
+                <div 
+                  className={`border-2 rounded-xl transition-all ${
+                    useCustomRole ? 'border-zinc-800 bg-zinc-50' : 'border-zinc-200'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setUseCustomRole(true)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  >
+                    <Sparkles className={`w-5 h-5 ${useCustomRole ? 'text-zinc-800' : 'text-zinc-400'}`} />
+                    <span className={`font-medium ${useCustomRole ? 'text-zinc-800' : 'text-zinc-600'}`}>
+                      Custom Role
+                    </span>
+                    {useCustomRole && (
+                      <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
+                    )}
+                  </button>
+                  {useCustomRole && (
+                    <div className="px-4 pb-4">
+                      <input
+                        type="text"
+                        value={customRole}
+                        onChange={(e) => setCustomRole(e.target.value)}
+                        placeholder="Enter your role (e.g., Highlight Editor)"
+                        className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-zinc-500 focus:border-transparent"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
             
-            {/* Tips */}
-            <div className="mt-6 bg-purple-500/10 border border-purple-500/20 rounded-xl p-4">
-              <h3 className="text-purple-300 font-medium text-sm mb-2">Tips for best results:</h3>
-              <ul className="text-purple-200/70 text-sm space-y-1">
-                <li>• Use unlisted or public YouTube videos</li>
-                <li>• Label videos with appropriate tags (SDE, Ceremony, etc.)</li>
-                <li>• The first video added will be featured prominently</li>
-              </ul>
+            <div className="flex gap-3 mt-8">
+              <button
+                type="button"
+                onClick={() => setStep('company')}
+                className="flex-1 py-3 border-2 border-zinc-300 text-zinc-700 rounded-xl font-medium hover:bg-zinc-50 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleRoleSubmit}
+                className="flex-1 py-3 bg-zinc-800 text-white rounded-xl font-medium hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
+                data-testid="role-continue-btn"
+              >
+                Continue <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Step 3: Confirmation */}
+        {step === 'confirm' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            <div className="text-center mb-8">
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-zinc-800 mb-2">Confirm your details</h2>
+              <p className="text-zinc-600">This is how you'll appear in the gallery credits</p>
+            </div>
+            
+            {/* Preview Card */}
+            <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl p-6 text-white mb-8">
+              <p className="text-xs uppercase tracking-wider text-zinc-400 mb-1">Credit Preview</p>
+              <div className="border-l-2 border-white/30 pl-4 mt-4">
+                <p className="text-lg font-semibold">{companyName}</p>
+                <p className="text-sm text-zinc-400">{getFinalRole()}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4 mb-8">
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100">
+                <span className="text-zinc-500">Company Name</span>
+                <span className="font-medium text-zinc-800">{companyName}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100">
+                <span className="text-zinc-500">Role</span>
+                <span className="font-medium text-zinc-800">{getFinalRole()}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100">
+                <span className="text-zinc-500">Section</span>
+                <span className="font-medium text-zinc-800">{galleryInfo?.section_name}</span>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStep('role')}
+                className="flex-1 py-3 border-2 border-zinc-300 text-zinc-700 rounded-xl font-medium hover:bg-zinc-50 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                className="flex-1 py-3 bg-zinc-800 text-white rounded-xl font-medium hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
+                data-testid="confirm-and-upload-btn"
+              >
+                Confirm & Add Videos <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Video Upload */}
+        {step === 'upload' && (
+          <div className="space-y-8">
+            {/* Contributor Info Banner */}
+            <div className="bg-white rounded-xl border border-zinc-200 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-zinc-500">Contributing as</p>
+                  <p className="font-medium text-zinc-800">{companyName}</p>
+                  <p className="text-sm text-zinc-500">{getFinalRole()}</p>
+                </div>
+                <Film className="w-10 h-10 text-zinc-300" />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Upload Form */}
+              <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-6">
+                <h2 className="text-lg font-semibold text-zinc-800 mb-6 flex items-center gap-2">
+                  <Plus className="w-5 h-5" />
+                  Add Video
+                </h2>
+                
+                <form onSubmit={handleVideoSubmit} className="space-y-5">
+                  {/* YouTube URL */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-2">
+                      YouTube Video URL *
+                    </label>
+                    <input
+                      type="url"
+                      value={youtubeUrl}
+                      onChange={(e) => handleUrlChange(e.target.value)}
+                      placeholder="https://youtube.com/watch?v=..."
+                      className="w-full px-4 py-3 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-zinc-500 focus:border-transparent"
+                      data-testid="youtube-url-input"
+                    />
+                    
+                    {/* Preview */}
+                    {previewVideoId && (
+                      <div className="mt-3 rounded-xl overflow-hidden aspect-video bg-zinc-100 relative">
+                        <img 
+                          src={`https://img.youtube.com/vi/${previewVideoId}/maxresdefault.jpg`}
+                          alt="Video thumbnail"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = `https://img.youtube.com/vi/${previewVideoId}/hqdefault.jpg`;
+                          }}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
+                            <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Video Tag */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-2">
+                      Video Type / Tag *
+                    </label>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {SUGGESTED_TAGS.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => { setTag(t); setCustomTag(''); }}
+                          className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                            tag === t
+                              ? 'bg-zinc-800 text-white'
+                              : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setTag('custom')}
+                        className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                          tag === 'custom'
+                            ? 'bg-zinc-800 text-white'
+                            : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                        }`}
+                      >
+                        + Custom
+                      </button>
+                    </div>
+                    
+                    {tag === 'custom' && (
+                      <input
+                        type="text"
+                        value={customTag}
+                        onChange={(e) => setCustomTag(e.target.value)}
+                        placeholder="Enter custom tag..."
+                        className="w-full px-4 py-3 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-zinc-500 focus:border-transparent"
+                      />
+                    )}
+                  </div>
+                  
+                  {/* Title (optional) */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-2">
+                      Video Title <span className="text-zinc-400">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="e.g., Our Perfect Day"
+                      className="w-full px-4 py-3 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-zinc-500 focus:border-transparent"
+                      data-testid="video-title-input"
+                    />
+                  </div>
+                  
+                  {/* Description (optional) */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-2">
+                      Description <span className="text-zinc-400">(optional)</span>
+                    </label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Short description of the video..."
+                      rows={3}
+                      className="w-full px-4 py-3 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-zinc-500 focus:border-transparent resize-none"
+                      data-testid="video-description-input"
+                    />
+                  </div>
+                  
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={uploading}
+                    className="w-full py-4 bg-zinc-800 text-white font-semibold rounded-xl hover:bg-zinc-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    data-testid="add-video-button"
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Adding Video...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-5 h-5" />
+                        Add Video
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+              
+              {/* Uploaded Videos */}
+              <div>
+                <h2 className="text-lg font-semibold text-zinc-800 mb-4 flex items-center gap-2">
+                  <Video className="w-5 h-5" />
+                  Your Videos ({videos.length})
+                </h2>
+                
+                {videos.length === 0 ? (
+                  <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8 text-center">
+                    <Film className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                    <p className="text-zinc-500">No videos uploaded yet</p>
+                    <p className="text-zinc-400 text-sm mt-1">Add your first video using the form</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {videos.map((video) => (
+                      <div 
+                        key={video.id}
+                        className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden group"
+                      >
+                        <div className="flex">
+                          {/* Thumbnail */}
+                          <div className="w-32 h-20 relative flex-shrink-0">
+                            <img 
+                              src={video.thumbnail_url || video.youtube_thumbnail_url}
+                              alt={video.title || video.tag}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/320x180?text=Video';
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <Play className="w-8 h-8 text-white" fill="white" />
+                            </div>
+                            {video.is_featured && (
+                              <div className="absolute top-1 left-1 bg-yellow-500 text-black text-xs px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
+                                <Star className="w-3 h-3" fill="currentColor" />
+                                Featured
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Info */}
+                          <div className="flex-1 p-3 flex flex-col justify-between">
+                            <div>
+                              <span className="inline-block px-2 py-0.5 bg-zinc-100 text-zinc-600 text-xs rounded-full mb-1">
+                                {video.tag}
+                              </span>
+                              <h3 className="text-zinc-800 text-sm font-medium truncate">
+                                {video.title || video.tag}
+                              </h3>
+                            </div>
+                            
+                            <button
+                              onClick={() => handleDeleteVideo(video.id)}
+                              className="self-end p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Tips */}
+                <div className="mt-6 bg-zinc-50 border border-zinc-200 rounded-xl p-4">
+                  <h3 className="text-zinc-700 font-medium text-sm mb-2">Tips for best results:</h3>
+                  <ul className="text-zinc-500 text-sm space-y-1">
+                    <li>• Use unlisted or public YouTube videos</li>
+                    <li>• Label videos with appropriate tags (SDE, Ceremony, etc.)</li>
+                    <li>• The first video added will be featured prominently</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-      )}
+
+      {/* Footer */}
+      <footer className="border-t border-zinc-200 py-8 mt-12 bg-white">
+        <div className="max-w-screen-xl mx-auto px-6 text-center text-sm text-zinc-500">
+          <p>© {new Date().getFullYear()} {brandConfig.brand_name || 'PhotoShare'}. Video Contributor Portal.</p>
+        </div>
+      </footer>
     </div>
   );
 };
