@@ -449,12 +449,28 @@ const CollageDisplay = () => {
             newPhotos.forEach(p => imagePreloader.preload(getPhotoUrl(p)));
           }
         } else {
-          // Filter out photos without thumbnails (they may be broken)
-          const validPhotos = data.photos.filter(p => p.thumbnail_medium_url || p.thumbnail_url);
+          // Filter out photos without valid URLs
+          // pCloud and GDrive photos always have url, upload photos should have thumbnails
+          const validPhotos = data.photos.filter(p => {
+            // Accept if has any displayable URL
+            if (p.url) return true;
+            if (p.thumbnail_medium_url) return true;
+            if (p.thumbnail_url) return true;
+            return false;
+          });
           const shuffled = [...validPhotos].sort(() => Math.random() - 0.5);
           setPhotos(shuffled);
+          
+          // Log photo sources for debugging
+          const sources = validPhotos.reduce((acc, p) => {
+            const source = p.source || 'upload';
+            acc[source] = (acc[source] || 0) + 1;
+            return acc;
+          }, {});
+          console.log(`[Collage] Loaded ${validPhotos.length} photos:`, sources);
+          
           if (validPhotos.length < data.photos.length) {
-            console.log(`[Collage] Filtered out ${data.photos.length - validPhotos.length} photos without thumbnails`);
+            console.log(`[Collage] Filtered out ${data.photos.length - validPhotos.length} photos without valid URLs`);
           }
         }
         lastPhotoCount.current = newPhotoCount;
