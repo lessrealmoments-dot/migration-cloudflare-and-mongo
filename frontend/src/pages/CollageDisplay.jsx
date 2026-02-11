@@ -319,6 +319,27 @@ const CollageDisplay = () => {
 
   const getPhotoUrl = useCallback((photo) => {
     if (!photo) return '';
+    
+    // Handle different photo sources
+    const source = photo.source || 'upload';
+    
+    if (source === 'pcloud') {
+      // pCloud photos use our proxy endpoint - needs BACKEND_URL prefix
+      // URL format: /api/pcloud/serve/{code}/{fileid}
+      const url = photo.url || photo.thumbnail_medium_url || photo.thumbnail_url;
+      if (url && url.startsWith('/api/')) {
+        return `${BACKEND_URL}${url}`;
+      }
+      return getImageUrl(url);
+    }
+    
+    if (source === 'gdrive') {
+      // Google Drive photos use direct Google URLs (already absolute)
+      // Prefer thumbnail_medium_url for better quality in collage
+      return photo.thumbnail_medium_url || photo.thumbnail_url || photo.url;
+    }
+    
+    // Regular uploaded photos - prefer medium thumbnail for display
     if (photo.thumbnail_medium_url) {
       return getImageUrl(photo.thumbnail_medium_url);
     }
