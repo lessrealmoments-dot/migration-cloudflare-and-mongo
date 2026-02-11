@@ -3279,7 +3279,9 @@ async def get_admin_global_feature_toggles(admin: dict = Depends(get_admin_user)
             "qr_code": "Generate QR code for gallery",
             "view_public_gallery": "Allow public gallery viewing",
             "display_mode": "Slideshow/Collage display modes",
-            "collaboration_link": "Contributor upload links"
+            "collaboration_link": "Contributor upload links",
+            "gallery_storage_limit_gb": "Storage limit per gallery in GB (-1 = unlimited)",
+            "gallery_expiration_days": "Days until gallery auto-deletes"
         }
     }
 
