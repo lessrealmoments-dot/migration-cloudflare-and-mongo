@@ -120,6 +120,24 @@ All components respect the gallery's selected theme:
 - Colors from `currentTheme.colors` (text, textLight, accent, secondary, background)
 - Fonts from `currentTheme.fonts` (heading, body)
 
+### Professional Contributor Credits Display (February 2026) ✅
+Updated the hero section to display contributor credits professionally:
+- **Hero Credits**: Shows "THE STORY, CURATED BY [Owner]" followed by "WITH" section
+- **Contributor Roles**: Each contributor displays their name AND official title (e.g., "Videographer", "Lead Photographer", "Catering Partner")
+- **Fallback Logic**: Uses `c.title` (section role) → `c.role` (coordinator/owner) → "Contributor"
+- **Section-Level Attribution**: Photo sections now show "ROLE · Contributor Name" format instead of "by Name"
+
+**Backend Data Structure** (`/api/public/gallery/{share_link}`):
+```json
+{
+  "contributors": [
+    {"name": "Less Real Moments", "role": "Gallery Owner", "is_owner": true},
+    {"name": "Events by Sarah", "role": "Coordinator", "is_owner": false},
+    {"name": "Romel Tan Concept", "title": "Videographer", "section": "Official Videographer", "is_owner": false}
+  ]
+}
+```
+
 ## Admin Override System (NEW - February 2026)
 
 ### Authority Hierarchy (Strict Order)
