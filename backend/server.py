@@ -566,6 +566,15 @@ GALLERY_EDIT_LOCK_DAYS = 7
 # Demo gallery feature window (in hours) - same as expiration for free
 DEMO_FEATURE_WINDOW_HOURS = 6
 
+# ============================================
+# SUBSCRIPTION GRACE PERIOD SETTINGS
+# ============================================
+# When subscription expires, galleries get grace periods:
+# - UPLOAD_GRACE_PERIOD_DAYS: Owner/guests/contributors can still upload
+# - VIEW_GRACE_PERIOD_DAYS: Gallery remains viewable after subscription expires
+UPLOAD_GRACE_PERIOD_DAYS = 60  # 2 months
+VIEW_GRACE_PERIOD_DAYS = 180   # 6 months
+
 # ============ Google Drive Integration ============
 
 def _extract_gdrive_folder_id_deprecated(url: str) -> Optional[str]:
