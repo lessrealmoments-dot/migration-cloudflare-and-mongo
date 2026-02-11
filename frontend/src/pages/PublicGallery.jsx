@@ -1383,20 +1383,21 @@ const PublicGallery = () => {
 
           {/* Middle upload section removed - using hero CTA and navbar instead */}
 
-        {/* Quick Section Navigation */}
+        {/* Quick Section Navigation - Mobile optimized */}
         {getNavigationItems.length > 1 && (
-          <div className="sticky top-0 z-30 py-3 backdrop-blur-md border-b transition-all duration-300"
+          <div className="sticky top-0 z-30 py-2 md:py-3 border-b"
                style={{ 
-                 backgroundColor: `${currentTheme.colors.background}ee`,
+                 backgroundColor: currentTheme.colors.background,
                  borderColor: getSubtleTextColor(currentTheme.colors.background, 0.1)
                }}>
-            <div className="max-w-screen-2xl mx-auto px-4 md:px-12">
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
+            <div className="max-w-screen-2xl mx-auto px-3 md:px-12">
+              <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto scrollbar-hide py-1 -mx-1 px-1"
+                   style={{ WebkitOverflowScrolling: 'touch' }}>
                 <span className="text-xs font-medium uppercase tracking-wider shrink-0 opacity-50 hidden sm:block"
                       style={{ color: getContrastTextColor(currentTheme.colors.background) }}>
                   Jump to:
                 </span>
-                {getNavigationItems.map((item, index) => {
+                {getNavigationItems.map((item) => {
                   const IconComponent = {
                     star: Star,
                     image: Image,
@@ -1408,26 +1409,19 @@ const PublicGallery = () => {
                   }[item.icon] || Image;
                   
                   return (
-                    <motion.button
+                    <button
                       key={item.id}
                       onClick={() => scrollToSection(item.id)}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 hover:scale-105"
+                      className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1.5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap active:scale-95 transition-transform"
                       style={{ 
                         backgroundColor: getSubtleTextColor(currentTheme.colors.background, 0.08),
                         color: getContrastTextColor(currentTheme.colors.background)
                       }}
-                      whileHover={{ 
-                        backgroundColor: currentTheme.colors.accent,
-                        color: getContrastTextColor(currentTheme.colors.accent)
-                      }}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
                     >
-                      <IconComponent className="w-3.5 h-3.5" />
-                      <span>{item.name}</span>
+                      <IconComponent className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                      <span className="max-w-[100px] md:max-w-none truncate">{item.name}</span>
                       <span className="text-xs opacity-60">({item.count})</span>
-                    </motion.button>
+                    </button>
                   );
                 })}
               </div>
