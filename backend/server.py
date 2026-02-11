@@ -7876,6 +7876,16 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
+    # Check subscription grace period for guest uploads
+    photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
+    if photographer:
+        grace_periods = await check_subscription_grace_periods(photographer, gallery)
+        if grace_periods["subscription_expired"] and not grace_periods["uploads_allowed"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Guest uploads have been disabled. The photographer's upload grace period has ended."
+            )
+    
     # Validate filename exists
     if not file.filename:
         raise HTTPException(status_code=400, detail="File must have a filename")
