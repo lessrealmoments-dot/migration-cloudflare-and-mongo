@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 
+// Helper to get the correct image URL - handles both CDN (absolute) and local (relative) URLs
+const getImageUrl = (url, backendUrl) => {
+  if (!url) return '';
+  // If URL already starts with http(s), it's a CDN URL - use as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // Otherwise, it's a local/relative URL - prepend backend URL
+  return `${backendUrl}${url}`;
+};
+
 const PremiumLightbox = ({ 
   photos, 
   initialIndex = 0, 
