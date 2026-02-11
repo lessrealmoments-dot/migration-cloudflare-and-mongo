@@ -675,6 +675,99 @@ const PublicGallery = () => {
     return photos.filter(p => !p.section_id && p.uploaded_by === 'photographer' && !p.is_highlight);
   };
 
+  // Generate navigation items from sections
+  const getNavigationItems = useMemo(() => {
+    const items = [];
+    
+    // Add Highlights if there are any
+    const highlights = photos.filter(p => p.is_highlight);
+    if (highlights.length > 0) {
+      items.push({
+        id: 'highlights',
+        name: 'Highlights',
+        type: 'highlight',
+        icon: 'star',
+        count: highlights.length
+      });
+    }
+    
+    // Add sections
+    if (gallery?.sections) {
+      gallery.sections.forEach(section => {
+        let count = 0;
+        let icon = 'image';
+        
+        if (section.type === 'video') {
+          count = getVideosBySection(section.id).length;
+          icon = 'video';
+        } else if (section.type === 'fotoshare') {
+          count = getFotoshareVideosBySection(section.id).length;
+          icon = 'film';
+        } else if (section.type === 'pcloud') {
+          count = getPcloudPhotosBySection(section.id).length;
+          icon = 'cloud';
+        } else if (section.type === 'gdrive') {
+          count = getGdrivePhotosBySection(section.id).length;
+          icon = 'drive';
+        } else {
+          count = getPhotosBySection(section.id).length;
+          icon = 'image';
+        }
+        
+        if (count > 0) {
+          items.push({
+            id: section.id,
+            name: section.name,
+            type: section.type || 'photo',
+            icon,
+            count
+          });
+        }
+      });
+    }
+    
+    // Add unsorted photos
+    const unsortedPhotos = getRegularPhotosWithoutSection();
+    if (unsortedPhotos.length > 0) {
+      items.push({
+        id: 'unsorted',
+        name: 'Photos',
+        type: 'photo',
+        icon: 'image',
+        count: unsortedPhotos.length
+      });
+    }
+    
+    // Add guest photos
+    const guestPhotos = photos.filter(p => p.uploaded_by === 'guest');
+    if (guestPhotos.length > 0) {
+      items.push({
+        id: 'guest-uploads',
+        name: 'Guest Photos',
+        type: 'guest',
+        icon: 'users',
+        count: guestPhotos.length
+      });
+    }
+    
+    return items;
+  }, [gallery, photos, videos, fotoshareVideos, pcloudPhotos, gdrivePhotos]);
+
+  // Scroll to section
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(`section-${sectionId}`);
+    if (element) {
+      const offset = 80; // Account for sticky nav
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
