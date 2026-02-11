@@ -165,6 +165,13 @@ const AdminDashboard = () => {
     fetchBillingSettings();
     fetchPendingPayments();
     fetchTransactions();
+    
+    // Auto-refresh pending payments every 30 seconds
+    const pendingPaymentsInterval = setInterval(() => {
+      fetchPendingPayments();
+    }, 30000);
+    
+    return () => clearInterval(pendingPaymentsInterval);
   }, [navigate]);
 
   const getAuthHeader = () => ({
