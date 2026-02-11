@@ -7473,7 +7473,7 @@ async def get_display_data(share_link: str):
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    # Get all visible photos for display
+    # Get all visible photos for display (no limit - frontend handles pagination)
     photos = await db.photos.find(
         {
             "gallery_id": gallery["id"],
@@ -7481,7 +7481,7 @@ async def get_display_data(share_link: str):
             "is_flagged": {"$ne": True}
         },
         {"_id": 0, "id": 1, "url": 1, "thumbnail_url": 1, "thumbnail_medium_url": 1, "is_highlight": 1, "uploaded_at": 1}
-    ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).limit(500).to_list(None)
+    ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).to_list(None)
     
     # Get photographer info for branding
     photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0, "business_name": 1, "name": 1})
