@@ -1629,7 +1629,7 @@ async def resolve_user_features(user: dict) -> dict:
         "effective_plan": plan,
         "features": {},
         "has_unlimited_credits": False,
-        "credits_available": user.get("subscription_tokens", 0) + user.get("extra_credits", 0),
+        "credits_available": user.get("subscription_tokens", 0) + user.get("addon_tokens", 0),
         "can_download": True,
         "override_active": False,
         "override_mode": None,
@@ -1679,7 +1679,7 @@ async def resolve_user_features(user: dict) -> dict:
     result["authority_source"] = "payment_plan"
     
     # CRITICAL: Check if subscription has expired for paid plans
-    # If expired, downgrade to free plan but preserve extra_credits
+    # If expired, downgrade to free plan but preserve addon_tokens
     effective_plan = plan
     subscription_expired = False
     
@@ -1715,24 +1715,24 @@ async def resolve_user_features(user: dict) -> dict:
     
     # Handle credits when subscription expires:
     # - Monthly tokens (subscription_tokens) → reset to 0
-    # - Extra tokens (extra_credits) → preserved until their own expiration (12 months from purchase)
+    # - Extra tokens (addon_tokens) → preserved until their own expiration (12 months from purchase)
     if subscription_expired:
         # Monthly credits are lost, but extra credits remain
         subscription_tokens = 0  # Monthly tokens gone
-        extra_credits = user.get("extra_credits", 0)
+        addon_tokens = user.get("addon_tokens", 0)
         
         # Check if extra credits have expired (12 months from purchase)
-        extra_credits_purchased_at = user.get("extra_credits_purchased_at")
-        if extra_credits_purchased_at and extra_credits > 0:
+        addon_tokens_purchased_at = user.get("addon_tokens_purchased_at")
+        if addon_tokens_purchased_at and addon_tokens > 0:
             try:
-                purchased_at = datetime.fromisoformat(extra_credits_purchased_at.replace('Z', '+00:00'))
-                extra_credits_expires = purchased_at + timedelta(days=365)
-                if datetime.now(timezone.utc) >= extra_credits_expires:
-                    extra_credits = 0  # Extra credits also expired
+                purchased_at = datetime.fromisoformat(addon_tokens_purchased_at.replace('Z', '+00:00'))
+                addon_tokens_expires = purchased_at + timedelta(days=365)
+                if datetime.now(timezone.utc) >= addon_tokens_expires:
+                    addon_tokens = 0  # Extra credits also expired
             except (ValueError, TypeError):
                 pass
         
-        result["credits_available"] = extra_credits
+        result["credits_available"] = addon_tokens
         result["has_unlimited_credits"] = False
     
     # STEP 3: Payment Status Check (only if billing enforcement enabled)
@@ -1921,15 +1921,15 @@ def get_effective_credits(user: dict) -> int:
                 # For other override modes, use actual remaining credits
                 # (subscription_tokens stores the remaining credits after deductions)
                 base_credits = user.get("subscription_tokens", 0)
-                extra_credits = user.get("extra_credits", 0)
-                return max(0, base_credits + extra_credits)
+                addon_tokens = user.get("addon_tokens", 0)
+                return max(0, base_credits + addon_tokens)
         except:
             pass
     
     # Regular plan credits
     base_credits = user.get("subscription_tokens", 0)
-    extra_credits = user.get("extra_credits", 0)
-    return max(0, base_credits + extra_credits)
+    addon_tokens = user.get("addon_tokens", 0)
+    return max(0, base_credits + addon_tokens)
 
 def is_feature_enabled_for_user(user: dict, feature: str) -> bool:
     """Check if a feature is enabled for the user based on their plan"""
@@ -2154,7 +2154,7 @@ async def create_notification(user_id: str, notification_type: str, title: str, 
     return notification
 
 async def create_transaction(user_id: str, tx_type: str, amount: int, status: str, 
-                           plan: str = None, extra_credits: int = None,
+                           plan: str = None, addon_tokens: int = None,
                            payment_proof_url: str = None, admin_notes: str = None,
                            rejection_reason: str = None, dispute_message: str = None,
                            dispute_proof_url: str = None, resolved_at: str = None):
@@ -2165,7 +2165,7 @@ async def create_transaction(user_id: str, tx_type: str, amount: int, status: st
         "type": tx_type,
         "amount": amount,
         "plan": plan,
-        "extra_credits": extra_credits,
+        "addon_tokens": addon_tokens,
         "status": status,
         "payment_proof_url": payment_proof_url,
         "admin_notes": admin_notes,
@@ -2242,14 +2242,14 @@ async def reset_user_credits_if_needed(user_id: str):
             await db.users.update_one({"id": user_id}, {"$set": update_data})
         
         # Check if extra credits have expired (12 months from purchase)
-        extra_credits_purchased = user.get("extra_credits_purchased_at")
-        if extra_credits_purchased and user.get("extra_credits", 0) > 0:
+        addon_tokens_purchased = user.get("addon_tokens_purchased_at")
+        if addon_tokens_purchased and user.get("addon_tokens", 0) > 0:
             try:
-                purchased_at = datetime.fromisoformat(extra_credits_purchased.replace('Z', '+00:00'))
+                purchased_at = datetime.fromisoformat(addon_tokens_purchased.replace('Z', '+00:00'))
                 if now >= purchased_at + timedelta(days=365):  # 12 months
                     await db.users.update_one(
                         {"id": user_id},
-                        {"$set": {"extra_credits": 0, "extra_credits_purchased_at": None}}
+                        {"$set": {"addon_tokens": 0, "addon_tokens_purchased_at": None}}
                     )
             except:
                 pass
@@ -2660,7 +2660,7 @@ async def get_all_photographers(admin: dict = Depends(get_admin_user)):
             # Subscription fields
             plan=user.get("plan", PLAN_FREE),
             subscription_tokens=user.get("subscription_tokens", 0),
-            extra_credits=user.get("extra_credits", 0),
+            addon_tokens=user.get("addon_tokens", 0),
             payment_status=user.get("payment_status", PAYMENT_NONE),
             override_mode=user.get("override_mode"),
             override_expires=user.get("override_expires"),
@@ -2991,8 +2991,8 @@ async def get_all_clients(
             "effective_status": effective_status,
             "payment_status": client.get("payment_status", PAYMENT_NONE),
             "subscription_tokens": client.get("subscription_tokens", 0),
-            "extra_credits": client.get("extra_credits", 0),
-            "total_credits": client.get("subscription_tokens", 0) + client.get("extra_credits", 0),
+            "addon_tokens": client.get("addon_tokens", 0),
+            "total_credits": client.get("subscription_tokens", 0) + client.get("addon_tokens", 0),
             "storage_quota": client.get("storage_quota", DEFAULT_STORAGE_QUOTA),
             "storage_used": client.get("storage_used", 0),
             "storage_percent": round((client.get("storage_used", 0) / max(client.get("storage_quota", DEFAULT_STORAGE_QUOTA), 1)) * 100, 1),
@@ -3006,7 +3006,7 @@ async def get_all_clients(
             "created_at": client["created_at"],
             "last_login": client.get("last_login"),
             "requested_plan": client.get("requested_plan"),
-            "requested_extra_credits": client.get("requested_extra_credits")
+            "requested_addon_tokens": client.get("requested_addon_tokens")
         })
     
     return result
@@ -3076,12 +3076,12 @@ async def get_client_details(user_id: str, admin: dict = Depends(get_admin_user)
             "billing_cycle_start": user.get("billing_cycle_start"),
             "subscription_expires": user.get("subscription_expires"),
             "subscription_tokens": user.get("subscription_tokens", 0),
-            "extra_credits": user.get("extra_credits", 0),
-            "extra_credits_purchased_at": user.get("extra_credits_purchased_at"),
-            "extra_credits_expires_at": user.get("extra_credits_expires_at"),
+            "addon_tokens": user.get("addon_tokens", 0),
+            "addon_tokens_purchased_at": user.get("addon_tokens_purchased_at"),
+            "addon_tokens_expires_at": user.get("addon_tokens_expires_at"),
             "payment_status": user.get("payment_status", PAYMENT_NONE),
             "requested_plan": user.get("requested_plan"),
-            "requested_extra_credits": user.get("requested_extra_credits")
+            "requested_addon_tokens": user.get("requested_addon_tokens")
         },
         "storage": {
             "quota": user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
@@ -3119,7 +3119,7 @@ async def add_client_credits(user_id: str, data: dict, admin: dict = Depends(get
     if credits_to_add < 1 or credits_to_add > 100:
         raise HTTPException(status_code=400, detail="Credits must be between 1 and 100")
     
-    update_field = "subscription_tokens" if credit_type == "event" else "extra_credits"
+    update_field = "subscription_tokens" if credit_type == "event" else "addon_tokens"
     current_credits = user.get(update_field, 0)
     
     update_data = {
@@ -3128,8 +3128,8 @@ async def add_client_credits(user_id: str, data: dict, admin: dict = Depends(get
     
     # If adding extra credits, set expiration
     if credit_type == "extra":
-        update_data["extra_credits_purchased_at"] = datetime.now(timezone.utc).isoformat()
-        update_data["extra_credits_expires_at"] = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
+        update_data["addon_tokens_purchased_at"] = datetime.now(timezone.utc).isoformat()
+        update_data["addon_tokens_expires_at"] = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
     
     await db.users.update_one({"id": user_id}, {"$set": update_data})
     
@@ -3139,7 +3139,7 @@ async def add_client_credits(user_id: str, data: dict, admin: dict = Depends(get
         tx_type="admin_bonus",
         amount=0,
         status="approved",
-        extra_credits=credits_to_add if credit_type == "extra" else None,
+        addon_tokens=credits_to_add if credit_type == "extra" else None,
         admin_notes=f"Admin added {credits_to_add} {credit_type} credit(s): {reason}",
         resolved_at=datetime.now(timezone.utc).isoformat()
     )
@@ -4115,10 +4115,10 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
                 )
         elif not has_unlimited_credits:
             # Deduct credit (skip for users with unlimited_token)
-            if user.get("extra_credits", 0) > 0:
+            if user.get("addon_tokens", 0) > 0:
                 await db.users.update_one(
                     {"id": current_user["id"]},
-                    {"$inc": {"extra_credits": -1}}
+                    {"$inc": {"addon_tokens": -1}}
                 )
             else:
                 await db.users.update_one(
@@ -9169,12 +9169,12 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
     override_mode = db_user.get("override_mode")
     
     # Calculate extra credits expiration
-    extra_credits_purchased_at = db_user.get("extra_credits_purchased_at")
-    extra_credits_expires_at = None
-    if extra_credits_purchased_at and db_user.get("extra_credits", 0) > 0:
+    addon_tokens_purchased_at = db_user.get("addon_tokens_purchased_at")
+    addon_tokens_expires_at = None
+    if addon_tokens_purchased_at and db_user.get("addon_tokens", 0) > 0:
         try:
-            purchased_at = datetime.fromisoformat(extra_credits_purchased_at.replace('Z', '+00:00'))
-            extra_credits_expires_at = (purchased_at + timedelta(days=365)).isoformat()
+            purchased_at = datetime.fromisoformat(addon_tokens_purchased_at.replace('Z', '+00:00'))
+            addon_tokens_expires_at = (purchased_at + timedelta(days=365)).isoformat()
         except:
             pass
     
@@ -9183,17 +9183,17 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
     subscription_expired = resolved.get("subscription_expired", False)
     
     # Calculate effective credits based on subscription status
-    # - If subscription expired: monthly credits (subscription_tokens) = 0, extra_credits preserved
-    # - If subscription active: both subscription_tokens and extra_credits count
+    # - If subscription expired: monthly credits (subscription_tokens) = 0, addon_tokens preserved
+    # - If subscription active: both subscription_tokens and addon_tokens count
     effective_subscription_tokens = 0 if subscription_expired else db_user.get("subscription_tokens", 0)
-    effective_extra_credits = db_user.get("extra_credits", 0)
+    effective_addon_tokens = db_user.get("addon_tokens", 0)
     
     # Check if extra credits have also expired (12 months from purchase)
-    if extra_credits_purchased_at and effective_extra_credits > 0:
+    if addon_tokens_purchased_at and effective_addon_tokens > 0:
         try:
-            purchased_at = datetime.fromisoformat(extra_credits_purchased_at.replace('Z', '+00:00'))
+            purchased_at = datetime.fromisoformat(addon_tokens_purchased_at.replace('Z', '+00:00'))
             if datetime.now(timezone.utc) >= (purchased_at + timedelta(days=365)):
-                effective_extra_credits = 0
+                effective_addon_tokens = 0
         except:
             pass
     
@@ -9206,10 +9206,10 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
         "subscription_expired": subscription_expired,  # Whether subscription has expired
         "subscription_tokens": effective_subscription_tokens,  # Monthly tokens (0 if subscription expired)
         "subscription_tokens_raw": db_user.get("subscription_tokens", 0),  # Raw value in DB (for debugging)
-        "extra_credits": effective_extra_credits,  # Extra tokens (preserved until 12 months from purchase)
-        "extra_credits_raw": db_user.get("extra_credits", 0),  # Raw value in DB
-        "extra_credits_purchased_at": extra_credits_purchased_at,  # When extra credits were bought
-        "extra_credits_expires_at": extra_credits_expires_at,  # When extra credits will expire
+        "addon_tokens": effective_addon_tokens,  # Extra tokens (preserved until 12 months from purchase)
+        "addon_tokens_raw": db_user.get("addon_tokens", 0),  # Raw value in DB
+        "addon_tokens_purchased_at": addon_tokens_purchased_at,  # When extra credits were bought
+        "addon_tokens_expires_at": addon_tokens_expires_at,  # When extra credits will expire
         "total_credits": resolved["credits_available"],
         "is_unlimited_credits": resolved["has_unlimited_credits"],
         "requested_plan": db_user.get("requested_plan"),  # Pending upgrade
@@ -9311,7 +9311,7 @@ async def submit_upgrade_request(data: UpgradeRequest, background_tasks: Backgro
 # NOTE: ExtraCreditRequest model is now imported from models/billing.py
 
 @api_router.post("/user/extra-credits-request")
-async def submit_extra_credits_request(data: ExtraCreditRequest, background_tasks: BackgroundTasks, user: dict = Depends(get_current_user)):
+async def submit_addon_tokens_request(data: ExtraCreditRequest, background_tasks: BackgroundTasks, user: dict = Depends(get_current_user)):
     """Submit a request for extra credits with payment proof"""
     if data.quantity < 1 or data.quantity > 10:
         raise HTTPException(status_code=400, detail="Quantity must be between 1 and 10")
@@ -9327,7 +9327,7 @@ async def submit_extra_credits_request(data: ExtraCreditRequest, background_task
             "payment_status": PAYMENT_PENDING,
             "payment_proof_url": data.proof_url,
             "payment_submitted_at": datetime.now(timezone.utc).isoformat(),
-            "requested_extra_credits": data.quantity
+            "requested_addon_tokens": data.quantity
         }}
     )
     
@@ -9355,10 +9355,10 @@ async def submit_extra_credits_request(data: ExtraCreditRequest, background_task
     # Create pending transaction record
     await create_transaction(
         user_id=user["id"],
-        tx_type="extra_credits",
+        tx_type="addon_tokens",
         amount=total_cost,
         status="pending",
-        extra_credits=data.quantity,
+        addon_tokens=data.quantity,
         payment_proof_url=data.proof_url
     )
     
@@ -9442,16 +9442,16 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
         email_credits = update_data.get("subscription_tokens", PLAN_CREDITS.get(requested_plan, 2))
     
     # If user has requested extra credits, add them
-    requested_extra_credits = user.get("requested_extra_credits")
-    if requested_extra_credits and requested_extra_credits > 0:
-        current_extra = user.get("extra_credits", 0)
-        update_data["extra_credits"] = current_extra + requested_extra_credits
-        update_data["requested_extra_credits"] = None
-        message_parts.append(f"+{requested_extra_credits} extra credits added")
-        notification_msg_parts.append(f"You received {requested_extra_credits} extra credit(s).")
-        tx_type = "extra_credits"
-        tx_amount = pricing.get("extra_credit", 500) * requested_extra_credits
-        email_credits = f"+{requested_extra_credits} extra"
+    requested_addon_tokens = user.get("requested_addon_tokens")
+    if requested_addon_tokens and requested_addon_tokens > 0:
+        current_extra = user.get("addon_tokens", 0)
+        update_data["addon_tokens"] = current_extra + requested_addon_tokens
+        update_data["requested_addon_tokens"] = None
+        message_parts.append(f"+{requested_addon_tokens} extra credits added")
+        notification_msg_parts.append(f"You received {requested_addon_tokens} extra credit(s).")
+        tx_type = "addon_tokens"
+        tx_amount = pricing.get("extra_credit", 500) * requested_addon_tokens
+        email_credits = f"+{requested_addon_tokens} extra"
         if not email_plan:
             email_plan = get_effective_plan(user).capitalize()
     
@@ -9477,7 +9477,7 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
         message=" ".join(notification_msg_parts),
         metadata={
             "plan": requested_plan,
-            "extra_credits": requested_extra_credits
+            "addon_tokens": requested_addon_tokens
         }
     )
     
@@ -9488,7 +9488,7 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
         amount=tx_amount,
         status="approved",
         plan=requested_plan,
-        extra_credits=requested_extra_credits,
+        addon_tokens=requested_addon_tokens,
         payment_proof_url=user.get("payment_proof_url"),
         admin_notes=data.notes,
         resolved_at=datetime.now(timezone.utc).isoformat()
@@ -9659,7 +9659,7 @@ async def reject_payment(data: RejectPayment, background_tasks: BackgroundTasks,
             "reason": data.reason,
             "can_dispute": can_dispute,
             "requested_plan": user.get("requested_plan"),
-            "requested_extra_credits": user.get("requested_extra_credits")
+            "requested_addon_tokens": user.get("requested_addon_tokens")
         }
     )
     
@@ -9667,16 +9667,16 @@ async def reject_payment(data: RejectPayment, background_tasks: BackgroundTasks,
     billing_settings = await get_billing_settings()
     pricing = billing_settings.get("pricing", DEFAULT_PRICING)
     requested_plan = user.get("requested_plan")
-    requested_extra_credits = user.get("requested_extra_credits")
+    requested_addon_tokens = user.get("requested_addon_tokens")
     tx_amount = 0
     tx_type = "subscription"
     
     if requested_plan:
         tx_type = "upgrade"
         tx_amount = pricing.get(f"{requested_plan}_monthly", 0)
-    if requested_extra_credits:
-        tx_type = "extra_credits"
-        tx_amount = pricing.get("extra_credit", 500) * requested_extra_credits
+    if requested_addon_tokens:
+        tx_type = "addon_tokens"
+        tx_amount = pricing.get("extra_credit", 500) * requested_addon_tokens
     
     await create_transaction(
         user_id=data.user_id,
@@ -9684,7 +9684,7 @@ async def reject_payment(data: RejectPayment, background_tasks: BackgroundTasks,
         amount=tx_amount,
         status="rejected",
         plan=requested_plan,
-        extra_credits=requested_extra_credits,
+        addon_tokens=requested_addon_tokens,
         payment_proof_url=user.get("payment_proof_url"),
         rejection_reason=data.reason,
         resolved_at=datetime.now(timezone.utc).isoformat()
@@ -9821,7 +9821,7 @@ async def get_user_subscription_admin(user_id: str, admin: dict = Depends(get_ad
         "effective_plan": get_effective_plan(user),
         "billing_cycle_start": user.get("billing_cycle_start"),
         "subscription_tokens": user.get("subscription_tokens", 0),
-        "extra_credits": user.get("extra_credits", 0),
+        "addon_tokens": user.get("addon_tokens", 0),
         "total_credits": get_effective_credits(user),
         "payment_status": user.get("payment_status", PAYMENT_NONE),
         "payment_proof_url": user.get("payment_proof_url"),
@@ -9945,7 +9945,7 @@ async def get_payment_status(user: dict = Depends(get_current_user)):
         "can_dispute": db_user.get("payment_rejected_at") is not None and db_user.get("payment_dispute_count", 0) < 1,
         "payment_proof_url": db_user.get("payment_proof_url"),
         "requested_plan": db_user.get("requested_plan"),
-        "requested_extra_credits": db_user.get("requested_extra_credits")
+        "requested_addon_tokens": db_user.get("requested_addon_tokens")
     }
 
 # ============================================
