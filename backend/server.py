@@ -3329,7 +3329,7 @@ async def update_single_mode_features(
     # Validate feature keys - include storage and expiration for override modes AND paid plans
     valid_features = ["unlimited_token", "copy_share_link", "qr_code", "view_public_gallery", "display_mode", "collaboration_link"]
     if mode_or_plan in ALL_OVERRIDE_MODES or mode_or_plan in [PLAN_STANDARD, PLAN_PRO]:
-        valid_features.extend(["storage_limit_gb", "gallery_expiration_days"])
+        valid_features.extend(["gallery_storage_limit_gb", "gallery_expiration_days"])
     
     for key in features.keys():
         if key not in valid_features:
