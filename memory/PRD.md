@@ -138,6 +138,36 @@ Updated the hero section to display contributor credits professionally:
 }
 ```
 
+### Gallery Performance Optimization (February 2026) ✅
+Implemented smart progressive loading for galleries with 100s-1000s of photos:
+
+**Problem Solved**: Galleries with 700+ photos (5-10MB each) were freezing browsers by loading 3.5-7GB of images at once.
+
+**Solution Components**:
+1. **VirtualizedGalleryGrid** (`/app/frontend/src/components/VirtualizedGalleryGrid.jsx`)
+   - Infinite scroll with batched loading (24 photos per batch)
+   - Only renders photos as user scrolls
+   - Shows "X of Y photos" counter
+   - Triggers for galleries with 50+ photos (`LARGE_GALLERY_THRESHOLD`)
+
+2. **ProgressiveImage** (`/app/frontend/src/components/ProgressiveImage.jsx`)
+   - Blur-to-sharp transition (like Apple/Unsplash)
+   - Loads thumbnail first (~50-100KB), full-res on demand
+   - Intersection Observer for lazy loading
+   - Memory efficient - no full images loaded until clicked
+
+**Data Flow**:
+- Grid View: Uses pCloud thumbnails (400x400px via `/api/pcloud/thumb/{code}/{fileid}`)
+- Lightbox: Loads full resolution on-demand via proxy URL
+- Download: Always serves original full-resolution
+
+**Performance Impact**:
+- Initial load: ~2MB (24 thumbnails) vs 7GB (all full-res)
+- Scroll: Loads 24 more photos per batch
+- Memory: Only visible photos in DOM
+
+**Affected Sections**: pCloud, Regular Photos, Unsorted Photos, Google Drive
+
 ## Admin Override System (NEW - February 2026)
 
 ### Authority Hierarchy (Strict Order)
