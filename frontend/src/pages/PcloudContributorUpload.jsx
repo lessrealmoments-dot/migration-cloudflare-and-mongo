@@ -4,27 +4,69 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { 
   Cloud, Loader2, CheckCircle, ExternalLink, 
-  Image as ImageIcon, Upload, AlertTriangle
+  Image as ImageIcon, Upload, AlertTriangle, Building2,
+  Users, ChevronRight, Check, Camera, Video, Music,
+  Scissors, Cake, Monitor, Plane, PartyPopper, Sparkles,
+  Link as LinkIcon, FolderOpen, RefreshCw
 } from 'lucide-react';
+import useBrandConfig from '../hooks/useBrandConfig';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
+
+// Predefined contributor roles organized by category
+const CONTRIBUTOR_ROLES = {
+  'Core Team': [
+    { value: 'Photographer', icon: Camera },
+    { value: 'Videographer', icon: Video },
+    { value: 'Event Coordinator / Planner', icon: Users },
+    { value: 'Caterer', icon: Cake },
+    { value: 'Event Stylist / Designer', icon: Sparkles },
+    { value: 'Host / DJ / Emcee', icon: Music },
+  ],
+  'Additional Services': [
+    { value: 'Live Band / Musicians', icon: Music },
+    { value: 'Hair & Makeup Artist (HMUA)', icon: Scissors },
+    { value: 'Cake Designer', icon: Cake },
+    { value: 'Photobooth Provider', icon: Camera },
+    { value: 'Lights & Sounds / Technical Team', icon: Monitor },
+  ],
+  'Premium Enhancements': [
+    { value: 'Drone / Aerial Coverage', icon: Plane },
+    { value: 'LED Wall / Visual Display', icon: Monitor },
+    { value: 'Special Effects (confetti, CO₂, fireworks, cold sparks)', icon: PartyPopper },
+    { value: 'Content Creators / Social Media Team', icon: Video },
+    { value: 'Live Streaming / Broadcast Team', icon: Video },
+  ],
+};
 
 const PcloudContributorUpload = () => {
   const { contributorLink } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hubLink = searchParams.get('hub');
+  const brandConfig = useBrandConfig();
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [galleryInfo, setGalleryInfo] = useState(null);
-  const [companyName, setCompanyName] = useState('');
-  const [contributorRole, setContributorRole] = useState('');
-  const [pcloudViewingUrl, setPcloudViewingUrl] = useState('');
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [submitResult, setSubmitResult] = useState(null);
-  const [showSyncForm, setShowSyncForm] = useState(false);
-  const [roleConfirmed, setRoleConfirmed] = useState(false);
+  
+  // Multi-step form
+  const [step, setStep] = useState('company'); // 'company', 'role', 'confirm', 'sync'
+  const [companyName, setCompanyName] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
+  const [customRole, setCustomRole] = useState('');
+  const [useCustomRole, setUseCustomRole] = useState(false);
+  const [pcloudViewingUrl, setPcloudViewingUrl] = useState('');
+  
+  // Get the final role value
+  const getFinalRole = () => {
+    if (useCustomRole && customRole.trim()) {
+      return customRole.trim();
+    }
+    return selectedRole || galleryInfo?.section_name || 'Contributor';
+  };
   
   // Navigate back to coordinator hub
   const goBackToHub = () => {
@@ -52,9 +94,16 @@ const PcloudContributorUpload = () => {
       }
       
       setGalleryInfo(response.data);
-      setCompanyName(response.data.existing_contributor_name || '');
-      setContributorRole(response.data.existing_contributor_role || '');
       setExistingPhotos(response.data.existing_pcloud_photos || []);
+      
+      // If contributor info already exists, pre-fill and skip to sync
+      if (response.data.existing_contributor_name) {
+        setCompanyName(response.data.existing_contributor_name);
+        if (response.data.existing_contributor_role) {
+          setSelectedRole(response.data.existing_contributor_role);
+        }
+        setStep('sync');
+      }
     } catch (error) {
       toast.error('Invalid or expired upload link');
       navigate('/');
@@ -69,317 +118,469 @@ const PcloudContributorUpload = () => {
     }
   };
   
+  // Step 1: Company name submission
+  const handleCompanySubmit = (e) => {
+    e.preventDefault();
+    if (!companyName.trim()) {
+      toast.error('Please enter your company/business name');
+      return;
+    }
+    setStep('role');
+  };
+
+  // Step 2: Role selection
+  const handleRoleSubmit = () => {
+    if (!selectedRole && !useCustomRole) {
+      toast.error('Please select your role');
+      return;
+    }
+    if (useCustomRole && !customRole.trim()) {
+      toast.error('Please enter your custom role');
+      return;
+    }
+    setStep('confirm');
+  };
+
+  // Step 3: Confirm and save
+  const handleConfirm = async () => {
+    try {
+      await axios.post(`${API}/contributor/${contributorLink}/set-name`, {
+        company_name: companyName.trim(),
+        contributor_role: getFinalRole()
+      });
+      toast.success('Profile saved! Now sync your pCloud folder.');
+      setStep('sync');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to save profile');
+    }
+  };
+  
   const handleSubmitSync = async (e) => {
     e.preventDefault();
     
-    if (!companyName.trim()) {
-      toast.error('Please enter your name or company name');
-      return;
-    }
-    
     if (!pcloudViewingUrl.trim()) {
-      toast.error('Please enter a pCloud viewing/sharing link');
+      toast.error('Please enter your pCloud viewing URL');
       return;
     }
     
     // Basic URL validation
-    if (!pcloudViewingUrl.includes('pcloud') && !pcloudViewingUrl.includes('u.pcloud.link')) {
-      toast.error('Please enter a valid pCloud share link');
+    if (!pcloudViewingUrl.includes('pcloud.com') && !pcloudViewingUrl.includes('u.pcloud.link')) {
+      toast.error('Please enter a valid pCloud link');
       return;
     }
     
     setSubmitting(true);
-    setSubmitResult(null);
     
     try {
       const response = await axios.post(`${API}/contributor/${contributorLink}/pcloud`, {
-        company_name: companyName,
-        contributor_role: contributorRole || 'Photos',
-        pcloud_viewing_url: pcloudViewingUrl
+        company_name: companyName.trim(),
+        contributor_role: getFinalRole(),
+        pcloud_viewing_url: pcloudViewingUrl.trim()
       });
       
       setSubmitResult(response.data);
-      toast.success(`Successfully synced ${response.data.photo_count} photos!`);
-      setShowSyncForm(false);
-      
-      // Refresh gallery info to show updated photos
-      fetchGalleryInfo();
-      
+      toast.success(`Successfully synced ${response.data.photos_synced} photos!`);
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Failed to sync photos';
-      toast.error(errorMsg);
+      toast.error(error.response?.data?.detail || 'Failed to sync pCloud folder');
     } finally {
       setSubmitting(false);
     }
   };
-  
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
       </div>
     );
   }
-  
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 mb-4">
-            <Cloud className="w-8 h-8 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100">
+      {/* Header */}
+      <header className="bg-white border-b border-zinc-200 sticky top-0 z-10">
+        <div className="max-w-screen-xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {brandConfig.logo_url ? (
+              <img src={brandConfig.logo_url} alt={brandConfig.brand_name} className="h-8" />
+            ) : (
+              <Cloud className="w-8 h-8 text-blue-600" />
+            )}
+            <span className="font-semibold text-zinc-800">{brandConfig.brand_name || 'PhotoShare'}</span>
           </div>
-          <h1 className="text-3xl font-light text-zinc-800 mb-2" style={{ fontFamily: 'Playfair Display, serif' }}>
-            pCloud Photo Upload
-          </h1>
-          <p className="text-zinc-600">
-            Share your photos for <span className="font-medium">{galleryInfo?.gallery_title}</span>
-          </p>
-          <p className="text-sm text-zinc-500 mt-1">
-            Photographer: {galleryInfo?.photographer_name}
-          </p>
+          {hubLink && (
+            <button
+              onClick={goBackToHub}
+              className="text-sm text-zinc-600 hover:text-zinc-800 flex items-center gap-1"
+            >
+              ← Back to Hub
+            </button>
+          )}
         </div>
-        
-        {/* Role Confirmation */}
-        {!roleConfirmed && (
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <div className="text-center mb-6">
-              <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Cloud className="w-7 h-7 text-amber-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-zinc-800 mb-2">Please Confirm Your Role</h2>
-            </div>
-            
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
-              <p className="text-amber-800 text-lg text-center mb-3">
-                Are you sure you are the
-              </p>
-              <p className="text-2xl font-bold text-center text-amber-700" style={{ fontFamily: 'Playfair Display, serif' }}>
-                OFFICIAL PHOTO CONTRIBUTOR
-              </p>
-              <p className="text-amber-800 text-lg text-center mt-3">
-                for the section "<strong>{galleryInfo?.section_name}</strong>"?
-              </p>
-            </div>
-            
-            <p className="text-zinc-500 text-sm mb-6 text-center">
-              ⚠️ Please make sure you're uploading to the correct section.
-            </p>
-            
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={goBackToHub}
-                className="flex-1 bg-zinc-100 text-zinc-700 py-3 rounded-xl font-medium hover:bg-zinc-200 transition-colors"
-              >
-                No, Go Back
-              </button>
-              <button
-                type="button"
-                onClick={() => setRoleConfirmed(true)}
-                className="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors"
-                data-testid="confirm-role-btn"
-              >
-                Yes, I Confirm
-              </button>
-            </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="max-w-2xl mx-auto px-6 py-12">
+        {/* Gallery Info */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full mb-4">
+            <Cloud className="w-4 h-4" />
+            <span className="text-sm font-medium">pCloud Integration</span>
           </div>
-        )}
-        
-        {roleConfirmed && (
-        <>
-        {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Success Result */}
-          {submitResult && (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-              <div className="flex items-center gap-3 text-blue-700">
-                <CheckCircle className="w-5 h-5" />
-                <div>
-                  <p className="font-medium">Photos synced successfully!</p>
-                  <p className="text-sm text-blue-600">
-                    {submitResult.photo_count} photos from "{submitResult.folder_name}"
-                  </p>
-                </div>
+          <p className="text-sm text-zinc-500 uppercase tracking-wider mb-2">Contributing to</p>
+          <h1 className="text-3xl font-light text-zinc-800 mb-1">{galleryInfo?.gallery_title}</h1>
+          <p className="text-lg text-zinc-600">{galleryInfo?.section_name}</p>
+        </div>
+
+        {/* Progress Steps */}
+        <div className="flex items-center justify-center gap-2 mb-10">
+          {['company', 'role', 'confirm', 'sync'].map((s, i) => (
+            <React.Fragment key={s}>
+              <div 
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                  step === s 
+                    ? 'bg-blue-600 text-white' 
+                    : ['company', 'role', 'confirm', 'sync'].indexOf(step) > i 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-zinc-200 text-zinc-500'
+                }`}
+              >
+                {['company', 'role', 'confirm', 'sync'].indexOf(step) > i ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  i + 1
+                )}
               </div>
+              {i < 3 && (
+                <div className={`w-12 h-0.5 ${['company', 'role', 'confirm', 'sync'].indexOf(step) > i ? 'bg-green-500' : 'bg-zinc-200'}`} />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* Step 1: Company Name */}
+        {step === 'company' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            <div className="text-center mb-8">
+              <Building2 className="w-12 h-12 text-zinc-400 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-zinc-800 mb-2">What's your company name?</h2>
+              <p className="text-zinc-600">This will appear in the gallery credits</p>
             </div>
-          )}
-          
-          {/* Existing Photos Info */}
-          {existingPhotos.length > 0 && !submitResult && (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-              <div className="flex items-center gap-3 text-blue-700">
-                <ImageIcon className="w-5 h-5" />
-                <p className="text-sm">
-                  <span className="font-medium">{existingPhotos.length} photos</span> already synced to this section
-                </p>
-              </div>
-            </div>
-          )}
-          
-          {/* Step 1: Your Details */}
-          <div className="mb-8">
-            <h2 className="text-lg font-medium text-zinc-800 mb-4 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">1</span>
-              Your Details
-            </h2>
-            <div className="space-y-4 pl-9">
+            
+            <form onSubmit={handleCompanySubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-zinc-700 mb-2">
-                  Your Name / Company Name *
+                  Company / Business Name
                 </label>
                 <input
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="e.g., John Smith Photography"
-                  className="w-full h-12 px-4 rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  data-testid="contributor-name-input"
+                  placeholder="e.g., ABC Photography Studio"
+                  className="w-full px-4 py-3 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-lg"
+                  autoFocus
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-2">
-                  Your Role (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={contributorRole}
-                  onChange={(e) => setContributorRole(e.target.value)}
-                  placeholder="e.g., Photography, Same Day Edit, Highlights"
-                  className="w-full h-12 px-4 rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  data-testid="contributor-role-input"
-                />
-              </div>
-            </div>
+              
+              <button
+                type="submit"
+                className="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                Continue <ChevronRight className="w-5 h-5" />
+              </button>
+            </form>
           </div>
-          
-          {/* Step 2: Upload Photos */}
-          <div className="mb-8">
-            <h2 className="text-lg font-medium text-zinc-800 mb-4 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">2</span>
-              Upload Your Photos to pCloud
-            </h2>
-            <div className="pl-9">
-              {galleryInfo?.pcloud_upload_link ? (
-                <div className="space-y-4">
-                  <p className="text-sm text-zinc-600">
-                    Click the button below to upload your photos to the photographer's pCloud folder.
-                  </p>
-                  <button
-                    onClick={handleOpenUploadLink}
-                    className="w-full h-14 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-medium hover:from-blue-600 hover:to-cyan-700 transition-all flex items-center justify-center gap-2"
-                    data-testid="upload-to-pcloud-btn"
-                  >
-                    <Upload className="w-5 h-5" />
-                    Upload Photos to pCloud
-                    <ExternalLink className="w-4 h-4 ml-1" />
-                  </button>
-                  <p className="text-xs text-zinc-500 text-center">
-                    Opens in a new tab. Upload your photos there, then come back to sync.
-                  </p>
-                </div>
-              ) : (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                  <div className="flex gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                    <p className="text-sm text-amber-700">
-                      No upload link has been configured. Please contact the photographer.
-                    </p>
+        )}
+
+        {/* Step 2: Role Selection */}
+        {step === 'role' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            <div className="text-center mb-8">
+              <Users className="w-12 h-12 text-zinc-400 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-zinc-800 mb-2">What's your role?</h2>
+              <p className="text-zinc-600">Select your service category for the credits</p>
+            </div>
+            
+            <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2">
+              {Object.entries(CONTRIBUTOR_ROLES).map(([category, roles]) => (
+                <div key={category}>
+                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {category}
+                  </h3>
+                  <div className="grid grid-cols-1 gap-2">
+                    {roles.map((role) => {
+                      const Icon = role.icon;
+                      const isSelected = selectedRole === role.value && !useCustomRole;
+                      return (
+                        <button
+                          key={role.value}
+                          type="button"
+                          onClick={() => {
+                            setSelectedRole(role.value);
+                            setUseCustomRole(false);
+                          }}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                            isSelected
+                              ? 'border-blue-600 bg-blue-50'
+                              : 'border-zinc-200 hover:border-zinc-300'
+                          }`}
+                        >
+                          <Icon className={`w-5 h-5 ${isSelected ? 'text-blue-600' : 'text-zinc-400'}`} />
+                          <span className={`font-medium ${isSelected ? 'text-blue-900' : 'text-zinc-600'}`}>
+                            {role.value}
+                          </span>
+                          {isSelected && (
+                            <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              )}
+              ))}
+              
+              {/* Custom Role Option */}
+              <div>
+                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+                  Or enter a custom role
+                </h3>
+                <div 
+                  className={`border-2 rounded-xl transition-all ${
+                    useCustomRole ? 'border-blue-600 bg-blue-50' : 'border-zinc-200'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setUseCustomRole(true)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  >
+                    <Sparkles className={`w-5 h-5 ${useCustomRole ? 'text-blue-600' : 'text-zinc-400'}`} />
+                    <span className={`font-medium ${useCustomRole ? 'text-blue-900' : 'text-zinc-600'}`}>
+                      Custom Role
+                    </span>
+                    {useCustomRole && (
+                      <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
+                    )}
+                  </button>
+                  {useCustomRole && (
+                    <div className="px-4 pb-4">
+                      <input
+                        type="text"
+                        value={customRole}
+                        onChange={(e) => setCustomRole(e.target.value)}
+                        placeholder="Enter your role (e.g., Florist)"
+                        className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-8">
+              <button
+                type="button"
+                onClick={() => setStep('company')}
+                className="flex-1 py-3 border-2 border-zinc-300 text-zinc-700 rounded-xl font-medium hover:bg-zinc-50 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleRoleSubmit}
+                className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                Continue <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
           </div>
-          
-          {/* Step 3: Sync Photos */}
-          <div className="mb-6">
-            <h2 className="text-lg font-medium text-zinc-800 mb-4 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">3</span>
-              Sync Your Photos to Gallery
-            </h2>
-            <div className="pl-9">
-              {!showSyncForm ? (
-                <div className="space-y-4">
-                  <p className="text-sm text-zinc-600">
-                    After uploading, you can either wait for automatic sync (every 30 minutes) or manually sync by providing your pCloud share link.
+        )}
+
+        {/* Step 3: Confirmation */}
+        {step === 'confirm' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            <div className="text-center mb-8">
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-zinc-800 mb-2">Confirm your details</h2>
+              <p className="text-zinc-600">This is how you'll appear in the gallery credits</p>
+            </div>
+            
+            {/* Preview Card */}
+            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 text-white mb-8">
+              <p className="text-xs uppercase tracking-wider text-blue-200 mb-1">Credit Preview</p>
+              <div className="border-l-2 border-white/30 pl-4 mt-4">
+                <p className="text-lg font-semibold">{companyName}</p>
+                <p className="text-sm text-blue-200">{getFinalRole()}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4 mb-8">
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100">
+                <span className="text-zinc-500">Company Name</span>
+                <span className="font-medium text-zinc-800">{companyName}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100">
+                <span className="text-zinc-500">Role</span>
+                <span className="font-medium text-zinc-800">{getFinalRole()}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100">
+                <span className="text-zinc-500">Section</span>
+                <span className="font-medium text-zinc-800">{galleryInfo?.section_name}</span>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStep('role')}
+                className="flex-1 py-3 border-2 border-zinc-300 text-zinc-700 rounded-xl font-medium hover:bg-zinc-50 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                Confirm & Continue <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: pCloud Sync */}
+        {step === 'sync' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            {!submitResult ? (
+              <>
+                <div className="text-center mb-8">
+                  <Cloud className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                  <h2 className="text-xl font-semibold text-zinc-800 mb-2">Sync Your pCloud Folder</h2>
+                  <p className="text-zinc-600">
+                    Contributing as <span className="font-medium">{companyName}</span>
+                    <span className="text-zinc-400"> • {getFinalRole()}</span>
                   </p>
-                  <button
-                    onClick={() => setShowSyncForm(true)}
-                    className="w-full h-12 rounded-xl border-2 border-blue-500 text-blue-600 font-medium hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
-                    data-testid="show-sync-form-btn"
-                  >
-                    <Cloud className="w-5 h-5" />
-                    Sync Now (Manual)
-                  </button>
                 </div>
-              ) : (
+
+                {/* Instructions */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+                  <h3 className="font-semibold text-blue-900 mb-4">How to share your pCloud folder:</h3>
+                  <ol className="space-y-3 text-sm text-blue-800">
+                    <li className="flex gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center text-blue-900 font-medium">1</span>
+                      <span>Upload your photos to a folder in pCloud</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center text-blue-900 font-medium">2</span>
+                      <span>Right-click the folder and select "Get Link" → "Public folder"</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center text-blue-900 font-medium">3</span>
+                      <span>Copy the viewing link and paste it below</span>
+                    </li>
+                  </ol>
+                </div>
+
+                {/* Upload Link Button (if provided by gallery owner) */}
+                {galleryInfo?.pcloud_upload_link && (
+                  <div className="mb-6">
+                    <button
+                      onClick={handleOpenUploadLink}
+                      className="w-full py-3 bg-zinc-100 text-zinc-700 rounded-xl font-medium hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <ExternalLink className="w-5 h-5" />
+                      Open pCloud Upload Folder
+                    </button>
+                    <p className="text-xs text-zinc-500 text-center mt-2">
+                      The gallery owner has provided an upload folder for you
+                    </p>
+                  </div>
+                )}
+
+                {/* Sync Form */}
                 <form onSubmit={handleSubmitSync} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 mb-2">
-                      pCloud Viewing/Share Link *
+                      pCloud Folder Link (Public/Viewing URL)
                     </label>
                     <input
                       type="url"
                       value={pcloudViewingUrl}
                       onChange={(e) => setPcloudViewingUrl(e.target.value)}
                       placeholder="https://u.pcloud.link/publink/show?code=..."
-                      className="w-full h-12 px-4 rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                      disabled={submitting}
-                      data-testid="pcloud-viewing-url-input"
+                      className="w-full px-4 py-3 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
                     />
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Paste the share link to the folder where you uploaded your photos
-                    </p>
                   </div>
                   
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowSyncForm(false)}
-                      className="flex-1 h-12 rounded-xl border border-zinc-300 text-zinc-600 font-medium hover:bg-zinc-50 transition-all"
-                      disabled={submitting}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submitting || !companyName.trim() || !pcloudViewingUrl.trim()}
-                      className="flex-1 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-medium hover:from-blue-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-                      data-testid="sync-photos-btn"
-                    >
-                      {submitting ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          Syncing...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="w-5 h-5" />
-                          Sync Photos
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Syncing Photos...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-5 h-5" />
+                        Sync Photos from pCloud
+                      </>
+                    )}
+                  </button>
                 </form>
-              )}
-            </div>
+
+                {/* Existing Photos */}
+                {existingPhotos.length > 0 && (
+                  <div className="mt-8 pt-6 border-t border-zinc-200">
+                    <p className="text-sm text-zinc-600 mb-4">
+                      <CheckCircle className="w-4 h-4 inline text-green-500 mr-1" />
+                      {existingPhotos.length} photos already synced
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Success State */
+              <div className="text-center py-8">
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-zinc-800 mb-2">Photos Synced Successfully!</h3>
+                <p className="text-zinc-600 mb-6">
+                  {submitResult.photos_synced} photos have been added to the gallery
+                </p>
+                
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+                  <p className="text-green-800">
+                    Your photos will appear in the <strong>{galleryInfo?.section_name}</strong> section
+                  </p>
+                </div>
+                
+                <button
+                  onClick={() => {
+                    setSubmitResult(null);
+                    setPcloudViewingUrl('');
+                    fetchGalleryInfo();
+                  }}
+                  className="px-6 py-3 bg-zinc-100 text-zinc-700 rounded-xl font-medium hover:bg-zinc-200 transition-colors"
+                >
+                  Sync More Photos
+                </button>
+              </div>
+            )}
           </div>
-          
-          {/* Re-submit Note */}
-          {existingPhotos.length > 0 && (
-            <p className="text-center text-xs text-zinc-400 mt-4">
-              Syncing again will update the photos to the latest version
-            </p>
-          )}
-        </div>
-        </>
         )}
-        
-        {/* Footer */}
-        <p className="text-center text-sm text-zinc-400 mt-8">
-          Your photos will be visible in the client's gallery once synced
-        </p>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-zinc-200 py-8 mt-12 bg-white">
+        <div className="max-w-screen-xl mx-auto px-6 text-center text-sm text-zinc-500">
+          <p>© {new Date().getFullYear()} {brandConfig.brand_name || 'PhotoShare'}. pCloud Contributor Portal.</p>
+        </div>
+      </footer>
     </div>
   );
 };
