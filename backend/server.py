@@ -7371,6 +7371,11 @@ async def get_public_gallery(share_link: str):
                 contributors.append({"name": contributor_name, "role": section_name, "is_owner": False})
                 seen_entries.add(entry_key)
     
+    # Check download lock status
+    download_check = await check_download_allowed(gallery)
+    downloads_locked = not download_check["allowed"]
+    downloads_locked_reason = download_check["reason"]
+    
     return PublicGallery(
         id=gallery["id"],
         title=gallery["title"],
@@ -7389,7 +7394,9 @@ async def get_public_gallery(share_link: str):
         has_download_all_password=gallery.get("download_all_password") is not None,
         theme=gallery.get("theme", "classic"),
         photo_count=total_photo_count,
-        video_count=total_video_count
+        video_count=total_video_count,
+        downloads_locked=downloads_locked,
+        downloads_locked_reason=downloads_locked_reason
     )
 
 @api_router.post("/public/gallery/{share_link}/verify-password")
