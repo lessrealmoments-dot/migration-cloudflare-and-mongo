@@ -148,18 +148,18 @@ const FeatureTogglePage = () => {
       
       // Merge with default storage/expiration values for override modes
       const defaultModeSettings = {
-        founders_circle: { storage_limit_gb: -1, gallery_expiration_days: 36500 },
-        early_partner_beta: { storage_limit_gb: 50, gallery_expiration_days: 180 },
-        comped_pro: { storage_limit_gb: 50, gallery_expiration_days: 180 },
-        comped_standard: { storage_limit_gb: 20, gallery_expiration_days: 90 },
-        enterprise_access: { storage_limit_gb: -1, gallery_expiration_days: 36500 }
+        founders_circle: { gallery_storage_limit_gb: -1, gallery_expiration_days: 36500 },
+        early_partner_beta: { gallery_storage_limit_gb: 20, gallery_expiration_days: 180 },
+        comped_pro: { gallery_storage_limit_gb: 20, gallery_expiration_days: 180 },
+        comped_standard: { gallery_storage_limit_gb: 10, gallery_expiration_days: 90 },
+        enterprise_access: { gallery_storage_limit_gb: -1, gallery_expiration_days: 36500 }
       };
       
       // Default settings for payment plans
       const defaultPlanSettings = {
-        free: { storage_limit_gb: 0.5, gallery_expiration_days: 1 }, // 500MB, 1 day (demo)
-        standard: { storage_limit_gb: -1, gallery_expiration_days: 180 }, // Unlimited, 6 months
-        pro: { storage_limit_gb: -1, gallery_expiration_days: 180 } // Unlimited, 6 months
+        free: { gallery_storage_limit_gb: 1, gallery_expiration_days: 1 }, // 1GB per gallery, 1 day (demo)
+        standard: { gallery_storage_limit_gb: 10, gallery_expiration_days: 180 }, // 10GB per gallery, 6 months
+        pro: { gallery_storage_limit_gb: 20, gallery_expiration_days: 180 } // 20GB per gallery, 6 months
       };
       
       const data = response.data;
