@@ -145,26 +145,27 @@ Implemented smart progressive loading for galleries with 100s-1000s of photos:
 
 **Solution Components**:
 1. **VirtualizedGalleryGrid** (`/app/frontend/src/components/VirtualizedGalleryGrid.jsx`)
-   - Infinite scroll with batched loading (24 photos per batch)
-   - Only renders photos as user scrolls
+   - Manual "Load More" buttons (no auto infinite scroll)
+   - 50 photos per batch for optimal UX
    - Shows "X of Y photos" counter
-   - Triggers for galleries with 50+ photos (`LARGE_GALLERY_THRESHOLD`)
+   - "Load All" option for power users
+   - Triggers for galleries with 50+ photos
 
-2. **ProgressiveImage** (`/app/frontend/src/components/ProgressiveImage.jsx`)
-   - Blur-to-sharp transition (like Apple/Unsplash)
-   - Loads thumbnail first (~50-100KB), full-res on demand
-   - Intersection Observer for lazy loading
-   - Memory efficient - no full images loaded until clicked
+2. **Sharp Thumbnails** (No blur effect)
+   - pCloud: 800x800px thumbnails (clear, ~100-200KB)
+   - Google Drive: 800px thumbnails
+   - Native browser lazy loading
+   - Fallback to full-res if thumbnail fails
 
 **Data Flow**:
-- Grid View: Uses pCloud thumbnails (400x400px via `/api/pcloud/thumb/{code}/{fileid}`)
+- Grid View: Sharp 800px thumbnails via `/api/pcloud/thumb/{code}/{fileid}?size=800x800`
 - Lightbox: Loads full resolution on-demand via proxy URL
 - Download: Always serves original full-resolution
 
 **Performance Impact**:
-- Initial load: ~2MB (24 thumbnails) vs 7GB (all full-res)
-- Scroll: Loads 24 more photos per batch
-- Memory: Only visible photos in DOM
+- Initial load: ~5-10MB (50 sharp thumbnails) - still much better than 7GB
+- User-controlled expansion: 50 photos per click
+- Memory efficient: Only rendered photos in DOM
 
 **Affected Sections**: pCloud, Regular Photos, Unsorted Photos, Google Drive
 
