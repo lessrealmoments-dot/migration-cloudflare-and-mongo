@@ -54,6 +54,10 @@ class Gallery(BaseModel):
     is_edit_locked: bool = False  # Whether editing is locked (7 days after creation)
     days_until_edit_lock: int = 7  # Days remaining before edit lock
     download_locked_until_payment: bool = False  # Downloads locked until payment approved
+    # Per-gallery storage tracking
+    storage_used: int = 0  # Bytes used in this gallery
+    storage_quota: int = -1  # Storage limit in bytes (-1 = unlimited)
+    storage_percent: float = 0.0  # Percentage of quota used
 
 
 class GalleryUpdate(BaseModel):
