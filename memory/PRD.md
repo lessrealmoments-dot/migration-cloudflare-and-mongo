@@ -1342,6 +1342,54 @@ When users submitted payment proofs for plan upgrades or extra credits, a pendin
 
 ---
 
+## Comprehensive Client Management System (February 2026) ✅
+
+### New "Clients" Tab in Admin Dashboard
+A complete client account management section with:
+
+#### Stats Dashboard
+- Total Clients, Active Clients, Pending Payments
+- Total Revenue, Plan Distribution, Override Count
+
+#### Client List View
+| Column | Description |
+|--------|-------------|
+| Client | Name, email, business name |
+| Plan | Free/Standard/Pro badge + override mode |
+| Status | Active/Pending Payment/Suspended with icons |
+| Credits | Event + extra credits |
+| Storage | Usage bar with percentage |
+| Galleries | Active / total count |
+| Revenue | Total revenue + transaction count |
+| Joined | Registration date + last login |
+| Actions | View details button |
+
+#### Filters & Search
+- Search by name, email, business name
+- Filter by: Plan, Status, Override Mode
+- "Pending Only" checkbox
+- Sortable columns (Name, Revenue, Joined)
+
+#### Client Detail Modal
+- **Subscription Card**: Plan, status, credits, storage bar
+- **Quick Actions**: Add Credits, Extend, Change Plan, Override, Reset Password
+- **Payment History**: All transactions with amounts and status
+- **Galleries**: Recent galleries with photo counts
+- **Account Info**: Member since, last login, status, client ID
+
+### New API Endpoints
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/admin/clients` | List clients with filters, search, sorting |
+| `GET /api/admin/clients/{id}` | Get comprehensive client details |
+| `GET /api/admin/clients/stats` | Overall client statistics |
+| `POST /api/admin/clients/{id}/add-credits` | Add bonus credits |
+| `POST /api/admin/clients/{id}/extend-subscription` | Extend subscription |
+| `POST /api/admin/clients/{id}/change-plan` | Change client's plan |
+| `POST /api/admin/clients/{id}/reset-password` | Reset client's password |
+
+---
+
 ## Photo/Video Count & Download Integration Sources (December 2025)
 
 ### Photo Count Update
