@@ -453,13 +453,31 @@ const FotoshareContributorUpload = () => {
           <div className="bg-zinc-800/50 backdrop-blur-sm rounded-2xl border border-zinc-700 p-8">
             {!submitResult ? (
               <>
-                <div className="text-center mb-8">
+                <div className="text-center mb-6">
                   <RotateCcw className="w-12 h-12 text-purple-400 mx-auto mb-4" />
                   <h2 className="text-xl font-semibold text-white mb-2">Sync Your Fotoshare Event</h2>
-                  <p className="text-zinc-400">
-                    Contributing as <span className="font-medium text-white">{companyName}</span>
-                    <span className="text-zinc-500"> • {getFinalRole()}</span>
-                  </p>
+                </div>
+
+                {/* Edit Profile Banner */}
+                <div className="bg-zinc-900/50 border border-zinc-700 rounded-xl p-4 mb-6 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center">
+                      <Building2 className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-white">{companyName}</p>
+                      <p className="text-sm text-zinc-400">{getFinalRole()}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setStep('company')}
+                    className="px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-700 rounded-lg transition-colors flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Edit
+                  </button>
                 </div>
 
                 {/* Instructions */}
