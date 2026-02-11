@@ -624,7 +624,7 @@ async def fetch_gdrive_folder_photos(folder_id: str) -> dict:
                         if thumbnail_url:
                             thumbnail_url = thumbnail_url.replace('=s220', '=s800')
                         else:
-                            thumbnail_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w400"
+                            thumbnail_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w800"
                         
                         # Full image URL for viewing
                         view_url = f"https://drive.google.com/uc?export=view&id={file_id}"
