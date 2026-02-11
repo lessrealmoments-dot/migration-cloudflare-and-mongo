@@ -8748,9 +8748,12 @@ async def upload_payment_qr(file: UploadFile = File(...), method: str = Form(...
     # Upload to R2 if enabled, otherwise save locally
     if storage.r2_enabled:
         file_key = f"payment_qr/{filename}"
-        url = await storage.upload_file(content, file_key, content_type)
+        success, url_or_error = await storage.upload_file(file_key, content, content_type)
+        if not success:
+            logger.error(f"R2 upload failed for payment QR: {url_or_error}")
+            raise HTTPException(status_code=500, detail="Failed to upload QR code. Please try again.")
         logger.info(f"Payment QR uploaded to R2: {filename}")
-        return {"url": url}
+        return {"url": url_or_error}
     else:
         # Fallback to local storage
         qr_dir = Path("uploads/payment_qr")
