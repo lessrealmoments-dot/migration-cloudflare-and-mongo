@@ -8412,6 +8412,16 @@ async def submit_extra_credits_request(data: ExtraCreditRequest, background_task
     })
     background_tasks.add_task(send_email, db_user.get("email"), customer_subject, customer_html)
     
+    # Create pending transaction record
+    await create_transaction(
+        user_id=user["id"],
+        tx_type="extra_credits",
+        amount=total_cost,
+        status="pending",
+        extra_credits=data.quantity,
+        payment_proof_url=data.proof_url
+    )
+    
     return {
         "message": f"Request for {data.quantity} extra credit(s) submitted. Total: ₱{total_cost}. Awaiting admin approval.",
         "quantity": data.quantity,
