@@ -185,6 +185,9 @@ class PublicGallery(BaseModel):
     display_transition: str = "crossfade"
     display_interval: int = 6
     collage_preset_id: Optional[str] = None
+    # Download lock status
+    downloads_locked: bool = False
+    downloads_locked_reason: Optional[str] = None
 
 
 class CoverPhotoPosition(BaseModel):
