@@ -1794,6 +1794,32 @@ def can_download(user: dict) -> bool:
     payment_status = user.get("payment_status", PAYMENT_NONE)
     return payment_status != PAYMENT_PENDING
 
+async def check_download_allowed(gallery: dict, is_owner: bool = False) -> dict:
+    """
+    Check if downloads are allowed for a gallery.
+    Returns: {"allowed": bool, "reason": str or None}
+    
+    Downloads are blocked if:
+    1. Gallery has download_locked_until_payment = True
+    2. Photographer has a pending payment transaction
+    """
+    # Check gallery-level lock
+    if gallery.get("download_locked_until_payment", False):
+        return {
+            "allowed": False,
+            "reason": "Downloads are temporarily locked while payment is being verified. Please wait for admin approval."
+        }
+    
+    # Check photographer's payment status
+    photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0, "payment_status": 1})
+    if photographer and photographer.get("payment_status") == PAYMENT_PENDING:
+        return {
+            "allowed": False,
+            "reason": "Downloads are temporarily locked while payment is being verified. Please wait for admin approval."
+        }
+    
+    return {"allowed": True, "reason": None}
+
 def is_gallery_locked(gallery: dict) -> bool:
     """Check if gallery is past edit window (7 days)"""
     created_at = gallery.get("created_at")
