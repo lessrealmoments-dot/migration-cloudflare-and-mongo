@@ -205,7 +205,7 @@ const PremiumLightbox = ({
         <div className="relative max-w-7xl max-h-full flex items-center justify-center">
           <img
             ref={imageRef}
-            src={`${backendUrl}${currentPhoto.url}`}
+            src={getImageUrl(currentPhoto.url, backendUrl)}
             alt="Gallery"
             onLoad={() => setImageLoaded(true)}
             className={`max-w-full max-h-[70vh] w-auto h-auto object-contain transition-all duration-300 ${
