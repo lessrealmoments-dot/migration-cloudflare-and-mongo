@@ -1523,53 +1523,20 @@ const PublicGallery = () => {
                         </h3>
                       </motion.div>
                       
-                      {/* pCloud Photos Grid - Virtualized for large galleries */}
-                      {useLargeGalleryMode ? (
-                        <VirtualizedGalleryGrid
-                          photos={sectionPcloudPhotos}
-                          initialCount={PHOTOS_PER_BATCH}
-                          batchSize={PHOTOS_PER_BATCH}
-                          onPhotoClick={(index) => {
-                            setPcloudLightboxPhotos(pcloudLightboxPhotos);
-                            setPcloudLightboxIndex(index);
-                          }}
-                          getThumbUrl={getPcloudThumbUrl}
-                          getFullUrl={getPcloudFullUrl}
-                          themeColors={currentTheme.colors}
-                          showSupplierName={true}
-                        />
-                      ) : (
-                        // Standard grid for smaller galleries
-                        <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-                          {sectionPcloudPhotos.map((photo, index) => (
-                            <motion.div
-                              key={photo.id}
-                              className="break-inside-avoid mb-4 group cursor-pointer relative overflow-hidden rounded-lg"
-                              initial={{ opacity: 0, y: 20 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true }}
-                              transition={{ duration: 0.5, delay: Math.min(index * 0.05, 0.4) }}
-                              onClick={() => {
-                                setPcloudLightboxPhotos(pcloudLightboxPhotos);
-                                setPcloudLightboxIndex(index);
-                              }}
-                            >
-                              <ProgressiveImage
-                                src={`${API}${photo.proxy_url}`}
-                                thumbnailSrc={`${API}${photo.thumbnail_url || photo.proxy_url}`}
-                                alt={photo.name}
-                                className="w-full h-auto transition-transform duration-700 group-hover:scale-105"
-                                objectFit="cover"
-                              />
-                              {photo.supplier_name && (
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <p className="text-white text-xs">by {photo.supplier_name}</p>
-                                </div>
-                              )}
-                            </motion.div>
-                          ))}
-                        </div>
-                      )}
+                      {/* pCloud Photos Grid - Using LazyMasonryGrid for all sizes */}
+                      <LazyMasonryGrid
+                        photos={sectionPcloudPhotos}
+                        initialCount={PHOTOS_PER_BATCH}
+                        batchSize={PHOTOS_PER_BATCH}
+                        onPhotoClick={(index) => {
+                          setPcloudLightboxPhotos(pcloudLightboxPhotos);
+                          setPcloudLightboxIndex(index);
+                        }}
+                        getThumbUrl={getPcloudThumbUrl}
+                        getFullUrl={getPcloudFullUrl}
+                        themeColors={currentTheme.colors}
+                        showSupplierName={true}
+                      />
                     </div>
                   </motion.section>
                 );
