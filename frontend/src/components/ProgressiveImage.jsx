@@ -4,35 +4,31 @@ import { Loader2, ImageOff } from 'lucide-react';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 /**
- * ProgressiveImage - Premium blur-to-sharp image loading
+ * ProgressiveImage - Clean image loading without blur effect
  * 
  * Features:
- * - Tiny placeholder (blurred) → Medium quality → Full quality
- * - Intersection Observer for lazy loading
- * - Smooth blur-to-sharp transition (like Apple/Unsplash)
- * - Memory efficient - no full image loaded until needed
+ * - Loads thumbnail immediately (sharp, no blur)
+ * - Lazy loading with Intersection Observer
+ * - Graceful error handling with fallback
+ * - Optional full-res loading on view (for lightbox)
  */
 const ProgressiveImage = ({
   src,                          // Full resolution URL
-  thumbnailSrc,                 // Low-res thumbnail URL (required for progressive loading)
-  placeholderSrc = null,        // Tiny placeholder (optional, for extra blur effect)
+  thumbnailSrc,                 // Thumbnail URL (shown in grid)
   alt = '',
   className = '',
   style = {},
   onClick,
   showLoader = true,
-  aspectRatio = null,           // e.g., "4/3", "16/9", "1/1" for consistent layout before load
+  aspectRatio = null,           // e.g., "4/3", "16/9", "1/1"
   objectFit = 'cover',
   onLoadComplete = null,
-  loadFullOnView = false,       // Load full-res when in viewport (for lightbox)
+  loadFullOnView = false,       // Load full-res when in viewport
 }) => {
-  const [loadState, setLoadState] = useState('initial'); // initial | thumbnail | full | error
+  const [loadState, setLoadState] = useState('initial'); // initial | loading | loaded | error
   const [currentSrc, setCurrentSrc] = useState(null);
   const [isInView, setIsInView] = useState(false);
-  const [thumbnailLoaded, setThumbnailLoaded] = useState(false);
   const containerRef = useRef(null);
-  const thumbnailRef = useRef(null);
-  const fullImageRef = useRef(null);
 
   // Normalize URL
   const normalizeUrl = useCallback((url) => {
@@ -51,16 +47,17 @@ const ProgressiveImage = ({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setIsInView(true);
-            // Start loading thumbnail when visible
+            // Start loading when visible
             if (loadState === 'initial') {
-              setCurrentSrc(normalizeUrl(thumbnailSrc || src));
-              setLoadState('loading-thumbnail');
+              const imageUrl = normalizeUrl(thumbnailSrc || src);
+              setCurrentSrc(imageUrl);
+              setLoadState('loading');
             }
           }
         });
       },
       {
-        rootMargin: '200px', // Start loading 200px before entering viewport
+        rootMargin: '100px', // Start loading 100px before entering viewport
         threshold: 0.01
       }
     );
@@ -72,64 +69,24 @@ const ProgressiveImage = ({
     return () => observer.disconnect();
   }, [thumbnailSrc, src, loadState, normalizeUrl]);
 
-  // Handle thumbnail load
-  const handleThumbnailLoad = useCallback(() => {
-    setThumbnailLoaded(true);
-    setLoadState('thumbnail');
-    
-    // If loadFullOnView is true and we're in view, start loading full image
-    if (loadFullOnView && isInView && src !== thumbnailSrc) {
-      // Preload full image in background
-      const fullImg = new Image();
-      fullImg.onload = () => {
-        setCurrentSrc(normalizeUrl(src));
-        setLoadState('full');
-        if (onLoadComplete) onLoadComplete();
-      };
-      fullImg.onerror = () => {
-        // Keep thumbnail, log error
-        console.warn('Full image failed to load:', src);
-      };
-      fullImg.src = normalizeUrl(src);
-    } else if (onLoadComplete) {
-      onLoadComplete();
-    }
-  }, [loadFullOnView, isInView, src, thumbnailSrc, normalizeUrl, onLoadComplete]);
+  // Handle image load
+  const handleLoad = useCallback(() => {
+    setLoadState('loaded');
+    if (onLoadComplete) onLoadComplete();
+  }, [onLoadComplete]);
 
-  // Handle thumbnail error
-  const handleThumbnailError = useCallback(() => {
-    // Try loading original if thumbnail fails
-    if (src && currentSrc !== normalizeUrl(src)) {
-      setCurrentSrc(normalizeUrl(src));
+  // Handle image error
+  const handleError = useCallback(() => {
+    // Try loading full URL if thumbnail fails
+    const fullUrl = normalizeUrl(src);
+    if (currentSrc !== fullUrl && src) {
+      setCurrentSrc(fullUrl);
     } else {
       setLoadState('error');
     }
   }, [src, currentSrc, normalizeUrl]);
 
-  // Load full resolution on demand (for lightbox click)
-  const loadFullResolution = useCallback(() => {
-    if (loadState === 'full' || !src) return;
-    
-    const fullImg = new Image();
-    fullImg.onload = () => {
-      setCurrentSrc(normalizeUrl(src));
-      setLoadState('full');
-    };
-    fullImg.src = normalizeUrl(src);
-  }, [loadState, src, normalizeUrl]);
-
-  // Handle click - load full res first if needed
-  const handleClick = useCallback((e) => {
-    if (onClick) {
-      // If we haven't loaded full res yet and it's different from thumbnail
-      if (loadState !== 'full' && src !== thumbnailSrc) {
-        loadFullResolution();
-      }
-      onClick(e);
-    }
-  }, [onClick, loadState, src, thumbnailSrc, loadFullResolution]);
-
-  const isLoading = loadState === 'initial' || loadState === 'loading-thumbnail';
+  const isLoading = loadState === 'initial' || loadState === 'loading';
   const hasError = loadState === 'error';
 
   return (
@@ -141,11 +98,11 @@ const ProgressiveImage = ({
         minHeight: isLoading ? '100px' : 'auto',
         ...style
       }}
-      onClick={handleClick}
+      onClick={onClick}
     >
-      {/* Loading placeholder with subtle pulse */}
+      {/* Loading placeholder */}
       {isLoading && showLoader && (
-        <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 animate-pulse">
+        <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800">
           <Loader2 className="w-6 h-6 text-zinc-400 animate-spin" />
         </div>
       )}
@@ -158,33 +115,18 @@ const ProgressiveImage = ({
         </div>
       )}
 
-      {/* Thumbnail layer - always visible once loaded */}
+      {/* Image - sharp, no blur */}
       {currentSrc && !hasError && (
         <img
-          ref={thumbnailRef}
           src={currentSrc}
           alt={alt}
           className={`
-            w-full h-full transition-all duration-700 ease-out
-            ${loadState === 'loading-thumbnail' ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}
-            ${loadState === 'thumbnail' ? 'blur-[1px]' : 'blur-0'}
+            w-full h-full transition-opacity duration-300
+            ${loadState === 'loading' ? 'opacity-0' : 'opacity-100'}
           `}
           style={{ objectFit }}
-          onLoad={handleThumbnailLoad}
-          onError={handleThumbnailError}
-          loading="lazy"
-          decoding="async"
-        />
-      )}
-
-      {/* Full resolution overlay - fades in over thumbnail */}
-      {loadState === 'full' && src !== thumbnailSrc && (
-        <img
-          ref={fullImageRef}
-          src={normalizeUrl(src)}
-          alt={alt}
-          className="absolute inset-0 w-full h-full opacity-100 transition-opacity duration-500"
-          style={{ objectFit }}
+          onLoad={handleLoad}
+          onError={handleError}
           loading="lazy"
           decoding="async"
         />
