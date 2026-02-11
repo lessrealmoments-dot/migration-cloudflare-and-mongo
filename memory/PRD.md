@@ -168,6 +168,32 @@ Implemented smart progressive loading for galleries with 100s-1000s of photos:
 
 **Affected Sections**: pCloud, Regular Photos, Unsorted Photos, Google Drive
 
+### Smart Adaptive Upload System (February 2026) ✅
+Implemented intelligent upload system that adapts to connection speed:
+
+**Upload Modes by User Type**:
+| User Type | Concurrency | Why |
+|-----------|-------------|-----|
+| Guests | 1 (sequential) | Limited mobile data, avoid timeouts |
+| Photographer/Owner | 2-6 (adaptive) | Professional setup, maximize speed |
+| Contributors | 2-6 (adaptive) | Professional suppliers |
+
+**Smart Uploader Features** (`/app/frontend/src/hooks/useSmartUploader.js`):
+- **Speed Measurement**: Samples upload speed during first few files
+- **Auto-Adjust Concurrency**:
+  - Fast (>5 MB/s / 40 Mbps): 6 concurrent uploads
+  - Medium (2-5 MB/s): 4 concurrent uploads
+  - Slow (<2 MB/s): 2 concurrent uploads
+  - Very slow: 1 sequential upload
+- **Progress UI**: Shows real-time speed (Mbps) and concurrent uploads count
+- **Cancel Support**: Users can cancel ongoing uploads
+- **Retry Logic**: Auto-retry failed uploads with exponential backoff
+
+**Files Modified**:
+- `/app/frontend/src/pages/GalleryDetail.jsx` - Photographer uploads
+- `/app/frontend/src/pages/ContributorUpload.jsx` - Contributor uploads
+- `/app/frontend/src/pages/PublicGallery.jsx` - Guest uploads (unchanged, already sequential)
+
 ## Admin Override System (NEW - February 2026)
 
 ### Authority Hierarchy (Strict Order)
