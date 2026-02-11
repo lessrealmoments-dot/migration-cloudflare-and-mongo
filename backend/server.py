@@ -4123,6 +4123,13 @@ async def get_galleries(current_user: dict = Depends(get_current_user)):
         days_until_deletion = calculate_days_until_deletion(auto_delete_date)
         edit_info = get_edit_lock_info(g["created_at"])
         
+        # Calculate storage percentage
+        storage_used = g.get("storage_used", 0)
+        storage_quota = g.get("storage_quota", -1)
+        storage_percent = 0.0
+        if storage_quota > 0:
+            storage_percent = round((storage_used / storage_quota) * 100, 1)
+        
         result.append(Gallery(
             id=g["id"],
             photographer_id=g["photographer_id"],
@@ -4147,7 +4154,10 @@ async def get_galleries(current_user: dict = Depends(get_current_user)):
             auto_delete_date=auto_delete_date,
             days_until_deletion=days_until_deletion,
             is_edit_locked=edit_info["is_locked"],
-            days_until_edit_lock=edit_info["days_until_lock"]
+            days_until_edit_lock=edit_info["days_until_lock"],
+            storage_used=storage_used,
+            storage_quota=storage_quota,
+            storage_percent=storage_percent
         ))
     
     return result
