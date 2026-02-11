@@ -8700,6 +8700,12 @@ async def get_photographer_analytics(current_user: dict = Depends(get_current_us
     
     for g in galleries:
         days_remaining = calculate_days_until_deletion(g.get("auto_delete_date"))
+        # Convert datetime to ISO string for Pydantic model
+        created_at_value = g.get("created_at")
+        if hasattr(created_at_value, 'isoformat'):
+            created_at_str = created_at_value.isoformat()
+        else:
+            created_at_str = str(created_at_value) if created_at_value else ""
         gallery_analytics.append(GalleryAnalytics(
             gallery_id=g["id"],
             gallery_title=g["title"],
@@ -8707,7 +8713,7 @@ async def get_photographer_analytics(current_user: dict = Depends(get_current_us
             total_photos=g.get("total_photos", 0),
             photographer_photos=g.get("photographer_photos", 0),
             guest_photos=g.get("guest_photos", 0),
-            created_at=g["created_at"],
+            created_at=created_at_str,
             days_until_deletion=days_remaining,
             qr_scans=g.get("qr_scan_count", 0),
             download_count=g.get("download_count", 0)
