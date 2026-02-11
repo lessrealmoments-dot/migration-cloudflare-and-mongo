@@ -1497,7 +1497,8 @@ const PublicGallery = () => {
                 
                 return (
                   <motion.section 
-                    key={section.id} 
+                    key={section.id}
+                    id={`section-${section.id}`}
                     className="py-16 md:py-24"
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
