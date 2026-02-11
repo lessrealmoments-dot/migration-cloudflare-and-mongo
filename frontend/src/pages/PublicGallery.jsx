@@ -1447,12 +1447,13 @@ const PublicGallery = () => {
                 if (sectionVideos.length === 0) return null;
                 
                 return (
-                  <VideoSection
-                    key={section.id}
-                    videos={sectionVideos}
-                    sectionName={section.name}
-                    contributorName={section.contributor_name}
-                  />
+                  <div key={section.id} id={`section-${section.id}`}>
+                    <VideoSection
+                      videos={sectionVideos}
+                      sectionName={section.name}
+                      contributorName={section.contributor_name}
+                    />
+                  </div>
                 );
               }
               
@@ -1462,7 +1463,7 @@ const PublicGallery = () => {
                 if (sectionFotoshareVideos.length === 0 && !section.fotoshare_expired) return null;
                 
                 return (
-                  <div key={section.id} className="py-16 md:py-24" style={{ backgroundColor: currentTheme.colors.background }}>
+                  <div key={section.id} id={`section-${section.id}`} className="py-16 md:py-24" style={{ backgroundColor: currentTheme.colors.background }}>
                     <div className="max-w-screen-2xl mx-auto px-6 md:px-12 lg:px-24">
                       <FotoshareSection
                         section={section}
