@@ -1724,8 +1724,6 @@ const PublicGallery = () => {
                       getFullUrl={getPhotoFullUrl}
                       themeColors={currentTheme.colors}
                     />
-                      </>
-                    )}
                   </div>
                 </motion.section>
               );
