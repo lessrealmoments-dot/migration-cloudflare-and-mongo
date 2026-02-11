@@ -1711,63 +1711,19 @@ const PublicGallery = () => {
                       </motion.div>
                     ) : null}
                     
-                    {/* Photo Grid - Virtualized for large galleries */}
-                    {useLargeGalleryMode ? (
-                      <VirtualizedGalleryGrid
-                        photos={unsortedPhotos}
-                        initialCount={PHOTOS_PER_BATCH}
-                        batchSize={PHOTOS_PER_BATCH}
-                        onPhotoClick={(index, photo) => {
-                          const globalIndex = photos.findIndex(p => p.id === photo.id);
-                          setLightboxIndex(globalIndex >= 0 ? globalIndex : index);
-                        }}
-                        getThumbUrl={getPhotoThumbUrl}
-                        getFullUrl={getPhotoFullUrl}
-                        themeColors={currentTheme.colors}
-                        gridCols="columns-1 sm:columns-2 lg:columns-3"
-                      />
-                    ) : (
-                      <>
-                        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 md:gap-8">
-                          {displayPhotos.map((photo, idx) => (
-                            <AnimatedPhotoCard
-                              key={photo.id}
-                              photo={photo}
-                              index={idx}
-                              onView={setLightboxIndex}
-                              onDownload={handleDownload}
-                              photoIndex={photos.findIndex(p => p.id === photo.id)}
-                            />
-                          ))}
-                        </div>
-                        
-                        {hasMore && (
-                          <motion.div 
-                            className="text-center mt-12"
-                            initial={{ opacity: 0 }}
-                            whileInView={{ opacity: 1 }}
-                            viewport={{ once: true }}
-                          >
-                            <button 
-                              onClick={() => toggleSectionExpand(sectionId)}
-                              className="group inline-flex items-center gap-3 px-8 py-4 rounded-full transition-all duration-300 border-2"
-                              style={{ 
-                                borderColor: currentTheme.colors.accent,
-                                color: getContrastTextColor(currentTheme.colors.background) 
-                              }}
-                            >
-                              <span className="font-medium">
-                                {isExpanded ? 'Show Less' : `View All ${unsortedPhotos.length} Photos`}
-                              </span>
-                              <motion.span
-                                animate={{ rotate: isExpanded ? 180 : 0 }}
-                                transition={{ duration: 0.3 }}
-                              >
-                                <ChevronDown className="w-5 h-5" />
-                              </motion.span>
-                            </button>
-                          </motion.div>
-                        )}
+                    {/* Photo Grid - Using LazyMasonryGrid */}
+                    <LazyMasonryGrid
+                      photos={unsortedPhotos}
+                      initialCount={PHOTOS_PER_BATCH}
+                      batchSize={PHOTOS_PER_BATCH}
+                      onPhotoClick={(index, photo) => {
+                        const globalIndex = photos.findIndex(p => p.id === photo.id);
+                        setLightboxIndex(globalIndex >= 0 ? globalIndex : index);
+                      }}
+                      getThumbUrl={getPhotoThumbUrl}
+                      getFullUrl={getPhotoFullUrl}
+                      themeColors={currentTheme.colors}
+                    />
                       </>
                     )}
                   </div>
