@@ -3,11 +3,19 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { Upload, CheckCircle, AlertCircle, Loader2, Camera, Building2, ChevronRight } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, Loader2, Camera, Building2, ChevronRight, Wifi, Zap } from 'lucide-react';
 import useBrandConfig from '../hooks/useBrandConfig';
+import { useSmartUploader } from '../hooks/useSmartUploader';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Format speed for display
+const formatSpeed = (bytesPerSecond) => {
+  if (!bytesPerSecond || bytesPerSecond === 0) return '-- Mbps';
+  const mbps = (bytesPerSecond * 8) / (1024 * 1024);
+  return `${mbps.toFixed(1)} Mbps`;
+};
 
 const ContributorUpload = () => {
   const { contributorLink } = useParams();
