@@ -463,7 +463,10 @@ const PublicGallery = () => {
       let downloadUrl;
       
       // Check if this is a pCloud photo - use proxy download to bypass ISP blocks
-      if (photo.url && photo.url.includes('/pcloud/serve/')) {
+      if (photo.download_url) {
+        // Use the pre-built download URL from the API
+        downloadUrl = `${BACKEND_URL}/api${photo.download_url}?filename=${encodeURIComponent(photo.filename || photo.name || 'photo.jpg')}`;
+      } else if (photo.url && photo.url.includes('/pcloud/serve/')) {
         // Convert serve URL to download URL
         downloadUrl = photo.url.replace('/pcloud/serve/', '/pcloud/download/');
         downloadUrl = `${BACKEND_URL}${downloadUrl}?filename=${encodeURIComponent(photo.filename || 'photo.jpg')}`;
@@ -477,7 +480,7 @@ const PublicGallery = () => {
       
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = photo.filename || 'photo.jpg';
+      link.download = photo.filename || photo.name || 'photo.jpg';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
