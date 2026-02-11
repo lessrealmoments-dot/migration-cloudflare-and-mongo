@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { ArrowLeft, Upload, Trash2, Copy, ExternalLink, Lock, X, Plus, Image as ImageIcon, AlertTriangle, Cloud, CloudOff, Check, Loader2, RefreshCw, CheckCircle, AlertCircle, Download, Package, Settings2, QrCode, Star, EyeOff, Eye, GripVertical, CheckSquare, Square, FolderInput, ChevronDown, ChevronUp, Code, Monitor, Grid, Play, Edit2, Film, Video, Camera, Sparkles, RotateCcw, HardDrive } from 'lucide-react';
+import { ArrowLeft, Upload, Trash2, Copy, ExternalLink, Lock, X, Plus, Image as ImageIcon, AlertTriangle, Cloud, CloudOff, Check, Loader2, RefreshCw, CheckCircle, AlertCircle, Download, Package, Settings2, QrCode, Star, EyeOff, Eye, GripVertical, CheckSquare, Square, FolderInput, ChevronDown, ChevronUp, Code, Monitor, Grid, Play, Edit2, Film, Video, Camera, Sparkles, RotateCcw, HardDrive, Zap, Wifi } from 'lucide-react';
 import { themes, getThemesByCategory } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 import OptimizedImage from '@/components/OptimizedImage';
@@ -13,6 +13,7 @@ import VideoThumbnailCropper from '@/components/VideoThumbnailCropper';
 import { QRCodeSVG } from 'qrcode.react';
 import useBrandConfig from '../hooks/useBrandConfig';
 import useFeatureToggles from '../hooks/useFeatureToggles';
+import { useSmartUploader } from '../hooks/useSmartUploader';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -35,6 +36,13 @@ const formatBytes = (bytes) => {
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
+// Format speed for display
+const formatSpeed = (bytesPerSecond) => {
+  if (!bytesPerSecond || bytesPerSecond === 0) return '-- Mbps';
+  const mbps = (bytesPerSecond * 8) / (1024 * 1024);
+  return `${mbps.toFixed(1)} Mbps`;
 };
 
 const GalleryDetail = () => {
