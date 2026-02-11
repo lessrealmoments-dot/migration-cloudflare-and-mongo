@@ -5004,9 +5004,12 @@ async def upload_video_thumbnail(file: UploadFile = File(...), user: dict = Depe
         # Upload to R2 if enabled, otherwise save locally
         if storage.r2_enabled:
             file_key = f"video_thumbnails/{filename}"
-            url = await storage.upload_file(optimized_content, file_key, "image/jpeg")
+            success, url_or_error = await storage.upload_file(file_key, optimized_content, "image/jpeg")
+            if not success:
+                logger.error(f"R2 upload failed for video thumbnail: {url_or_error}")
+                raise HTTPException(status_code=500, detail="Failed to upload thumbnail. Please try again.")
             logger.info(f"Video thumbnail uploaded to R2: {filename}")
-            return {"url": url}
+            return {"url": url_or_error}
         else:
             # Fallback to local storage
             thumbnails_dir = Path("uploads/video_thumbnails")
