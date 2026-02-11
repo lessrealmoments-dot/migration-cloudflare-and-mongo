@@ -124,7 +124,17 @@ const SlideshowDisplay = () => {
             setPhotos(prev => [...prev, ...newPhotos]);
           }
         } else {
-          setPhotos(data.photos);
+          // Filter only photos with valid URLs
+          const validPhotos = data.photos.filter(p => p.url || p.thumbnail_medium_url || p.thumbnail_url);
+          setPhotos(validPhotos);
+          
+          // Log photo sources for debugging
+          const sources = validPhotos.reduce((acc, p) => {
+            const source = p.source || 'upload';
+            acc[source] = (acc[source] || 0) + 1;
+            return acc;
+          }, {});
+          console.log(`[Slideshow] Loaded ${validPhotos.length} photos:`, sources);
         }
         lastPhotoCount.current = newPhotoCount;
       }
