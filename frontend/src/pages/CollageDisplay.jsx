@@ -458,7 +458,13 @@ const CollageDisplay = () => {
             if (p.thumbnail_url) return true;
             return false;
           });
-          const shuffled = [...validPhotos].sort(() => Math.random() - 0.5);
+          
+          // Fisher-Yates shuffle for proper randomization across all sources/sections
+          const shuffled = [...validPhotos];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
           setPhotos(shuffled);
           
           // Log photo sources for debugging
@@ -467,7 +473,7 @@ const CollageDisplay = () => {
             acc[source] = (acc[source] || 0) + 1;
             return acc;
           }, {});
-          console.log(`[Collage] Loaded ${validPhotos.length} photos:`, sources);
+          console.log(`[Collage] Loaded ${validPhotos.length} photos (shuffled from all sources):`, sources);
           
           if (validPhotos.length < data.photos.length) {
             console.log(`[Collage] Filtered out ${data.photos.length - validPhotos.length} photos without valid URLs`);
