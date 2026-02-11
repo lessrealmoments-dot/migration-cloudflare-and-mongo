@@ -1679,7 +1679,7 @@ async def resolve_user_features(user: dict) -> dict:
     result["authority_source"] = "payment_plan"
     
     # CRITICAL: Check if subscription has expired for paid plans
-    # If expired, downgrade to free plan
+    # If expired, downgrade to free plan but preserve extra_credits
     effective_plan = plan
     subscription_expired = False
     
@@ -1713,9 +1713,26 @@ async def resolve_user_features(user: dict) -> dict:
         result["has_unlimited_credits"] = True
         result["credits_available"] = 999
     
-    # If subscription expired, set credits to 0
+    # Handle credits when subscription expires:
+    # - Monthly tokens (event_credits) → reset to 0
+    # - Extra tokens (extra_credits) → preserved until their own expiration (12 months from purchase)
     if subscription_expired:
-        result["credits_available"] = 0
+        # Monthly credits are lost, but extra credits remain
+        event_credits = 0  # Monthly tokens gone
+        extra_credits = user.get("extra_credits", 0)
+        
+        # Check if extra credits have expired (12 months from purchase)
+        extra_credits_purchased_at = user.get("extra_credits_purchased_at")
+        if extra_credits_purchased_at and extra_credits > 0:
+            try:
+                purchased_at = datetime.fromisoformat(extra_credits_purchased_at.replace('Z', '+00:00'))
+                extra_credits_expires = purchased_at + timedelta(days=365)
+                if datetime.now(timezone.utc) >= extra_credits_expires:
+                    extra_credits = 0  # Extra credits also expired
+            except (ValueError, TypeError):
+                pass
+        
+        result["credits_available"] = extra_credits
         result["has_unlimited_credits"] = False
     
     # STEP 3: Payment Status Check (only if billing enforcement enabled)
