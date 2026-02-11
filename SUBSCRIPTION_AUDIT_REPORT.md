@@ -210,8 +210,8 @@ else:
   subscription_expires: "2026-03-11T00:00:00+00:00",  // ISO string
   override_mode: "founders_circle" | null,
   override_expires: "2027-02-03T14:21:40+00:00",
-  event_credits: 2,
-  extra_credits: 0,
+  subscription_tokens: 2,
+  addon_tokens: 0,
   billing_cycle_start: "2026-02-11T00:00:00+00:00"
 }
 ```
