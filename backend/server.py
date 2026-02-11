@@ -1439,6 +1439,104 @@ async def health_check():
     """Health check endpoint for Kubernetes probes"""
     return {"status": "healthy", "service": "photoshare-backend"}
 
+# ============================================
+# OPEN GRAPH META TAGS FOR SOCIAL SHARING
+# ============================================
+@app.get("/og/gallery/{share_link}", response_class=HTMLResponse)
+async def get_gallery_og_tags(share_link: str, request: Request):
+    """
+    Serve HTML with Open Graph meta tags for social media link previews.
+    This endpoint is called by social media crawlers (Facebook, Twitter, etc.)
+    """
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
+    
+    if not gallery:
+        # Return basic HTML if gallery not found
+        return HTMLResponse(content="""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta property="og:title" content="Gallery Not Found" />
+            <meta property="og:description" content="This gallery does not exist or has been removed." />
+            <meta property="og:type" content="website" />
+        </head>
+        <body>Gallery not found</body>
+        </html>
+        """, status_code=404)
+    
+    # Get photographer/owner info
+    photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
+    business_name = photographer.get("business_name") or photographer.get("name", "PhotoShare") if photographer else "PhotoShare"
+    
+    # Get gallery details
+    title = gallery.get("event_title") or gallery.get("title", "Photo Gallery")
+    cover_photo_url = gallery.get("cover_photo_url", "")
+    
+    # Build the canonical URL for the gallery
+    # Use the request's host or default to the site
+    host = request.headers.get("x-forwarded-host", request.headers.get("host", "eventsgallery.vip"))
+    scheme = request.headers.get("x-forwarded-proto", "https")
+    canonical_url = f"{scheme}://{host}/gallery/{share_link}"
+    
+    # If no cover photo, use a default or leave empty
+    if not cover_photo_url:
+        # Try to get the first photo as cover
+        first_photo = await db.photos.find_one({"gallery_id": gallery["id"]}, {"_id": 0, "url": 1, "thumbnail_url": 1})
+        if first_photo:
+            cover_photo_url = first_photo.get("url") or first_photo.get("thumbnail_url", "")
+    
+    # Ensure cover photo URL is absolute
+    if cover_photo_url and not cover_photo_url.startswith("http"):
+        cover_photo_url = f"{scheme}://{host}{cover_photo_url}"
+    
+    # Build description
+    description = f"Curated by {business_name}"
+    
+    # Photo count for additional context
+    photo_count = await db.photos.count_documents({"gallery_id": gallery["id"]})
+    if photo_count > 0:
+        description += f" • {photo_count} photos"
+    
+    # Build the HTML response with OG tags
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary Meta Tags -->
+    <title>{title}</title>
+    <meta name="title" content="{title}">
+    <meta name="description" content="{description}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{canonical_url}">
+    <meta property="og:title" content="{title}">
+    <meta property="og:description" content="{description}">
+    <meta property="og:image" content="{cover_photo_url}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="{business_name}">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{canonical_url}">
+    <meta property="twitter:title" content="{title}">
+    <meta property="twitter:description" content="{description}">
+    <meta property="twitter:image" content="{cover_photo_url}">
+    
+    <!-- Redirect to actual gallery page for real users -->
+    <meta http-equiv="refresh" content="0;url={canonical_url}">
+    <link rel="canonical" href="{canonical_url}">
+</head>
+<body>
+    <p>Redirecting to <a href="{canonical_url}">{title}</a>...</p>
+</body>
+</html>"""
+    
+    return HTMLResponse(content=html_content)
+
 # NOTE: User, UserRegister, UserLogin, UserProfile, Token, ForgotPassword, ChangePassword,
 # AdminLogin, AdminToken, PhotographerAdmin, UpdateGalleryLimit, UpdateStorageQuota, 
 # LandingPageConfig models moved to models/user.py
