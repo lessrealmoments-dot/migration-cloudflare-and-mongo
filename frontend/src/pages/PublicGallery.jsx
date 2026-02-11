@@ -1593,9 +1593,14 @@ const PublicGallery = () => {
             (() => {
               const unsortedPhotos = getRegularPhotosWithoutSection();
               const sectionId = 'unsorted';
+              const useLargeGalleryMode = unsortedPhotos.length >= LARGE_GALLERY_THRESHOLD;
               const isExpanded = isSectionExpanded(sectionId);
-              const displayPhotos = isExpanded ? unsortedPhotos : unsortedPhotos.slice(0, PREVIEW_COUNT);
-              const hasMore = unsortedPhotos.length > PREVIEW_COUNT;
+              const displayPhotos = useLargeGalleryMode ? unsortedPhotos : (isExpanded ? unsortedPhotos : unsortedPhotos.slice(0, PREVIEW_COUNT));
+              const hasMore = !useLargeGalleryMode && unsortedPhotos.length > PREVIEW_COUNT;
+              
+              // Helper functions for VirtualizedGalleryGrid
+              const getPhotoThumbUrl = (photo) => getImageUrl(photo.thumbnail_medium_url || photo.thumbnail_url || photo.url);
+              const getPhotoFullUrl = (photo) => getImageUrl(photo.url);
               
               return (
                 <motion.section 
@@ -1627,45 +1632,64 @@ const PublicGallery = () => {
                       </motion.div>
                     ) : null}
                     
-                    <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 md:gap-8">
-                      {displayPhotos.map((photo, idx) => (
-                        <AnimatedPhotoCard
-                          key={photo.id}
-                          photo={photo}
-                          index={idx}
-                          onView={setLightboxIndex}
-                          onDownload={handleDownload}
-                          photoIndex={photos.findIndex(p => p.id === photo.id)}
-                        />
-                      ))}
-                    </div>
-                    
-                    {hasMore && (
-                      <motion.div 
-                        className="text-center mt-12"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                      >
-                        <button 
-                          onClick={() => toggleSectionExpand(sectionId)}
-                          className="group inline-flex items-center gap-3 px-8 py-4 rounded-full transition-all duration-300 border-2"
-                          style={{ 
-                            borderColor: currentTheme.colors.accent,
-                            color: getContrastTextColor(currentTheme.colors.background) 
-                          }}
-                        >
-                          <span className="font-medium">
-                            {isExpanded ? 'Show Less' : `View All ${unsortedPhotos.length} Photos`}
-                          </span>
-                          <motion.span
-                            animate={{ rotate: isExpanded ? 180 : 0 }}
-                            transition={{ duration: 0.3 }}
+                    {/* Photo Grid - Virtualized for large galleries */}
+                    {useLargeGalleryMode ? (
+                      <VirtualizedGalleryGrid
+                        photos={unsortedPhotos}
+                        initialCount={24}
+                        batchSize={24}
+                        onPhotoClick={(index, photo) => {
+                          const globalIndex = photos.findIndex(p => p.id === photo.id);
+                          setLightboxIndex(globalIndex >= 0 ? globalIndex : index);
+                        }}
+                        getThumbUrl={getPhotoThumbUrl}
+                        getFullUrl={getPhotoFullUrl}
+                        themeColors={currentTheme.colors}
+                        gridCols="columns-1 sm:columns-2 lg:columns-3"
+                      />
+                    ) : (
+                      <>
+                        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 md:gap-8">
+                          {displayPhotos.map((photo, idx) => (
+                            <AnimatedPhotoCard
+                              key={photo.id}
+                              photo={photo}
+                              index={idx}
+                              onView={setLightboxIndex}
+                              onDownload={handleDownload}
+                              photoIndex={photos.findIndex(p => p.id === photo.id)}
+                            />
+                          ))}
+                        </div>
+                        
+                        {hasMore && (
+                          <motion.div 
+                            className="text-center mt-12"
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            viewport={{ once: true }}
                           >
-                            <ChevronDown className="w-5 h-5" />
-                          </motion.span>
-                        </button>
-                      </motion.div>
+                            <button 
+                              onClick={() => toggleSectionExpand(sectionId)}
+                              className="group inline-flex items-center gap-3 px-8 py-4 rounded-full transition-all duration-300 border-2"
+                              style={{ 
+                                borderColor: currentTheme.colors.accent,
+                                color: getContrastTextColor(currentTheme.colors.background) 
+                              }}
+                            >
+                              <span className="font-medium">
+                                {isExpanded ? 'Show Less' : `View All ${unsortedPhotos.length} Photos`}
+                              </span>
+                              <motion.span
+                                animate={{ rotate: isExpanded ? 180 : 0 }}
+                                transition={{ duration: 0.3 }}
+                              >
+                                <ChevronDown className="w-5 h-5" />
+                              </motion.span>
+                            </button>
+                          </motion.div>
+                        )}
+                      </>
                     )}
                   </div>
                 </motion.section>
