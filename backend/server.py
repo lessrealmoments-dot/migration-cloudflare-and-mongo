@@ -8312,6 +8312,11 @@ async def submit_upgrade_request(data: UpgradeRequest, background_tasks: Backgro
     if current_plan == data.requested_plan:
         raise HTTPException(status_code=400, detail="You are already on this plan")
     
+    # Get pricing for transaction record
+    billing_settings = await get_billing_settings()
+    pricing = billing_settings.get("pricing", DEFAULT_PRICING)
+    tx_amount = pricing.get(f"{data.requested_plan}_monthly", 0)
+    
     # Save upgrade request
     update_data = {
         "requested_plan": data.requested_plan,
@@ -8324,6 +8329,16 @@ async def submit_upgrade_request(data: UpgradeRequest, background_tasks: Backgro
         update_data["payment_proof_url"] = data.proof_url
         update_data["payment_submitted_at"] = datetime.now(timezone.utc).isoformat()
         message = f"Upgrade to {data.requested_plan} requested with payment proof. Awaiting admin approval."
+        
+        # Create pending transaction record
+        await create_transaction(
+            user_id=user["id"],
+            tx_type="upgrade",
+            amount=tx_amount,
+            status="pending",
+            plan=data.requested_plan,
+            payment_proof_url=data.proof_url
+        )
         
         # Send email notifications
         # To Admin
