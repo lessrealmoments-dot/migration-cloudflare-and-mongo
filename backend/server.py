@@ -5995,13 +5995,18 @@ async def get_contributor_upload_info(contributor_link: str):
 
 @api_router.post("/contributor/{contributor_link}/set-name")
 async def set_contributor_name(contributor_link: str, data: dict = Body(...)):
-    """Set the contributor/company name for a section"""
+    """Set the contributor/company name and role for a section"""
     company_name = data.get("company_name", "").strip()
+    contributor_role = data.get("contributor_role", "").strip()
+    
     if not company_name:
         raise HTTPException(status_code=400, detail="Company name is required")
     
     if len(company_name) > 100:
         raise HTTPException(status_code=400, detail="Company name must be 100 characters or less")
+    
+    if contributor_role and len(contributor_role) > 100:
+        raise HTTPException(status_code=400, detail="Role must be 100 characters or less")
     
     # Find gallery with this contributor link
     gallery = await db.galleries.find_one(
@@ -6016,12 +6021,14 @@ async def set_contributor_name(contributor_link: str, data: dict = Body(...)):
     if section_idx is None:
         raise HTTPException(status_code=404, detail="Section not found")
     
-    # Update contributor name
+    # Update contributor name and role
     sections[section_idx]["contributor_name"] = company_name
+    if contributor_role:
+        sections[section_idx]["contributor_role"] = contributor_role
     
     await db.galleries.update_one({"id": gallery["id"]}, {"$set": {"sections": sections}})
     
-    return {"success": True, "company_name": company_name}
+    return {"success": True, "company_name": company_name, "contributor_role": contributor_role}
 
 @api_router.post("/contributor/{contributor_link}/fotoshare")
 async def submit_contributor_fotoshare(contributor_link: str, data: dict = Body(...)):
