@@ -66,6 +66,25 @@ const SlideshowDisplay = () => {
 
   const getPhotoUrl = useCallback((photo) => {
     if (!photo) return '';
+    
+    // Handle different photo sources
+    const source = photo.source || 'upload';
+    
+    if (source === 'pcloud') {
+      // pCloud photos use our proxy endpoint - needs BACKEND_URL prefix
+      const url = photo.url || photo.thumbnail_medium_url || photo.thumbnail_url;
+      if (url && url.startsWith('/api/')) {
+        return `${BACKEND_URL}${url}`;
+      }
+      return getImageUrl(url);
+    }
+    
+    if (source === 'gdrive') {
+      // Google Drive photos use direct Google URLs (already absolute)
+      return photo.url || photo.thumbnail_medium_url || photo.thumbnail_url;
+    }
+    
+    // Regular uploaded photos
     return getImageUrl(photo.url);
   }, []);
 
