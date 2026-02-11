@@ -1439,8 +1439,13 @@ const PublicGallery = () => {
               const sectionPhotos = getRegularPhotosBySection(section.id);
               if (sectionPhotos.length === 0) return null;
               const isExpanded = isSectionExpanded(section.id);
-              const displayPhotos = isExpanded ? sectionPhotos : sectionPhotos.slice(0, PREVIEW_COUNT);
-              const hasMore = sectionPhotos.length > PREVIEW_COUNT;
+              const useLargeGalleryMode = sectionPhotos.length >= LARGE_GALLERY_THRESHOLD;
+              const displayPhotos = useLargeGalleryMode ? sectionPhotos : (isExpanded ? sectionPhotos : sectionPhotos.slice(0, PREVIEW_COUNT));
+              const hasMore = !useLargeGalleryMode && sectionPhotos.length > PREVIEW_COUNT;
+              
+              // Helper functions for VirtualizedGalleryGrid
+              const getPhotoThumbUrl = (photo) => getImageUrl(photo.thumbnail_medium_url || photo.thumbnail_url || photo.url);
+              const getPhotoFullUrl = (photo) => getImageUrl(photo.url);
               
               return (
                 <motion.section 
