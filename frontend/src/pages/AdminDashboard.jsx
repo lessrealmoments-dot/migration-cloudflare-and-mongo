@@ -1289,9 +1289,18 @@ const AdminDashboard = () => {
 
             {/* Pending Payments */}
             <div className="bg-zinc-800 rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-zinc-700">
-                <h3 className="text-lg font-medium text-white">Pending Payments</h3>
-                <p className="text-sm text-zinc-400 mt-1">Review and approve payment proofs</p>
+              <div className="px-6 py-4 border-b border-zinc-700 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium text-white">Pending Payments</h3>
+                  <p className="text-sm text-zinc-400 mt-1">Review and approve payment proofs • Auto-refreshes every 30s</p>
+                </div>
+                <button
+                  onClick={fetchPendingPayments}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 text-sm rounded-lg transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh
+                </button>
               </div>
               
               {pendingPayments.length === 0 ? (
