@@ -8,7 +8,34 @@ Build a photo-sharing application for event photographers with:
 - **Complete subscription system with plans, credits, billing, and pricing page**
 - **Professional, cinematic public gallery experience**
 
+## Key Reference Documents
+- **Subscription System:** `/app/SUBSCRIPTION_SYSTEM_REFERENCE.md` - Complete guide to tokens, grace periods, grandfathering
+- **Code Analysis:** `/app/CODE_ANALYSIS_REPORT.md` - Full codebase audit
+- **Refactor Plan:** `/app/backend/REFACTOR_PLAN.md` - Backend refactoring roadmap
+
 ## Latest Updates (February 2026)
+
+### Subscription & Grandfathering System ✅ (NEW)
+- **Token Renaming:** `event_credits` → `subscription_tokens`, `extra_credits` → `addon_tokens`
+- **Grace Periods Implemented:**
+  - Upload Grace: 2 months (60 days) after subscription expires
+  - View Grace: 6 months (180 days) after subscription expires
+- **Grandfathering Rules:**
+  - Existing contributor links work during grace period
+  - Cannot create NEW contributor links when expired
+  - Galleries created before expiry get grace periods
+- **See:** `/app/SUBSCRIPTION_SYSTEM_REFERENCE.md` for complete details
+
+### Open Graph Meta Tags ✅ (NEW)
+- Social sharing previews for galleries (`/og/g/{share_link}`)
+- Shows: Cover photo, Event title, "Curated by {business_name}"
+- Works with Facebook, Twitter, WhatsApp, Discord, etc.
+
+### Contributor Upload Flow Standardized ✅ (NEW)
+- All contributor types now use 4-step flow
+- Company Name → Role Selection → Confirm → Upload
+- Added "Edit Profile" button to change details after submission
+- Applies to: Regular, pCloud, GDrive, Fotoshare (360 Glam), Videographer
 
 ### R2 Storage Integration Fix ✅
 - Fixed critical bug where uploads went to local storage instead of R2
