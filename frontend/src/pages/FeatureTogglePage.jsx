@@ -221,7 +221,7 @@ const FeatureTogglePage = () => {
           ...prev[section][key],
           features: {
             ...prev[section][key].features,
-            storage_limit_gb: parseInt(value)
+            gallery_storage_limit_gb: parseInt(value)
           }
         }
       }
