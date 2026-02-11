@@ -1,25 +1,23 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Loader2, ChevronDown } from 'lucide-react';
-import ProgressiveImage from './ProgressiveImage';
+import { ChevronDown, Images } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
 
 /**
- * VirtualizedGalleryGrid - High-performance gallery for 100s-1000s of photos
+ * VirtualizedGalleryGrid - High-performance gallery for large photo collections
  * 
  * Features:
- * - Initial batch loading (shows first N photos immediately)
- * - Infinite scroll with batched loading
- * - Uses thumbnails for grid, full-res only in lightbox
- * - Memory efficient - doesn't load all photos at once
- * - Smooth animations with framer-motion
+ * - Manual "Load More" expansion (no auto infinite scroll)
+ * - 50 photos per expansion for optimal UX
+ * - Sharp thumbnails (no blur effect)
+ * - Lazy loading with native browser support
+ * - Memory efficient - only renders visible photos
  */
 const VirtualizedGalleryGrid = ({
   photos,                       // Array of photo objects
-  initialCount = 24,            // Number of photos to show initially
-  batchSize = 24,               // Number to load on each scroll
+  initialCount = 50,            // Number of photos to show initially
+  batchSize = 50,               // Number to load on each "Load More" click
   onPhotoClick,                 // Callback when photo is clicked (index, photo)
   getThumbUrl,                  // Function to get thumbnail URL from photo
   getFullUrl,                   // Function to get full resolution URL from photo
@@ -28,57 +26,26 @@ const VirtualizedGalleryGrid = ({
   gridCols = 'columns-2 md:columns-3 lg:columns-4',  // CSS columns class
 }) => {
   const [visibleCount, setVisibleCount] = useState(initialCount);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const loadMoreRef = useRef(null);
   const totalPhotos = photos.length;
 
   // Calculate if there are more photos to load
   const hasMore = visibleCount < totalPhotos;
+  const remainingPhotos = totalPhotos - visibleCount;
+  
   const displayedPhotos = useMemo(() => 
     photos.slice(0, visibleCount), 
     [photos, visibleCount]
   );
 
-  // Infinite scroll observer
-  useEffect(() => {
-    if (!hasMore) return;
+  // Load more photos on button click
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount(prev => Math.min(prev + batchSize, totalPhotos));
+  }, [batchSize, totalPhotos]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isLoadingMore) {
-          loadMorePhotos();
-        }
-      },
-      {
-        rootMargin: '400px', // Start loading well before user reaches bottom
-        threshold: 0.1
-      }
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [hasMore, isLoadingMore, visibleCount]);
-
-  // Load more photos
-  const loadMorePhotos = useCallback(() => {
-    if (isLoadingMore || !hasMore) return;
-    
-    setIsLoadingMore(true);
-    
-    // Small delay for smooth UX
-    setTimeout(() => {
-      setVisibleCount(prev => Math.min(prev + batchSize, totalPhotos));
-      setIsLoadingMore(false);
-    }, 100);
-  }, [isLoadingMore, hasMore, batchSize, totalPhotos]);
-
-  // Manual load more button click
-  const handleLoadMoreClick = useCallback(() => {
-    loadMorePhotos();
-  }, [loadMorePhotos]);
+  // Load all remaining photos
+  const handleLoadAll = useCallback(() => {
+    setVisibleCount(totalPhotos);
+  }, [totalPhotos]);
 
   return (
     <div className="relative">
@@ -91,69 +58,90 @@ const VirtualizedGalleryGrid = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ 
-              duration: 0.4, 
-              delay: Math.min(index * 0.02, 0.5), // Cap delay for large batches
+              duration: 0.3, 
+              delay: Math.min((index % batchSize) * 0.015, 0.3), // Reset delay for each batch
               ease: [0.22, 1, 0.36, 1]
             }}
             onClick={() => onPhotoClick && onPhotoClick(index, photo)}
           >
-            <ProgressiveImage
-              src={getFullUrl ? getFullUrl(photo) : photo.url}
-              thumbnailSrc={getThumbUrl ? getThumbUrl(photo) : photo.thumbnail_url}
+            {/* Sharp thumbnail - no blur effect */}
+            <img
+              src={getThumbUrl ? getThumbUrl(photo) : photo.thumbnail_url}
               alt={photo.name || photo.title || 'Photo'}
-              className="w-full h-auto"
-              objectFit="cover"
+              className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
+              onError={(e) => {
+                // Fallback to full URL if thumbnail fails
+                const fullUrl = getFullUrl ? getFullUrl(photo) : photo.url;
+                if (e.target.src !== fullUrl) {
+                  e.target.src = fullUrl;
+                }
+              }}
             />
             
             {/* Hover overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              {/* Download indicator could go here */}
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
             {/* Supplier name overlay */}
             {showSupplierName && photo.supplier_name && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <p className="text-white text-xs">by {photo.supplier_name}</p>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-white text-xs font-medium">by {photo.supplier_name}</p>
               </div>
             )}
           </motion.div>
         ))}
       </div>
 
-      {/* Load more trigger (invisible) */}
+      {/* Load More Section */}
       {hasMore && (
-        <div 
-          ref={loadMoreRef} 
-          className="h-20 flex items-center justify-center"
-        >
-          {isLoadingMore && (
-            <Loader2 className="w-6 h-6 animate-spin" style={{ color: themeColors?.accent || '#888' }} />
-          )}
+        <div className="text-center py-8 space-y-4">
+          {/* Photo count indicator */}
+          <p className="text-sm opacity-60" style={{ color: themeColors?.text || '#666' }}>
+            Showing {visibleCount} of {totalPhotos} photos
+          </p>
+          
+          {/* Load More Button */}
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <button
+              onClick={handleLoadMore}
+              className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105"
+              style={{
+                backgroundColor: themeColors?.accent || '#3b82f6',
+                color: '#ffffff',
+              }}
+            >
+              <Images className="w-4 h-4" />
+              Load {Math.min(batchSize, remainingPhotos)} More Photos
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            
+            {/* Show "Load All" only if there are many remaining */}
+            {remainingPhotos > batchSize && (
+              <button
+                onClick={handleLoadAll}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105"
+                style={{
+                  backgroundColor: 'transparent',
+                  color: themeColors?.accent || '#3b82f6',
+                  border: `1px solid ${themeColors?.accent || '#3b82f6'}40`
+                }}
+              >
+                Load All ({remainingPhotos})
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Manual load more button (fallback for failed auto-load) */}
-      {hasMore && !isLoadingMore && visibleCount > initialCount && (
-        <div className="text-center py-4">
-          <button
-            onClick={handleLoadMoreClick}
-            className="inline-flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-all hover:scale-105"
-            style={{
-              backgroundColor: themeColors?.accent ? `${themeColors.accent}15` : '#f0f0f0',
-              color: themeColors?.accent || '#666',
-              border: `1px solid ${themeColors?.accent || '#ddd'}30`
-            }}
-          >
-            Load More ({totalPhotos - visibleCount} remaining)
-            <ChevronDown className="w-4 h-4" />
-          </button>
+      {/* All photos loaded indicator */}
+      {!hasMore && totalPhotos > initialCount && (
+        <div className="text-center py-6">
+          <p className="text-sm opacity-50" style={{ color: themeColors?.text || '#666' }}>
+            All {totalPhotos} photos loaded
+          </p>
         </div>
       )}
-
-      {/* Photo count indicator */}
-      <div className="text-center py-4 text-sm opacity-60">
-        Showing {Math.min(visibleCount, totalPhotos)} of {totalPhotos} photos
-      </div>
     </div>
   );
 };
