@@ -156,6 +156,40 @@ const GalleryDetail = () => {
   const [repairingThumbnails, setRepairingThumbnails] = useState(false);
   const [photoHealthStatus, setPhotoHealthStatus] = useState(null);
 
+  // Smart uploader hook for adaptive concurrent uploads
+  const {
+    uploading: smartUploading,
+    progress: smartProgress,
+    stats: uploadStats,
+    startUpload: startSmartUpload,
+    cancelUpload: cancelSmartUpload,
+    clearProgress: clearSmartProgress,
+  } = useSmartUploader({
+    uploadEndpoint: `${API}/galleries/${id}/photos`,
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    formDataBuilder: (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (selectedSection) {
+        formData.append('section_id', selectedSection);
+      }
+      return formData;
+    },
+    onAllComplete: (results, completed, failed) => {
+      if (completed > 0) {
+        toast.success(`${completed} photo(s) uploaded successfully!`);
+        fetchGalleryData();
+      }
+      if (failed > 0) {
+        toast.error(`${failed} photo(s) failed to upload`);
+      }
+      // Clear progress after a delay
+      setTimeout(() => {
+        clearSmartProgress();
+      }, 3000);
+    },
+  });
+
   // Section drag handlers
   const handleSectionDragStart = (e, section) => {
     setDraggedSection(section);
