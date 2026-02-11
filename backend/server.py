@@ -1623,13 +1623,23 @@ async def resolve_user_features(user: dict) -> dict:
     billing_settings = await get_billing_settings()
     billing_enabled = billing_settings.get("billing_enforcement_enabled", False)
     
+    # Helper to read tokens with backward compatibility (old field names: event_credits, extra_credits)
+    def get_subscription_tokens(u):
+        return u.get("subscription_tokens", u.get("event_credits", 0))
+    
+    def get_addon_tokens(u):
+        return u.get("addon_tokens", u.get("extra_credits", 0))
+    
+    def get_addon_tokens_purchased_at(u):
+        return u.get("addon_tokens_purchased_at", u.get("extra_credits_purchased_at"))
+    
     # Default result
     result = {
         "authority_source": None,  # What's providing the features
         "effective_plan": plan,
         "features": {},
         "has_unlimited_credits": False,
-        "credits_available": user.get("subscription_tokens", 0) + user.get("addon_tokens", 0),
+        "credits_available": get_subscription_tokens(user) + get_addon_tokens(user),
         "can_download": True,
         "override_active": False,
         "override_mode": None,
