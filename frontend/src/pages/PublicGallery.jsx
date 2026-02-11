@@ -22,6 +22,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const PREVIEW_COUNT = 8;
 const LARGE_GALLERY_THRESHOLD = 50; // Use virtualized grid for galleries with more photos
+const PHOTOS_PER_BATCH = 50; // Load 50 photos at a time
 
 // Helper to get the correct image URL (handles both CDN and local URLs)
 const getImageUrl = (url) => {
