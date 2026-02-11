@@ -961,6 +961,7 @@ const GalleryDetail = () => {
     multiple: false
   });
 
+  // Smart uploader onDrop - uses adaptive concurrent uploads based on connection speed
   const onDrop = useCallback(async (acceptedFiles) => {
     if (acceptedFiles.length === 0) return;
     
@@ -990,118 +991,10 @@ const GalleryDetail = () => {
       return;
     }
     
-    setUploading(true);
-    const token = localStorage.getItem('token');
-
-    // Initialize progress tracking for each file
-    const initialProgress = validFiles.map(file => ({
-      name: file.name,
-      status: 'pending',
-      progress: 0,
-      retries: 0
-    }));
-    setUploadProgress(initialProgress);
-
-    // Upload function with retry logic
-    const uploadWithRetry = async (file, index, maxRetries = 2) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      if (selectedSection) {
-        formData.append('section_id', selectedSection);
-      }
-      
-      let lastError;
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-          if (attempt > 0) {
-            setUploadProgress(prev => prev.map((item, i) => 
-              i === index ? { ...item, status: 'retrying', retries: attempt } : item
-            ));
-            // Wait before retry
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-          }
-          
-          const response = await axios.post(`${API}/galleries/${id}/photos`, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            },
-            timeout: 120000, // 2 minute timeout for large files
-            onUploadProgress: (progressEvent) => {
-              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              setUploadProgress(prev => prev.map((item, i) => 
-                i === index ? { ...item, progress: percentCompleted } : item
-              ));
-            }
-          });
-          
-          // Mark as success
-          setUploadProgress(prev => prev.map((item, i) => 
-            i === index ? { ...item, status: 'success', progress: 100 } : item
-          ));
-          
-          return response;
-        } catch (error) {
-          lastError = error;
-          // Don't retry for these errors
-          if (error.response?.status === 403 || error.response?.status === 400 || error.response?.status === 409) {
-            break;
-          }
-        }
-      }
-      
-      // Mark as error with specific message
-      let errorMsg = 'Upload failed';
-      if (lastError?.response?.status === 403) {
-        errorMsg = 'Storage full';
-      } else if (lastError?.response?.status === 400) {
-        errorMsg = lastError.response?.data?.detail || 'Invalid file';
-      } else if (lastError?.response?.status === 409) {
-        errorMsg = 'Duplicate file';
-      } else if (lastError?.code === 'ECONNABORTED') {
-        errorMsg = 'Timeout';
-      }
-      
-      setUploadProgress(prev => prev.map((item, i) => 
-        i === index ? { ...item, status: 'error', errorMsg } : item
-      ));
-      throw lastError;
-    };
-
-    // Sequential upload - one file at a time
-    let successCount = 0;
-    let failCount = 0;
-
-    for (let index = 0; index < validFiles.length; index++) {
-      const file = validFiles[index];
-      
-      // Update status to uploading
-      setUploadProgress(prev => prev.map((item, i) => 
-        i === index ? { ...item, status: 'uploading' } : item
-      ));
-
-      try {
-        await uploadWithRetry(file, index);
-        successCount++;
-      } catch (error) {
-        failCount++;
-      }
-    }
-
-    if (successCount > 0) {
-      toast.success(`${successCount} photo(s) uploaded successfully!`);
-      fetchGalleryData();
-    }
-    if (failCount > 0) {
-      toast.error(`${failCount} photo(s) failed to upload`);
-    }
-
-    // Clear progress after a delay
-    setTimeout(() => {
-      setUploadProgress([]);
-      setUploading(false);
-    }, 3000);
-  }, [id, selectedSection, fetchGalleryData]);
+    // Use smart uploader for adaptive concurrent uploads
+    toast.info(`Starting upload of ${validFiles.length} photos...`, { duration: 2000 });
+    await startSmartUpload(validFiles);
+  }, [startSmartUpload]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
