@@ -7432,15 +7432,17 @@ async def get_public_gallery_photos(share_link: str, password: Optional[str] = N
     if gallery.get("password") and not verify_password(password, gallery["password"]):
         raise HTTPException(status_code=401, detail="Invalid password")
     
-    # Get photos excluding hidden AND flagged ones, sorted by highlights first, then order
+    # Get photos excluding hidden AND flagged ones
+    # Note: Removed hard limit of 500 - photos are now loaded progressively on frontend
+    # Guest photos are sorted to appear at the end (for the dedicated guest section)
     photos = await db.photos.find(
         {
             "gallery_id": gallery["id"], 
             "is_hidden": {"$ne": True},
-            "is_flagged": {"$ne": True}  # Exclude flagged photos from public view
+            "is_flagged": {"$ne": True}
         }, 
         {"_id": 0}
-    ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).limit(500).to_list(None)
+    ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).to_list(None)
     return [Photo(**p) for p in photos]
 
 @api_router.get("/public/gallery/{share_link}/videos")
