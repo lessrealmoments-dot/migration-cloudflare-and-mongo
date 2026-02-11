@@ -8597,9 +8597,12 @@ async def upload_payment_proof(file: UploadFile = File(...), user: dict = Depend
         # Upload to R2 if enabled, otherwise save locally
         if storage.r2_enabled:
             file_key = f"payment_proofs/{filename}"
-            url = await storage.upload_file(optimized_content, file_key, "image/jpeg")
+            success, url_or_error = await storage.upload_file(file_key, optimized_content, "image/jpeg")
+            if not success:
+                logger.error(f"R2 upload failed for payment proof: {url_or_error}")
+                raise HTTPException(status_code=500, detail="Failed to upload file. Please try again.")
             logger.info(f"Payment proof uploaded to R2: {filename}")
-            return {"url": url}
+            return {"url": url_or_error}
         else:
             # Fallback to local storage
             proofs_dir = Path("uploads/payment_proofs")
