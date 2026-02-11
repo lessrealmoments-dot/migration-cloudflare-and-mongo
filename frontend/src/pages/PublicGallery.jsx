@@ -895,7 +895,9 @@ const PublicGallery = () => {
                               {others.map((c, i) => (
                                 <div key={i} className="text-center">
                                   <p className="text-white/80 text-sm font-medium">{c.name}</p>
-                                  <p className="text-white/40 text-[10px] uppercase tracking-wider mt-0.5">{c.role}</p>
+                                  <p className="text-white/40 text-[10px] uppercase tracking-wider mt-0.5">
+                                    {c.title || c.role || 'Contributor'}
+                                  </p>
                                 </div>
                               ))}
                             </div>
@@ -973,7 +975,9 @@ const PublicGallery = () => {
                             {others.map((c, i) => (
                               <div key={i} className="text-center">
                                 <p className="text-sm font-medium" style={{ color: textColor }}>{c.name}</p>
-                                <p className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: subtleColor }}>{c.role}</p>
+                                <p className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: subtleColor }}>
+                                  {c.title || c.role || 'Contributor'}
+                                </p>
                               </div>
                             ))}
                           </div>
