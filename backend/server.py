@@ -1675,10 +1675,35 @@ async def resolve_user_features(user: dict) -> dict:
     
     # STEP 2: Normal Payment/Subscription Plan
     result["authority_source"] = "payment_plan"
-    result["effective_plan"] = plan
+    
+    # CRITICAL: Check if subscription has expired for paid plans
+    # If expired, downgrade to free plan
+    effective_plan = plan
+    subscription_expired = False
+    
+    if plan != PLAN_FREE:
+        subscription_expires_str = user.get("subscription_expires")
+        if subscription_expires_str:
+            try:
+                subscription_expires = datetime.fromisoformat(subscription_expires_str.replace('Z', '+00:00'))
+                if datetime.now(timezone.utc) >= subscription_expires:
+                    # Subscription has expired - downgrade to free
+                    subscription_expired = True
+                    effective_plan = PLAN_FREE
+                    logger.warning(f"User subscription expired, downgrading to free: user_id={user.get('id')}")
+            except (ValueError, TypeError):
+                pass
+        else:
+            # No subscription_expires set but has a paid plan - check payment_status
+            if payment_status != PAYMENT_APPROVED:
+                # Not approved payment, treat as free
+                effective_plan = PLAN_FREE
+    
+    result["effective_plan"] = effective_plan
+    result["subscription_expired"] = subscription_expired
     
     # Get plan features from global_toggles first, then fall back to defaults
-    plan_features = global_toggles.get(plan, DEFAULT_PLAN_FEATURES.get(plan, {})).copy()
+    plan_features = global_toggles.get(effective_plan, DEFAULT_PLAN_FEATURES.get(effective_plan, {})).copy()
     result["features"] = plan_features
     
     # Check unlimited credits from feature toggle (unlikely for regular plans)
@@ -1686,8 +1711,13 @@ async def resolve_user_features(user: dict) -> dict:
         result["has_unlimited_credits"] = True
         result["credits_available"] = 999
     
+    # If subscription expired, set credits to 0
+    if subscription_expired:
+        result["credits_available"] = 0
+        result["has_unlimited_credits"] = False
+    
     # STEP 3: Payment Status Check (only if billing enforcement enabled)
-    if billing_enabled and plan != PLAN_FREE:
+    if billing_enabled and effective_plan != PLAN_FREE:
         if payment_status == PAYMENT_PENDING:
             result["can_download"] = False
             result["payment_required"] = True
