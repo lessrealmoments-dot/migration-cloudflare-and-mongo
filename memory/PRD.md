@@ -1310,6 +1310,61 @@ backend/
 - Feature toggles, collage presets, landing config
 - All background tasks running correctly
 
+## Per-Gallery Storage System (February 2026) ✅
+
+### Change from Per-User to Per-Gallery Storage
+
+**Previous System:**
+- Storage quota tracked at user level
+- One large gallery could consume all storage
+
+**New System:**
+- Each gallery has its own storage quota
+- Standard: 10GB per gallery
+- Pro: 20GB per gallery
+- Free: 1GB per gallery (demo only)
+- Override modes: Configurable
+
+### Storage Fields on Gallery Document
+```json
+{
+  "storage_used": 0,      // Bytes used (R2 files only)
+  "storage_quota": -1     // -1 = unlimited, else bytes
+}
+```
+
+### Enforcement Points
+- Owner uploads: Checked before upload
+- Guest uploads: Checked before upload
+- Contributor uploads: Checked before upload
+
+### Frontend Storage Bar
+- Shows on each gallery card
+- Color coded: Green (<70%), Amber (70-90%), Red (>90%)
+- Warning message at 80%: "Consider using Google Drive or pCloud"
+
+### Migration Endpoint
+```
+POST /api/admin/migrate/gallery-storage
+```
+Calculates `storage_used` for all existing galleries from their photos.
+
+---
+
+## 60-Day Contributor Link Expiration (February 2026) ✅
+
+### Implementation
+Contributor uploads are now blocked 60 days after the gallery's event date.
+
+### Enforcement Points
+- `GET /api/contributor/{link}` - Returns `uploads_allowed` and `days_until_expires`
+- `POST /api/contributor/{link}/upload` - Rejects if window expired
+
+### Error Message
+"Contributor upload window has expired (60 days from event date). Please contact the photographer."
+
+---
+
 ## Pending Transactions Fix (February 2026) ✅
 
 ### Issue
