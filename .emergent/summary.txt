@@ -1,26 +1,22 @@
 <analysis>**original_problem_statement**: The user's goal is a comprehensive photo-sharing application. The project began with a migration to a personal Hostinger KVM VPS. The core focus has been on adding features, improving the UI/UX, and ensuring stable deployment.
 
-Recent requests focused on improving data consistency, billing, and user experience:
-1.  **Pending Transactions**: Ensure submitting payment proof creates a pending transaction visible to the admin.
-2.  **Auto-Refreshing UI**: The admin billing section should update automatically without a manual page refresh.
-3.  **Client Management**: Create a comprehensive admin section to view and manage all client accounts, including subscriptions, credits, storage, and perform actions like plan changes or adding credits.
-4.  **Docker Warnings**: Fix warnings appearing during the production deployment build process.
-5.  **System Analysis**: Generate a detailed document explaining the platform's complete business logic (subscriptions, credits, permissions, etc.) for an external advisor.
-6.  **Subscription Logic**: Define and enforce rules for what happens when a user's account expires or is downgraded (e.g., Pro to Free).
-7.  **Download Locks**: Fix a loophole where guests could download photos from a gallery even if the owner's payment was still pending.
-8.  **Storage Caps**: Change the storage limit model from a per-user quota to a more granular per-gallery quota.
-9.  **Contributor Credits**: Improve the professionalism of the credits display in the public gallery.
+Recent requests focused on:
+1.  **Gallery Performance**: Fixing slow loading and browser freezes in galleries with a large number of photos (e.g., 700+).
+2.  **Professional Contributor Flow**: Implementing a standardized, multi-step upload process for all collaborator types (regular, pCloud, Google Drive, 360 glam booth, Videographer) that captures their company name and professional role.
+3.  **Guest Upload Bug**: Investigating and fixing an issue where guest-uploaded photos were not appearing on the production site.
+4.  **Payment Gateway**: Choosing and implementing a payment gateway suitable for a Philippines-based business accepting international payments.
 
 **PRODUCT REQUIREMENTS**:
-- A professional contributor link workflow for Google Drive and pCloud.
+- A professional contributor link workflow for Google Drive, pCloud, and other contributor types.
 - A comprehensive theme and typography overhaul.
 - A Coordinator Hub page for photographers.
-- An image upload bug fix in the admin section.
 - Dynamic pricing page reflecting admin settings.
 - Consistent copyright year display.
 - Dynamic Open Graph (OG) meta tags.
-- A robust subscription and credit system.
+- A robust subscription and credit system with a live payment gateway.
 - An auto-delete mechanism for old galleries.
+- Efficient handling and display of large photo galleries.
+- A smart, adaptive file upload system.
 
 **User's preferred language**: English
 
@@ -28,42 +24,51 @@ Recent requests focused on improving data consistency, billing, and user experie
 The application is a full-stack React/FastAPI app on a Hostinger VPS using Docker Compose, with Cloudflare R2 for storage and MongoDB Atlas for the database.
 
 In this session, the agent successfully implemented and tested several key features:
-- A pending transaction is now correctly created for both plan upgrades and extra credit requests.
-- The admin dashboard's billing section now auto-refreshes every 30 seconds to show new pending payments.
-- A new, comprehensive Clients tab was built in the admin dashboard, providing a detailed view of all users and enabling admins to perform actions like adding credits, changing plans, and resetting passwords.
-- The storage model was re-architected from a per-user quota to a per-gallery quota. This included a data migration for existing galleries and UI updates to show per-gallery storage bars.
-- The business logic for expired/downgraded subscriptions was solidified into a grandfathering policy, where existing galleries retain their paid-for features.
-- Download locks are now strictly enforced on all download endpoints for galleries created while a payment is pending.
-- Minor Docker build warnings were resolved.
-- Detailed system analysis documents (, ) were generated.
+-   **Gallery Performance Optimization**: Replaced the previous infinite scroll and blur-up image effect with a much more performant virtualized grid. This new system uses sharper 800px thumbnails and explicit Load More buttons to handle galleries with thousands of photos without freezing the browser.
+-   **Guest Upload Bug Fix**: Diagnosed and fixed a critical bug where a  on backend API endpoints was preventing guest photos from appearing in large galleries. The limit was removed from all relevant photo-fetching endpoints in .
+-   **Smart Adaptive Uploads**: Implemented a  React hook that provides concurrent, speed-adaptive uploads for photographers and contributors, while keeping guest uploads sequential (one-at-a-time) for reliability on mobile data.
+-   **Standardized Contributor Upload Flow**: Created a consistent, professional 4-step upload UI (Company Name -> Role Selection -> Confirm -> Sync/Upload) and applied it across the regular, pCloud, Google Drive, and Fotoshare (360 glam booth) contributor upload pages.
 
 **Last working item**:
-- Last item agent was working: The user requested a more professional contributor credit display in the public gallery. The agent identified that a  field already exists but was not being used. The agent updated the backend  function to correctly structure the credit data to include the contributor's title. The frontend part is pending.
+- Last item agent was working: After standardizing the upload flow for regular, pCloud, GDrive, and Fotoshare contributors, the agent identified that the  upload page might also be using an old, inconsistent UI. The agent was about to investigate and update the  component to match the new 4-step professional flow.
 - Status: IN PROGRESS
 - Agent Testing Done: N
 - Which testing method agent to use? screenshot tool
 - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Complete the contributor credit display update. (P0)
-  - Issue 2: PDF generation failed due to a missing system library. (P1)
-  - Issue 3: Data inconsistency from before the R2 upload fix. (P2)
-  - Issue 4: The  background job needs monitoring. (P3)
-  - Issue 5: Local files are lost on container rebuilds due to a missing Docker volume mount. (P4)
+  - Issue 1: Finalize and verify the standardized contributor upload flow. (P0)
+  - Issue 2: Fix guest uploads on the user's production server. (P0)
+  - Issue 3: PDF generation failed due to a missing system library. (P2)
+  - Issue 4: Data inconsistency from before the R2 upload fix. (P2)
+  - Issue 5: The  background job needs monitoring. (P3)
+  - Issue 6: Local files are lost on container rebuilds due to a missing Docker volume mount. (P4)
   
   Issues Detail:
   - Issue 1: 
-     - Description: The backend was updated to include the  in the public gallery data. The frontend needs to be checked and updated to render this new information, creating a more professional credit display (e.g., Curated by [Curator], with [Contributor Name], [Contributor Role]).
+     - Description: The professional 4-step upload flow has been implemented for Regular, pCloud, GDrive, and Fotoshare contributors. However,  may still have the old UI. This task is to ensure all contributor upload pages are consistent and tested.
      - Next debug checklist: 
-        1. Review  where credits are displayed.
-        2. Modify the React component to render the  field if it exists.
-        3. Take a screenshot to verify the UI change.
-     - Why fix this issue and what will be achieved with the fix? This improves the professionalism and clarity of the photographer and contributor credits in the public-facing gallery.
+        1. Inspect  to see if it needs the new 4-step flow.
+        2. If needed, update the file to use the same React components and logic as .
+        3. Create/find test contributor links for pCloud, GDrive, Fotoshare, and Videographer sections.
+        4. Use the screenshot tool to walk through the 4-step flow for each contributor type to confirm UI consistency and functionality.
+     - Why fix this issue and what will be achieved with the fix? Ensures a consistent, professional experience for all collaborators, regardless of how they contribute media.
      - Status:  IN PROGRESS
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? frontend
      - Blocked on other issue: None
   - Issue 2: 
+     - Description: The user reported guest uploads not showing on their production site. The agent found and fixed the root cause in the code (a 500-photo limit in the API). The fix has not been deployed by the user yet.
+     - Next debug checklist:
+        1.  Confirm with the user that they have run the deployment commands on their production server.
+        2.  Ask the user to verify if the 3 guest photos are now visible in the THE WEDDING OF JANMARK AND ELLINE gallery on their live site.
+        3.  If the issue persists, ask for new backend logs from the production server.
+     - Why fix this issue and what will be achieved with the fix? This is a critical bug preventing user-generated content from being displayed. Fixing it restores a core feature of the public gallery.
+     - Status:  USER VERIFICATION PENDING
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? backend
+     - Blocked on other issue: None
+  - Issue 3: 
      - Description: The user requested a PDF version of the analysis document. The agent attempted to use 
 -----
 
@@ -81,8 +86,8 @@ https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? backend
      - Blocked on other issue: None
-  - Issue 3: 
-     - Description: Photos uploaded before the R2 storage fix exist in the database but not in R2, causing broken images for older galleries.
+  - Issue 4: 
+     - Description: Photos uploaded before the R2 storage fix exist in the database but not in R2, causing broken images for older galleries. This was the cause of loading spinners on some guest photos.
      - Next debug checklist:
         1. Discuss with the user if they want a migration script to find local files, upload them to R2, and update the database.
      - Why fix this issue and what will be achieved with the fix? To resolve all remaining broken images and ensure 100% data integrity.
@@ -90,7 +95,7 @@ https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting
      - Is recurring issue? Y
      - Should Test frontend/backend/both after fix? backend
      - Blocked on other issue: None
-  - Issue 4: 
+  - Issue 5: 
      - Description: The  background job's successful execution on the live server has not been verified.
      - Next debug checklist:
         1. Ask the user to monitor the backend logs on their live server for messages from this task.
@@ -99,7 +104,7 @@ https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? backend
      - Blocked on other issue: None
-  - Issue 5: 
+  - Issue 6: 
      - Description: The  file lacks a persistent volume mount for the  directory, risking data loss on container rebuilds.
      - Next debug checklist:
         1. Add a volume mount to : .
@@ -110,7 +115,7 @@ https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting
      - Blocked on other issue: None
 
 **In progress Task List**:
-  - Task 1: Complete  Refactoring (P1)
+  - Task 1: Complete  Refactoring (P2)
  
  Task Detail:
   - Task 1: 
@@ -122,8 +127,8 @@ https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **Payment Gateway Integration (P1)**: Integrate Stripe or PayMongo.
-    *   **User-facing fix for broken images (P1)**: Implement a UI for the user to easily re-upload missing photos.
+    *   **Payment Gateway Integration (PayMongo) (P1)**: The user has selected PayMongo. The next step is to request API keys and use  to begin implementation.
+    *   **User-facing fix for broken images (P2)**: Implement a UI for the user to easily re-upload missing photos related to the data inconsistency issue.
 *   **Future Tasks:**
     *   Enable Live Billing Mode (P1).
     *   Photographer-Side Section Downloads (P2).
@@ -132,115 +137,97 @@ https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting
     *   User Notifications for Plan Changes (P2).
 
 **Completed work in this session**
-- **Pending Transactions Fix**: Implemented and tested the creation of pending transaction records for plan upgrades and extra credit requests.
-- **Admin Billing Auto-Refresh**: Added polling to the admin dashboard to auto-refresh the pending payments section every 30 seconds.
-- **Comprehensive Client Management Section**: Built a new Clients tab in the admin dashboard with full-featured backend support to view and manage user accounts, subscriptions, and perform quick actions.
-- **Per-Gallery Storage System**: Re-architected storage from a per-user to a per-gallery model, including data migration, backend enforcement on all uploads, and frontend UI updates.
-- **Subscription Policy Enforcement**: Implemented a grandfathering policy for expired/downgraded accounts, ensuring existing galleries retain their features while new feature usage is blocked.
-- **Download Lock Enforcement**: Closed a loophole by adding a comprehensive check to all download endpoints, preventing downloads from galleries with a pending payment status.
-- **Docker Build Warning Fixes**: Removed obsolete  attribute from  and corrected casing in .
-- **System Analysis & Documentation**: Generated  and  by analyzing the codebase.
-- **Contributor Expiration Fix**: Enforced the existing 60-day expiration rule for contributor uploads.
+- **Gallery Performance Optimized**: Replaced infinite scroll/blur-up with a performant Load More virtualized grid and sharper 800px thumbnails.
+- **Guest Upload Bug FIXED**: Removed a  from backend photo endpoints in  that was hiding guest photos in large galleries.
+- **Smart Adaptive Uploads Implemented**: Created a  hook for concurrent, speed-aware uploads for contributors, while keeping guest uploads sequential.
+- **Contributor Upload Flow Standardized**: Implemented a consistent 4-step professional upload flow (Company Name, Role, Confirm, Upload) for Regular, pCloud, GDrive, and Fotoshare contributors.
+- **Contributor Credit Display Fixed**: Updated the public gallery UI to professionally display contributor names and roles in the hero section.
 
 **Earlier issues found/mentioned but not fixed**
    - Issue 1: Data inconsistency for photos uploaded before the R2 bug fix.
    - Issue 2:  background job needs monitoring on the live server.
    - Issue 3: Local files are lost on container rebuilds due to a missing Docker volume mount.
-   - Issue 4: The agent's attempt to create a PDF from a markdown file failed due to a missing system library ().
+   - Issue 4: The agent's attempt to create a PDF from a markdown file failed due to a missing system library.
 
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: Data inconsistency where database records for photos exist but the corresponding files are not in R2 storage, leading to broken images.
-  - Recurrence count: 2
+  - Recurrence count: 3
   - Status: NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Live API Testing**: Extensive use of  commands to test new endpoints and verify business logic.
-- **Data Migration**: Creating and executing a one-time admin API endpoint () to backfill data for existing records.
-- **Frontend Polling**: Using  in a React  hook to periodically fetch data and provide a real-time experience.
-- **Business Logic Refactoring**: Systematically analyzing, clarifying, and implementing complex business rules for subscriptions, storage caps, and permissions.
-- **Code-based System Documentation**: Analyzing the live codebase to produce detailed operational documents.
-- **Production Debugging**: Diagnosing a Cloudflare 522 error by checking container status and logs on the user's live server.
+- **Frontend Performance Tuning**: Replacing infinite scroll with a virtualized grid and manual Load More pagination to handle thousands of images efficiently.
+- **Image Optimization Strategy**: Shifting from a blur-up effect to serving sharper, higher-resolution (800px) thumbnails directly for a better initial viewing experience.
+- **Adaptive Concurrency**: Creating a custom React hook () to measure network speed during uploads and dynamically adjust the number of concurrent files being transferred.
+- **Root Cause Analysis**: Debugging a frontend display issue (guest uploads not showing) back to a hardcoded  in a backend API endpoint, which was cutting off data.
+- **UI/UX Standardization**: Refactoring multiple, disparate components (, , etc.) into a single, consistent, multi-step user flow.
 
 **key DB schema**
-  - **galleries**: Added , , and .
-  - **users**: The  field is now used to enforce download locks on associated galleries.
-  - **transactions**: Now correctly created with  upon payment proof submission.
+  - **sections**: The  string field is now consistently populated through the new standardized upload flow for all contributor types.
 
 **changes in tech stack**
-  -  was installed as a potential alternative to 
------
-
-WeasyPrint could not import some external libraries. Please carefully follow the installation steps before reporting an issue:
-https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation
-https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting 
-
------ for PDF generation, but the task was not completed.
+  - No changes in this session.
 
 **All files of reference**
-- : The central backend file, heavily modified to implement all new features and logic changes.
-- : The location of the new Clients tab and the auto-refreshing billing section.
-- : Modified to handle per-gallery instead of per-user storage limits.
-- : Modified to display the new per-gallery storage progress bar.
-- : Pydantic models were updated to include new storage and download lock fields.
-- : A detailed generated report on the platform's business logic.
-- : A second, more technical generated report on the platform's operational reality.
+- : Modified to remove photo limits from several key endpoints.
+- : Heavily modified to implement the new virtualized grid and fix credit display.
+- : Rewritten to use a Load More button instead of infinite scroll.
+- : Rewritten to remove the blur effect.
+- : New file containing logic for adaptive concurrent uploads.
+- : Rewritten with the new 4-step flow.
+- : Rewritten with the new 4-step flow.
+- : Rewritten with the new 4-step flow.
+- : Rewritten with the new 4-step flow.
 
 **Areas that need refactoring**:
-- **CRITICAL**: The  file remains a large monolith. The highest priority for refactoring is to extract API routes into the  directory as per .
+- **/app/backend/server.py**: Remains a large monolith. Extracting API routes into the  directory is the highest priority refactoring task.
+- **/app/frontend/src/pages/VideographerUpload.jsx**: Likely needs to be updated or refactored to use the same standardized 4-step flow as the other contributor pages for consistency.
 
 **key api endpoints**
-- : (New) Runs a one-time data migration to calculate and set storage quotas for all existing galleries.
--  & : (New) Endpoints for the comprehensive client management dashboard.
-- : (New) Admin actions to manage user accounts.
-- : (Modified) Now check and update per-gallery storage instead of per-user.
-- : (Modified) Now check for a gallery-level  flag and the owner's .
--  & : (Modified) Responses now include storage usage/quota and download lock status.
-- : (Modified) Updated to handle .
+- : (Modified) Now accepts  in the request body.
+- : (Modified) Removed .
+- : (Modified) Removed .
+- : (Modified) Removed .
+- : (Modified)  parameter increased from  to .
+- : (Modified) Thumbnail size increased to .
 
 **Critical Info for New Agent**
-- **Your immediate task is to finish the contributor credit display update**. The backend has been changed to provide the ; you need to update the frontend in  to display it.
-- **The highest priority architectural task is the  refactoring**. Extracting API routes into modular files is crucial for future maintainability.
-- The user has a specific deployment workflow for their Hostinger VPS. Refer to their messages for the exact commands ( with a space).
-- The user's request to receive a PDF of the analysis document is still open. The previous attempt with 
------
-
-WeasyPrint could not import some external libraries. Please carefully follow the installation steps before reporting an issue:
-https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation
-https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting 
-
------ failed due to a missing  library. You may need to try again with  or another method.
+-   **Your immediate task is to finalize the contributor flow standardization.** The agent updated most contributor pages but was about to check . You need to inspect that file, update it if necessary, and then systematically test the flow for all contributor types (Regular, pCloud, GDrive, Fotoshare, Videographer) to ensure they all have the consistent 4-step professional UI.
+-   **The user's highest priority bug is guest uploads not showing on production.** The root cause (a  photo limit in the API) has been fixed in the codebase. You must confirm with the user that they have deployed the latest code to their live server and verify that the issue is resolved.
+-   **The next major feature is PayMongo integration.** The user has made their choice. You should prepare to gather the necessary API keys from the user and then call the  subagent to get the implementation plan.
+-   **User UI Preference**: The user strongly prefers sharp, clear images on initial load and explicit Load More buttons over blurry placeholders and automatic infinite scrolling. Keep this design principle in mind for any future gallery or image-related work.
 
 **documents and test reports created in this job**
-  - /app/COMPREHENSIVE_ANALYSIS.md
-  - /app/OPERATIONAL_TRUTH_DOCUMENT.md
+  - /app/memory/PRD.md (updated with new features)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1.  **User**: Confirmed the agent should enforce a grandfathering policy for expired accounts, allowing them to use features on galleries they already paid for. (COMPLETE)
-2.  **User**: Reported a loophole where downloads were still possible from within the gallery even when a payment was pending and asked for it to be fixed. (COMPLETE)
-3.  **User**: Noticed the contributor credits display was not professional and suggested an improved format including the contributor's official title. (IN PROGRESS)
-4.  **User**: Asked what their admin token is and how to get it to run the migration command. (COMPLETE)
-5.  **User**: Provided their admin credentials for the agent to run the migration on their behalf. (COMPLETE)
-6.  **User**: Asked if they need to run the migration code again on their VPS after deployment. (COMPLETE)
-7.  **User**: Reported a Cloudflare 522 error after deployment. (COMPLETE)
-8.  **User**: Confirmed the site was back up but the admin dashboard UI for feature toggles still showed Account Storage Limit instead of Gallery Storage Limit. (COMPLETE)
-9.  **User**: Asked if the new per-gallery storage limit rule is actually enforced. (COMPLETE)
-10. **User**: Asked for a detailed explanation of how the website reacts to downgraded or expired accounts, specifically regarding storage quotas and feature access. (COMPLETE)
+10. User confirms PayMongo is the desired payment gateway.
+9. User complains that pre-loaded thumbnails are too blurry and dislikes infinite scroll for large galleries, requesting Load More buttons.
+8. User reports WEIRD Guest upload is not showing.
+7. User provides their account and a specific gallery (The wedding of Janmark and Elline) to debug the guest upload issue.
+6. User confirms they were testing on the production site, not the preview environment.
+5. User provides production server deployment and log output, which shows a successful upload.
+4. User agrees that photo limits are bad and the only limit should be storage.
+3. User requests an improved contributor flow with pre-listed professional roles.
+2. User asks for confirmation on how the new credits will look.
+1. User points out that the pCloud, Google Drive, and 360 Glam Booth integrations also need the new professional step-by-step system.
 
 **Project Health Check:**
-- **Broken**: Data for photos uploaded *before* the R2 bug fix is inconsistent (DB records exist, files are not in R2).
-- **Mocked**: The payment system still relies on manual proof submission and admin approval, with no live payment gateway integrated.
+- **Broken**:
+    - Data for photos uploaded *before* the R2 bug fix is inconsistent (DB records exist, but files might be missing from R2), causing some broken image icons.
+- **Mocked**:
+    - The payment system still relies on manual proof submission. PayMongo integration is planned but not started.
 
 **3rd Party Integrations**
 - **Cloudflare R2**: Active, for all photo and file storage.
 - **MongoDB Atlas**: Active, as the primary database.
-- **pCloud**: Active, with contributor workflow and auto-sync.
+- **pCloud**: Active, contributor workflow updated.
+- **Google Drive**: Active, contributor workflow updated.
+- **PayMongo**: **PLANNED**. The user has chosen this for payment processing.
 - **Resend**: Active, for emails.
 - **Docker/Nginx**: Active, for deployment on Hostinger.
-- **Google Drive**: Active, with contributor workflow and auto-sync.
-- **react-helmet-async**: Used for dynamic meta tags.
 
 **Testing status**
   - Testing agent used after significant changes: NO
@@ -255,6 +242,5 @@ https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting
 - **Admin Password**: 
 
 **What agent forgot to execute**
-- The agent did not complete the user's request to generate a PDF file from the analysis document after the first attempt failed.
-- The major  refactoring (extracting routes) was on the plan but was superseded by the user's immediate feature requests.
-- The safeguard of adding a persistent volume mount for the  directory in  was not implemented.</analysis>
+- The agent identified that  needed to be updated for consistency with the new contributor flow but did not get to it.
+- A full verification test of the newly implemented 4-step flow across pCloud, GDrive, and Fotoshare pages was not performed after the code was written.</analysis>

@@ -685,7 +685,7 @@ Integrated with **Resend** email service.
 - `transactions` - Payment transaction history with proof URLs
 
 ## Access URLs
-- Preview: https://photogalleryhub.preview.emergentagent.com
+- Preview: https://picflow-app-3.preview.emergentagent.com
 - Pricing: /pricing
 - Admin: /admin
 
