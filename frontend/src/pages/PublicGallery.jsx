@@ -460,8 +460,21 @@ const PublicGallery = () => {
       setDownloadingPhoto(photo.id);
       toast.loading('Preparing download...', { id: 'download-photo' });
       
-      // Use backend URL with download parameter
-      const downloadUrl = `${getImageUrl(photo.url)}?download=true`;
+      let downloadUrl;
+      
+      // Check if this is a pCloud photo - use proxy download to bypass ISP blocks
+      if (photo.url && photo.url.includes('/pcloud/serve/')) {
+        // Convert serve URL to download URL
+        downloadUrl = photo.url.replace('/pcloud/serve/', '/pcloud/download/');
+        downloadUrl = `${BACKEND_URL}${downloadUrl}?filename=${encodeURIComponent(photo.filename || 'photo.jpg')}`;
+      } else if (photo.is_pcloud && photo.pcloud_code && photo.fileid) {
+        // Build proxy download URL from photo metadata
+        downloadUrl = `${BACKEND_URL}/api/pcloud/download/${photo.pcloud_code}/${photo.fileid}?filename=${encodeURIComponent(photo.filename || 'photo.jpg')}`;
+      } else {
+        // Regular photo - use backend URL with download parameter
+        downloadUrl = `${getImageUrl(photo.url)}?download=true`;
+      }
+      
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = photo.filename || 'photo.jpg';
