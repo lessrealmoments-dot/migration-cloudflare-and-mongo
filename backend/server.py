@@ -1443,6 +1443,7 @@ async def health_check():
 # OPEN GRAPH META TAGS FOR SOCIAL SHARING
 # ============================================
 @app.get("/og/gallery/{share_link}", response_class=HTMLResponse)
+@app.get("/og/g/{share_link}", response_class=HTMLResponse)
 async def get_gallery_og_tags(share_link: str, request: Request):
     """
     Serve HTML with Open Graph meta tags for social media link previews.
