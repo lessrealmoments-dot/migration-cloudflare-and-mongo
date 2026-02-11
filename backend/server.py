@@ -9168,6 +9168,7 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
         "billing_cycle_start": db_user.get("billing_cycle_start"),
         "subscription_expires": db_user.get("subscription_expires"),  # When subscription period ends
         "subscription_active": is_subscription_active_flag,  # Whether subscription is currently active
+        "subscription_expired": resolved.get("subscription_expired", False),  # Whether subscription has expired
         "event_credits": db_user.get("event_credits", 0),
         "extra_credits": db_user.get("extra_credits", 0),
         "extra_credits_purchased_at": extra_credits_purchased_at,  # When extra credits were bought
