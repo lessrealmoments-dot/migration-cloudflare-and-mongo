@@ -1477,7 +1477,7 @@ async def get_gallery_og_tags(share_link: str, request: Request):
     # Use the request's host or default to the site
     host = request.headers.get("x-forwarded-host", request.headers.get("host", "eventsgallery.vip"))
     scheme = request.headers.get("x-forwarded-proto", "https")
-    canonical_url = f"{scheme}://{host}/gallery/{share_link}"
+    canonical_url = f"{scheme}://{host}/g/{share_link}"
     
     # If no cover photo, use a default or leave empty
     if not cover_photo_url:
