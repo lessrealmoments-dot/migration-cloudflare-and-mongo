@@ -11,6 +11,7 @@ from .background import (
     auto_sync_pcloud_sections,
     auto_sync_drive_backup_task,
     auto_delete_expired_galleries,
+    check_expiring_subscriptions,
 )
 
 __all__ = [
@@ -21,4 +22,5 @@ __all__ = [
     'auto_sync_pcloud_sections',
     'auto_sync_drive_backup_task',
     'auto_delete_expired_galleries',
+    'check_expiring_subscriptions',
 ]
