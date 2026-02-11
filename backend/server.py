@@ -6559,7 +6559,13 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
             thumb_small = generate_thumbnail(file_path, photo_id, 'small')
             thumb_medium = generate_thumbnail(file_path, photo_id, 'medium')
     
-    # Update storage used
+    # Update gallery storage used (per-gallery tracking)
+    await db.galleries.update_one(
+        {"id": gallery_id},
+        {"$inc": {"storage_used": file_size}}
+    )
+    
+    # Also update user storage for overall tracking
     await db.users.update_one(
         {"id": current_user["id"]},
         {"$inc": {"storage_used": file_size}}
