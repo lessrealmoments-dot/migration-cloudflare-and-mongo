@@ -37,12 +37,12 @@ const PremiumLightbox = ({
       if (index >= 0 && index < photos.length) {
         const photo = photos[index];
         const img = new Image();
-        // Preload full image for viewing
-        img.src = `${backendUrl}${photo.url}`;
+        // Preload full image for viewing - use helper to handle CDN vs local URLs
+        img.src = getImageUrl(photo.url, backendUrl);
         // Also preload thumbnail for filmstrip
         if (photo.thumbnail_url && photo.thumbnail_url !== photo.url) {
           const thumbImg = new Image();
-          thumbImg.src = `${backendUrl}${photo.thumbnail_url}`;
+          thumbImg.src = getImageUrl(photo.thumbnail_url, backendUrl);
         }
       }
     };
