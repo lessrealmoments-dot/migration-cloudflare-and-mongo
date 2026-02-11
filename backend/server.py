@@ -9178,10 +9178,18 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
     resolved = await resolve_user_features(db_user)
     override_mode = db_user.get("override_mode")
     
+    # Helper for backward compatibility with old field names
+    def get_addon_tokens_val(u):
+        return u.get("addon_tokens", u.get("extra_credits", 0))
+    def get_addon_tokens_purchased(u):
+        return u.get("addon_tokens_purchased_at", u.get("extra_credits_purchased_at"))
+    def get_subscription_tokens_val(u):
+        return u.get("subscription_tokens", u.get("event_credits", 0))
+    
     # Calculate extra credits expiration
-    addon_tokens_purchased_at = db_user.get("addon_tokens_purchased_at")
+    addon_tokens_purchased_at = get_addon_tokens_purchased(db_user)
     addon_tokens_expires_at = None
-    if addon_tokens_purchased_at and db_user.get("addon_tokens", 0) > 0:
+    if addon_tokens_purchased_at and get_addon_tokens_val(db_user) > 0:
         try:
             purchased_at = datetime.fromisoformat(addon_tokens_purchased_at.replace('Z', '+00:00'))
             addon_tokens_expires_at = (purchased_at + timedelta(days=365)).isoformat()
@@ -9195,8 +9203,8 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
     # Calculate effective credits based on subscription status
     # - If subscription expired: monthly credits (subscription_tokens) = 0, addon_tokens preserved
     # - If subscription active: both subscription_tokens and addon_tokens count
-    effective_subscription_tokens = 0 if subscription_expired else db_user.get("subscription_tokens", 0)
-    effective_addon_tokens = db_user.get("addon_tokens", 0)
+    effective_subscription_tokens = 0 if subscription_expired else get_subscription_tokens_val(db_user)
+    effective_addon_tokens = get_addon_tokens_val(db_user)
     
     # Check if extra credits have also expired (12 months from purchase)
     if addon_tokens_purchased_at and effective_addon_tokens > 0:
@@ -9215,11 +9223,11 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
         "subscription_active": is_subscription_active_flag,  # Whether subscription is currently active
         "subscription_expired": subscription_expired,  # Whether subscription has expired
         "subscription_tokens": effective_subscription_tokens,  # Monthly tokens (0 if subscription expired)
-        "subscription_tokens_raw": db_user.get("subscription_tokens", 0),  # Raw value in DB (for debugging)
+        "subscription_tokens_raw": get_subscription_tokens_val(db_user),  # Raw value in DB (for debugging)
         "addon_tokens": effective_addon_tokens,  # Extra tokens (preserved until 12 months from purchase)
-        "addon_tokens_raw": db_user.get("addon_tokens", 0),  # Raw value in DB
-        "addon_tokens_purchased_at": addon_tokens_purchased_at,  # When extra credits were bought
-        "addon_tokens_expires_at": addon_tokens_expires_at,  # When extra credits will expire
+        "addon_tokens_raw": get_addon_tokens_val(db_user),  # Raw value in DB
+        "addon_tokens_purchased_at": addon_tokens_purchased_at,  # When addon tokens were bought
+        "addon_tokens_expires_at": addon_tokens_expires_at,  # When addon tokens will expire
         "total_credits": resolved["credits_available"],
         "is_unlimited_credits": resolved["has_unlimited_credits"],
         "requested_plan": db_user.get("requested_plan"),  # Pending upgrade
