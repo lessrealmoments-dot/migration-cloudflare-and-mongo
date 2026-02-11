@@ -789,6 +789,21 @@ const AdminDashboard = () => {
             Photographers
           </button>
           <button
+            onClick={() => setActiveTab('clients')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-sm transition-colors ${
+              activeTab === 'clients'
+                ? 'bg-white text-zinc-900'
+                : 'bg-zinc-800 text-zinc-400 hover:text-white'
+            }`}
+            data-testid="clients-tab"
+          >
+            <UserCog className="w-5 h-5" strokeWidth={1.5} />
+            Clients
+            {clientStats?.pending_payments > 0 && (
+              <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">{clientStats.pending_payments}</span>
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab('billing')}
             className={`flex items-center gap-2 px-4 py-2 rounded-sm transition-colors ${
               activeTab === 'billing'
