@@ -885,6 +885,7 @@ DEFAULT_MODE_FEATURES = {
 }
 
 # Default feature toggles per payment plan
+# NOTE: These can be overridden in admin panel under "Normal Payment Plans"
 DEFAULT_PLAN_FEATURES = {
     PLAN_FREE: {
         "unlimited_token": False,
@@ -893,7 +894,8 @@ DEFAULT_PLAN_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,  # Demo only (6hr gallery)
         "collaboration_link": True,  # Demo only (6hr gallery)
-        "gallery_storage_limit_gb": 1  # 1GB for demo gallery
+        "storage_limit_gb": 1,  # 1GB per gallery for demo
+        "gallery_expiration_days": 1  # 6 hours (demo)
     },
     PLAN_STANDARD: {
         "unlimited_token": False,
@@ -902,7 +904,8 @@ DEFAULT_PLAN_FEATURES = {
         "view_public_gallery": True,
         "display_mode": False,
         "collaboration_link": False,
-        "gallery_storage_limit_gb": 10  # 10GB per gallery
+        "storage_limit_gb": 10,  # 10GB per gallery
+        "gallery_expiration_days": 90  # 3 months
     },
     PLAN_PRO: {
         "unlimited_token": False,
@@ -911,7 +914,8 @@ DEFAULT_PLAN_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,
         "collaboration_link": True,
-        "gallery_storage_limit_gb": 20  # 20GB per gallery
+        "storage_limit_gb": 15,  # 15GB per gallery
+        "gallery_expiration_days": 180  # 6 months
     }
 }
 
