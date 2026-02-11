@@ -466,7 +466,7 @@ const Dashboard = ({ user, setUser }) => {
                         <span className="text-green-600 font-medium">Unlimited Credits</span>
                       ) : (
                         <>
-                          <span>{subscription.event_credits} event credits + {subscription.extra_credits || 0} extra</span>
+                          <span>{subscription.subscription_tokens} event credits + {subscription.addon_tokens || 0} extra</span>
                           {subscription.effective_plan !== 'free' && subscription.payment_status !== 'pending' && (
                             <button
                               onClick={() => setShowBuyCreditsModal(true)}
@@ -487,10 +487,10 @@ const Dashboard = ({ user, setUser }) => {
                           Renews: {new Date(subscription.subscription_expires).toLocaleDateString()}
                         </span>
                       )}
-                      {subscription.extra_credits > 0 && subscription.extra_credits_expires_at && (
+                      {subscription.addon_tokens > 0 && subscription.addon_tokens_expires_at && (
                         <span className="flex items-center gap-1 text-amber-600">
                           <AlertCircle className="w-3 h-3" />
-                          Extra credits expire: {new Date(subscription.extra_credits_expires_at).toLocaleDateString()}
+                          Extra credits expire: {new Date(subscription.addon_tokens_expires_at).toLocaleDateString()}
                         </span>
                       )}
                     </div>

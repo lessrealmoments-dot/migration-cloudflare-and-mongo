@@ -940,11 +940,11 @@ const AdminDashboard = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        {(p.override_mode === 'founders_circle' || p.event_credits === 999) ? (
+                        {(p.override_mode === 'founders_circle' || p.subscription_tokens === 999) ? (
                           <span className="text-green-400 text-sm font-medium">∞</span>
                         ) : (
                           <span className="text-white text-sm">
-                            {(p.event_credits || 0) + (p.extra_credits || 0)}
+                            {(p.subscription_tokens || 0) + (p.addon_tokens || 0)}
                           </span>
                         )}
                       </td>
@@ -1451,9 +1451,9 @@ const AdminDashboard = () => {
                               Upgrading to: {PLAN_LABELS[user.requested_plan] || user.requested_plan}
                             </div>
                           )}
-                          {user.requested_extra_credits && (
+                          {user.requested_addon_tokens && (
                             <div className="text-xs text-green-400 mt-0.5">
-                              Buying: {user.requested_extra_credits} extra credit(s)
+                              Buying: {user.requested_addon_tokens} extra credit(s)
                             </div>
                           )}
                           <div className="text-xs text-zinc-500">
@@ -1597,11 +1597,11 @@ const AdminDashboard = () => {
                           <td className="px-4 py-3 text-sm">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${
                               tx.type === 'upgrade' ? 'bg-purple-500/20 text-purple-300' :
-                              tx.type === 'extra_credits' ? 'bg-blue-500/20 text-blue-300' :
+                              tx.type === 'addon_tokens' ? 'bg-blue-500/20 text-blue-300' :
                               'bg-zinc-600 text-zinc-300'
                             }`}>
                               {tx.type === 'upgrade' ? `Upgrade to ${tx.plan}` :
-                               tx.type === 'extra_credits' ? `+${tx.extra_credits} Credit(s)` :
+                               tx.type === 'addon_tokens' ? `+${tx.addon_tokens} Credit(s)` :
                                tx.type}
                             </span>
                           </td>
@@ -1934,9 +1934,9 @@ const AdminDashboard = () => {
                           </td>
                           <td className="px-4 py-3">
                             <div className="text-white">
-                              {client.event_credits}
-                              {client.extra_credits > 0 && (
-                                <span className="text-green-400"> +{client.extra_credits}</span>
+                              {client.subscription_tokens}
+                              {client.addon_tokens > 0 && (
+                                <span className="text-green-400"> +{client.addon_tokens}</span>
                               )}
                             </div>
                             <div className="text-xs text-zinc-500">credits</div>
@@ -2054,11 +2054,11 @@ const AdminDashboard = () => {
                     </div>
                     <div>
                       <div className="text-xs text-zinc-500">Event Credits</div>
-                      <div className="text-white font-medium">{clientDetails.subscription.event_credits}</div>
+                      <div className="text-white font-medium">{clientDetails.subscription.subscription_tokens}</div>
                     </div>
                     <div>
                       <div className="text-xs text-zinc-500">Extra Credits</div>
-                      <div className="text-green-400 font-medium">{clientDetails.subscription.extra_credits}</div>
+                      <div className="text-green-400 font-medium">{clientDetails.subscription.addon_tokens}</div>
                     </div>
                   </div>
                   
@@ -2637,11 +2637,11 @@ const AdminDashboard = () => {
                           <div className="flex items-center gap-3">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${
                               tx.type === 'upgrade' ? 'bg-purple-500/20 text-purple-300' :
-                              tx.type === 'extra_credits' ? 'bg-blue-500/20 text-blue-300' :
+                              tx.type === 'addon_tokens' ? 'bg-blue-500/20 text-blue-300' :
                               'bg-zinc-600 text-zinc-300'
                             }`}>
                               {tx.type === 'upgrade' ? `Upgrade to ${tx.plan?.toUpperCase()}` :
-                               tx.type === 'extra_credits' ? `+${tx.extra_credits} Credit(s)` :
+                               tx.type === 'addon_tokens' ? `+${tx.addon_tokens} Credit(s)` :
                                tx.type}
                             </span>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
