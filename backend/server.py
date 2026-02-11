@@ -9283,50 +9283,96 @@ async def track_gallery_view_by_id(gallery_id: str):
 
 @api_router.get("/billing/pricing")
 async def get_public_pricing():
-    """Get current pricing, plan features, and retention settings (public)"""
+    """Get current pricing, plan features, and retention settings (public)
+    
+    This endpoint dynamically pulls from admin-configured feature toggles
+    for Free, Standard, and Pro plans.
+    """
     settings = await get_billing_settings()
     global_toggles = await get_global_feature_toggles()
     
-    # Get plan-specific settings
-    standard_config = global_toggles.get(PLAN_STANDARD, {})
-    pro_config = global_toggles.get(PLAN_PRO, {})
+    # Get plan-specific settings from admin feature toggles
+    free_config = global_toggles.get(PLAN_FREE, DEFAULT_PLAN_FEATURES.get(PLAN_FREE, {}))
+    standard_config = global_toggles.get(PLAN_STANDARD, DEFAULT_PLAN_FEATURES.get(PLAN_STANDARD, {}))
+    pro_config = global_toggles.get(PLAN_PRO, DEFAULT_PLAN_FEATURES.get(PLAN_PRO, {}))
     
-    # Calculate retention in months
-    standard_retention_days = standard_config.get("gallery_expiration_days", 180)
-    pro_retention_days = pro_config.get("gallery_expiration_days", 180)
-    
-    def days_to_months_text(days):
+    # Calculate retention in human-readable format
+    def days_to_text(days):
         if days >= 36500:
             return "Unlimited"
+        if days >= 365:
+            years = days // 365
+            return f"{years} year{'s' if years > 1 else ''}"
         months = days // 30
-        if months <= 0:
-            return f"{days} days"
-        return f"{months} months"
+        if months > 0:
+            return f"{months} month{'s' if months > 1 else ''}"
+        return f"{days} day{'s' if days > 1 else ''}"
+    
+    # Get tokens per plan from billing settings
+    tokens_per_plan = settings.get("tokens_per_plan", {
+        "free": 0,
+        "standard": 2,
+        "pro": 2
+    })
     
     return {
-        **settings.get("pricing", DEFAULT_PRICING),
+        # Pricing from admin settings
+        "standard_monthly": settings.get("pricing", DEFAULT_PRICING).get("standard_monthly", 1000),
+        "pro_monthly": settings.get("pricing", DEFAULT_PRICING).get("pro_monthly", 1500),
+        "addon_token_price": settings.get("pricing", DEFAULT_PRICING).get("extra_credit", 500),
+        "extra_credit": settings.get("pricing", DEFAULT_PRICING).get("extra_credit", 500),  # Legacy name
+        
+        # Payment methods
         "payment_methods": settings.get("payment_methods", {
             "gcash": {"enabled": True, "name": "GCash", "account_name": "Less Real Moments", "account_number": "09952568450"},
             "maya": {"enabled": True, "name": "Maya", "account_name": "Less Real Moments", "account_number": "09952568450"},
             "bank": {"enabled": False, "name": "Bank Transfer", "account_name": "", "account_number": "", "bank_name": ""}
         }),
+        
+        # Plan features - pulled directly from admin feature toggles
         "plan_features": {
+            "free": {
+                "tokens_per_month": tokens_per_plan.get("free", 0),
+                "storage_per_gallery_gb": free_config.get("storage_limit_gb", 1),
+                "gallery_retention": days_to_text(free_config.get("gallery_expiration_days", 1)),
+                "gallery_expiration_days": free_config.get("gallery_expiration_days", 1),
+                "display_mode": free_config.get("display_mode", False),
+                "collaboration_link": free_config.get("collaboration_link", False),
+                "qr_code": free_config.get("qr_code", True),
+                "copy_share_link": free_config.get("copy_share_link", True),
+                "view_public_gallery": free_config.get("view_public_gallery", True),
+                "unlimited_token": free_config.get("unlimited_token", False),
+            },
             "standard": {
+                "tokens_per_month": tokens_per_plan.get("standard", 2),
+                "storage_per_gallery_gb": standard_config.get("storage_limit_gb", 10),
+                "gallery_retention": days_to_text(standard_config.get("gallery_expiration_days", 90)),
+                "gallery_expiration_days": standard_config.get("gallery_expiration_days", 90),
                 "display_mode": standard_config.get("display_mode", False),
                 "collaboration_link": standard_config.get("collaboration_link", False),
                 "qr_code": standard_config.get("qr_code", True),
-                "storage_limit_gb": standard_config.get("storage_limit_gb", 10),
-                "gallery_retention": days_to_months_text(standard_retention_days),
-                "gallery_expiration_days": standard_retention_days
+                "copy_share_link": standard_config.get("copy_share_link", True),
+                "view_public_gallery": standard_config.get("view_public_gallery", True),
+                "unlimited_token": standard_config.get("unlimited_token", False),
             },
             "pro": {
+                "tokens_per_month": tokens_per_plan.get("pro", 2),
+                "storage_per_gallery_gb": pro_config.get("storage_limit_gb", 15),
+                "gallery_retention": days_to_text(pro_config.get("gallery_expiration_days", 180)),
+                "gallery_expiration_days": pro_config.get("gallery_expiration_days", 180),
                 "display_mode": pro_config.get("display_mode", True),
                 "collaboration_link": pro_config.get("collaboration_link", True),
                 "qr_code": pro_config.get("qr_code", True),
-                "storage_limit_gb": pro_config.get("storage_limit_gb", 10),
-                "gallery_retention": days_to_months_text(pro_retention_days),
-                "gallery_expiration_days": pro_retention_days
+                "copy_share_link": pro_config.get("copy_share_link", True),
+                "view_public_gallery": pro_config.get("view_public_gallery", True),
+                "unlimited_token": pro_config.get("unlimited_token", False),
             }
+        },
+        
+        # Grace periods
+        "grace_periods": {
+            "upload_grace_days": UPLOAD_GRACE_PERIOD_DAYS,
+            "view_grace_days": VIEW_GRACE_PERIOD_DAYS
         }
     }
 
