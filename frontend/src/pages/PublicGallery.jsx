@@ -1317,10 +1317,6 @@ const PublicGallery = () => {
                 const sectionPcloudPhotos = getPcloudPhotosBySection(section.id);
                 if (sectionPcloudPhotos.length === 0) return null;
                 
-                const isExpanded = isSectionExpanded(section.id);
-                const displayPcloudPhotos = isExpanded ? sectionPcloudPhotos : sectionPcloudPhotos.slice(0, PREVIEW_COUNT);
-                const hasMore = sectionPcloudPhotos.length > PREVIEW_COUNT;
-                
                 // Create lightbox-compatible photo objects for pCloud photos
                 // Use full image URL for lightbox, thumbnail for grid
                 const pcloudLightboxPhotos = sectionPcloudPhotos.map(p => ({
@@ -1329,6 +1325,13 @@ const PublicGallery = () => {
                   thumbnail_url: `/api${p.thumbnail_url || p.proxy_url}`,  // Thumbnail for lightbox nav
                   is_pcloud: true
                 }));
+                
+                // Helper functions for VirtualizedGalleryGrid
+                const getPcloudThumbUrl = (photo) => `${API}${photo.thumbnail_url || photo.proxy_url}`;
+                const getPcloudFullUrl = (photo) => `${API}${photo.proxy_url}`;
+                
+                // Use virtualized grid for large galleries (50+ photos)
+                const useLargeGalleryMode = sectionPcloudPhotos.length >= LARGE_GALLERY_THRESHOLD;
                 
                 return (
                   <motion.section 
@@ -1361,64 +1364,51 @@ const PublicGallery = () => {
                         </h3>
                       </motion.div>
                       
-                      {/* pCloud Photos Grid */}
-                      <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-                        {displayPcloudPhotos.map((photo, index) => (
-                          <motion.div
-                            key={photo.id}
-                            className="break-inside-avoid mb-4 group cursor-pointer relative overflow-hidden rounded-lg"
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.5, delay: index * 0.05 }}
-                            onClick={() => {
-                              // Open lightbox with pCloud photos
-                              setPcloudLightboxPhotos(pcloudLightboxPhotos);
-                              setPcloudLightboxIndex(index);
-                            }}
-                          >
-                            <img
-                              src={`${API}${photo.thumbnail_url || photo.proxy_url}`}
-                              alt={photo.name}
-                              className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
-                              loading="lazy"
-                              onError={(e) => {
-                                // If thumbnail fails, try full image
-                                if (photo.thumbnail_url && !e.target.dataset.triedFull) {
-                                  e.target.dataset.triedFull = 'true';
-                                  e.target.src = `${API}${photo.proxy_url}`;
-                                } else {
-                                  e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23e5e7eb" width="100" height="100"/><text fill="%2371717a" x="50" y="50" text-anchor="middle" dy=".3em" font-size="10">Error</text></svg>';
-                                }
+                      {/* pCloud Photos Grid - Virtualized for large galleries */}
+                      {useLargeGalleryMode ? (
+                        <VirtualizedGalleryGrid
+                          photos={sectionPcloudPhotos}
+                          initialCount={24}
+                          batchSize={24}
+                          onPhotoClick={(index) => {
+                            setPcloudLightboxPhotos(pcloudLightboxPhotos);
+                            setPcloudLightboxIndex(index);
+                          }}
+                          getThumbUrl={getPcloudThumbUrl}
+                          getFullUrl={getPcloudFullUrl}
+                          themeColors={currentTheme.colors}
+                          showSupplierName={true}
+                        />
+                      ) : (
+                        // Standard grid for smaller galleries
+                        <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+                          {sectionPcloudPhotos.map((photo, index) => (
+                            <motion.div
+                              key={photo.id}
+                              className="break-inside-avoid mb-4 group cursor-pointer relative overflow-hidden rounded-lg"
+                              initial={{ opacity: 0, y: 20 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.5, delay: Math.min(index * 0.05, 0.4) }}
+                              onClick={() => {
+                                setPcloudLightboxPhotos(pcloudLightboxPhotos);
+                                setPcloudLightboxIndex(index);
                               }}
-                            />
-                            {photo.supplier_name && (
-                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <p className="text-white text-xs">by {photo.supplier_name}</p>
-                              </div>
-                            )}
-                          </motion.div>
-                        ))}
-                      </div>
-                      
-                      {/* View More Button */}
-                      {hasMore && (
-                        <div className="text-center mt-12">
-                          <button
-                            onClick={() => toggleSectionExpand(section.id)}
-                            className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105"
-                            style={{
-                              backgroundColor: currentTheme.colors.accent + '10',
-                              color: currentTheme.colors.accent,
-                              border: `1px solid ${currentTheme.colors.accent}30`
-                            }}
-                          >
-                            {isExpanded ? (
-                              <>Show Less</>
-                            ) : (
-                              <>View All {sectionPcloudPhotos.length} Photos</>
-                            )}
-                          </button>
+                            >
+                              <ProgressiveImage
+                                src={`${API}${photo.proxy_url}`}
+                                thumbnailSrc={`${API}${photo.thumbnail_url || photo.proxy_url}`}
+                                alt={photo.name}
+                                className="w-full h-auto transition-transform duration-700 group-hover:scale-105"
+                                objectFit="cover"
+                              />
+                              {photo.supplier_name && (
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <p className="text-white text-xs">by {photo.supplier_name}</p>
+                                </div>
+                              )}
+                            </motion.div>
+                          ))}
                         </div>
                       )}
                     </div>
