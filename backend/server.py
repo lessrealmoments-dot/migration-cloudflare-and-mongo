@@ -4244,16 +4244,25 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
                 )
         elif not has_unlimited_credits:
             # Deduct credit (skip for users with unlimited_token)
-            if user.get("addon_tokens", 0) > 0:
+            # Priority: addon_tokens first (they expire), then subscription_tokens
+            # Backward compatibility: also check old field names (extra_credits, event_credits)
+            addon_tokens = user.get("addon_tokens", user.get("extra_credits", 0))
+            
+            if addon_tokens > 0:
+                # Use addon token first (they expire in 12 months)
+                # Update both old and new field names for compatibility
                 await db.users.update_one(
                     {"id": current_user["id"]},
-                    {"$inc": {"addon_tokens": -1}}
+                    {"$inc": {"addon_tokens": -1, "extra_credits": -1}}
                 )
+                logger.info(f"Deducted 1 addon_token for gallery creation: user={current_user['id']}")
             else:
+                # Fall back to subscription tokens
                 await db.users.update_one(
                     {"id": current_user["id"]},
-                    {"$inc": {"subscription_tokens": -1}}
+                    {"$inc": {"subscription_tokens": -1, "event_credits": -1}}
                 )
+                logger.info(f"Deducted 1 subscription_token for gallery creation: user={current_user['id']}")
     
     gallery_id = str(uuid.uuid4())
     share_link = str(uuid.uuid4())[:8]
