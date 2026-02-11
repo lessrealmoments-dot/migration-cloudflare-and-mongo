@@ -259,6 +259,13 @@ The system checks features in this order (highest to lowest priority):
 **Cause:** View grace period (180 days) has passed
 **Solution:** Photographer needs to renew and galleries may need manual restore
 
+### Issue: pCloud downloads don't work (ISP blocking)
+**Cause:** Some ISPs block `e.pcloud.link` (download domain)
+**Solution:** All downloads now go through our proxy:
+- View: `/api/pcloud/serve/{code}/{fileid}` - Already proxied
+- Thumbnail: `/api/pcloud/thumb/{code}/{fileid}` - Already proxied  
+- Download: `/api/pcloud/download/{code}/{fileid}` - **NEW proxy endpoint**
+
 ---
 
 ## 📞 Deployment Commands
