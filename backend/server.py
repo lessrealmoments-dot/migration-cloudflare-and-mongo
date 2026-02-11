@@ -9180,6 +9180,22 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
     
     # Check subscription status
     is_subscription_active_flag = await is_subscription_active(db_user)
+    subscription_expired = resolved.get("subscription_expired", False)
+    
+    # Calculate effective credits based on subscription status
+    # - If subscription expired: monthly credits (event_credits) = 0, extra_credits preserved
+    # - If subscription active: both event_credits and extra_credits count
+    effective_event_credits = 0 if subscription_expired else db_user.get("event_credits", 0)
+    effective_extra_credits = db_user.get("extra_credits", 0)
+    
+    # Check if extra credits have also expired (12 months from purchase)
+    if extra_credits_purchased_at and effective_extra_credits > 0:
+        try:
+            purchased_at = datetime.fromisoformat(extra_credits_purchased_at.replace('Z', '+00:00'))
+            if datetime.now(timezone.utc) >= (purchased_at + timedelta(days=365)):
+                effective_extra_credits = 0
+        except:
+            pass
     
     return {
         "plan": db_user.get("plan", PLAN_FREE),
@@ -9187,9 +9203,11 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
         "billing_cycle_start": db_user.get("billing_cycle_start"),
         "subscription_expires": db_user.get("subscription_expires"),  # When subscription period ends
         "subscription_active": is_subscription_active_flag,  # Whether subscription is currently active
-        "subscription_expired": resolved.get("subscription_expired", False),  # Whether subscription has expired
-        "event_credits": db_user.get("event_credits", 0),
-        "extra_credits": db_user.get("extra_credits", 0),
+        "subscription_expired": subscription_expired,  # Whether subscription has expired
+        "event_credits": effective_event_credits,  # Monthly tokens (0 if subscription expired)
+        "event_credits_raw": db_user.get("event_credits", 0),  # Raw value in DB (for debugging)
+        "extra_credits": effective_extra_credits,  # Extra tokens (preserved until 12 months from purchase)
+        "extra_credits_raw": db_user.get("extra_credits", 0),  # Raw value in DB
         "extra_credits_purchased_at": extra_credits_purchased_at,  # When extra credits were bought
         "extra_credits_expires_at": extra_credits_expires_at,  # When extra credits will expire
         "total_credits": resolved["credits_available"],
