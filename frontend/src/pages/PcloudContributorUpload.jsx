@@ -455,13 +455,31 @@ const PcloudContributorUpload = () => {
           <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
             {!submitResult ? (
               <>
-                <div className="text-center mb-8">
+                <div className="text-center mb-6">
                   <Cloud className="w-12 h-12 text-blue-600 mx-auto mb-4" />
                   <h2 className="text-xl font-semibold text-zinc-800 mb-2">Sync Your pCloud Folder</h2>
-                  <p className="text-zinc-600">
-                    Contributing as <span className="font-medium">{companyName}</span>
-                    <span className="text-zinc-400"> • {getFinalRole()}</span>
-                  </p>
+                </div>
+
+                {/* Edit Profile Banner */}
+                <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Building2 className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-zinc-800">{companyName}</p>
+                      <p className="text-sm text-zinc-500">{getFinalRole()}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setStep('company')}
+                    className="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-800 hover:bg-zinc-100 rounded-lg transition-colors flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Edit
+                  </button>
                 </div>
 
                 {/* Instructions */}
