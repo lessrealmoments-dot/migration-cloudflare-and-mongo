@@ -9400,13 +9400,11 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
         "storage_used": db_user.get("storage_used", 0),
         "features_enabled": resolved["features"],
         "authority_source": resolved["authority_source"],
-        # Grace period info for expired subscriptions
-        "grace_periods": {
-            "upload_grace_days": UPLOAD_GRACE_PERIOD_DAYS,  # 2 months
-            "view_grace_days": VIEW_GRACE_PERIOD_DAYS,  # 6 months
-            "uploads_allowed": not subscription_expired or (await check_subscription_grace_periods(db_user))["uploads_allowed"] if subscription_expired else True,
-            "can_create_new_contributor_links": not subscription_expired
-        } if subscription_expired else None
+        # Grace period constants for client-side calculations
+        "grace_period_settings": {
+            "upload_grace_days": UPLOAD_GRACE_PERIOD_DAYS,  # 2 months (60 days)
+            "view_grace_days": VIEW_GRACE_PERIOD_DAYS,  # 6 months (180 days)
+        }
     }
 
 @api_router.post("/user/payment-proof")
