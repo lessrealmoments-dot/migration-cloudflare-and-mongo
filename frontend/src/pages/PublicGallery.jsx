@@ -1480,7 +1480,15 @@ const PublicGallery = () => {
                       </h3>
                       {section.contributor_name && (
                         <p className="text-sm mt-2" style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.6) }}>
-                          by <span style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.8) }}>{section.contributor_name}</span>
+                          {section.contributor_role ? (
+                            <>
+                              <span className="uppercase tracking-wider text-[10px]" style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.5) }}>
+                                {section.contributor_role}
+                              </span>
+                              <span className="mx-2">·</span>
+                            </>
+                          ) : null}
+                          <span style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.8) }}>{section.contributor_name}</span>
                         </p>
                       )}
                       
