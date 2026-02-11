@@ -130,28 +130,32 @@ const GoogleDriveSection = ({
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
 
+  // Sort: highlights first, then by order
+  const sortedPhotos = useMemo(() => {
+    if (!photos || photos.length === 0) return [];
+    return [...photos].sort((a, b) => {
+      if (a.is_highlight && !b.is_highlight) return -1;
+      if (!a.is_highlight && b.is_highlight) return 1;
+      return (a.order || 0) - (b.order || 0);
+    });
+  }, [photos]);
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount(prev => Math.min(prev + BATCH_SIZE, sortedPhotos.length));
+  }, [sortedPhotos.length]);
+
+  const handleLoadAll = useCallback(() => {
+    setVisibleCount(sortedPhotos.length);
+  }, [sortedPhotos.length]);
+
+  // Early return after hooks
   if (!photos || photos.length === 0) {
     return null;
   }
 
-  // Sort: highlights first, then by order
-  const sortedPhotos = useMemo(() => [...photos].sort((a, b) => {
-    if (a.is_highlight && !b.is_highlight) return -1;
-    if (!a.is_highlight && b.is_highlight) return 1;
-    return (a.order || 0) - (b.order || 0);
-  }), [photos]);
-
   const displayPhotos = sortedPhotos.slice(0, visibleCount);
   const hasMore = visibleCount < photos.length;
   const remainingPhotos = photos.length - visibleCount;
-
-  const handleLoadMore = useCallback(() => {
-    setVisibleCount(prev => Math.min(prev + BATCH_SIZE, photos.length));
-  }, [photos.length]);
-
-  const handleLoadAll = useCallback(() => {
-    setVisibleCount(photos.length);
-  }, [photos.length]);
 
   // Use theme colors if provided, otherwise use defaults
   const accentColor = themeColors?.accent || '#3b82f6';
