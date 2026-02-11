@@ -820,7 +820,7 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,
         "collaboration_link": True,
-        "storage_limit_gb": -1,  # -1 = unlimited
+        "gallery_storage_limit_gb": -1,  # -1 = unlimited per gallery
         "gallery_expiration_days": 36500  # ~100 years (never)
     },
     MODE_EARLY_PARTNER_BETA: {
@@ -830,7 +830,7 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,
         "collaboration_link": True,
-        "storage_limit_gb": 50,  # 50GB
+        "gallery_storage_limit_gb": 20,  # 20GB per gallery
         "gallery_expiration_days": 180  # 6 months
     },
     MODE_COMPED_PRO: {
@@ -840,7 +840,7 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,
         "collaboration_link": True,
-        "storage_limit_gb": 50,  # 50GB
+        "gallery_storage_limit_gb": 20,  # 20GB per gallery
         "gallery_expiration_days": 180  # 6 months
     },
     MODE_COMPED_STANDARD: {
@@ -850,7 +850,7 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": False,
         "collaboration_link": False,
-        "storage_limit_gb": 20,  # 20GB
+        "gallery_storage_limit_gb": 10,  # 10GB per gallery
         "gallery_expiration_days": 90  # 3 months
     },
     MODE_ENTERPRISE_ACCESS: {
@@ -860,7 +860,7 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,
         "collaboration_link": True,
-        "storage_limit_gb": -1,  # -1 = unlimited
+        "gallery_storage_limit_gb": -1,  # -1 = unlimited per gallery
         "gallery_expiration_days": 36500  # ~100 years (never)
     }
 }
@@ -873,7 +873,8 @@ DEFAULT_PLAN_FEATURES = {
         "qr_code": True,
         "view_public_gallery": True,
         "display_mode": True,  # Demo only (6hr gallery)
-        "collaboration_link": True  # Demo only (6hr gallery)
+        "collaboration_link": True,  # Demo only (6hr gallery)
+        "gallery_storage_limit_gb": 1  # 1GB for demo gallery
     },
     PLAN_STANDARD: {
         "unlimited_token": False,
@@ -881,7 +882,8 @@ DEFAULT_PLAN_FEATURES = {
         "qr_code": True,
         "view_public_gallery": True,
         "display_mode": False,
-        "collaboration_link": False
+        "collaboration_link": False,
+        "gallery_storage_limit_gb": 10  # 10GB per gallery
     },
     PLAN_PRO: {
         "unlimited_token": False,
@@ -889,7 +891,8 @@ DEFAULT_PLAN_FEATURES = {
         "qr_code": True,
         "view_public_gallery": True,
         "display_mode": True,
-        "collaboration_link": True
+        "collaboration_link": True,
+        "gallery_storage_limit_gb": 20  # 20GB per gallery
     }
 }
 
