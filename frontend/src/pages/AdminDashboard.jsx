@@ -1716,6 +1716,674 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Clients Tab */}
+        {activeTab === 'clients' && (
+          <div className="space-y-6">
+            {/* Stats Cards */}
+            {clientStats && (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div className="bg-zinc-800 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-white">{clientStats.total_clients}</div>
+                  <div className="text-sm text-zinc-400">Total Clients</div>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-green-400">{clientStats.active_clients}</div>
+                  <div className="text-sm text-zinc-400">Active</div>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-amber-400">{clientStats.pending_payments}</div>
+                  <div className="text-sm text-zinc-400">Pending Payments</div>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-purple-400">₱{(clientStats.total_revenue || 0).toLocaleString()}</div>
+                  <div className="text-sm text-zinc-400">Total Revenue</div>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-zinc-300">{clientStats.plan_distribution?.free || 0}</span>
+                    <span className="text-xs text-zinc-500">Free</span>
+                    <span className="text-lg font-bold text-blue-400 ml-2">{clientStats.plan_distribution?.standard || 0}</span>
+                    <span className="text-xs text-zinc-500">Std</span>
+                    <span className="text-lg font-bold text-purple-400 ml-2">{clientStats.plan_distribution?.pro || 0}</span>
+                    <span className="text-xs text-zinc-500">Pro</span>
+                  </div>
+                  <div className="text-sm text-zinc-400">Plan Distribution</div>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-cyan-400">{Object.values(clientStats.override_counts || {}).reduce((a, b) => a + b, 0)}</div>
+                  <div className="text-sm text-zinc-400">Override Active</div>
+                </div>
+              </div>
+            )}
+
+            {/* Search and Filters */}
+            <div className="bg-zinc-800 rounded-lg p-4">
+              <div className="flex flex-wrap gap-4 items-center">
+                <div className="flex-1 min-w-[200px]">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by name, email, or business..."
+                      value={clientSearch}
+                      onChange={(e) => setClientSearch(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && fetchClients()}
+                      className="w-full bg-zinc-700 border border-zinc-600 rounded-lg pl-10 pr-4 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
+                    />
+                  </div>
+                </div>
+                
+                <select
+                  value={clientFilters.plan}
+                  onChange={(e) => setClientFilters(prev => ({ ...prev, plan: e.target.value }))}
+                  className="bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none"
+                >
+                  <option value="">All Plans</option>
+                  <option value="free">Free</option>
+                  <option value="standard">Standard</option>
+                  <option value="pro">Pro</option>
+                </select>
+                
+                <select
+                  value={clientFilters.status}
+                  onChange={(e) => setClientFilters(prev => ({ ...prev, status: e.target.value }))}
+                  className="bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none"
+                >
+                  <option value="">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+                
+                <select
+                  value={clientFilters.override_mode}
+                  onChange={(e) => setClientFilters(prev => ({ ...prev, override_mode: e.target.value }))}
+                  className="bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none"
+                >
+                  <option value="">All Modes</option>
+                  <option value="none">No Override</option>
+                  <option value="founders_circle">Founders Circle</option>
+                  <option value="early_partner_beta">Early Partner</option>
+                  <option value="comped_pro">Comped Pro</option>
+                  <option value="comped_standard">Comped Standard</option>
+                </select>
+                
+                <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={clientFilters.has_pending}
+                    onChange={(e) => setClientFilters(prev => ({ ...prev, has_pending: e.target.checked }))}
+                    className="w-4 h-4 rounded bg-zinc-700 border-zinc-600"
+                  />
+                  Pending Only
+                </label>
+                
+                <button
+                  onClick={fetchClients}
+                  className="flex items-center gap-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
+                >
+                  <RefreshCw className={`w-4 h-4 ${clientsLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </button>
+              </div>
+            </div>
+
+            {/* Client List */}
+            <div className="bg-zinc-800 rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-zinc-700">
+                      <th 
+                        className="text-left px-4 py-3 text-sm font-medium text-zinc-400 cursor-pointer hover:text-white"
+                        onClick={() => setClientSort(prev => ({ by: 'name', order: prev.by === 'name' && prev.order === 'asc' ? 'desc' : 'asc' }))}
+                      >
+                        <div className="flex items-center gap-1">
+                          Client
+                          {clientSort.by === 'name' && (clientSort.order === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />)}
+                        </div>
+                      </th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-zinc-400">Plan</th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-zinc-400">Status</th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-zinc-400">Credits</th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-zinc-400">Storage</th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-zinc-400">Galleries</th>
+                      <th 
+                        className="text-left px-4 py-3 text-sm font-medium text-zinc-400 cursor-pointer hover:text-white"
+                        onClick={() => setClientSort(prev => ({ by: 'total_revenue', order: prev.by === 'total_revenue' && prev.order === 'desc' ? 'asc' : 'desc' }))}
+                      >
+                        <div className="flex items-center gap-1">
+                          Revenue
+                          {clientSort.by === 'total_revenue' && (clientSort.order === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />)}
+                        </div>
+                      </th>
+                      <th 
+                        className="text-left px-4 py-3 text-sm font-medium text-zinc-400 cursor-pointer hover:text-white"
+                        onClick={() => setClientSort(prev => ({ by: 'created_at', order: prev.by === 'created_at' && prev.order === 'desc' ? 'asc' : 'desc' }))}
+                      >
+                        <div className="flex items-center gap-1">
+                          Joined
+                          {clientSort.by === 'created_at' && (clientSort.order === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />)}
+                        </div>
+                      </th>
+                      <th className="text-center px-4 py-3 text-sm font-medium text-zinc-400">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-700">
+                    {clientsLoading ? (
+                      <tr>
+                        <td colSpan="9" className="px-4 py-8 text-center">
+                          <Loader2 className="w-6 h-6 animate-spin mx-auto text-zinc-400" />
+                        </td>
+                      </tr>
+                    ) : clients.length === 0 ? (
+                      <tr>
+                        <td colSpan="9" className="px-4 py-8 text-center text-zinc-500">
+                          No clients found
+                        </td>
+                      </tr>
+                    ) : (
+                      clients.map((client) => (
+                        <tr key={client.id} className="hover:bg-zinc-750">
+                          <td className="px-4 py-3">
+                            <div>
+                              <div className="text-white font-medium">{client.name || 'No Name'}</div>
+                              <div className="text-sm text-zinc-400">{client.email}</div>
+                              {client.business_name && (
+                                <div className="text-xs text-zinc-500 flex items-center gap-1">
+                                  <Building2 className="w-3 h-3" />
+                                  {client.business_name}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-col gap-1">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                                client.effective_plan === 'pro' ? 'bg-purple-500/20 text-purple-400' :
+                                client.effective_plan === 'standard' ? 'bg-blue-500/20 text-blue-400' :
+                                'bg-zinc-600/50 text-zinc-400'
+                              }`}>
+                                {client.effective_plan === 'pro' && <Crown className="w-3 h-3" />}
+                                {client.effective_plan === 'standard' && <Star className="w-3 h-3" />}
+                                {client.effective_plan?.toUpperCase() || 'FREE'}
+                              </span>
+                              {client.override_mode && (
+                                <span className="text-xs text-amber-400">
+                                  {client.override_mode.replace(/_/g, ' ')}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                              client.effective_status === 'active' ? 'bg-green-500/20 text-green-400' :
+                              client.effective_status === 'pending_payment' ? 'bg-amber-500/20 text-amber-400' :
+                              client.effective_status === 'suspended' ? 'bg-red-500/20 text-red-400' :
+                              'bg-zinc-600/50 text-zinc-400'
+                            }`}>
+                              {client.effective_status === 'active' && <CheckCircle className="w-3 h-3" />}
+                              {client.effective_status === 'pending_payment' && <Clock className="w-3 h-3" />}
+                              {client.effective_status === 'suspended' && <XCircle className="w-3 h-3" />}
+                              {client.effective_status?.replace(/_/g, ' ') || 'Unknown'}
+                            </span>
+                            {client.pending_transactions > 0 && (
+                              <div className="text-xs text-amber-400 mt-1">
+                                {client.pending_transactions} pending tx
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-white">
+                              {client.event_credits}
+                              {client.extra_credits > 0 && (
+                                <span className="text-green-400"> +{client.extra_credits}</span>
+                              )}
+                            </div>
+                            <div className="text-xs text-zinc-500">credits</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="w-24">
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <span className="text-zinc-400">{Math.round(client.storage_used / (1024 * 1024 * 1024) * 10) / 10} GB</span>
+                                <span className="text-zinc-500">{client.storage_percent}%</span>
+                              </div>
+                              <div className="h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full ${
+                                    client.storage_percent > 90 ? 'bg-red-500' :
+                                    client.storage_percent > 70 ? 'bg-amber-500' :
+                                    'bg-green-500'
+                                  }`}
+                                  style={{ width: `${Math.min(client.storage_percent, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-white">{client.active_galleries}</div>
+                            <div className="text-xs text-zinc-500">of {client.total_galleries} total</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-white">₱{(client.total_revenue || 0).toLocaleString()}</div>
+                            <div className="text-xs text-zinc-500">{client.transaction_count} tx</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-sm text-zinc-300">
+                              {new Date(client.created_at).toLocaleDateString()}
+                            </div>
+                            {client.last_login && (
+                              <div className="text-xs text-zinc-500">
+                                Last: {new Date(client.last_login).toLocaleDateString()}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => fetchClientDetails(client.id)}
+                              className="p-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
+                              title="View Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Client Detail Modal */}
+        {showClientModal && clientDetails && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-zinc-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-zinc-700 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">{clientDetails.profile.name || 'No Name'}</h2>
+                  <div className="flex items-center gap-3 text-sm text-zinc-400 mt-1">
+                    <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{clientDetails.profile.email}</span>
+                    {clientDetails.profile.business_name && (
+                      <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{clientDetails.profile.business_name}</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setShowClientModal(false); setClientDetails(null); setClientAction(null); }}
+                  className="p-2 hover:bg-zinc-700 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-zinc-400" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Subscription Card */}
+                <div className="bg-zinc-700/50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
+                    <Wallet className="w-4 h-4" /> Subscription
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <div className="text-xs text-zinc-500">Current Plan</div>
+                      <div className={`font-medium ${
+                        clientDetails.subscription.effective_plan === 'pro' ? 'text-purple-400' :
+                        clientDetails.subscription.effective_plan === 'standard' ? 'text-blue-400' :
+                        'text-zinc-300'
+                      }`}>
+                        {clientDetails.subscription.effective_plan?.toUpperCase() || 'FREE'}
+                        {clientDetails.subscription.override_mode && (
+                          <span className="text-xs text-amber-400 block">
+                            ({clientDetails.subscription.override_mode.replace(/_/g, ' ')})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-zinc-500">Status</div>
+                      <div className={`font-medium ${
+                        clientDetails.subscription.payment_status === 'approved' ? 'text-green-400' :
+                        clientDetails.subscription.payment_status === 'pending' ? 'text-amber-400' :
+                        'text-zinc-300'
+                      }`}>
+                        {clientDetails.subscription.payment_status || 'None'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-zinc-500">Event Credits</div>
+                      <div className="text-white font-medium">{clientDetails.subscription.event_credits}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-zinc-500">Extra Credits</div>
+                      <div className="text-green-400 font-medium">{clientDetails.subscription.extra_credits}</div>
+                    </div>
+                  </div>
+                  
+                  {/* Storage */}
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-zinc-400">Storage Used</span>
+                      <span className="text-white">
+                        {(clientDetails.storage.used / (1024 * 1024 * 1024)).toFixed(2)} GB / 
+                        {clientDetails.storage.quota < 0 ? ' Unlimited' : ` ${(clientDetails.storage.quota / (1024 * 1024 * 1024)).toFixed(0)} GB`}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-zinc-600 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full ${
+                          clientDetails.storage.percent > 90 ? 'bg-red-500' :
+                          clientDetails.storage.percent > 70 ? 'bg-amber-500' : 'bg-green-500'
+                        }`}
+                        style={{ width: `${Math.min(clientDetails.storage.percent, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setClientAction({ type: 'add_credits', userId: clientDetails.profile.id })}
+                      className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-sm rounded-lg transition-colors"
+                    >
+                      <Plus className="w-3 h-3 inline mr-1" /> Add Credits
+                    </button>
+                    <button
+                      onClick={() => setClientAction({ type: 'extend', userId: clientDetails.profile.id })}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-lg transition-colors"
+                    >
+                      <Calendar className="w-3 h-3 inline mr-1" /> Extend
+                    </button>
+                    <button
+                      onClick={() => setClientAction({ type: 'change_plan', userId: clientDetails.profile.id })}
+                      className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-sm rounded-lg transition-colors"
+                    >
+                      <Star className="w-3 h-3 inline mr-1" /> Change Plan
+                    </button>
+                    <button
+                      onClick={() => setShowOverrideModal(clientDetails.profile.id)}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-sm rounded-lg transition-colors"
+                    >
+                      <Crown className="w-3 h-3 inline mr-1" /> Override
+                    </button>
+                    <button
+                      onClick={() => setClientAction({ type: 'reset_password', userId: clientDetails.profile.id })}
+                      className="px-3 py-1.5 bg-zinc-600 hover:bg-zinc-500 text-white text-sm rounded-lg transition-colors"
+                    >
+                      <Key className="w-3 h-3 inline mr-1" /> Reset Password
+                    </button>
+                  </div>
+                </div>
+
+                {/* Action Forms */}
+                {clientAction && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+                    {clientAction.type === 'add_credits' && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-amber-400">Add Credits</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-zinc-400">Amount</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="100"
+                              defaultValue="1"
+                              id="credits-amount"
+                              className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-zinc-400">Type</label>
+                            <select id="credits-type" className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white">
+                              <option value="event">Event Credits</option>
+                              <option value="extra">Extra Credits</option>
+                            </select>
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Reason (optional)"
+                          id="credits-reason"
+                          className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              const amount = parseInt(document.getElementById('credits-amount').value);
+                              const type = document.getElementById('credits-type').value;
+                              const reason = document.getElementById('credits-reason').value;
+                              handleAddCredits(clientAction.userId, amount, type, reason);
+                              setClientAction(null);
+                            }}
+                            className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg"
+                          >
+                            Add Credits
+                          </button>
+                          <button onClick={() => setClientAction(null)} className="px-4 py-2 bg-zinc-600 hover:bg-zinc-500 text-white rounded-lg">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {clientAction.type === 'extend' && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-amber-400">Extend Subscription</h4>
+                        <div>
+                          <label className="text-xs text-zinc-400">Months to Add</label>
+                          <select id="extend-months" className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white">
+                            {[1, 2, 3, 6, 12].map(m => (
+                              <option key={m} value={m}>{m} month{m > 1 ? 's' : ''}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Reason (optional)"
+                          id="extend-reason"
+                          className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              const months = parseInt(document.getElementById('extend-months').value);
+                              const reason = document.getElementById('extend-reason').value;
+                              handleExtendSubscription(clientAction.userId, months, reason);
+                              setClientAction(null);
+                            }}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+                          >
+                            Extend
+                          </button>
+                          <button onClick={() => setClientAction(null)} className="px-4 py-2 bg-zinc-600 hover:bg-zinc-500 text-white rounded-lg">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {clientAction.type === 'change_plan' && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-amber-400">Change Plan</h4>
+                        <div>
+                          <label className="text-xs text-zinc-400">New Plan</label>
+                          <select id="change-plan" className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white">
+                            <option value="free">Free</option>
+                            <option value="standard">Standard</option>
+                            <option value="pro">Pro</option>
+                          </select>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Reason (optional)"
+                          id="change-reason"
+                          className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              const plan = document.getElementById('change-plan').value;
+                              const reason = document.getElementById('change-reason').value;
+                              handleChangePlan(clientAction.userId, plan, reason);
+                              setClientAction(null);
+                            }}
+                            className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg"
+                          >
+                            Change Plan
+                          </button>
+                          <button onClick={() => setClientAction(null)} className="px-4 py-2 bg-zinc-600 hover:bg-zinc-500 text-white rounded-lg">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {clientAction.type === 'reset_password' && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-amber-400">Reset Password</h4>
+                        <input
+                          type="password"
+                          placeholder="New Password (min 8 characters)"
+                          id="new-password"
+                          className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              const password = document.getElementById('new-password').value;
+                              handleResetPassword(clientAction.userId, password);
+                              setClientAction(null);
+                            }}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg"
+                          >
+                            Reset Password
+                          </button>
+                          <button onClick={() => setClientAction(null)} className="px-4 py-2 bg-zinc-600 hover:bg-zinc-500 text-white rounded-lg">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Payment History */}
+                <div className="bg-zinc-700/50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" /> Payment History
+                    <span className="text-xs text-zinc-500">({clientDetails.billing.transaction_count} transactions)</span>
+                    <span className="ml-auto text-green-400 font-medium">₱{clientDetails.billing.total_revenue.toLocaleString()} total</span>
+                  </h3>
+                  {clientDetails.billing.recent_transactions.length === 0 ? (
+                    <div className="text-center py-4 text-zinc-500">No transactions yet</div>
+                  ) : (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {clientDetails.billing.recent_transactions.map((tx) => (
+                        <div key={tx.id} className="flex items-center justify-between py-2 border-b border-zinc-600 last:border-0">
+                          <div className="flex items-center gap-3">
+                            <span className={`w-2 h-2 rounded-full ${
+                              tx.status === 'approved' ? 'bg-green-500' :
+                              tx.status === 'pending' ? 'bg-amber-500' :
+                              'bg-red-500'
+                            }`} />
+                            <div>
+                              <div className="text-sm text-white capitalize">{tx.type.replace(/_/g, ' ')}</div>
+                              <div className="text-xs text-zinc-500">{new Date(tx.created_at).toLocaleString()}</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-white font-medium">₱{tx.amount.toLocaleString()}</div>
+                            <div className={`text-xs capitalize ${
+                              tx.status === 'approved' ? 'text-green-400' :
+                              tx.status === 'pending' ? 'text-amber-400' :
+                              'text-red-400'
+                            }`}>
+                              {tx.status}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Galleries */}
+                <div className="bg-zinc-700/50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
+                    <FolderOpen className="w-4 h-4" /> Galleries
+                    <span className="text-xs text-zinc-500">
+                      ({clientDetails.galleries.active} active / {clientDetails.galleries.total} total • {clientDetails.galleries.total_photos} photos)
+                    </span>
+                  </h3>
+                  {clientDetails.galleries.recent.length === 0 ? (
+                    <div className="text-center py-4 text-zinc-500">No galleries yet</div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {clientDetails.galleries.recent.map((gallery) => (
+                        <div key={gallery.id} className="flex items-center gap-3 p-2 bg-zinc-600/30 rounded-lg">
+                          {gallery.cover_photo_url ? (
+                            <img 
+                              src={getFileUrl(gallery.cover_photo_url)} 
+                              alt="" 
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-zinc-600 rounded flex items-center justify-center">
+                              <Image className="w-5 h-5 text-zinc-400" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm text-white truncate">{gallery.title}</div>
+                            <div className="text-xs text-zinc-500">{gallery.photo_count} photos</div>
+                          </div>
+                          <a
+                            href={`/gallery/${gallery.share_link}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 hover:bg-zinc-600 rounded"
+                          >
+                            <ExternalLink className="w-4 h-4 text-zinc-400" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Account Info */}
+                <div className="bg-zinc-700/50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
+                    <Activity className="w-4 h-4" /> Account Info
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="text-xs text-zinc-500">Member Since</div>
+                      <div className="text-white">{new Date(clientDetails.profile.created_at).toLocaleDateString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-zinc-500">Last Login</div>
+                      <div className="text-white">{clientDetails.profile.last_login ? new Date(clientDetails.profile.last_login).toLocaleDateString() : 'Never'}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-zinc-500">Account Status</div>
+                      <div className={clientDetails.profile.status === 'active' ? 'text-green-400' : 'text-red-400'}>
+                        {clientDetails.profile.status}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-zinc-500">Client ID</div>
+                      <div className="text-zinc-400 font-mono text-xs">{clientDetails.profile.id.slice(0, 8)}...</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Features Tab */}
         {activeTab === 'features' && (
           <FeatureTogglePage />
