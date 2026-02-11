@@ -2609,6 +2609,487 @@ async def get_activity_logs(limit: int = 50, admin: dict = Depends(get_admin_use
     logs = await db.activity_logs.find({}, {"_id": 0}).sort("timestamp", -1).limit(limit).to_list(None)
     return logs
 
+# ============================================
+# Client Management Endpoints (Comprehensive)
+# ============================================
+
+@api_router.get("/admin/clients")
+async def get_all_clients(
+    search: Optional[str] = None,
+    plan: Optional[str] = None,
+    status: Optional[str] = None,
+    has_pending: Optional[bool] = None,
+    override_mode: Optional[str] = None,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
+    limit: int = 100,
+    admin: dict = Depends(get_admin_user)
+):
+    """Get all clients with comprehensive data, filters, and sorting"""
+    
+    # Build query
+    query = {}
+    
+    if search:
+        search_regex = {"$regex": search, "$options": "i"}
+        query["$or"] = [
+            {"name": search_regex},
+            {"email": search_regex},
+            {"business_name": search_regex}
+        ]
+    
+    if plan:
+        query["plan"] = plan
+    
+    if status:
+        query["status"] = status
+    
+    if has_pending:
+        query["payment_status"] = PAYMENT_PENDING
+    
+    if override_mode:
+        if override_mode == "none":
+            query["override_mode"] = None
+        else:
+            query["override_mode"] = override_mode
+    
+    # Determine sort direction
+    sort_direction = -1 if sort_order == "desc" else 1
+    
+    # Aggregation pipeline for comprehensive data
+    pipeline = [
+        {"$match": query},
+        {"$lookup": {
+            "from": "galleries",
+            "localField": "id",
+            "foreignField": "photographer_id",
+            "as": "user_galleries"
+        }},
+        {"$lookup": {
+            "from": "transactions",
+            "localField": "id",
+            "foreignField": "user_id",
+            "as": "user_transactions"
+        }},
+        {"$addFields": {
+            "active_galleries": {"$size": "$user_galleries"},
+            "total_galleries": "$galleries_created_total",
+            "transaction_count": {"$size": "$user_transactions"},
+            "total_revenue": {
+                "$sum": {
+                    "$map": {
+                        "input": {
+                            "$filter": {
+                                "input": "$user_transactions",
+                                "as": "tx",
+                                "cond": {"$eq": ["$$tx.status", "approved"]}
+                            }
+                        },
+                        "as": "approved_tx",
+                        "in": "$$approved_tx.amount"
+                    }
+                }
+            },
+            "pending_transactions": {
+                "$size": {
+                    "$filter": {
+                        "input": "$user_transactions",
+                        "as": "tx",
+                        "cond": {"$eq": ["$$tx.status", "pending"]}
+                    }
+                }
+            }
+        }},
+        {"$project": {
+            "_id": 0,
+            "password": 0,
+            "user_galleries": 0,
+            "user_transactions": 0,
+            "google_session_token": 0
+        }},
+        {"$sort": {sort_by: sort_direction}},
+        {"$limit": limit}
+    ]
+    
+    clients = await db.users.aggregate(pipeline).to_list(None)
+    
+    # Format response
+    result = []
+    for client in clients:
+        # Determine effective status
+        effective_status = client.get("status", "active")
+        if client.get("payment_status") == PAYMENT_PENDING:
+            effective_status = "pending_payment"
+        elif client.get("override_expires"):
+            try:
+                expires = datetime.fromisoformat(client["override_expires"].replace("Z", "+00:00"))
+                if expires < datetime.now(timezone.utc):
+                    effective_status = "override_expired"
+            except:
+                pass
+        
+        # Determine effective plan (considering override)
+        effective_plan = client.get("plan", PLAN_FREE)
+        if client.get("override_mode"):
+            override_plans = {
+                "founders_circle": "pro",
+                "early_partner_beta": "pro",
+                "comped_pro": "pro",
+                "comped_standard": "standard",
+                "enterprise_access": "pro"
+            }
+            effective_plan = override_plans.get(client.get("override_mode"), effective_plan)
+        
+        result.append({
+            "id": client["id"],
+            "email": client["email"],
+            "name": client.get("name", ""),
+            "business_name": client.get("business_name", ""),
+            "plan": client.get("plan", PLAN_FREE),
+            "effective_plan": effective_plan,
+            "override_mode": client.get("override_mode"),
+            "override_expires": client.get("override_expires"),
+            "status": client.get("status", "active"),
+            "effective_status": effective_status,
+            "payment_status": client.get("payment_status", PAYMENT_NONE),
+            "event_credits": client.get("event_credits", 0),
+            "extra_credits": client.get("extra_credits", 0),
+            "total_credits": client.get("event_credits", 0) + client.get("extra_credits", 0),
+            "storage_quota": client.get("storage_quota", DEFAULT_STORAGE_QUOTA),
+            "storage_used": client.get("storage_used", 0),
+            "storage_percent": round((client.get("storage_used", 0) / max(client.get("storage_quota", DEFAULT_STORAGE_QUOTA), 1)) * 100, 1),
+            "active_galleries": client.get("active_galleries", 0),
+            "total_galleries": client.get("total_galleries", 0),
+            "transaction_count": client.get("transaction_count", 0),
+            "total_revenue": client.get("total_revenue", 0),
+            "pending_transactions": client.get("pending_transactions", 0),
+            "billing_cycle_start": client.get("billing_cycle_start"),
+            "subscription_expires": client.get("subscription_expires"),
+            "created_at": client["created_at"],
+            "last_login": client.get("last_login"),
+            "requested_plan": client.get("requested_plan"),
+            "requested_extra_credits": client.get("requested_extra_credits")
+        })
+    
+    return result
+
+@api_router.get("/admin/clients/{user_id}")
+async def get_client_details(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Get comprehensive details for a specific client"""
+    
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0, "google_session_token": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    # Get galleries summary
+    galleries = await db.galleries.find(
+        {"photographer_id": user_id},
+        {"_id": 0, "id": 1, "title": 1, "share_link": 1, "created_at": 1, "theme": 1, "cover_photo_url": 1}
+    ).sort("created_at", -1).to_list(None)
+    
+    # Get photo count per gallery
+    gallery_summaries = []
+    total_photos = 0
+    for g in galleries:
+        photo_count = await db.photos.count_documents({"gallery_id": g["id"]})
+        total_photos += photo_count
+        gallery_summaries.append({
+            **g,
+            "photo_count": photo_count
+        })
+    
+    # Get transactions
+    transactions = await db.transactions.find(
+        {"user_id": user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(None)
+    
+    # Calculate total revenue
+    total_revenue = sum(tx.get("amount", 0) for tx in transactions if tx.get("status") == "approved")
+    
+    # Determine effective plan
+    effective_plan = user.get("plan", PLAN_FREE)
+    if user.get("override_mode"):
+        override_plans = {
+            "founders_circle": "pro",
+            "early_partner_beta": "pro",
+            "comped_pro": "pro",
+            "comped_standard": "standard",
+            "enterprise_access": "pro"
+        }
+        effective_plan = override_plans.get(user.get("override_mode"), effective_plan)
+    
+    return {
+        "profile": {
+            "id": user["id"],
+            "email": user["email"],
+            "name": user.get("name", ""),
+            "business_name": user.get("business_name", ""),
+            "created_at": user["created_at"],
+            "last_login": user.get("last_login"),
+            "status": user.get("status", "active")
+        },
+        "subscription": {
+            "plan": user.get("plan", PLAN_FREE),
+            "effective_plan": effective_plan,
+            "override_mode": user.get("override_mode"),
+            "override_expires": user.get("override_expires"),
+            "override_reason": user.get("override_reason"),
+            "billing_cycle_start": user.get("billing_cycle_start"),
+            "subscription_expires": user.get("subscription_expires"),
+            "event_credits": user.get("event_credits", 0),
+            "extra_credits": user.get("extra_credits", 0),
+            "extra_credits_purchased_at": user.get("extra_credits_purchased_at"),
+            "extra_credits_expires_at": user.get("extra_credits_expires_at"),
+            "payment_status": user.get("payment_status", PAYMENT_NONE),
+            "requested_plan": user.get("requested_plan"),
+            "requested_extra_credits": user.get("requested_extra_credits")
+        },
+        "storage": {
+            "quota": user.get("storage_quota", DEFAULT_STORAGE_QUOTA),
+            "used": user.get("storage_used", 0),
+            "percent": round((user.get("storage_used", 0) / max(user.get("storage_quota", DEFAULT_STORAGE_QUOTA), 1)) * 100, 1)
+        },
+        "galleries": {
+            "active": len(galleries),
+            "total": user.get("galleries_created_total", 0),
+            "max_allowed": user.get("max_galleries", DEFAULT_MAX_GALLERIES),
+            "total_photos": total_photos,
+            "recent": gallery_summaries[:5]  # Last 5 galleries
+        },
+        "billing": {
+            "total_revenue": total_revenue,
+            "transaction_count": len(transactions),
+            "pending_count": sum(1 for tx in transactions if tx.get("status") == "pending"),
+            "recent_transactions": transactions[:10]  # Last 10 transactions
+        },
+        "feature_toggles": user.get("feature_toggles", {})
+    }
+
+@api_router.post("/admin/clients/{user_id}/add-credits")
+async def add_client_credits(user_id: str, data: dict, admin: dict = Depends(get_admin_user)):
+    """Add bonus credits to a client account"""
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    credits_to_add = data.get("credits", 1)
+    credit_type = data.get("type", "event")  # "event" or "extra"
+    reason = data.get("reason", "Admin bonus")
+    
+    if credits_to_add < 1 or credits_to_add > 100:
+        raise HTTPException(status_code=400, detail="Credits must be between 1 and 100")
+    
+    update_field = "event_credits" if credit_type == "event" else "extra_credits"
+    current_credits = user.get(update_field, 0)
+    
+    update_data = {
+        update_field: current_credits + credits_to_add
+    }
+    
+    # If adding extra credits, set expiration
+    if credit_type == "extra":
+        update_data["extra_credits_purchased_at"] = datetime.now(timezone.utc).isoformat()
+        update_data["extra_credits_expires_at"] = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
+    
+    await db.users.update_one({"id": user_id}, {"$set": update_data})
+    
+    # Create transaction record
+    await create_transaction(
+        user_id=user_id,
+        tx_type="admin_bonus",
+        amount=0,
+        status="approved",
+        extra_credits=credits_to_add if credit_type == "extra" else None,
+        admin_notes=f"Admin added {credits_to_add} {credit_type} credit(s): {reason}",
+        resolved_at=datetime.now(timezone.utc).isoformat()
+    )
+    
+    # Log activity
+    await db.activity_logs.insert_one({
+        "action": "add_credits",
+        "admin": admin.get("username", "admin"),
+        "target_user": user_id,
+        "details": f"Added {credits_to_add} {credit_type} credit(s) to {user.get('email')}: {reason}",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "message": f"Added {credits_to_add} {credit_type} credit(s)",
+        "new_total": current_credits + credits_to_add
+    }
+
+@api_router.post("/admin/clients/{user_id}/extend-subscription")
+async def extend_client_subscription(user_id: str, data: dict, admin: dict = Depends(get_admin_user)):
+    """Extend a client's subscription"""
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    months = data.get("months", 1)
+    reason = data.get("reason", "Admin extension")
+    
+    if months < 1 or months > 24:
+        raise HTTPException(status_code=400, detail="Extension must be between 1 and 24 months")
+    
+    # Get current expiration or use now
+    current_expires = user.get("subscription_expires")
+    if current_expires:
+        try:
+            base_date = datetime.fromisoformat(current_expires.replace("Z", "+00:00"))
+            if base_date < datetime.now(timezone.utc):
+                base_date = datetime.now(timezone.utc)
+        except:
+            base_date = datetime.now(timezone.utc)
+    else:
+        base_date = datetime.now(timezone.utc)
+    
+    new_expires = (base_date + timedelta(days=30 * months)).isoformat()
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"subscription_expires": new_expires}}
+    )
+    
+    # Log activity
+    await db.activity_logs.insert_one({
+        "action": "extend_subscription",
+        "admin": admin.get("username", "admin"),
+        "target_user": user_id,
+        "details": f"Extended subscription by {months} month(s) for {user.get('email')}: {reason}",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "message": f"Subscription extended by {months} month(s)",
+        "new_expiration": new_expires
+    }
+
+@api_router.post("/admin/clients/{user_id}/change-plan")
+async def change_client_plan(user_id: str, data: dict, admin: dict = Depends(get_admin_user)):
+    """Change a client's subscription plan"""
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    new_plan = data.get("plan")
+    reason = data.get("reason", "Admin change")
+    
+    if new_plan not in [PLAN_FREE, PLAN_STANDARD, PLAN_PRO]:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    
+    old_plan = user.get("plan", PLAN_FREE)
+    
+    update_data = {
+        "plan": new_plan,
+        "event_credits": PLAN_CREDITS.get(new_plan, 0),
+        "billing_cycle_start": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Set subscription expiration for paid plans
+    if new_plan != PLAN_FREE:
+        update_data["subscription_expires"] = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+    
+    await db.users.update_one({"id": user_id}, {"$set": update_data})
+    
+    # Log activity
+    await db.activity_logs.insert_one({
+        "action": "change_plan",
+        "admin": admin.get("username", "admin"),
+        "target_user": user_id,
+        "details": f"Changed plan from {old_plan} to {new_plan} for {user.get('email')}: {reason}",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "message": f"Plan changed from {old_plan} to {new_plan}",
+        "new_credits": PLAN_CREDITS.get(new_plan, 0)
+    }
+
+@api_router.post("/admin/clients/{user_id}/reset-password")
+async def reset_client_password(user_id: str, data: dict, admin: dict = Depends(get_admin_user)):
+    """Reset a client's password"""
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    new_password = data.get("new_password")
+    if not new_password or len(new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"password": hashed_password.decode('utf-8')}}
+    )
+    
+    # Log activity
+    await db.activity_logs.insert_one({
+        "action": "reset_password",
+        "admin": admin.get("username", "admin"),
+        "target_user": user_id,
+        "details": f"Reset password for {user.get('email')}",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "Password reset successfully"}
+
+@api_router.get("/admin/clients/stats")
+async def get_client_stats(admin: dict = Depends(get_admin_user)):
+    """Get overall client statistics"""
+    
+    total_clients = await db.users.count_documents({})
+    active_clients = await db.users.count_documents({"status": "active"})
+    suspended_clients = await db.users.count_documents({"status": "suspended"})
+    
+    # Plan distribution
+    free_count = await db.users.count_documents({"plan": PLAN_FREE})
+    standard_count = await db.users.count_documents({"plan": PLAN_STANDARD})
+    pro_count = await db.users.count_documents({"plan": PLAN_PRO})
+    
+    # Override counts
+    override_counts = {}
+    for mode in ["founders_circle", "early_partner_beta", "comped_pro", "comped_standard", "enterprise_access"]:
+        count = await db.users.count_documents({"override_mode": mode})
+        if count > 0:
+            override_counts[mode] = count
+    
+    # Pending payments
+    pending_payments = await db.users.count_documents({"payment_status": PAYMENT_PENDING})
+    
+    # Revenue stats
+    pipeline = [
+        {"$match": {"status": "approved"}},
+        {"$group": {
+            "_id": None,
+            "total_revenue": {"$sum": "$amount"},
+            "total_transactions": {"$sum": 1}
+        }}
+    ]
+    revenue_result = await db.transactions.aggregate(pipeline).to_list(1)
+    total_revenue = revenue_result[0]["total_revenue"] if revenue_result else 0
+    total_transactions = revenue_result[0]["total_transactions"] if revenue_result else 0
+    
+    return {
+        "total_clients": total_clients,
+        "active_clients": active_clients,
+        "suspended_clients": suspended_clients,
+        "plan_distribution": {
+            "free": free_count,
+            "standard": standard_count,
+            "pro": pro_count
+        },
+        "override_counts": override_counts,
+        "pending_payments": pending_payments,
+        "total_revenue": total_revenue,
+        "total_transactions": total_transactions
+    }
+
 @api_router.get("/admin/settings")
 async def get_admin_settings(admin: dict = Depends(get_admin_user)):
     """Get admin settings"""
