@@ -11,6 +11,7 @@ import PremiumLightbox from '@/components/PremiumLightbox';
 import OptimizedImage from '@/components/OptimizedImage';
 import ProgressiveImage from '@/components/ProgressiveImage';
 import VirtualizedGalleryGrid from '@/components/VirtualizedGalleryGrid';
+import LazyMasonryGrid from '@/components/LazyMasonryGrid';
 import SocialSharePanel from '@/components/SocialSharePanel';
 import VideoSection from '@/components/VideoSection';
 import FotoshareSection from '@/components/FotoshareSection';
