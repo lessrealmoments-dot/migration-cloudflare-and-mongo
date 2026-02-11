@@ -525,6 +525,15 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
 
+# Helper function to convert datetime to ISO string for Pydantic models
+def datetime_to_str(value):
+    """Convert datetime to ISO string, return as-is if already string or None"""
+    if value is None:
+        return None
+    if hasattr(value, 'isoformat'):
+        return value.isoformat()
+    return str(value)
+
 # Email configuration
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
