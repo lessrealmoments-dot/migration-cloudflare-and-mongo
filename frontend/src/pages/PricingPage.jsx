@@ -143,9 +143,11 @@ const PricingPage = () => {
   };
 
   // Dynamic plan features from admin settings
+  const freeFeatures = pricing.plan_features?.free || {};
   const standardFeatures = pricing.plan_features?.standard || {};
   const proFeatures = pricing.plan_features?.pro || {};
 
+  // Build plans dynamically from API data
   const plans = [
     {
       name: 'Free',
@@ -155,12 +157,12 @@ const PricingPage = () => {
       color: 'zinc',
       features: [
         { text: '1 Demo Gallery', included: true },
-        { text: '500MB Storage', included: true },
-        { text: 'Gallery expires in 6 hours', included: true, warning: true },
+        { text: `${freeFeatures.storage_per_gallery_gb || 1}GB Storage per Gallery`, included: true },
+        { text: `Gallery expires in ${freeFeatures.gallery_retention || '6 hours'}`, included: true, warning: true },
         { text: 'All features during demo', included: true },
-        { text: 'QR Code Sharing', included: false },
-        { text: 'Display Mode', included: false },
-        { text: 'Contributor Links', included: false },
+        { text: 'QR Code Sharing', included: false, afterDemo: true },
+        { text: 'Display Mode', included: false, afterDemo: true },
+        { text: 'Contributor Links', included: false, afterDemo: true },
       ],
       cta: 'Start Free',
       popular: false
@@ -172,13 +174,13 @@ const PricingPage = () => {
       icon: Zap,
       color: 'blue',
       features: [
-        { text: '2 Event Credits/month', included: true },
-        { text: `${standardFeatures.storage_limit_gb || 10}GB Storage`, included: true },
+        { text: `${standardFeatures.tokens_per_month || 2} Subscription Tokens/month`, included: true },
+        { text: `${standardFeatures.storage_per_gallery_gb || 10}GB Storage per Gallery`, included: true },
+        { text: `${standardFeatures.gallery_retention || '3 months'} Gallery Retention`, included: true },
         { text: 'QR Code Sharing', included: standardFeatures.qr_code !== false },
         { text: 'Online Gallery Access', included: true },
         { text: 'Guest Uploads', included: true },
-        { text: `${standardFeatures.gallery_retention || '6 months'} gallery retention`, included: true },
-        { text: 'Display Mode', included: standardFeatures.display_mode === true },
+        { text: 'Display Mode (Slideshow + Collage)', included: standardFeatures.display_mode === true },
         { text: 'Contributor Links', included: standardFeatures.collaboration_link === true },
       ],
       cta: 'Get Started',
@@ -191,13 +193,13 @@ const PricingPage = () => {
       icon: Crown,
       color: 'purple',
       features: [
-        { text: '2 Event Credits/month', included: true },
-        { text: `${proFeatures.storage_limit_gb || 10}GB Storage`, included: true },
+        { text: `${proFeatures.tokens_per_month || 2} Subscription Tokens/month`, included: true },
+        { text: `${proFeatures.storage_per_gallery_gb || 15}GB Storage per Gallery`, included: true },
+        { text: `${proFeatures.gallery_retention || '6 months'} Gallery Retention`, included: true },
         { text: 'All Standard Features', included: true },
         { text: 'Display Mode (Slideshow + Collage)', included: proFeatures.display_mode !== false },
         { text: 'Contributor Upload Links', included: proFeatures.collaboration_link !== false },
         { text: 'Supplier-specific Sections', included: true },
-        { text: `${proFeatures.gallery_retention || '6 months'} gallery retention`, included: true },
         { text: 'Priority Support', included: true },
       ],
       cta: 'Go Pro',
@@ -205,26 +207,35 @@ const PricingPage = () => {
     }
   ];
 
+  // FAQs updated to match current system
   const faqs = [
     {
-      q: 'What is an Event Credit?',
-      a: 'One Event Credit allows you to create one Event Gallery. Each gallery represents a single event (wedding, birthday, corporate event, etc.). Credits reset monthly and do not roll over.'
+      q: 'What is a Subscription Token?',
+      a: `Each Subscription Token allows you to create one Event Gallery. Standard and Pro plans include ${standardFeatures.tokens_per_month || 2} tokens per month. Unused subscription tokens do NOT roll over - they reset each billing cycle.`
     },
     {
-      q: 'Can I purchase additional credits?',
-      a: `Yes! You can purchase extra Event Credits at ${formatPrice(pricing.extra_credit)} per credit. Extra credits are valid for the current billing cycle only.`
+      q: 'What are Add-on Tokens?',
+      a: `Add-on Tokens can be purchased separately at ${formatPrice(pricing.addon_token_price || pricing.extra_credit || 500)} each. Unlike subscription tokens, add-on tokens are valid for 12 months from purchase and are used first when creating galleries.`
+    },
+    {
+      q: 'What is the storage limit?',
+      a: `Storage is measured per gallery, not total account storage. Standard plans get ${standardFeatures.storage_per_gallery_gb || 10}GB per gallery, while Pro plans get ${proFeatures.storage_per_gallery_gb || 15}GB per gallery.`
     },
     {
       q: 'How long are galleries stored?',
-      a: `Your albums are safely stored for at least ${proFeatures.gallery_retention || '6 months'} from creation date. After this period, galleries may be automatically archived.`
+      a: `Gallery retention depends on your plan. Standard galleries are stored for ${standardFeatures.gallery_retention || '3 months'}, and Pro galleries for ${proFeatures.gallery_retention || '6 months'}. After your subscription expires, you have a 2-month grace period to upload, and galleries remain viewable for 6 months.`
     },
     {
-      q: 'What happens if I downgrade?',
-      a: 'Your existing galleries remain accessible. You just won\'t be able to use Pro features for new galleries. No content is deleted when you downgrade.'
+      q: 'What happens if my subscription expires?',
+      a: 'Your existing galleries remain accessible. Subscription tokens are lost, but any unused add-on tokens are preserved for up to 12 months. You can still upload for 2 months after expiration, and galleries stay viewable for 6 months.'
     },
     {
-      q: 'How do I pay?',
-      a: 'We accept GCash and PayMaya. Simply upload a screenshot of your payment confirmation, and our team will verify it within 24 hours.'
+      q: 'What is Display Mode?',
+      a: 'Display Mode lets you showcase your galleries as a slideshow or live collage on TVs and projectors at events. This feature is available on Pro plans only.'
+    },
+    {
+      q: 'What are Contributor Links?',
+      a: 'Contributor Links allow other suppliers (videographers, second shooters, HMUA, etc.) to upload directly to your gallery with their company name credited. Available on Pro plans only.'
     }
   ];
 
