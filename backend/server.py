@@ -5750,7 +5750,7 @@ async def get_contributor_upload_info(contributor_link: str):
     # Find gallery with this contributor link in any section
     gallery = await db.galleries.find_one(
         {"sections.contributor_link": contributor_link},
-        {"_id": 0, "id": 1, "title": 1, "sections": 1, "photographer_id": 1}
+        {"_id": 0}
     )
     if not gallery:
         raise HTTPException(status_code=404, detail="Invalid or expired contributor link")
@@ -5759,6 +5759,11 @@ async def get_contributor_upload_info(contributor_link: str):
     section = next((s for s in gallery.get("sections", []) if s.get("contributor_link") == contributor_link), None)
     if not section or not section.get("contributor_enabled", False):
         raise HTTPException(status_code=404, detail="Contributor uploads are not enabled for this section")
+    
+    # Check 60-day collaborator access window
+    access_windows = await check_gallery_access_windows(gallery)
+    uploads_allowed = access_windows.get("collaborator_access_allowed", True)
+    days_until_expires = access_windows.get("days_until_collaborator_expires")
     
     # Get photographer info for display
     photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0, "business_name": 1, "name": 1})
@@ -5804,20 +5809,24 @@ async def get_contributor_upload_info(contributor_link: str):
         "gallery_title": gallery["title"],
         "section_id": section["id"],
         "section_name": section["name"],
-        "section_type": section.get("type", "photo"),  # Return section type
+        "section_type": section.get("type", "photo"),
         "photographer_name": photographer.get("business_name") or photographer.get("name", "Photographer"),
         "existing_contributor_name": section.get("contributor_name"),
         "existing_contributor_role": section.get("contributor_role"),
-        "existing_videos": existing_videos,  # For video sections
-        "existing_fotoshare_videos": existing_fotoshare_videos,  # For fotoshare sections
-        "existing_gdrive_photos": existing_gdrive_photos,  # For gdrive sections
-        "existing_pcloud_photos": existing_pcloud_photos,  # For pcloud sections
-        "fotoshare_url": section.get("fotoshare_url"),  # Existing fotoshare URL if any
-        "gdrive_folder_id": section.get("gdrive_folder_id"),  # Existing gdrive folder if any
+        "existing_videos": existing_videos,
+        "existing_fotoshare_videos": existing_fotoshare_videos,
+        "existing_gdrive_photos": existing_gdrive_photos,
+        "existing_pcloud_photos": existing_pcloud_photos,
+        "fotoshare_url": section.get("fotoshare_url"),
+        "gdrive_folder_id": section.get("gdrive_folder_id"),
         "gdrive_folder_name": section.get("gdrive_folder_name"),
-        "pcloud_code": section.get("pcloud_code"),  # Existing pcloud code if any
+        "pcloud_code": section.get("pcloud_code"),
         "pcloud_folder_name": section.get("pcloud_folder_name"),
-        "pcloud_upload_link": section.get("pcloud_upload_link")  # pCloud upload request link
+        "pcloud_upload_link": section.get("pcloud_upload_link"),
+        # Contributor access window info
+        "uploads_allowed": uploads_allowed,
+        "days_until_expires": days_until_expires,
+        "upload_window_expired": not uploads_allowed
     }
 
 @api_router.post("/contributor/{contributor_link}/set-name")
