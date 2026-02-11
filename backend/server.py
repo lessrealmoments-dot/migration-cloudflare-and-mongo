@@ -5150,7 +5150,7 @@ async def get_public_pcloud_photos(share_link: str, section_id: Optional[str] = 
         code = photo['pcloud_code']
         fileid = photo['fileid']
         photo["proxy_url"] = f"/pcloud/serve/{code}/{fileid}"
-        photo["thumbnail_url"] = f"/pcloud/thumb/{code}/{fileid}?size=400x400"
+        photo["thumbnail_url"] = f"/pcloud/thumb/{code}/{fileid}?size=800x800"
     
     return photos
 
