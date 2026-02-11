@@ -46,16 +46,16 @@ const FEATURE_INFO = {
   }
 };
 
-// Storage options in GB
+// Storage options in GB (per gallery)
 const STORAGE_OPTIONS = [
   { value: -1, label: 'Unlimited' },
+  { value: 1, label: '1 GB' },
+  { value: 5, label: '5 GB' },
   { value: 10, label: '10 GB' },
+  { value: 15, label: '15 GB' },
   { value: 20, label: '20 GB' },
   { value: 30, label: '30 GB' },
-  { value: 50, label: '50 GB' },
-  { value: 100, label: '100 GB' },
-  { value: 200, label: '200 GB' },
-  { value: 500, label: '500 GB' }
+  { value: 50, label: '50 GB' }
 ];
 
 // Gallery expiration options in days
