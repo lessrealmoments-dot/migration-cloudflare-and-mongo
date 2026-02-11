@@ -510,16 +510,26 @@ const VideographerUpload = () => {
         {/* Step 4: Video Upload */}
         {step === 'upload' && (
           <div className="space-y-8">
-            {/* Contributor Info Banner */}
-            <div className="bg-white rounded-xl border border-zinc-200 p-4">
-              <div className="flex items-center justify-between">
+            {/* Edit Profile Banner */}
+            <div className="bg-white rounded-xl border border-zinc-200 p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-zinc-600" />
+                </div>
                 <div>
-                  <p className="text-sm text-zinc-500">Contributing as</p>
                   <p className="font-medium text-zinc-800">{companyName}</p>
                   <p className="text-sm text-zinc-500">{getFinalRole()}</p>
                 </div>
-                <Film className="w-10 h-10 text-zinc-300" />
               </div>
+              <button
+                onClick={() => setStep('company')}
+                className="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-800 hover:bg-zinc-100 rounded-lg transition-colors flex items-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Edit
+              </button>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
