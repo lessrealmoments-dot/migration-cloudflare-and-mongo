@@ -684,6 +684,7 @@ async def scrape_gdrive_folder_html(folder_id: str) -> dict:
     """
     Alternative method: Scrape Google Drive folder HTML page for public folders.
     This works when the folder is publicly shared but API access is restricted.
+    Updated to handle Google's 2024+ page structure.
     """
     result = {
         'success': False,
@@ -695,53 +696,86 @@ async def scrape_gdrive_folder_html(folder_id: str) -> dict:
     try:
         url = f"https://drive.google.com/drive/folders/{folder_id}"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
         }
         
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers) as response:
+            async with session.get(url, headers=headers, allow_redirects=True) as response:
                 if response.status == 200:
                     html = await response.text()
                     
-                    # Extract file IDs from the page
-                    # Google Drive uses a specific pattern for file IDs in the HTML
-                    file_pattern = r'\["([a-zA-Z0-9_-]{25,})"[^\]]*"([^"]+\.(jpg|jpeg|png|gif|webp|heic))"'
-                    matches = re.findall(file_pattern, html, re.IGNORECASE)
-                    
-                    seen_ids = set()
-                    for match in matches:
-                        file_id = match[0]
-                        file_name = match[1]
-                        
-                        if file_id in seen_ids:
-                            continue
-                        seen_ids.add(file_id)
-                        
-                        photo_data = {
-                            'file_id': file_id,
-                            'name': file_name,
-                            'mime_type': 'image/jpeg',
-                            'size': 0,
-                            'thumbnail_url': f"https://drive.google.com/thumbnail?id={file_id}&sz=w800",
-                            'view_url': f"https://drive.google.com/uc?export=view&id={file_id}",
-                            'width': None,
-                            'height': None,
-                            'created_time': None
-                        }
-                        result['photos'].append(photo_data)
-                    
-                    # Try to extract folder name
+                    # Extract folder name from title
                     title_match = re.search(r'<title>([^<]+)</title>', html)
                     if title_match:
                         title = title_match.group(1).replace(' - Google Drive', '').strip()
                         if title:
                             result['folder_name'] = title
                     
+                    # Method 1: Find file IDs using the pattern for Google Drive files
+                    # Google Drive file IDs are typically 33 characters, starting with '1'
+                    file_id_pattern = r'"(1[a-zA-Z0-9_-]{30,35})"'
+                    potential_files = list(set(re.findall(file_id_pattern, html)))
+                    
+                    # Filter out the folder ID itself
+                    potential_files = [f for f in potential_files if f != folder_id]
+                    
+                    logger.info(f"Found {len(potential_files)} potential file IDs in Google Drive folder {folder_id}")
+                    
+                    # Verify each file by checking if thumbnail exists
+                    verified_count = 0
+                    for file_id in potential_files:
+                        # Try to verify this is an image by checking thumbnail
+                        thumb_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w100"
+                        try:
+                            async with session.head(thumb_url, allow_redirects=True, timeout=aiohttp.ClientTimeout(total=5)) as thumb_resp:
+                                if thumb_resp.status == 200:
+                                    verified_count += 1
+                                    photo_data = {
+                                        'file_id': file_id,
+                                        'name': f'Photo_{verified_count}.jpg',  # Google doesn't expose names in HTML
+                                        'mime_type': 'image/jpeg',
+                                        'size': 0,
+                                        'thumbnail_url': f"https://drive.google.com/thumbnail?id={file_id}&sz=w800",
+                                        'view_url': f"https://drive.google.com/uc?export=view&id={file_id}",
+                                        'width': None,
+                                        'height': None,
+                                        'created_time': None
+                                    }
+                                    result['photos'].append(photo_data)
+                        except asyncio.TimeoutError:
+                            continue
+                        except Exception as e:
+                            logger.debug(f"Error verifying file {file_id}: {e}")
+                            continue
+                    
+                    logger.info(f"Verified {len(result['photos'])} images in Google Drive folder {folder_id}")
+                    
                     if result['photos']:
                         result['success'] = True
                         result['photo_count'] = len(result['photos'])
                     else:
-                        result['error'] = "No photos found in folder. Make sure it contains images and is publicly shared."
+                        # If no verified photos, try adding all potential files anyway
+                        # (verification might fail due to rate limiting)
+                        if potential_files:
+                            for i, file_id in enumerate(potential_files):
+                                photo_data = {
+                                    'file_id': file_id,
+                                    'name': f'Photo_{i+1}.jpg',
+                                    'mime_type': 'image/jpeg',
+                                    'size': 0,
+                                    'thumbnail_url': f"https://drive.google.com/thumbnail?id={file_id}&sz=w800",
+                                    'view_url': f"https://drive.google.com/uc?export=view&id={file_id}",
+                                    'width': None,
+                                    'height': None,
+                                    'created_time': None
+                                }
+                                result['photos'].append(photo_data)
+                            result['success'] = True
+                            result['photo_count'] = len(result['photos'])
+                        else:
+                            result['error'] = "No photos found in folder. Make sure it contains images and is publicly shared."
                         
                 elif response.status == 404:
                     result['error'] = "Folder not found"
