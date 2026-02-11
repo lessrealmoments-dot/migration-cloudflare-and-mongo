@@ -34,9 +34,42 @@ const ContributorUpload = () => {
   const [confirmedName, setConfirmedName] = useState('');
   
   // Upload state
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState([]);
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
+  
+  // Smart uploader hook - confirmed name needs to be stable before hook setup
+  const {
+    uploading,
+    progress: uploadProgress,
+    stats: uploadStats,
+    startUpload,
+    cancelUpload,
+    clearProgress,
+  } = useSmartUploader({
+    uploadEndpoint: `${API}/contributor/${contributorLink}/upload`,
+    formDataBuilder: (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('company_name', confirmedName);
+      return formData;
+    },
+    onFileSuccess: (file, data) => {
+      setUploadedPhotos(prev => [...prev, {
+        id: data.id,
+        url: data.url,
+        filename: file.name
+      }]);
+    },
+    onFileError: (file, error, errorMsg) => {
+      toast.error(`${file.name}: ${errorMsg}`);
+    },
+    onAllComplete: (results, completed, failed) => {
+      if (completed > 0) {
+        toast.success(`${completed} photo(s) uploaded successfully!`);
+      }
+      // Clear progress after delay
+      setTimeout(() => clearProgress(), 3000);
+    },
+  });
   
   // Navigate back to coordinator hub
   const goBackToHub = () => {
