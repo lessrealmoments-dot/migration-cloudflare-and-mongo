@@ -1729,10 +1729,10 @@ async def resolve_user_features(user: dict) -> dict:
     if subscription_expired:
         # Monthly credits are lost, but extra credits remain
         subscription_tokens = 0  # Monthly tokens gone
-        addon_tokens = user.get("addon_tokens", 0)
+        addon_tokens = get_addon_tokens(user)
         
         # Check if extra credits have expired (12 months from purchase)
-        addon_tokens_purchased_at = user.get("addon_tokens_purchased_at")
+        addon_tokens_purchased_at = get_addon_tokens_purchased_at(user)
         if addon_tokens_purchased_at and addon_tokens > 0:
             try:
                 purchased_at = datetime.fromisoformat(addon_tokens_purchased_at.replace('Z', '+00:00'))
