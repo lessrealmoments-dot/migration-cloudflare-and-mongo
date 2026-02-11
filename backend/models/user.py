@@ -81,9 +81,9 @@ class PhotographerAdmin(BaseModel):
     status: str = "active"
     created_at: str
     plan: str = PLAN_FREE
-    event_credits: int = 0
-    extra_credits: int = 0
-    extra_credits_purchased_at: Optional[str] = None  # When extra credits were purchased (expire after 12 months)
+    subscription_tokens: int = 0
+    addon_tokens: int = 0
+    addon_tokens_purchased_at: Optional[str] = None  # When extra credits were purchased (expire after 12 months)
     payment_status: str = PAYMENT_NONE
     subscription_expires: Optional[str] = None  # When current subscription period ends
     override_mode: Optional[str] = None

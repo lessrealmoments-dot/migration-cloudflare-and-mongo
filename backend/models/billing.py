@@ -96,8 +96,8 @@ DEFAULT_PLAN_FEATURES = {
 class SubscriptionInfo(BaseModel):
     plan: str = PLAN_FREE
     billing_cycle_start: Optional[str] = None
-    event_credits: int = 0
-    extra_credits: int = 0
+    subscription_tokens: int = 0
+    addon_tokens: int = 0
     payment_status: str = PAYMENT_NONE
     payment_proof_url: Optional[str] = None
     payment_submitted_at: Optional[str] = None
@@ -196,7 +196,7 @@ class Transaction(BaseModel):
     type: str
     amount: int
     plan: Optional[str] = None
-    extra_credits: Optional[int] = None
+    addon_tokens: Optional[int] = None
     status: str
     payment_proof_url: Optional[str] = None
     admin_notes: Optional[str] = None
