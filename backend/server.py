@@ -4173,6 +4173,13 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
     days_until_deletion = calculate_days_until_deletion(auto_delete_date)
     edit_info = get_edit_lock_info(gallery["created_at"])
     
+    # Calculate storage percentage
+    storage_used = gallery.get("storage_used", 0)
+    storage_quota = gallery.get("storage_quota", -1)
+    storage_percent = 0.0
+    if storage_quota > 0:
+        storage_percent = round((storage_used / storage_quota) * 100, 1)
+    
     return Gallery(
         id=gallery["id"],
         photographer_id=gallery["photographer_id"],
@@ -4199,7 +4206,10 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         days_until_deletion=days_until_deletion,
         is_edit_locked=edit_info["is_locked"],
         days_until_edit_lock=edit_info["days_until_lock"],
-        download_locked_until_payment=gallery.get("download_locked_until_payment", False)
+        download_locked_until_payment=gallery.get("download_locked_until_payment", False),
+        storage_used=storage_used,
+        storage_quota=storage_quota,
+        storage_percent=storage_percent
     )
 
 @api_router.put("/galleries/{gallery_id}", response_model=Gallery)
