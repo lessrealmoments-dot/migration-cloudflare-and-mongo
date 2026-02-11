@@ -7723,6 +7723,11 @@ async def download_all_photos(share_link: str, password_data: PasswordVerify):
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
+    # Check if downloads are allowed
+    download_check = await check_download_allowed(gallery)
+    if not download_check["allowed"]:
+        raise HTTPException(status_code=403, detail=download_check["reason"])
+    
     if not gallery.get("download_all_password"):
         raise HTTPException(status_code=403, detail="Download all is not enabled for this gallery")
     
