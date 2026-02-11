@@ -1875,6 +1875,7 @@ const PublicGallery = () => {
               
               return (
                 <div 
+                  id="section-guest-uploads"
                   className="mb-12 mt-16 pt-12 border-t-2"
                   style={{ borderColor: getSubtleTextColor(currentTheme.colors.background, 0.2) }}
                 >
