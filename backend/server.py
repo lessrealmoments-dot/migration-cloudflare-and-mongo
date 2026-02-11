@@ -7484,6 +7484,16 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
         logger.error(f"Error reading guest upload: {e}")
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
     
+    # Check per-gallery storage quota
+    gallery_storage_used = gallery.get("storage_used", 0)
+    gallery_storage_quota = gallery.get("storage_quota", -1)
+    
+    if gallery_storage_quota != -1 and gallery_storage_used + file_size > gallery_storage_quota:
+        raise HTTPException(
+            status_code=403, 
+            detail="This gallery has reached its storage limit. Please contact the photographer."
+        )
+    
     photo_id = str(uuid.uuid4())
     # Sanitize file extension
     original_ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
