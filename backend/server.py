@@ -7825,6 +7825,11 @@ async def download_gallery_chunk(gallery_id: str, chunk_number: int, current_use
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
+    # Check if downloads are allowed
+    download_check = await check_download_allowed(gallery, is_owner=True)
+    if not download_check["allowed"]:
+        raise HTTPException(status_code=403, detail=download_check["reason"])
+    
     # Get all photos
     photos = await db.photos.find({"gallery_id": gallery_id}, {"_id": 0}).to_list(None)
     
