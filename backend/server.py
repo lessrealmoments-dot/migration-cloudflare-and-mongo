@@ -703,7 +703,7 @@ async def scrape_gdrive_folder_html(folder_id: str) -> dict:
                             'name': file_name,
                             'mime_type': 'image/jpeg',
                             'size': 0,
-                            'thumbnail_url': f"https://drive.google.com/thumbnail?id={file_id}&sz=w400",
+                            'thumbnail_url': f"https://drive.google.com/thumbnail?id={file_id}&sz=w800",
                             'view_url': f"https://drive.google.com/uc?export=view&id={file_id}",
                             'width': None,
                             'height': None,
