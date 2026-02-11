@@ -1637,8 +1637,8 @@ const PublicGallery = () => {
                     {useLargeGalleryMode ? (
                       <VirtualizedGalleryGrid
                         photos={unsortedPhotos}
-                        initialCount={24}
-                        batchSize={24}
+                        initialCount={PHOTOS_PER_BATCH}
+                        batchSize={PHOTOS_PER_BATCH}
                         onPhotoClick={(index, photo) => {
                           const globalIndex = photos.findIndex(p => p.id === photo.id);
                           setLightboxIndex(globalIndex >= 0 ? globalIndex : index);
