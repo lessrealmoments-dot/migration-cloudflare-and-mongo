@@ -136,6 +136,7 @@ const ContributorUpload = () => {
     setStep('upload');
   };
 
+  // Smart uploader onDrop - uses adaptive concurrent uploads
   const onDrop = useCallback(async (acceptedFiles) => {
     if (acceptedFiles.length === 0) return;
 
@@ -160,57 +161,10 @@ const ContributorUpload = () => {
 
     if (validFiles.length === 0) return;
 
-    setUploading(true);
-    setUploadProgress(validFiles.map(f => ({ name: f.name, status: 'pending', progress: 0 })));
-
-    // Upload files sequentially
-    for (let i = 0; i < validFiles.length; i++) {
-      const file = validFiles[i];
-      
-      setUploadProgress(prev => prev.map((p, idx) => 
-        idx === i ? { ...p, status: 'uploading', progress: 0 } : p
-      ));
-
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('company_name', confirmedName);
-
-        const response = await axios.post(
-          `${API}/contributor/${contributorLink}/upload`,
-          formData,
-          {
-            headers: { 'Content-Type': 'multipart/form-data' },
-            onUploadProgress: (progressEvent) => {
-              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              setUploadProgress(prev => prev.map((p, idx) => 
-                idx === i ? { ...p, progress } : p
-              ));
-            }
-          }
-        );
-
-        setUploadProgress(prev => prev.map((p, idx) => 
-          idx === i ? { ...p, status: 'success', progress: 100 } : p
-        ));
-
-        setUploadedPhotos(prev => [...prev, {
-          id: response.data.id,
-          url: response.data.url,
-          filename: file.name
-        }]);
-
-      } catch (err) {
-        const errorMsg = err.response?.data?.detail || 'Upload failed';
-        setUploadProgress(prev => prev.map((p, idx) => 
-          idx === i ? { ...p, status: 'error', error: errorMsg } : p
-        ));
-        toast.error(`${file.name}: ${errorMsg}`);
-      }
-    }
-
-    setUploading(false);
-  }, [contributorLink, confirmedName]);
+    // Use smart uploader for adaptive concurrent uploads
+    toast.info(`Starting upload of ${validFiles.length} photos...`, { duration: 2000 });
+    await startUpload(validFiles);
+  }, [startUpload]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
