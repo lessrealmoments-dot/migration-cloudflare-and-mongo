@@ -14,6 +14,11 @@
 | **Subscription Tokens** | `subscription_tokens` | 2 free tokens from monthly subscription (Standard or Pro) | Lost when subscription expires |
 | **Add-on Tokens** | `addon_tokens` | Purchased separately (₱500 each) | 12 months from purchase date |
 
+### Token Usage Priority
+**Add-on tokens are ALWAYS used first** because they expire. Order:
+1. ✅ `addon_tokens` (used first - they expire in 12 months)
+2. ✅ `subscription_tokens` (used second - reset monthly anyway)
+
 ### Old Field Names (Backward Compatible)
 The code reads from both old and new field names for backward compatibility:
 - `event_credits` → now `subscription_tokens`
