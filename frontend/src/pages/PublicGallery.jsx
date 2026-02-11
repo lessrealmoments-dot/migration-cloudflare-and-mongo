@@ -1369,8 +1369,8 @@ const PublicGallery = () => {
                       {useLargeGalleryMode ? (
                         <VirtualizedGalleryGrid
                           photos={sectionPcloudPhotos}
-                          initialCount={24}
-                          batchSize={24}
+                          initialCount={PHOTOS_PER_BATCH}
+                          batchSize={PHOTOS_PER_BATCH}
                           onPhotoClick={(index) => {
                             setPcloudLightboxPhotos(pcloudLightboxPhotos);
                             setPcloudLightboxIndex(index);
