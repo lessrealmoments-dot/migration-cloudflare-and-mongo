@@ -112,17 +112,17 @@ if billing_enabled and plan != PLAN_FREE:
 **Problem:** The `reset_user_credits_if_needed()` function doesn't handle expired subscriptions.
 
 **Your Actual System (Clarified):**
-1. **Monthly tokens (`event_credits`)**: Reset to 0 when subscription expires (unused tokens lost)
-2. **Extra tokens (`extra_credits`)**: Valid for 12 months from purchase date, survive subscription expiry
-3. User can still create galleries with extra tokens even after subscription expires
+1. **Subscription Tokens (`subscription_tokens`)**: Reset to 0 when subscription expires (unused tokens lost)
+2. **Add-on Tokens (`addon_tokens`)**: Valid for 12 months from purchase date, survive subscription expiry
+3. User can still create galleries with addon tokens even after subscription expires
 4. BUT Pro features (display_mode, contributor_links) remain disabled
 
 **Fix Applied:**
 - When subscription expires:
-  - `event_credits` → effectively 0 (monthly tokens lost)
-  - `extra_credits` → preserved until their 12-month expiry
+  - `subscription_tokens` → effectively 0 (monthly tokens lost)
+  - `addon_tokens` → preserved until their 12-month expiry
   - `effective_plan` → "free" (Pro features disabled)
-  - User can still create galleries if they have extra_credits
+  - User can still create galleries if they have addon_tokens
 
 ---
 
