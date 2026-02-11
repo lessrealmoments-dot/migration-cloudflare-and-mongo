@@ -6316,6 +6316,18 @@ async def upload_contributor_photo(
     
     await db.photos.insert_one(photo)
     
+    # Update gallery storage used
+    await db.galleries.update_one(
+        {"id": gallery["id"]},
+        {"$inc": {"storage_used": file_size}}
+    )
+    
+    # Update photographer's total storage for overall tracking
+    await db.users.update_one(
+        {"id": gallery["photographer_id"]},
+        {"$inc": {"storage_used": file_size}}
+    )
+    
     # Update section contributor name if not set
     if not section.get("contributor_name"):
         sections = gallery.get("sections", [])
