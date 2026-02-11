@@ -1734,12 +1734,12 @@ const PublicGallery = () => {
           {getGuestPhotos().length > 0 && (
             (() => {
               const guestPhotos = getGuestPhotos();
-              const sectionId = 'guest';
-              const isExpanded = isSectionExpanded(sectionId);
-              const displayPhotos = isExpanded ? guestPhotos : guestPhotos.slice(0, PREVIEW_COUNT);
-              const hasMore = guestPhotos.length > PREVIEW_COUNT;
               const bgTextColor = getContrastTextColor(currentTheme.colors.background);
               const subtleColor = getSubtleTextColor(currentTheme.colors.background, 0.6);
+              
+              // Helper functions for LazyMasonryGrid
+              const getGuestThumbUrl = (photo) => getImageUrl(photo.thumbnail_medium_url || photo.thumbnail_url || photo.url);
+              const getGuestFullUrl = (photo) => getImageUrl(photo.url);
               
               return (
                 <div 
@@ -1747,49 +1747,31 @@ const PublicGallery = () => {
                   className="mb-12 mt-16 pt-12 border-t-2"
                   style={{ borderColor: getSubtleTextColor(currentTheme.colors.background, 0.2) }}
                 >
-                  <div 
-                    className="flex items-center justify-center gap-4 mb-6 cursor-pointer"
-                    onClick={() => hasMore && toggleSectionExpand(sectionId)}
-                  >
+                  <div className="text-center mb-8">
                     <h4
-                      className="text-2xl md:text-3xl font-normal text-center"
+                      className="text-2xl md:text-3xl font-normal"
                       style={{ fontFamily: currentTheme.fonts.heading, color: bgTextColor }}
                     >
                       Guest Uploads
                       <span className="text-lg ml-2" style={{ color: subtleColor }}>({guestPhotos.length})</span>
                     </h4>
+                    <p className="text-sm mt-2" style={{ color: subtleColor }}>
+                      Photos shared by guests
+                    </p>
                   </div>
-                  <p className="text-center text-sm mb-8" style={{ color: subtleColor }}>
-                    Photos shared by guests
-                  </p>
-                  <div className="masonry-grid">
-                    {displayPhotos.map((photo) => (
-                      <PublicPhotoItem
-                        key={photo.id}
-                        photo={photo}
-                        photoIndex={photos.findIndex(p => p.id === photo.id)}
-                        onView={setLightboxIndex}
-                        onDownload={handleDownload}
-                        isGuest
-                      />
-                    ))}
-                  </div>
-                  {hasMore && (
-                    <button 
-                      onClick={() => toggleSectionExpand(sectionId)}
-                      className="mt-6 mx-auto block px-6 py-3 border-2 rounded-full transition-colors flex items-center gap-2"
-                      style={{ 
-                        borderColor: currentTheme.colors.accent + '50',
-                        color: bgTextColor
-                      }}
-                    >
-                      {isExpanded ? (
-                        <>Collapse <ChevronUp className="w-4 h-4" /></>
-                      ) : (
-                        <>Show all {guestPhotos.length} photos <ChevronDown className="w-4 h-4" /></>
-                      )}
-                    </button>
-                  )}
+                  
+                  <LazyMasonryGrid
+                    photos={guestPhotos}
+                    initialCount={PHOTOS_PER_BATCH}
+                    batchSize={PHOTOS_PER_BATCH}
+                    onPhotoClick={(index, photo) => {
+                      const globalIndex = photos.findIndex(p => p.id === photo.id);
+                      setLightboxIndex(globalIndex >= 0 ? globalIndex : index);
+                    }}
+                    getThumbUrl={getGuestThumbUrl}
+                    getFullUrl={getGuestFullUrl}
+                    themeColors={currentTheme.colors}
+                  />
                 </div>
               );
             })()
