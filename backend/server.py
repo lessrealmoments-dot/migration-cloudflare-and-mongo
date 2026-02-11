@@ -5397,6 +5397,58 @@ async def serve_pcloud_image(code: str, fileid: str):
         logger.error(f"Error proxying pCloud image: {e}")
         raise HTTPException(status_code=502, detail="Failed to fetch image from pCloud")
 
+@api_router.get("/pcloud/download/{code}/{fileid}")
+async def download_pcloud_file(code: str, fileid: str, filename: Optional[str] = None):
+    """
+    Proxy a pCloud file download through our server.
+    This bypasses ISP blocking for downloads (some ISPs block e.pcloud.link).
+    
+    Parameters:
+    - code: pCloud folder code
+    - fileid: File ID within the folder
+    - filename: Optional filename for Content-Disposition header
+    """
+    # Get download URL from pCloud
+    download_info = await get_pcloud_download_url(code, int(fileid))
+    if not download_info:
+        raise HTTPException(status_code=404, detail="Could not get pCloud download URL")
+    
+    import aiohttp
+    try:
+        timeout = aiohttp.ClientTimeout(total=300)  # 5 minute timeout for large files
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(download_info['url']) as response:
+                if response.status != 200:
+                    raise HTTPException(status_code=response.status, detail="Failed to fetch from pCloud")
+                
+                content = await response.read()
+                content_type = response.headers.get('Content-Type', 'application/octet-stream')
+                
+                # Determine filename
+                download_filename = filename
+                if not download_filename:
+                    # Try to get from Content-Disposition header
+                    cd = response.headers.get('Content-Disposition', '')
+                    if 'filename=' in cd:
+                        download_filename = cd.split('filename=')[1].strip('"\'')
+                    else:
+                        # Default filename with extension based on content type
+                        ext = 'jpg' if 'image' in content_type else 'bin'
+                        download_filename = f"pcloud_{fileid}.{ext}"
+                
+                return StreamingResponse(
+                    io.BytesIO(content),
+                    media_type=content_type,
+                    headers={
+                        "Content-Disposition": f'attachment; filename="{download_filename}"',
+                        "Content-Length": str(len(content)),
+                        "Cache-Control": "private, no-cache"
+                    }
+                )
+    except aiohttp.ClientError as e:
+        logger.error(f"Error proxying pCloud download: {e}")
+        raise HTTPException(status_code=502, detail="Failed to download from pCloud")
+
 @api_router.get("/pcloud/thumb/{code}/{fileid}")
 async def serve_pcloud_thumbnail(code: str, fileid: str, size: str = "400x400"):
     """
