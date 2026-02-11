@@ -7912,6 +7912,51 @@ async def get_display_data(share_link: str):
         {"_id": 0, "id": 1, "url": 1, "thumbnail_url": 1, "thumbnail_medium_url": 1, "is_highlight": 1, "uploaded_at": 1}
     ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).to_list(None)
     
+    # Mark regular photos with source type
+    for photo in photos:
+        photo["source"] = "upload"
+    
+    # Get pCloud photos and format them for display
+    pcloud_photos_raw = await db.pcloud_photos.find(
+        {"gallery_id": gallery["id"]},
+        {"_id": 0}
+    ).to_list(None)
+    
+    # Convert pCloud photos to display format
+    for p in pcloud_photos_raw:
+        photos.append({
+            "id": p.get("id"),
+            "url": f"/api/pcloud/serve/{p.get('pcloud_code')}/{p.get('fileid')}",
+            "thumbnail_url": f"/api/pcloud/serve/{p.get('pcloud_code')}/{p.get('fileid')}",
+            "thumbnail_medium_url": f"/api/pcloud/serve/{p.get('pcloud_code')}/{p.get('fileid')}",
+            "is_highlight": False,
+            "uploaded_at": p.get("created_at", ""),
+            "source": "pcloud",
+            "supplier_name": p.get("supplier_name")
+        })
+    
+    # Get Google Drive photos and format them for display
+    gdrive_photos_raw = await db.gdrive_photos.find(
+        {"gallery_id": gallery["id"]},
+        {"_id": 0}
+    ).to_list(None)
+    
+    # Convert Google Drive photos to display format
+    for g in gdrive_photos_raw:
+        # Use the thumbnail URL for display (higher quality available)
+        thumbnail = g.get("thumbnail_url") or f"https://drive.google.com/thumbnail?id={g.get('file_id')}&sz=w800"
+        view_url = g.get("view_url") or f"https://drive.google.com/uc?export=view&id={g.get('file_id')}"
+        photos.append({
+            "id": g.get("id"),
+            "url": view_url,
+            "thumbnail_url": thumbnail,
+            "thumbnail_medium_url": thumbnail,
+            "is_highlight": False,
+            "uploaded_at": g.get("created_at", ""),
+            "source": "gdrive",
+            "file_id": g.get("file_id")
+        })
+    
     # Get photographer info for branding
     photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0, "business_name": 1, "name": 1})
     
@@ -7931,6 +7976,13 @@ async def get_display_data(share_link: str):
         {"_id": 0}
     ).sort([("is_featured", -1), ("order", 1)]).to_list(50)
     
+    # Count photos by source
+    upload_count = len([p for p in photos if p.get("source") == "upload"])
+    pcloud_count = len([p for p in photos if p.get("source") == "pcloud"])
+    gdrive_count = len([p for p in photos if p.get("source") == "gdrive"])
+    
+    logger.info(f"Display data for {share_link}: {upload_count} uploads, {pcloud_count} pCloud, {gdrive_count} GDrive photos")
+    
     return {
         "gallery_id": gallery["id"],
         "title": gallery.get("title", ""),
@@ -7943,9 +7995,14 @@ async def get_display_data(share_link: str):
         "collage_preset": collage_preset,
         "photos": photos,
         "photo_count": len(photos),
-        "videos": videos,  # NEW: Include videos
-        "sections": gallery.get("sections", []),  # NEW: Include sections with types
-        "last_updated": max([p.get("uploaded_at", "") for p in photos]) if photos else ""
+        "photo_sources": {
+            "upload": upload_count,
+            "pcloud": pcloud_count,
+            "gdrive": gdrive_count
+        },
+        "videos": videos,
+        "sections": gallery.get("sections", []),
+        "last_updated": max([p.get("uploaded_at", "") for p in photos if p.get("uploaded_at")]) if photos else ""
     }
 
 class DuplicateCheckRequest(BaseModel):
