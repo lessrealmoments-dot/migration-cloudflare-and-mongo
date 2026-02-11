@@ -7904,6 +7904,11 @@ async def get_public_download_info(share_link: str, request: SectionDownloadRequ
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
+    # Check if downloads are allowed
+    download_check = await check_download_allowed(gallery)
+    if not download_check["allowed"]:
+        raise HTTPException(status_code=403, detail=download_check["reason"])
+    
     # Verify password if download requires it
     if gallery.get("download_all_password"):
         if not request.password or not verify_password(request.password, gallery["download_all_password"]):
