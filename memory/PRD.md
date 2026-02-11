@@ -323,12 +323,25 @@ Admin-controlled features that can be independently toggled per package/mode:
 ## Contributor Upload Flow (Enhanced - February 2026) ✅
 
 ### Multi-Step Form
+All contributor types now share a unified 4-step professional flow:
 1. **Company Name**: Enter business/company name for credits
 2. **Role Selection**: Choose from predefined categories or custom role
-3. **Confirmation**: Preview how credits will appear in gallery
-4. **Upload**: Drag & drop photos with smart upload
+3. **Confirmation**: Preview how credits will appear in gallery (elegant Credit Preview card)
+4. **Upload/Add Content**: Upload photos OR add YouTube videos (based on section type)
+
+### Standardized Across All Contributor Types (February 2026 Update) ✅
+| Contributor Type | Route | Upload Format | Status |
+|------------------|-------|---------------|--------|
+| Regular Photo | `/c/{link}` | File upload | ✅ Standardized |
+| pCloud | `/c/{link}` | Folder code sync | ✅ Standardized |
+| Google Drive | `/c/{link}` | Folder ID sync | ✅ Standardized |
+| 360 Glam Booth (Fotoshare) | `/c/{link}` | Event URL sync | ✅ Standardized |
+| Videographer | `/v/{link}` | YouTube URL | ✅ Standardized |
 
 ### Predefined Role Categories
+
+**Photo Contributors (`ContributorUpload.jsx`):**
+
 **Core Team:**
 - Photographer
 - Videographer
@@ -350,6 +363,20 @@ Admin-controlled features that can be independently toggled per package/mode:
 - Special Effects (confetti, CO₂, fireworks, cold sparks)
 - Content Creators / Social Media Team
 - Live Streaming / Broadcast Team
+
+**Video Contributors (`VideographerUpload.jsx`):**
+
+**Video Production:**
+- Videographer
+- Cinematographer
+- Director of Photography
+- Video Editor
+
+**Specialized:**
+- Same Day Edit (SDE) Specialist
+- Drone Operator
+- Live Streaming Operator
+- Documentary Filmmaker
 
 ### Credits Display in Public Gallery
 Contributors appear in the hero section with:
