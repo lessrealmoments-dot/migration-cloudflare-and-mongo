@@ -7605,6 +7605,16 @@ async def get_public_gallery(share_link: str):
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
+    # Check subscription grace period for gallery viewing
+    photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
+    if photographer:
+        grace_periods = await check_subscription_grace_periods(photographer, gallery)
+        if grace_periods["subscription_expired"] and not grace_periods["viewing_allowed"]:
+            raise HTTPException(
+                status_code=403,
+                detail="This gallery is no longer available. The viewing period has expired."
+            )
+    
     is_expired = False
     if gallery.get("share_link_expiration_date"):
         try:
@@ -7626,6 +7636,12 @@ async def get_public_gallery(share_link: str):
                 guest_upload_enabled = False
         except:
             pass
+    
+    # Also disable guest uploads if subscription grace period expired
+    if photographer:
+        grace_periods = await check_subscription_grace_periods(photographer, gallery)
+        if grace_periods["subscription_expired"] and not grace_periods["uploads_allowed"]:
+            guest_upload_enabled = False
     
     photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
     sections = gallery.get("sections", [])
