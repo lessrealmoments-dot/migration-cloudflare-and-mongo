@@ -149,6 +149,23 @@ const AdminDashboard = () => {
   const [selectedUserTransactions, setSelectedUserTransactions] = useState(null);
   const [userTransactions, setUserTransactions] = useState([]);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
+  
+  // Client Management State
+  const [clients, setClients] = useState([]);
+  const [clientsLoading, setClientsLoading] = useState(false);
+  const [clientStats, setClientStats] = useState(null);
+  const [clientSearch, setClientSearch] = useState('');
+  const [clientFilters, setClientFilters] = useState({
+    plan: '',
+    status: '',
+    has_pending: false,
+    override_mode: ''
+  });
+  const [clientSort, setClientSort] = useState({ by: 'created_at', order: 'desc' });
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [clientDetails, setClientDetails] = useState(null);
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [clientAction, setClientAction] = useState(null); // { type: 'add_credits' | 'extend' | 'change_plan' | 'reset_password', data: {} }
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
