@@ -1424,6 +1424,7 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(auto_refresh_fotoshare_sections())
     asyncio.create_task(auto_sync_gdrive_sections())
     asyncio.create_task(auto_sync_pcloud_sections())
+    asyncio.create_task(check_expiring_subscriptions())
     
     yield
     
