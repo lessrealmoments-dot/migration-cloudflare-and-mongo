@@ -470,13 +470,20 @@ A new section type for galleries that allows videographers to add YouTube videos
 - **Thumbnail Management**: Auto-fetch from YouTube or upload custom thumbnail
 - **Video Management**: View, edit, delete videos from photographer dashboard
 
-### VideographerUpload Page (/v/{link})
-- Dark gradient theme with purple accents
-- Company/Videographer name field
-- YouTube URL input with live preview
-- Tag selection chips
-- Optional title and description
-- "Your Videos" grid showing uploaded videos
+### VideographerUpload Page (/v/{link}) - Redesigned ✅
+Now follows the same 4-step professional flow as photo contributors:
+1. **Step 1**: Company name input ("What's your company name?")
+2. **Step 2**: Role selection with video-specific categories (Videographer, Cinematographer, etc.)
+3. **Step 3**: Confirmation with Credit Preview card
+4. **Step 4**: Video upload form with:
+   - YouTube URL input with live thumbnail preview
+   - Video tag selection chips (SDE, Ceremony, Highlights, etc.)
+   - Optional title and description
+   - "Your Videos" panel showing uploaded videos
+   - Tips section for best results
+
+**Previous**: Dark gradient theme with combined form (no steps)
+**Current**: Clean zinc/white theme matching other contributor pages, 4-step flow with progress indicator
 
 ### VideoSection Component (Public Gallery)
 - Cinematic Showcase layout
