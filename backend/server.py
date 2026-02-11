@@ -1497,6 +1497,15 @@ async def get_gallery_og_tags(share_link: str, request: Request):
     if photo_count > 0:
         description += f" • {photo_count} photos"
     
+    # Build image meta tags only if we have a cover photo
+    image_meta_tags = ""
+    if cover_photo_url:
+        image_meta_tags = f"""
+    <meta property="og:image" content="{cover_photo_url}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="twitter:image" content="{cover_photo_url}">"""
+    
     # Build the HTML response with OG tags
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -1513,10 +1522,7 @@ async def get_gallery_og_tags(share_link: str, request: Request):
     <meta property="og:type" content="website">
     <meta property="og:url" content="{canonical_url}">
     <meta property="og:title" content="{title}">
-    <meta property="og:description" content="{description}">
-    <meta property="og:image" content="{cover_photo_url}">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <meta property="og:description" content="{description}">{image_meta_tags}
     <meta property="og:site_name" content="{business_name}">
     
     <!-- Twitter -->
@@ -1524,10 +1530,9 @@ async def get_gallery_og_tags(share_link: str, request: Request):
     <meta property="twitter:url" content="{canonical_url}">
     <meta property="twitter:title" content="{title}">
     <meta property="twitter:description" content="{description}">
-    <meta property="twitter:image" content="{cover_photo_url}">
     
     <!-- Redirect to actual gallery page for real users -->
-    <meta http-equiv="refresh" content="0;url={canonical_url}">
+    <meta http-equiv="refresh" content="0;url={canonical_url}">>
     <link rel="canonical" href="{canonical_url}">
 </head>
 <body>
