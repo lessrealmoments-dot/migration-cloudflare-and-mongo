@@ -384,33 +384,60 @@ const ContributorUpload = () => {
                 )}
               </div>
 
-              {/* Upload Progress */}
+              {/* Upload Progress with Speed Indicator */}
               {uploadProgress.length > 0 && (
                 <div className="mt-6 space-y-3">
-                  <h4 className="font-medium text-zinc-700">Upload Progress</h4>
-                  {uploadProgress.map((file, index) => (
-                    <div key={index} className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg">
-                      {file.status === 'pending' && (
-                        <div className="w-5 h-5 rounded-full border-2 border-zinc-300" />
-                      )}
-                      {file.status === 'uploading' && (
-                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                      )}
-                      {file.status === 'success' && (
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                      )}
-                      {file.status === 'error' && (
-                        <AlertCircle className="w-5 h-5 text-red-500" />
-                      )}
-                      <span className="flex-1 text-sm truncate">{file.name}</span>
-                      {file.status === 'uploading' && (
-                        <span className="text-sm text-zinc-500">{file.progress}%</span>
-                      )}
-                      {file.status === 'error' && (
-                        <span className="text-sm text-red-500">{file.error}</span>
-                      )}
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-zinc-700">
+                      Upload Progress ({uploadStats.completed + uploadStats.failed}/{uploadStats.totalFiles})
+                    </h4>
+                    <div className="flex items-center gap-3 text-xs text-zinc-500">
+                      <span className="flex items-center gap-1">
+                        <Wifi className="w-3.5 h-3.5" />
+                        {formatSpeed(uploadStats.currentSpeed)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Zap className="w-3.5 h-3.5" />
+                        {uploadStats.concurrency} concurrent
+                      </span>
                     </div>
-                  ))}
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-2">
+                    {uploadProgress.map((file, index) => (
+                      <div key={index} className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg">
+                        {file.status === 'pending' && (
+                          <div className="w-5 h-5 rounded-full border-2 border-zinc-300" />
+                        )}
+                        {(file.status === 'uploading' || file.status === 'retrying') && (
+                          <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                        )}
+                        {file.status === 'success' && (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        )}
+                        {file.status === 'error' && (
+                          <AlertCircle className="w-5 h-5 text-red-500" />
+                        )}
+                        <span className="flex-1 text-sm truncate">{file.name}</span>
+                        {(file.status === 'uploading' || file.status === 'retrying') && (
+                          <span className="text-sm text-zinc-500">{file.progress}%</span>
+                        )}
+                        {file.status === 'retrying' && (
+                          <span className="text-xs text-amber-500">Retrying...</span>
+                        )}
+                        {file.status === 'error' && (
+                          <span className="text-sm text-red-500">{file.errorMsg || file.error}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {uploading && (
+                    <button
+                      onClick={cancelUpload}
+                      className="text-sm text-red-600 hover:underline"
+                    >
+                      Cancel uploads
+                    </button>
+                  )}
                 </div>
               )}
 
