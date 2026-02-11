@@ -297,6 +297,101 @@ const AdminDashboard = () => {
     }
   };
 
+  // Client Management Functions
+  const fetchClients = async () => {
+    setClientsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (clientSearch) params.append('search', clientSearch);
+      if (clientFilters.plan) params.append('plan', clientFilters.plan);
+      if (clientFilters.status) params.append('status', clientFilters.status);
+      if (clientFilters.has_pending) params.append('has_pending', 'true');
+      if (clientFilters.override_mode) params.append('override_mode', clientFilters.override_mode);
+      params.append('sort_by', clientSort.by);
+      params.append('sort_order', clientSort.order);
+      
+      const response = await axios.get(`${API}/admin/clients?${params.toString()}`, getAuthHeader());
+      setClients(response.data);
+    } catch (error) {
+      toast.error('Failed to load clients');
+    } finally {
+      setClientsLoading(false);
+    }
+  };
+
+  const fetchClientStats = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/clients/stats`, getAuthHeader());
+      setClientStats(response.data);
+    } catch (error) {
+      console.error('Failed to load client stats');
+    }
+  };
+
+  const fetchClientDetails = async (userId) => {
+    try {
+      const response = await axios.get(`${API}/admin/clients/${userId}`, getAuthHeader());
+      setClientDetails(response.data);
+      setShowClientModal(true);
+    } catch (error) {
+      toast.error('Failed to load client details');
+    }
+  };
+
+  const handleAddCredits = async (userId, credits, type, reason) => {
+    try {
+      await axios.post(`${API}/admin/clients/${userId}/add-credits`, 
+        { credits, type, reason }, getAuthHeader());
+      toast.success(`Added ${credits} ${type} credit(s)`);
+      fetchClients();
+      if (clientDetails) fetchClientDetails(userId);
+    } catch (error) {
+      toast.error('Failed to add credits');
+    }
+  };
+
+  const handleExtendSubscription = async (userId, months, reason) => {
+    try {
+      const response = await axios.post(`${API}/admin/clients/${userId}/extend-subscription`, 
+        { months, reason }, getAuthHeader());
+      toast.success(response.data.message);
+      fetchClients();
+      if (clientDetails) fetchClientDetails(userId);
+    } catch (error) {
+      toast.error('Failed to extend subscription');
+    }
+  };
+
+  const handleChangePlan = async (userId, plan, reason) => {
+    try {
+      const response = await axios.post(`${API}/admin/clients/${userId}/change-plan`, 
+        { plan, reason }, getAuthHeader());
+      toast.success(response.data.message);
+      fetchClients();
+      if (clientDetails) fetchClientDetails(userId);
+    } catch (error) {
+      toast.error('Failed to change plan');
+    }
+  };
+
+  const handleResetPassword = async (userId, newPassword) => {
+    try {
+      await axios.post(`${API}/admin/clients/${userId}/reset-password`, 
+        { new_password: newPassword }, getAuthHeader());
+      toast.success('Password reset successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to reset password');
+    }
+  };
+
+  // Effect to fetch clients when tab changes or filters change
+  useEffect(() => {
+    if (activeTab === 'clients') {
+      fetchClients();
+      fetchClientStats();
+    }
+  }, [activeTab, clientFilters, clientSort]);
+
   const handleSaveBillingSettings = async () => {
     setSavingBilling(true);
     try {
