@@ -6150,6 +6150,14 @@ async def upload_contributor_photo(
     if not section or not section.get("contributor_enabled", False):
         raise HTTPException(status_code=404, detail="Contributor uploads are not enabled")
     
+    # Check 60-day collaborator access window
+    access_windows = await check_gallery_access_windows(gallery)
+    if not access_windows.get("collaborator_access_allowed", True):
+        raise HTTPException(
+            status_code=403, 
+            detail="Contributor upload window has expired (60 days from event date). Please contact the photographer."
+        )
+    
     # Validate file type
     allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
     if not file.content_type or file.content_type.lower() not in allowed_types:
