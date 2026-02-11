@@ -1310,6 +1310,38 @@ backend/
 - Feature toggles, collage presets, landing config
 - All background tasks running correctly
 
+## Pending Transactions Fix (February 2026) ✅
+
+### Issue
+When users submitted payment proofs for plan upgrades or extra credits, a pending transaction record was NOT being created in the database. This meant admins couldn't see incoming payment requests in the transaction history.
+
+### Fix Applied
+- **Upgrade requests**: Now creates a `pending` transaction when `proof_url` is provided
+- **Extra credits requests**: Now creates a `pending` transaction when submitting with payment proof
+
+### Transaction Record Structure
+```json
+{
+  "id": "uuid",
+  "user_id": "user_uuid",
+  "type": "upgrade" | "extra_credits",
+  "amount": 1000,
+  "plan": "standard" | "pro" | null,
+  "extra_credits": number | null,
+  "status": "pending" | "approved" | "rejected",
+  "payment_proof_url": "url",
+  "created_at": "ISO date",
+  "resolved_at": null
+}
+```
+
+### Testing
+- Created test user, submitted upgrade + extra credits requests
+- Verified both created `pending` transaction records
+- Admin can now see all pending transactions via `/api/admin/transactions?status=pending`
+
+---
+
 ## Photo/Video Count & Download Integration Sources (December 2025)
 
 ### Photo Count Update
