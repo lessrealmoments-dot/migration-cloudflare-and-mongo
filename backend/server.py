@@ -1629,7 +1629,7 @@ async def resolve_user_features(user: dict) -> dict:
         "effective_plan": plan,
         "features": {},
         "has_unlimited_credits": False,
-        "credits_available": user.get("event_credits", 0) + user.get("extra_credits", 0),
+        "credits_available": user.get("subscription_tokens", 0) + user.get("extra_credits", 0),
         "can_download": True,
         "override_active": False,
         "override_mode": None,
@@ -1714,11 +1714,11 @@ async def resolve_user_features(user: dict) -> dict:
         result["credits_available"] = 999
     
     # Handle credits when subscription expires:
-    # - Monthly tokens (event_credits) → reset to 0
+    # - Monthly tokens (subscription_tokens) → reset to 0
     # - Extra tokens (extra_credits) → preserved until their own expiration (12 months from purchase)
     if subscription_expired:
         # Monthly credits are lost, but extra credits remain
-        event_credits = 0  # Monthly tokens gone
+        subscription_tokens = 0  # Monthly tokens gone
         extra_credits = user.get("extra_credits", 0)
         
         # Check if extra credits have expired (12 months from purchase)
@@ -1919,15 +1919,15 @@ def get_effective_credits(user: dict) -> int:
                 if mode_credits == -1:  # Unlimited (founders_circle)
                     return 999
                 # For other override modes, use actual remaining credits
-                # (event_credits stores the remaining credits after deductions)
-                base_credits = user.get("event_credits", 0)
+                # (subscription_tokens stores the remaining credits after deductions)
+                base_credits = user.get("subscription_tokens", 0)
                 extra_credits = user.get("extra_credits", 0)
                 return max(0, base_credits + extra_credits)
         except:
             pass
     
     # Regular plan credits
-    base_credits = user.get("event_credits", 0)
+    base_credits = user.get("subscription_tokens", 0)
     extra_credits = user.get("extra_credits", 0)
     return max(0, base_credits + extra_credits)
 
@@ -2195,7 +2195,7 @@ async def reset_user_credits_if_needed(user_id: str):
             {"$set": {
                 "billing_cycle_start": now.isoformat(),
                 "subscription_expires": subscription_expires,
-                "event_credits": PLAN_CREDITS.get(user.get("plan", PLAN_FREE), 0),
+                "subscription_tokens": PLAN_CREDITS.get(user.get("plan", PLAN_FREE), 0),
             }}
         )
         return
@@ -2233,7 +2233,7 @@ async def reset_user_credits_if_needed(user_id: str):
             
             update_data = {
                 "billing_cycle_start": now.isoformat(),
-                "event_credits": new_credits,
+                "subscription_tokens": new_credits,
             }
             
             if subscription_expires:
@@ -2659,7 +2659,7 @@ async def get_all_photographers(admin: dict = Depends(get_admin_user)):
             created_at=user["created_at"],
             # Subscription fields
             plan=user.get("plan", PLAN_FREE),
-            event_credits=user.get("event_credits", 0),
+            subscription_tokens=user.get("subscription_tokens", 0),
             extra_credits=user.get("extra_credits", 0),
             payment_status=user.get("payment_status", PAYMENT_NONE),
             override_mode=user.get("override_mode"),
@@ -2990,9 +2990,9 @@ async def get_all_clients(
             "status": client.get("status", "active"),
             "effective_status": effective_status,
             "payment_status": client.get("payment_status", PAYMENT_NONE),
-            "event_credits": client.get("event_credits", 0),
+            "subscription_tokens": client.get("subscription_tokens", 0),
             "extra_credits": client.get("extra_credits", 0),
-            "total_credits": client.get("event_credits", 0) + client.get("extra_credits", 0),
+            "total_credits": client.get("subscription_tokens", 0) + client.get("extra_credits", 0),
             "storage_quota": client.get("storage_quota", DEFAULT_STORAGE_QUOTA),
             "storage_used": client.get("storage_used", 0),
             "storage_percent": round((client.get("storage_used", 0) / max(client.get("storage_quota", DEFAULT_STORAGE_QUOTA), 1)) * 100, 1),
@@ -3075,7 +3075,7 @@ async def get_client_details(user_id: str, admin: dict = Depends(get_admin_user)
             "override_reason": user.get("override_reason"),
             "billing_cycle_start": user.get("billing_cycle_start"),
             "subscription_expires": user.get("subscription_expires"),
-            "event_credits": user.get("event_credits", 0),
+            "subscription_tokens": user.get("subscription_tokens", 0),
             "extra_credits": user.get("extra_credits", 0),
             "extra_credits_purchased_at": user.get("extra_credits_purchased_at"),
             "extra_credits_expires_at": user.get("extra_credits_expires_at"),
@@ -3119,7 +3119,7 @@ async def add_client_credits(user_id: str, data: dict, admin: dict = Depends(get
     if credits_to_add < 1 or credits_to_add > 100:
         raise HTTPException(status_code=400, detail="Credits must be between 1 and 100")
     
-    update_field = "event_credits" if credit_type == "event" else "extra_credits"
+    update_field = "subscription_tokens" if credit_type == "event" else "extra_credits"
     current_credits = user.get(update_field, 0)
     
     update_data = {
@@ -3223,7 +3223,7 @@ async def change_client_plan(user_id: str, data: dict, admin: dict = Depends(get
     
     update_data = {
         "plan": new_plan,
-        "event_credits": PLAN_CREDITS.get(new_plan, 0),
+        "subscription_tokens": PLAN_CREDITS.get(new_plan, 0),
         "billing_cycle_start": datetime.now(timezone.utc).isoformat()
     }
     
@@ -4123,7 +4123,7 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
             else:
                 await db.users.update_one(
                     {"id": current_user["id"]},
-                    {"$inc": {"event_credits": -1}}
+                    {"$inc": {"subscription_tokens": -1}}
                 )
     
     gallery_id = str(uuid.uuid4())
@@ -9183,9 +9183,9 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
     subscription_expired = resolved.get("subscription_expired", False)
     
     # Calculate effective credits based on subscription status
-    # - If subscription expired: monthly credits (event_credits) = 0, extra_credits preserved
-    # - If subscription active: both event_credits and extra_credits count
-    effective_event_credits = 0 if subscription_expired else db_user.get("event_credits", 0)
+    # - If subscription expired: monthly credits (subscription_tokens) = 0, extra_credits preserved
+    # - If subscription active: both subscription_tokens and extra_credits count
+    effective_subscription_tokens = 0 if subscription_expired else db_user.get("subscription_tokens", 0)
     effective_extra_credits = db_user.get("extra_credits", 0)
     
     # Check if extra credits have also expired (12 months from purchase)
@@ -9204,8 +9204,8 @@ async def get_user_subscription(user: dict = Depends(get_current_user)):
         "subscription_expires": db_user.get("subscription_expires"),  # When subscription period ends
         "subscription_active": is_subscription_active_flag,  # Whether subscription is currently active
         "subscription_expired": subscription_expired,  # Whether subscription has expired
-        "event_credits": effective_event_credits,  # Monthly tokens (0 if subscription expired)
-        "event_credits_raw": db_user.get("event_credits", 0),  # Raw value in DB (for debugging)
+        "subscription_tokens": effective_subscription_tokens,  # Monthly tokens (0 if subscription expired)
+        "subscription_tokens_raw": db_user.get("subscription_tokens", 0),  # Raw value in DB (for debugging)
         "extra_credits": effective_extra_credits,  # Extra tokens (preserved until 12 months from purchase)
         "extra_credits_raw": db_user.get("extra_credits", 0),  # Raw value in DB
         "extra_credits_purchased_at": extra_credits_purchased_at,  # When extra credits were bought
@@ -9413,11 +9413,11 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
         # Check if upgrading from Standard to Pro
         if current_plan == PLAN_STANDARD and requested_plan == PLAN_PRO:
             # Keep existing credits and add Pro credits
-            current_credits = user.get("event_credits", 0)
-            update_data["event_credits"] = current_credits + PLAN_CREDITS.get(requested_plan, 2)
+            current_credits = user.get("subscription_tokens", 0)
+            update_data["subscription_tokens"] = current_credits + PLAN_CREDITS.get(requested_plan, 2)
         else:
             # Fresh plan activation
-            update_data["event_credits"] = PLAN_CREDITS.get(requested_plan, 2)
+            update_data["subscription_tokens"] = PLAN_CREDITS.get(requested_plan, 2)
         
         update_data["plan"] = requested_plan
         update_data["requested_plan"] = None
@@ -9439,7 +9439,7 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
         tx_type = "upgrade"
         tx_amount = pricing.get(f"{requested_plan}_monthly", 0)
         email_plan = requested_plan.capitalize()
-        email_credits = update_data.get("event_credits", PLAN_CREDITS.get(requested_plan, 2))
+        email_credits = update_data.get("subscription_tokens", PLAN_CREDITS.get(requested_plan, 2))
     
     # If user has requested extra credits, add them
     requested_extra_credits = user.get("requested_extra_credits")
@@ -9774,7 +9774,7 @@ async def assign_override_mode(data: AssignOverrideMode, admin: dict = Depends(g
             "override_expires": expires.isoformat(),
             "override_reason": data.reason,
             "override_assigned_at": datetime.now(timezone.utc).isoformat(),
-            "event_credits": credits,
+            "subscription_tokens": credits,
             "billing_cycle_start": datetime.now(timezone.utc).isoformat(),
             "payment_status": PAYMENT_APPROVED,  # Override users don't need to pay
             "storage_quota": storage_quota,
@@ -9801,7 +9801,7 @@ async def remove_override_mode(data: RemoveOverrideMode, admin: dict = Depends(g
             "override_reason": None,
             "override_removed_at": datetime.now(timezone.utc).isoformat(),
             "override_removal_reason": data.reason,
-            "event_credits": credits
+            "subscription_tokens": credits
         }}
     )
     return {"message": "Override mode removed"}
@@ -9820,7 +9820,7 @@ async def get_user_subscription_admin(user_id: str, admin: dict = Depends(get_ad
         "plan": user.get("plan", PLAN_FREE),
         "effective_plan": get_effective_plan(user),
         "billing_cycle_start": user.get("billing_cycle_start"),
-        "event_credits": user.get("event_credits", 0),
+        "subscription_tokens": user.get("subscription_tokens", 0),
         "extra_credits": user.get("extra_credits", 0),
         "total_credits": get_effective_credits(user),
         "payment_status": user.get("payment_status", PAYMENT_NONE),
@@ -9847,7 +9847,7 @@ async def update_user_plan(user_id: str, plan: str = Body(..., embed=True), admi
         {"id": user_id},
         {"$set": {
             "plan": plan,
-            "event_credits": credits,
+            "subscription_tokens": credits,
             "billing_cycle_start": datetime.now(timezone.utc).isoformat()
         }}
     )
