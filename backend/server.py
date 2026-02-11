@@ -3350,6 +3350,66 @@ async def update_single_mode_features(
     return {"message": f"Features updated for {mode_or_plan}", "features": features}
 
 # ============================================
+# Gallery Storage Migration Endpoint
+# ============================================
+
+@api_router.post("/admin/migrate/gallery-storage")
+async def migrate_gallery_storage(admin: dict = Depends(get_admin_user)):
+    """
+    Migration endpoint to calculate and set storage_used and storage_quota for all existing galleries.
+    This should be run once after deploying the per-gallery storage feature.
+    """
+    galleries_updated = 0
+    galleries_failed = 0
+    total_storage_calculated = 0
+    
+    # Get all galleries
+    async for gallery in db.galleries.find({}, {"_id": 0, "id": 1, "photographer_id": 1, "storage_used": 1, "storage_quota": 1}):
+        try:
+            gallery_id = gallery["id"]
+            
+            # Calculate total storage used by this gallery's photos
+            pipeline = [
+                {"$match": {"gallery_id": gallery_id}},
+                {"$group": {
+                    "_id": None,
+                    "total_size": {"$sum": "$file_size"}
+                }}
+            ]
+            result = await db.photos.aggregate(pipeline).to_list(1)
+            storage_used = result[0]["total_size"] if result else 0
+            
+            # Get photographer to determine storage quota
+            photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
+            if photographer:
+                storage_quota = await get_gallery_storage_quota(photographer)
+            else:
+                storage_quota = 10 * 1024 * 1024 * 1024  # Default 10GB
+            
+            # Update gallery with calculated storage
+            await db.galleries.update_one(
+                {"id": gallery_id},
+                {"$set": {
+                    "storage_used": storage_used,
+                    "storage_quota": storage_quota
+                }}
+            )
+            
+            galleries_updated += 1
+            total_storage_calculated += storage_used
+            
+        except Exception as e:
+            logger.error(f"Failed to migrate gallery {gallery.get('id')}: {e}")
+            galleries_failed += 1
+    
+    return {
+        "message": "Gallery storage migration completed",
+        "galleries_updated": galleries_updated,
+        "galleries_failed": galleries_failed,
+        "total_storage_calculated_gb": round(total_storage_calculated / (1024 * 1024 * 1024), 2)
+    }
+
+# ============================================
 # Per-User Feature Toggles (Resolved via Authority Hierarchy)
 # ============================================
 
