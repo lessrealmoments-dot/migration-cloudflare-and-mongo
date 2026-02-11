@@ -1178,7 +1178,7 @@ const PublicGallery = () => {
 
           {/* Highlights Bento Grid */}
           {getHighlightPhotos().length > 0 && (
-            <section className="py-16 md:py-24 px-6 md:px-12 lg:px-24" style={{ backgroundColor: currentTheme.colors.secondary }}>
+            <section id="section-highlights" className="py-16 md:py-24 px-6 md:px-12 lg:px-24" style={{ backgroundColor: currentTheme.colors.secondary }}>
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
