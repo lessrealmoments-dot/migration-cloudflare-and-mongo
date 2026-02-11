@@ -126,7 +126,14 @@ const SlideshowDisplay = () => {
         } else {
           // Filter only photos with valid URLs
           const validPhotos = data.photos.filter(p => p.url || p.thumbnail_medium_url || p.thumbnail_url);
-          setPhotos(validPhotos);
+          
+          // Fisher-Yates shuffle to mix photos from all sources/sections
+          const shuffled = [...validPhotos];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          setPhotos(shuffled);
           
           // Log photo sources for debugging
           const sources = validPhotos.reduce((acc, p) => {
@@ -134,7 +141,7 @@ const SlideshowDisplay = () => {
             acc[source] = (acc[source] || 0) + 1;
             return acc;
           }, {});
-          console.log(`[Slideshow] Loaded ${validPhotos.length} photos:`, sources);
+          console.log(`[Slideshow] Loaded ${validPhotos.length} photos (shuffled from all sources):`, sources);
         }
         lastPhotoCount.current = newPhotoCount;
       }
