@@ -507,3 +507,76 @@ async def auto_delete_expired_galleries():
             _logger.error(f"Auto-delete task error: {e}")
         
         await asyncio.sleep(24 * 60 * 60)  # Check daily
+
+
+
+async def check_expiring_subscriptions():
+    """
+    Background task to check for expiring subscriptions and log warnings.
+    Runs daily to identify users whose subscriptions are about to expire.
+    
+    Note: Email notifications are handled separately via the main server's email system.
+    This task focuses on logging and cleanup.
+    """
+    _logger.info("Subscription expiry check task started")
+    
+    while _sync_task_running:
+        try:
+            now = datetime.now(timezone.utc)
+            
+            # Find users with expiring subscriptions (within 7 days)
+            seven_days_later = (now + timedelta(days=7)).isoformat()
+            
+            expiring_users = await _db.users.find({
+                "plan": {"$in": ["standard", "pro"]},
+                "subscription_expires": {
+                    "$lte": seven_days_later,
+                    "$gt": now.isoformat()
+                }
+            }, {"_id": 0, "id": 1, "email": 1, "name": 1, "plan": 1, "subscription_expires": 1}).to_list(None)
+            
+            if expiring_users:
+                _logger.info(f"Found {len(expiring_users)} users with subscriptions expiring within 7 days")
+                for user in expiring_users:
+                    _logger.info(f"Subscription expiring soon: user={user.get('email')}, expires={user.get('subscription_expires')}")
+            
+            # Find users with already expired subscriptions who are still on paid plans
+            expired_users = await _db.users.find({
+                "plan": {"$in": ["standard", "pro"]},
+                "subscription_expires": {"$lt": now.isoformat()}
+            }, {"_id": 0, "id": 1, "email": 1, "name": 1, "plan": 1, "subscription_expires": 1}).to_list(None)
+            
+            if expired_users:
+                _logger.warning(f"Found {len(expired_users)} users with expired subscriptions still on paid plans")
+                for user in expired_users:
+                    _logger.warning(f"Expired subscription: user={user.get('email')}, plan={user.get('plan')}, expired={user.get('subscription_expires')}")
+                    
+                    # Optionally: Auto-downgrade to free (uncomment if desired)
+                    # await _db.users.update_one(
+                    #     {"id": user["id"]},
+                    #     {"$set": {"plan": "free", "payment_status": "none"}}
+                    # )
+                    # _logger.info(f"Auto-downgraded user {user.get('email')} to free plan")
+            
+            # Check override expirations
+            expired_overrides = await _db.users.find({
+                "override_mode": {"$ne": None},
+                "override_expires": {"$lt": now.isoformat()}
+            }, {"_id": 0, "id": 1, "email": 1, "override_mode": 1, "override_expires": 1}).to_list(None)
+            
+            if expired_overrides:
+                _logger.info(f"Found {len(expired_overrides)} users with expired override modes")
+                for user in expired_overrides:
+                    _logger.info(f"Expired override: user={user.get('email')}, mode={user.get('override_mode')}, expired={user.get('override_expires')}")
+                    
+                    # Clear expired override (keep user on their paid plan if any)
+                    await _db.users.update_one(
+                        {"id": user["id"]},
+                        {"$set": {"override_mode": None, "override_expires": None}}
+                    )
+                    _logger.info(f"Cleared expired override for user {user.get('email')}")
+        
+        except Exception as e:
+            _logger.error(f"Subscription expiry check error: {e}")
+        
+        await asyncio.sleep(24 * 60 * 60)  # Check daily
