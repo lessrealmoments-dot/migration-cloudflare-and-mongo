@@ -3,12 +3,38 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { Upload, CheckCircle, AlertCircle, Loader2, Camera, Building2, ChevronRight, Wifi, Zap } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, Loader2, Camera, Building2, ChevronRight, Wifi, Zap, Sparkles, Users, Music, Scissors, Cake, PartyPopper, Plane, Monitor, Video, Check } from 'lucide-react';
 import useBrandConfig from '../hooks/useBrandConfig';
 import { useSmartUploader } from '../hooks/useSmartUploader';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Predefined contributor roles organized by category
+const CONTRIBUTOR_ROLES = {
+  'Core Team': [
+    { value: 'Photographer', icon: Camera },
+    { value: 'Videographer', icon: Video },
+    { value: 'Event Coordinator / Planner', icon: Users },
+    { value: 'Caterer', icon: Cake },
+    { value: 'Event Stylist / Designer', icon: Sparkles },
+    { value: 'Host / DJ / Emcee', icon: Music },
+  ],
+  'Additional Services': [
+    { value: 'Live Band / Musicians', icon: Music },
+    { value: 'Hair & Makeup Artist (HMUA)', icon: Scissors },
+    { value: 'Cake Designer', icon: Cake },
+    { value: 'Photobooth Provider', icon: Camera },
+    { value: 'Lights & Sounds / Technical Team', icon: Monitor },
+  ],
+  'Premium Enhancements': [
+    { value: 'Drone / Aerial Coverage', icon: Plane },
+    { value: 'LED Wall / Visual Display', icon: Monitor },
+    { value: 'Special Effects (confetti, CO₂, fireworks, cold sparks)', icon: PartyPopper },
+    { value: 'Content Creators / Social Media Team', icon: Video },
+    { value: 'Live Streaming / Broadcast Team', icon: Video },
+  ],
+};
 
 // Format speed for display
 const formatSpeed = (bytesPerSecond) => {
@@ -28,15 +54,25 @@ const ContributorUpload = () => {
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
   
-  // Company name flow
-  const [step, setStep] = useState('name'); // 'name', 'confirm', 'role_confirm', 'upload'
+  // Multi-step form flow
+  const [step, setStep] = useState('company'); // 'company', 'role', 'confirm', 'upload'
   const [companyName, setCompanyName] = useState('');
-  const [confirmedName, setConfirmedName] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
+  const [customRole, setCustomRole] = useState('');
+  const [useCustomRole, setUseCustomRole] = useState(false);
   
   // Upload state
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
   
-  // Smart uploader hook - confirmed name needs to be stable before hook setup
+  // Get the final role value
+  const getFinalRole = () => {
+    if (useCustomRole && customRole.trim()) {
+      return customRole.trim();
+    }
+    return selectedRole || info?.section_name || 'Contributor';
+  };
+  
+  // Smart uploader hook
   const {
     uploading,
     progress: uploadProgress,
@@ -49,7 +85,7 @@ const ContributorUpload = () => {
     formDataBuilder: (file) => {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('company_name', confirmedName);
+      formData.append('company_name', companyName);
       return formData;
     },
     onFileSuccess: (file, data) => {
@@ -66,7 +102,6 @@ const ContributorUpload = () => {
       if (completed > 0) {
         toast.success(`${completed} photo(s) uploaded successfully!`);
       }
-      // Clear progress after delay
       setTimeout(() => clearProgress(), 3000);
     },
   });
@@ -95,10 +130,13 @@ const ContributorUpload = () => {
         
         setInfo(response.data);
         
-        // If contributor name already exists, skip to role confirmation
+        // If contributor info already exists, pre-fill and skip to upload
         if (response.data.existing_contributor_name) {
-          setConfirmedName(response.data.existing_contributor_name);
-          setStep('role_confirm');
+          setCompanyName(response.data.existing_contributor_name);
+          if (response.data.existing_contributor_role) {
+            setSelectedRole(response.data.existing_contributor_role);
+          }
+          setStep('upload');
         }
       } catch (err) {
         setError(err.response?.data?.detail || 'Invalid or expired contributor link');
@@ -110,38 +148,48 @@ const ContributorUpload = () => {
     fetchInfo();
   }, [contributorLink, navigate]);
 
-  const handleNameSubmit = (e) => {
+  // Step 1: Company name submission
+  const handleCompanySubmit = (e) => {
     e.preventDefault();
     if (!companyName.trim()) {
-      toast.error('Please enter your company name');
+      toast.error('Please enter your company/business name');
+      return;
+    }
+    setStep('role');
+  };
+
+  // Step 2: Role selection
+  const handleRoleSubmit = () => {
+    if (!selectedRole && !useCustomRole) {
+      toast.error('Please select your role');
+      return;
+    }
+    if (useCustomRole && !customRole.trim()) {
+      toast.error('Please enter your custom role');
       return;
     }
     setStep('confirm');
   };
 
-  const handleNameConfirm = async () => {
+  // Step 3: Confirm and save
+  const handleConfirm = async () => {
     try {
       await axios.post(`${API}/contributor/${contributorLink}/set-name`, {
-        company_name: companyName.trim()
+        company_name: companyName.trim(),
+        contributor_role: getFinalRole()
       });
-      setConfirmedName(companyName.trim());
-      setStep('role_confirm');
-      toast.success('Company name confirmed!');
+      toast.success('Profile saved! You can now upload your photos.');
+      setStep('upload');
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to save company name');
+      toast.error(err.response?.data?.detail || 'Failed to save profile');
     }
   };
 
-  const handleRoleConfirm = () => {
-    setStep('upload');
-  };
-
-  // Smart uploader onDrop - uses adaptive concurrent uploads
+  // File upload handler
   const onDrop = useCallback(async (acceptedFiles) => {
     if (acceptedFiles.length === 0) return;
 
-    // Validate files
-    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
     const validFiles = [];
     const invalidFiles = [];
 
@@ -161,7 +209,6 @@ const ContributorUpload = () => {
 
     if (validFiles.length === 0) return;
 
-    // Use smart uploader for adaptive concurrent uploads
     toast.info(`Starting upload of ${validFiles.length} photos...`, { duration: 2000 });
     await startUpload(validFiles);
   }, [startUpload]);
@@ -185,9 +232,9 @@ const ContributorUpload = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-lg shadow-sm p-8 max-w-md text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-medium mb-2">Link Not Found</h1>
+        <div className="text-center max-w-md">
+          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-semibold text-zinc-800 mb-2">Link Unavailable</h1>
           <p className="text-zinc-600">{error}</p>
         </div>
       </div>
@@ -195,61 +242,91 @@ const ContributorUpload = () => {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100">
       {/* Header */}
-      <nav className="border-b border-zinc-200 bg-white">
-        <div className="max-w-screen-xl mx-auto px-6 py-6">
-          <h1 
-            className="text-2xl font-medium"
-            style={{ fontFamily: 'Playfair Display, serif' }}
-          >
-            {brandConfig.brand_name || 'PhotoShare'}
-          </h1>
+      <header className="bg-white border-b border-zinc-200 sticky top-0 z-10">
+        <div className="max-w-screen-xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {brandConfig.logo_url ? (
+              <img src={brandConfig.logo_url} alt={brandConfig.brand_name} className="h-8" />
+            ) : (
+              <Camera className="w-8 h-8 text-zinc-700" />
+            )}
+            <span className="font-semibold text-zinc-800">{brandConfig.brand_name || 'PhotoShare'}</span>
+          </div>
+          {hubLink && (
+            <button
+              onClick={goBackToHub}
+              className="text-sm text-zinc-600 hover:text-zinc-800 flex items-center gap-1"
+            >
+              ← Back to Hub
+            </button>
+          )}
         </div>
-      </nav>
+      </header>
 
-      <div className="max-w-screen-md mx-auto px-6 py-12">
+      {/* Main Content */}
+      <div className="max-w-2xl mx-auto px-6 py-12">
         {/* Gallery Info */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Camera className="w-6 h-6 text-zinc-400" />
-            <div>
-              <h2 className="text-lg font-medium">{info?.gallery_title}</h2>
-              <p className="text-sm text-zinc-500">by {info?.photographer_name}</p>
-            </div>
-          </div>
-          <div className="bg-zinc-50 rounded-lg p-4">
-            <p className="text-sm text-zinc-600">
-              You're uploading to: <span className="font-medium text-zinc-900">{info?.section_name}</span>
-            </p>
-          </div>
+        <div className="text-center mb-8">
+          <p className="text-sm text-zinc-500 uppercase tracking-wider mb-2">Contributing to</p>
+          <h1 className="text-3xl font-light text-zinc-800 mb-1">{info?.gallery_title}</h1>
+          <p className="text-lg text-zinc-600">{info?.section_name}</p>
         </div>
 
-        {/* Step 1: Enter Company Name */}
-        {step === 'name' && (
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <Building2 className="w-6 h-6 text-primary" />
-              <h3 className="text-xl font-medium">Enter Your Company Name</h3>
+        {/* Progress Steps */}
+        <div className="flex items-center justify-center gap-2 mb-10">
+          {['company', 'role', 'confirm', 'upload'].map((s, i) => (
+            <React.Fragment key={s}>
+              <div 
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                  step === s 
+                    ? 'bg-zinc-800 text-white' 
+                    : ['company', 'role', 'confirm', 'upload'].indexOf(step) > i 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-zinc-200 text-zinc-500'
+                }`}
+              >
+                {['company', 'role', 'confirm', 'upload'].indexOf(step) > i ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  i + 1
+                )}
+              </div>
+              {i < 3 && (
+                <div className={`w-12 h-0.5 ${['company', 'role', 'confirm', 'upload'].indexOf(step) > i ? 'bg-green-500' : 'bg-zinc-200'}`} />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* Step 1: Company Name */}
+        {step === 'company' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            <div className="text-center mb-8">
+              <Building2 className="w-12 h-12 text-zinc-400 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-zinc-800 mb-2">What's your company name?</h2>
+              <p className="text-zinc-600">This will appear in the gallery credits</p>
             </div>
-            <p className="text-zinc-600 mb-6">
-              Your company name will be displayed as the contributor for this section. 
-              Please ensure correct spelling and capitalization.
-            </p>
-            <form onSubmit={handleNameSubmit}>
-              <input
-                type="text"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="e.g., Studio XYZ Photography"
-                className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-lg"
-                autoFocus
-                data-testid="company-name-input"
-              />
+            
+            <form onSubmit={handleCompanySubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-2">
+                  Company / Business Name
+                </label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="e.g., ABC Photography Studio"
+                  className="w-full px-4 py-3 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all text-lg"
+                  autoFocus
+                />
+              </div>
+              
               <button
                 type="submit"
-                className="mt-4 w-full bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
-                data-testid="continue-btn"
+                className="w-full py-3 bg-zinc-800 text-white rounded-xl font-medium hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
               >
                 Continue <ChevronRight className="w-5 h-5" />
               </button>
@@ -257,205 +334,283 @@ const ContributorUpload = () => {
           </div>
         )}
 
-        {/* Step 2: Confirm Company Name */}
-        {step === 'confirm' && (
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <CheckCircle className="w-6 h-6 text-green-500" />
-              <h3 className="text-xl font-medium">Confirm Your Company Name</h3>
-            </div>
-            <p className="text-zinc-600 mb-4">
-              Please verify this is exactly how you want your company name to appear:
-            </p>
-            <div className="bg-zinc-100 rounded-lg p-6 mb-6 text-center">
-              <p className="text-2xl font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
-                {companyName}
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setStep('name')}
-                className="flex-1 bg-zinc-100 text-zinc-700 py-3 rounded-lg font-medium hover:bg-zinc-200 transition-colors"
-              >
-                Edit Name
-              </button>
-              <button
-                onClick={handleNameConfirm}
-                className="flex-1 bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors"
-                data-testid="confirm-name-btn"
-              >
-                Confirm & Continue
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Role Confirmation */}
-        {step === 'role_confirm' && (
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <AlertCircle className="w-6 h-6 text-amber-500" />
-              <h3 className="text-xl font-medium">Please Confirm Your Role</h3>
+        {/* Step 2: Role Selection */}
+        {step === 'role' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            <div className="text-center mb-8">
+              <Users className="w-12 h-12 text-zinc-400 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-zinc-800 mb-2">What's your role?</h2>
+              <p className="text-zinc-600">Select your service category for the credits</p>
             </div>
             
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-6">
-              <p className="text-amber-900 text-lg text-center mb-4">
-                Are you sure you are the
-              </p>
-              <p className="text-2xl font-bold text-center text-amber-800" style={{ fontFamily: 'Playfair Display, serif' }}>
-                OFFICIAL PHOTOGRAPHER
-              </p>
-              <p className="text-amber-900 text-lg text-center mt-4">
-                for the section "<strong>{info?.section_name}</strong>"?
-              </p>
-            </div>
-            
-            <p className="text-zinc-600 text-sm mb-6 text-center">
-              ⚠️ Please make sure you're uploading to the correct section. 
-              If you're not the assigned photographer for this section, please go back and check with your coordinator.
-            </p>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={goBackToHub}
-                className="flex-1 bg-zinc-100 text-zinc-700 py-3 rounded-lg font-medium hover:bg-zinc-200 transition-colors"
-              >
-                No, Go Back
-              </button>
-              <button
-                onClick={handleRoleConfirm}
-                className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                data-testid="confirm-role-btn"
-              >
-                Yes, I Confirm
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 4: Upload Photos */}
-        {step === 'upload' && (
-          <div className="space-y-6">
-            {/* Contributor Badge */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-              <div>
-                <p className="text-green-800 font-medium">Uploading as: {confirmedName}</p>
-                <p className="text-green-700 text-sm">Your photos will be credited to this name</p>
-              </div>
-            </div>
-
-            {/* Gentle Reminder */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <p className="text-amber-800 text-sm">
-                💡 <strong>Tip:</strong> Please upload only your best photos that best represent you as a supplier.
-              </p>
-            </div>
-
-            {/* Upload Area */}
-            <div className="bg-white rounded-lg shadow-sm p-8">
-              <h3 className="text-xl font-medium mb-6">Upload Your Photos</h3>
+            <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2">
+              {Object.entries(CONTRIBUTOR_ROLES).map(([category, roles]) => (
+                <div key={category}>
+                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {category}
+                  </h3>
+                  <div className="grid grid-cols-1 gap-2">
+                    {roles.map((role) => {
+                      const Icon = role.icon;
+                      const isSelected = selectedRole === role.value && !useCustomRole;
+                      return (
+                        <button
+                          key={role.value}
+                          type="button"
+                          onClick={() => {
+                            setSelectedRole(role.value);
+                            setUseCustomRole(false);
+                          }}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                            isSelected
+                              ? 'border-zinc-800 bg-zinc-50'
+                              : 'border-zinc-200 hover:border-zinc-300'
+                          }`}
+                        >
+                          <Icon className={`w-5 h-5 ${isSelected ? 'text-zinc-800' : 'text-zinc-400'}`} />
+                          <span className={`font-medium ${isSelected ? 'text-zinc-800' : 'text-zinc-600'}`}>
+                            {role.value}
+                          </span>
+                          {isSelected && (
+                            <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
               
-              <div
-                {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
-                  isDragActive 
-                    ? 'border-primary bg-primary/5' 
-                    : uploading 
-                      ? 'border-zinc-200 bg-zinc-50 cursor-not-allowed'
-                      : 'border-zinc-300 hover:border-primary hover:bg-zinc-50'
-                }`}
-                data-testid="contributor-upload-dropzone"
-              >
-                <input {...getInputProps()} disabled={uploading} />
-                {uploading ? (
-                  <>
-                    <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
-                    <p className="text-base font-light text-zinc-600">Uploading photos...</p>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-zinc-400" strokeWidth={1.5} />
-                    <p className="text-base font-light text-zinc-600 mb-2">
-                      Drag & drop your photos here, or click to select
-                    </p>
-                    <p className="text-sm text-zinc-500">JPEG, PNG, GIF, WebP • Max 50MB per file</p>
-                  </>
-                )}
-              </div>
-
-              {/* Upload Progress with Speed Indicator */}
-              {uploadProgress.length > 0 && (
-                <div className="mt-6 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-zinc-700">
-                      Upload Progress ({uploadStats.completed + uploadStats.failed}/{uploadStats.totalFiles})
-                    </h4>
-                    <div className="flex items-center gap-3 text-xs text-zinc-500">
-                      <span className="flex items-center gap-1">
-                        <Wifi className="w-3.5 h-3.5" />
-                        {formatSpeed(uploadStats.currentSpeed)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Zap className="w-3.5 h-3.5" />
-                        {uploadStats.concurrency} concurrent
-                      </span>
+              {/* Custom Role Option */}
+              <div>
+                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+                  Or enter a custom role
+                </h3>
+                <div 
+                  className={`border-2 rounded-xl transition-all ${
+                    useCustomRole ? 'border-zinc-800 bg-zinc-50' : 'border-zinc-200'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setUseCustomRole(true)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  >
+                    <Sparkles className={`w-5 h-5 ${useCustomRole ? 'text-zinc-800' : 'text-zinc-400'}`} />
+                    <span className={`font-medium ${useCustomRole ? 'text-zinc-800' : 'text-zinc-600'}`}>
+                      Custom Role
+                    </span>
+                    {useCustomRole && (
+                      <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
+                    )}
+                  </button>
+                  {useCustomRole && (
+                    <div className="px-4 pb-4">
+                      <input
+                        type="text"
+                        value={customRole}
+                        onChange={(e) => setCustomRole(e.target.value)}
+                        placeholder="Enter your role (e.g., Florist)"
+                        className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-zinc-500 focus:border-transparent"
+                        autoFocus
+                      />
                     </div>
-                  </div>
-                  <div className="max-h-48 overflow-y-auto space-y-2">
-                    {uploadProgress.map((file, index) => (
-                      <div key={index} className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg">
-                        {file.status === 'pending' && (
-                          <div className="w-5 h-5 rounded-full border-2 border-zinc-300" />
-                        )}
-                        {(file.status === 'uploading' || file.status === 'retrying') && (
-                          <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                        )}
-                        {file.status === 'success' && (
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                        )}
-                        {file.status === 'error' && (
-                          <AlertCircle className="w-5 h-5 text-red-500" />
-                        )}
-                        <span className="flex-1 text-sm truncate">{file.name}</span>
-                        {(file.status === 'uploading' || file.status === 'retrying') && (
-                          <span className="text-sm text-zinc-500">{file.progress}%</span>
-                        )}
-                        {file.status === 'retrying' && (
-                          <span className="text-xs text-amber-500">Retrying...</span>
-                        )}
-                        {file.status === 'error' && (
-                          <span className="text-sm text-red-500">{file.errorMsg || file.error}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {uploading && (
-                    <button
-                      onClick={cancelUpload}
-                      className="text-sm text-red-600 hover:underline"
-                    >
-                      Cancel uploads
-                    </button>
                   )}
                 </div>
-              )}
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-8">
+              <button
+                type="button"
+                onClick={() => setStep('company')}
+                className="flex-1 py-3 border-2 border-zinc-300 text-zinc-700 rounded-xl font-medium hover:bg-zinc-50 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleRoleSubmit}
+                className="flex-1 py-3 bg-zinc-800 text-white rounded-xl font-medium hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
+              >
+                Continue <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
 
-              {/* Uploaded Photos Count */}
-              {uploadedPhotos.length > 0 && (
-                <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                  <p className="text-green-800 font-medium">
-                    ✓ {uploadedPhotos.length} photo{uploadedPhotos.length !== 1 ? 's' : ''} uploaded successfully
+        {/* Step 3: Confirmation */}
+        {step === 'confirm' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            <div className="text-center mb-8">
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-zinc-800 mb-2">Confirm your details</h2>
+              <p className="text-zinc-600">This is how you'll appear in the gallery credits</p>
+            </div>
+            
+            {/* Preview Card */}
+            <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl p-6 text-white mb-8">
+              <p className="text-xs uppercase tracking-wider text-zinc-400 mb-1">Credit Preview</p>
+              <div className="border-l-2 border-white/30 pl-4 mt-4">
+                <p className="text-lg font-semibold">{companyName}</p>
+                <p className="text-sm text-zinc-400">{getFinalRole()}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4 mb-8">
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100">
+                <span className="text-zinc-500">Company Name</span>
+                <span className="font-medium text-zinc-800">{companyName}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100">
+                <span className="text-zinc-500">Role</span>
+                <span className="font-medium text-zinc-800">{getFinalRole()}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100">
+                <span className="text-zinc-500">Section</span>
+                <span className="font-medium text-zinc-800">{info?.section_name}</span>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStep('role')}
+                className="flex-1 py-3 border-2 border-zinc-300 text-zinc-700 rounded-xl font-medium hover:bg-zinc-50 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                className="flex-1 py-3 bg-zinc-800 text-white rounded-xl font-medium hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
+              >
+                Confirm & Upload <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Upload */}
+        {step === 'upload' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-semibold text-zinc-800 mb-1">Upload Your Photos</h2>
+              <p className="text-zinc-600">
+                Contributing as <span className="font-medium">{companyName}</span>
+                {selectedRole && <span className="text-zinc-400"> • {getFinalRole()}</span>}
+              </p>
+            </div>
+            
+            {/* Dropzone */}
+            <div
+              {...getRootProps()}
+              className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${
+                isDragActive
+                  ? 'border-zinc-500 bg-zinc-50'
+                  : uploading
+                    ? 'border-zinc-200 bg-zinc-50 cursor-not-allowed'
+                    : 'border-zinc-300 hover:border-zinc-400 hover:bg-zinc-50'
+              }`}
+            >
+              <input {...getInputProps()} />
+              {uploading ? (
+                <div className="space-y-4">
+                  <Loader2 className="w-12 h-12 mx-auto text-zinc-400 animate-spin" />
+                  <p className="text-zinc-600">Uploading photos...</p>
+                </div>
+              ) : isDragActive ? (
+                <div className="space-y-4">
+                  <Upload className="w-12 h-12 mx-auto text-zinc-500" />
+                  <p className="text-zinc-600">Drop your photos here</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <Upload className="w-12 h-12 mx-auto text-zinc-400" />
+                  <div>
+                    <p className="text-zinc-700 font-medium">Drag & drop photos here</p>
+                    <p className="text-zinc-500 text-sm mt-1">or click to browse</p>
+                  </div>
+                  <p className="text-xs text-zinc-400">
+                    Supports JPG, PNG, GIF, WebP, HEIC • Max 50MB per file
                   </p>
                 </div>
               )}
             </div>
+
+            {/* Upload Progress with Speed Indicator */}
+            {uploadProgress.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-zinc-700">
+                    Upload Progress ({uploadStats.completed + uploadStats.failed}/{uploadStats.totalFiles})
+                  </h4>
+                  <div className="flex items-center gap-3 text-xs text-zinc-500">
+                    <span className="flex items-center gap-1">
+                      <Wifi className="w-3.5 h-3.5" />
+                      {formatSpeed(uploadStats.currentSpeed)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Zap className="w-3.5 h-3.5" />
+                      {uploadStats.concurrency} concurrent
+                    </span>
+                  </div>
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-2">
+                  {uploadProgress.map((file, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg">
+                      {file.status === 'pending' && (
+                        <div className="w-5 h-5 rounded-full border-2 border-zinc-300" />
+                      )}
+                      {(file.status === 'uploading' || file.status === 'retrying') && (
+                        <Loader2 className="w-5 h-5 text-zinc-600 animate-spin" />
+                      )}
+                      {file.status === 'success' && (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      )}
+                      {file.status === 'error' && (
+                        <AlertCircle className="w-5 h-5 text-red-500" />
+                      )}
+                      <span className="flex-1 text-sm truncate">{file.name}</span>
+                      {(file.status === 'uploading' || file.status === 'retrying') && (
+                        <span className="text-sm text-zinc-500">{file.progress}%</span>
+                      )}
+                      {file.status === 'retrying' && (
+                        <span className="text-xs text-amber-500">Retrying...</span>
+                      )}
+                      {file.status === 'error' && (
+                        <span className="text-sm text-red-500">{file.errorMsg || file.error}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {uploading && (
+                  <button
+                    onClick={cancelUpload}
+                    className="text-sm text-red-600 hover:underline"
+                  >
+                    Cancel uploads
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Uploaded Photos Count */}
+            {uploadedPhotos.length > 0 && (
+              <div className="mt-6 p-4 bg-green-50 rounded-xl border border-green-200">
+                <p className="text-green-800 font-medium flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  {uploadedPhotos.length} photo{uploadedPhotos.length !== 1 ? 's' : ''} uploaded successfully
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200 py-8 mt-12">
+      <footer className="border-t border-zinc-200 py-8 mt-12 bg-white">
         <div className="max-w-screen-xl mx-auto px-6 text-center text-sm text-zinc-500">
           <p>© {new Date().getFullYear()} {brandConfig.brand_name || 'PhotoShare'}. Contributor Upload Portal.</p>
         </div>
