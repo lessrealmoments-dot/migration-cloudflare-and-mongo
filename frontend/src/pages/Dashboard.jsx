@@ -694,6 +694,39 @@ const Dashboard = ({ user, setUser }) => {
                       Editing locked
                     </div>
                   )}
+                  {/* Storage usage bar */}
+                  {gallery.storage_quota > 0 && (
+                    <div className="mt-3 pt-3 border-t border-zinc-100">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="text-zinc-500 flex items-center gap-1">
+                          <HardDrive className="w-3 h-3" />
+                          Storage
+                        </span>
+                        <span className={`${
+                          gallery.storage_percent > 90 ? 'text-red-600 font-medium' :
+                          gallery.storage_percent > 70 ? 'text-amber-600' :
+                          'text-zinc-500'
+                        }`}>
+                          {formatBytes(gallery.storage_used)} / {formatBytes(gallery.storage_quota)}
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all ${
+                            gallery.storage_percent > 90 ? 'bg-red-500' :
+                            gallery.storage_percent > 70 ? 'bg-amber-500' :
+                            'bg-green-500'
+                          }`}
+                          style={{ width: `${Math.min(gallery.storage_percent, 100)}%` }}
+                        />
+                      </div>
+                      {gallery.storage_percent > 80 && (
+                        <p className="text-xs text-amber-600 mt-1">
+                          💡 Consider using Google Drive or pCloud for more photos
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
