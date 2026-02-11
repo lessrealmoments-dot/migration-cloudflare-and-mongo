@@ -7359,16 +7359,22 @@ async def get_public_gallery(share_link: str):
         contributors.append({"name": coordinator_name, "role": "Coordinator", "is_owner": False})
         seen_entries.add((coordinator_name.lower(), "coordinator"))
     
-    # Add contributors from each section with section name as role
+    # Add contributors from each section with their official title and section name
     for section in sections:
         section_name = section.get("name", "")
         contributor_name = section.get("contributor_name")
+        contributor_title = section.get("contributor_role", "")  # Official title like "Videographer"
         
         if contributor_name:
-            # Use section name as the role
-            entry_key = (contributor_name.lower(), section_name.lower())
+            # Use contributor name + title as unique key to avoid duplicates
+            entry_key = (contributor_name.lower(), contributor_title.lower() if contributor_title else section_name.lower())
             if entry_key not in seen_entries:
-                contributors.append({"name": contributor_name, "role": section_name, "is_owner": False})
+                contributors.append({
+                    "name": contributor_name,
+                    "title": contributor_title,  # Official title (e.g., "Videographer", "Second Shooter")
+                    "section": section_name,     # Section they contributed to
+                    "is_owner": False
+                })
                 seen_entries.add(entry_key)
     
     # Check download lock status
