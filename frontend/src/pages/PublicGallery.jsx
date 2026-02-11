@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
@@ -9,6 +9,8 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import { getThemeStyles, themes } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 import OptimizedImage from '@/components/OptimizedImage';
+import ProgressiveImage from '@/components/ProgressiveImage';
+import VirtualizedGalleryGrid from '@/components/VirtualizedGalleryGrid';
 import SocialSharePanel from '@/components/SocialSharePanel';
 import VideoSection from '@/components/VideoSection';
 import FotoshareSection from '@/components/FotoshareSection';
@@ -19,6 +21,7 @@ import { getContrastTextColor, getTextColorForBackground, getSubtleTextColor } f
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const PREVIEW_COUNT = 8;
+const LARGE_GALLERY_THRESHOLD = 50; // Use virtualized grid for galleries with more photos
 
 // Helper to get the correct image URL (handles both CDN and local URLs)
 const getImageUrl = (url) => {
