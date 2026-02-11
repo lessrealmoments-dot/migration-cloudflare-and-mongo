@@ -6240,6 +6240,20 @@ async def upload_contributor_photo(
     if file.filename.lower() in existing_filenames:
         raise HTTPException(status_code=400, detail=f"Photo '{file.filename}' already exists in this gallery")
     
+    # Read file content
+    file_content = await file.read()
+    file_size = len(file_content)
+    
+    # Check per-gallery storage quota
+    gallery_storage_used = gallery.get("storage_used", 0)
+    gallery_storage_quota = gallery.get("storage_quota", -1)
+    
+    if gallery_storage_quota != -1 and gallery_storage_used + file_size > gallery_storage_quota:
+        raise HTTPException(
+            status_code=403, 
+            detail="This gallery has reached its storage limit. Please contact the photographer."
+        )
+    
     # Generate unique filename
     file_ext = file.filename.split('.')[-1].lower()
     photo_id = str(uuid.uuid4())
@@ -6247,10 +6261,6 @@ async def upload_contributor_photo(
     
     # Get current photo count for order
     photo_count = await db.photos.count_documents({"gallery_id": gallery["id"], "section_id": section["id"]})
-    
-    # Read file content
-    file_content = await file.read()
-    file_size = len(file_content)
     
     # Use R2 storage if enabled, otherwise local
     if storage.r2_enabled:
