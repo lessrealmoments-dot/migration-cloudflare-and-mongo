@@ -1992,12 +1992,25 @@ const PublicGallery = () => {
           initialIndex={pcloudLightboxIndex}
           onClose={() => setPcloudLightboxIndex(null)}
           onDownload={(photo) => {
-            // Download pCloud photo using full URL
-            const downloadUrl = getImageUrl(photo.url);
+            // Download pCloud photo through our proxy to bypass ISP blocks
+            // photo.url format: /api/pcloud/serve/{code}/{fileid}
+            // Convert to download endpoint: /api/pcloud/download/{code}/{fileid}
+            let downloadUrl;
+            if (photo.url && photo.url.includes('/pcloud/serve/')) {
+              // Use our proxy download endpoint
+              downloadUrl = photo.url.replace('/pcloud/serve/', '/pcloud/download/');
+              downloadUrl = `${BACKEND_URL}${downloadUrl}?filename=${encodeURIComponent(photo.name || 'photo.jpg')}`;
+            } else if (photo.pcloud_code && photo.fileid) {
+              // Build proxy download URL from photo metadata
+              downloadUrl = `${BACKEND_URL}/api/pcloud/download/${photo.pcloud_code}/${photo.fileid}?filename=${encodeURIComponent(photo.name || 'photo.jpg')}`;
+            } else {
+              // Fallback to original URL
+              downloadUrl = getImageUrl(photo.url);
+            }
+            
             const link = document.createElement('a');
             link.href = downloadUrl;
             link.download = photo.name || 'photo.jpg';
-            link.target = '_blank';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
