@@ -7568,6 +7568,18 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
     
     try:
         await db.photos.insert_one(photo_doc)
+        
+        # Update gallery storage used
+        await db.galleries.update_one(
+            {"id": gallery["id"]},
+            {"$inc": {"storage_used": file_size}}
+        )
+        
+        # Update photographer's total storage for overall tracking
+        await db.users.update_one(
+            {"id": gallery["photographer_id"]},
+            {"$inc": {"storage_used": file_size}}
+        )
     except Exception as e:
         logger.error(f"Error saving guest photo to database: {e}")
         if file_path.exists():
