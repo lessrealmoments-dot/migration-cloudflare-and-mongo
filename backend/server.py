@@ -3928,6 +3928,9 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     # Check if this is a founder gallery (has unlimited token via override mode)
     is_founder = has_unlimited_credits and override_mode == MODE_FOUNDERS_CIRCLE
     
+    # Get per-gallery storage quota based on user's plan/mode
+    gallery_storage_quota = await get_gallery_storage_quota(user)
+    
     gallery_doc = {
         "id": gallery_id,
         "photographer_id": current_user["id"],
@@ -3953,7 +3956,10 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         "is_founder_gallery": is_founder,
         "demo_features_expire": demo_features_expire,
         "download_locked_until_payment": download_locked_until_payment,
-        "view_count": 0
+        "view_count": 0,
+        # Per-gallery storage tracking
+        "storage_used": 0,
+        "storage_quota": gallery_storage_quota  # -1 = unlimited
     }
     
     await db.galleries.insert_one(gallery_doc)
