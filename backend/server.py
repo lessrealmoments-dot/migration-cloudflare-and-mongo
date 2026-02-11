@@ -682,9 +682,9 @@ async def fetch_gdrive_folder_photos(folder_id: str) -> dict:
 
 async def scrape_gdrive_folder_html(folder_id: str) -> dict:
     """
-    Alternative method: Scrape Google Drive folder HTML page for public folders.
-    This works when the folder is publicly shared but API access is restricted.
-    Updated to handle Google's 2024+ page structure.
+    Scrape Google Drive folder HTML page for public folders.
+    This works when the folder is publicly shared.
+    Updated for Google's 2024/2025 page structure with multiple extraction methods.
     """
     result = {
         'success': False,
@@ -694,75 +694,125 @@ async def scrape_gdrive_folder_html(folder_id: str) -> dict:
     }
     
     try:
-        url = f"https://drive.google.com/drive/folders/{folder_id}"
+        # Try both URL formats
+        urls_to_try = [
+            f"https://drive.google.com/drive/folders/{folder_id}?usp=sharing",
+            f"https://drive.google.com/drive/folders/{folder_id}",
+        ]
+        
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0',
         }
         
+        html = None
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers, allow_redirects=True) as response:
-                if response.status == 200:
-                    html = await response.text()
-                    
-                    # Extract folder name from title
-                    title_match = re.search(r'<title>([^<]+)</title>', html)
-                    if title_match:
-                        title = title_match.group(1).replace(' - Google Drive', '').strip()
-                        if title:
-                            result['folder_name'] = title
-                    
-                    # Method 1: Find file IDs using the pattern for Google Drive files
-                    # Google Drive file IDs are typically 33 characters, starting with '1'
-                    file_id_pattern = r'"(1[a-zA-Z0-9_-]{30,35})"'
-                    potential_files = list(set(re.findall(file_id_pattern, html)))
-                    
-                    # Filter out the folder ID itself
-                    potential_files = [f for f in potential_files if f != folder_id]
-                    
-                    logger.info(f"Found {len(potential_files)} potential file IDs in Google Drive folder {folder_id}")
-                    
-                    # Verify each file by checking if thumbnail exists
-                    verified_count = 0
-                    for file_id in potential_files:
-                        # Try to verify this is an image by checking thumbnail
-                        thumb_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w100"
-                        try:
-                            async with session.head(thumb_url, allow_redirects=True, timeout=aiohttp.ClientTimeout(total=5)) as thumb_resp:
-                                if thumb_resp.status == 200:
-                                    verified_count += 1
-                                    photo_data = {
-                                        'file_id': file_id,
-                                        'name': f'Photo_{verified_count}.jpg',  # Google doesn't expose names in HTML
-                                        'mime_type': 'image/jpeg',
-                                        'size': 0,
-                                        'thumbnail_url': f"https://drive.google.com/thumbnail?id={file_id}&sz=w800",
-                                        'view_url': f"https://drive.google.com/uc?export=view&id={file_id}",
-                                        'width': None,
-                                        'height': None,
-                                        'created_time': None
-                                    }
-                                    result['photos'].append(photo_data)
-                        except asyncio.TimeoutError:
-                            continue
-                        except Exception as e:
-                            logger.debug(f"Error verifying file {file_id}: {e}")
-                            continue
-                    
-                    logger.info(f"Verified {len(result['photos'])} images in Google Drive folder {folder_id}")
-                    
-                    if result['photos']:
-                        result['success'] = True
-                        result['photo_count'] = len(result['photos'])
-                    else:
-                        # If no verified photos, try adding all potential files anyway
-                        # (verification might fail due to rate limiting)
-                        if potential_files:
-                            for i, file_id in enumerate(potential_files):
+            for url in urls_to_try:
+                try:
+                    async with session.get(url, headers=headers, allow_redirects=True, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                        if response.status == 200:
+                            html = await response.text()
+                            logger.info(f"Successfully fetched Google Drive folder HTML ({len(html)} bytes) from {url}")
+                            break
+                        else:
+                            logger.warning(f"Google Drive returned status {response.status} for {url}")
+                except Exception as e:
+                    logger.warning(f"Failed to fetch {url}: {e}")
+                    continue
+            
+            if not html:
+                result['error'] = "Could not access Google Drive folder. Make sure the link is correct and publicly shared."
+                return result
+            
+            # Extract folder name from title
+            title_match = re.search(r'<title>([^<]+)</title>', html)
+            if title_match:
+                title = title_match.group(1).replace(' - Google Drive', '').strip()
+                if title and title != 'Google Drive':
+                    result['folder_name'] = title
+            
+            # Multiple patterns to extract file IDs (Google changes their HTML frequently)
+            all_file_ids = set()
+            
+            # Pattern 1: /file/d/{fileId}/view format (most common in links)
+            pattern1 = r'/file/d/([a-zA-Z0-9_-]{25,})/view'
+            matches1 = re.findall(pattern1, html)
+            all_file_ids.update(matches1)
+            logger.info(f"Pattern 1 (/file/d/.../view): found {len(matches1)} matches")
+            
+            # Pattern 2: /d/{fileId} format
+            pattern2 = r'/d/([a-zA-Z0-9_-]{25,})'
+            matches2 = re.findall(pattern2, html)
+            all_file_ids.update(matches2)
+            logger.info(f"Pattern 2 (/d/...): found {len(matches2)} matches")
+            
+            # Pattern 3: data-id attribute
+            pattern3 = r'data-id="([a-zA-Z0-9_-]{25,})"'
+            matches3 = re.findall(pattern3, html)
+            all_file_ids.update(matches3)
+            logger.info(f"Pattern 3 (data-id): found {len(matches3)} matches")
+            
+            # Pattern 4: Quoted file IDs starting with '1' (common Google Drive ID format)
+            pattern4 = r'"(1[a-zA-Z0-9_-]{32,})"'
+            matches4 = re.findall(pattern4, html)
+            all_file_ids.update(matches4)
+            logger.info(f"Pattern 4 (quoted 1...): found {len(matches4)} matches")
+            
+            # Pattern 5: id= parameter in URLs
+            pattern5 = r'id=([a-zA-Z0-9_-]{25,})'
+            matches5 = re.findall(pattern5, html)
+            all_file_ids.update(matches5)
+            logger.info(f"Pattern 5 (id=...): found {len(matches5)} matches")
+            
+            # Pattern 6: JSON-like structure with file IDs
+            pattern6 = r'\["([a-zA-Z0-9_-]{25,})"[^\]]*"image/'
+            matches6 = re.findall(pattern6, html)
+            all_file_ids.update(matches6)
+            logger.info(f"Pattern 6 (JSON image): found {len(matches6)} matches")
+            
+            # Remove the folder ID itself
+            all_file_ids.discard(folder_id)
+            
+            # Also remove common non-file IDs (known Google IDs that aren't files)
+            known_non_files = {'AIzaSy', 'gtm.js', 'analytics'}
+            all_file_ids = {fid for fid in all_file_ids if not any(x in fid for x in known_non_files)}
+            
+            logger.info(f"Total unique potential file IDs found: {len(all_file_ids)}")
+            
+            if not all_file_ids:
+                # Save HTML for debugging if no files found
+                debug_sample = html[:5000] if len(html) > 5000 else html
+                logger.error(f"No file IDs found. HTML sample: {debug_sample[:1000]}...")
+                result['error'] = "No photos found in folder. Make sure it contains images and is publicly shared with 'Anyone with the link'."
+                return result
+            
+            # Verify files are images by checking thumbnails (with rate limiting)
+            verified_photos = []
+            check_limit = min(len(all_file_ids), 100)  # Limit checks to avoid rate limiting
+            
+            for i, file_id in enumerate(list(all_file_ids)[:check_limit]):
+                if i > 0 and i % 10 == 0:
+                    await asyncio.sleep(0.5)  # Rate limit
+                
+                thumb_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w100"
+                try:
+                    async with session.head(thumb_url, allow_redirects=True, timeout=aiohttp.ClientTimeout(total=5)) as thumb_resp:
+                        if thumb_resp.status == 200:
+                            content_type = thumb_resp.headers.get('Content-Type', '')
+                            if 'image' in content_type.lower():
                                 photo_data = {
                                     'file_id': file_id,
-                                    'name': f'Photo_{i+1}.jpg',
+                                    'name': f'Photo_{len(verified_photos)+1}.jpg',
                                     'mime_type': 'image/jpeg',
                                     'size': 0,
                                     'thumbnail_url': f"https://drive.google.com/thumbnail?id={file_id}&sz=w800",
@@ -771,20 +821,47 @@ async def scrape_gdrive_folder_html(folder_id: str) -> dict:
                                     'height': None,
                                     'created_time': None
                                 }
-                                result['photos'].append(photo_data)
-                            result['success'] = True
-                            result['photo_count'] = len(result['photos'])
-                        else:
-                            result['error'] = "No photos found in folder. Make sure it contains images and is publicly shared."
-                        
-                elif response.status == 404:
-                    result['error'] = "Folder not found"
+                                verified_photos.append(photo_data)
+                except asyncio.TimeoutError:
+                    continue
+                except Exception as e:
+                    logger.debug(f"Error verifying file {file_id}: {e}")
+                    continue
+            
+            logger.info(f"Verified {len(verified_photos)} images out of {check_limit} checked")
+            
+            # If verification found images, use those
+            if verified_photos:
+                result['photos'] = verified_photos
+                result['success'] = True
+                result['photo_count'] = len(verified_photos)
+            else:
+                # If verification failed (rate limiting), add all potential files
+                # and let the frontend handle broken images
+                logger.warning("Verification failed, adding all potential files without verification")
+                for i, file_id in enumerate(all_file_ids):
+                    photo_data = {
+                        'file_id': file_id,
+                        'name': f'Photo_{i+1}.jpg',
+                        'mime_type': 'image/jpeg',
+                        'size': 0,
+                        'thumbnail_url': f"https://drive.google.com/thumbnail?id={file_id}&sz=w800",
+                        'view_url': f"https://drive.google.com/uc?export=view&id={file_id}",
+                        'width': None,
+                        'height': None,
+                        'created_time': None
+                    }
+                    result['photos'].append(photo_data)
+                
+                if result['photos']:
+                    result['success'] = True
+                    result['photo_count'] = len(result['photos'])
                 else:
-                    result['error'] = f"Could not access folder (status {response.status})"
+                    result['error'] = "No photos found in folder."
                     
     except Exception as e:
-        result['error'] = f"Error scraping folder: {str(e)}"
-        logger.error(f"Google Drive scrape error: {e}")
+        result['error'] = f"Error accessing Google Drive folder: {str(e)}"
+        logger.error(f"Google Drive scrape error: {e}", exc_info=True)
     
     return result
 
