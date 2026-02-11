@@ -375,12 +375,12 @@ const FeatureTogglePage = () => {
                 <div className="flex items-center gap-3">
                   <HardDrive className="w-4 h-4 text-zinc-400" />
                   <div>
-                    <span className="text-sm text-white">Storage Limit</span>
-                    <p className="text-xs text-zinc-500">Maximum storage per account</p>
+                    <span className="text-sm text-white">Gallery Storage Limit</span>
+                    <p className="text-xs text-zinc-500">Maximum storage per gallery</p>
                   </div>
                 </div>
                 <select
-                  value={features.storage_limit_gb ?? -1}
+                  value={features.gallery_storage_limit_gb ?? -1}
                   onChange={(e) => handleStorageChange(section, modeKey, e.target.value)}
                   className="bg-zinc-600 text-white text-sm rounded-lg px-3 py-1.5 border border-zinc-500"
                 >
