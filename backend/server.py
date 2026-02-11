@@ -6566,13 +6566,9 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    # Check subscription status for owner uploads
-    subscription_active = await is_subscription_active(current_user)
-    if not subscription_active:
-        raise HTTPException(
-            status_code=403, 
-            detail="Your subscription has expired. Please renew to upload new photos."
-        )
+    # Note: Owner uploads are allowed even if subscription expired
+    # They paid for the gallery, so they can continue uploading to it
+    # Only creating NEW galleries requires active subscription
     
     # Validate file type more thoroughly
     allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
