@@ -9,6 +9,10 @@ const API = `${BACKEND_URL}/api`;
 // Helper to get the correct URL for uploaded files
 const getFileUrl = (path) => {
   if (!path) return null;
+  // If it's already an absolute URL (http:// or https://), return as-is
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
   if (path.startsWith('/api/files/')) {
     return `${BACKEND_URL}${path}`;
   }
