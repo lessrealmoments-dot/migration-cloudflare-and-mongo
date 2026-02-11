@@ -1768,6 +1768,7 @@ const PublicGallery = () => {
               
               return (
                 <motion.section 
+                  id="section-unsorted"
                   className="py-16 md:py-24"
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
