@@ -1383,6 +1383,58 @@ const PublicGallery = () => {
 
           {/* Middle upload section removed - using hero CTA and navbar instead */}
 
+        {/* Quick Section Navigation */}
+        {getNavigationItems.length > 1 && (
+          <div className="sticky top-0 z-30 py-3 backdrop-blur-md border-b transition-all duration-300"
+               style={{ 
+                 backgroundColor: `${currentTheme.colors.background}ee`,
+                 borderColor: getSubtleTextColor(currentTheme.colors.background, 0.1)
+               }}>
+            <div className="max-w-screen-2xl mx-auto px-4 md:px-12">
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
+                <span className="text-xs font-medium uppercase tracking-wider shrink-0 opacity-50 hidden sm:block"
+                      style={{ color: getContrastTextColor(currentTheme.colors.background) }}>
+                  Jump to:
+                </span>
+                {getNavigationItems.map((item, index) => {
+                  const IconComponent = {
+                    star: Star,
+                    image: Image,
+                    video: Video,
+                    film: Film,
+                    cloud: Cloud,
+                    drive: HardDrive,
+                    users: Users
+                  }[item.icon] || Image;
+                  
+                  return (
+                    <motion.button
+                      key={item.id}
+                      onClick={() => scrollToSection(item.id)}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 hover:scale-105"
+                      style={{ 
+                        backgroundColor: getSubtleTextColor(currentTheme.colors.background, 0.08),
+                        color: getContrastTextColor(currentTheme.colors.background)
+                      }}
+                      whileHover={{ 
+                        backgroundColor: currentTheme.colors.accent,
+                        color: getContrastTextColor(currentTheme.colors.accent)
+                      }}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <IconComponent className="w-3.5 h-3.5" />
+                      <span>{item.name}</span>
+                      <span className="text-xs opacity-60">({item.count})</span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Main Gallery Content */}
         <div className="py-8" style={{ backgroundColor: currentTheme.colors.background }}>
 
