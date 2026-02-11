@@ -1764,6 +1764,116 @@ async def resolve_user_features(user: dict) -> dict:
     
     return result
 
+async def check_subscription_grace_periods(user: dict, gallery: dict = None) -> dict:
+    """
+    Check subscription grace periods for grandfathered galleries.
+    
+    When subscription expires, galleries created during that subscription get:
+    - 2 months (UPLOAD_GRACE_PERIOD_DAYS): uploads still allowed
+    - 6 months (VIEW_GRACE_PERIOD_DAYS): gallery still viewable
+    
+    Returns dict with:
+    - subscription_expired: bool
+    - subscription_expired_at: str (ISO date)
+    - in_upload_grace_period: bool (within 2 months of expiry)
+    - in_view_grace_period: bool (within 6 months of expiry)
+    - uploads_allowed: bool
+    - viewing_allowed: bool
+    - can_create_new_contributor_links: bool
+    - existing_contributor_links_work: bool
+    - days_until_upload_disabled: int or None
+    - days_until_view_disabled: int or None
+    """
+    now = datetime.now(timezone.utc)
+    
+    result = {
+        "subscription_expired": False,
+        "subscription_expired_at": None,
+        "in_upload_grace_period": False,
+        "in_view_grace_period": False,
+        "uploads_allowed": True,
+        "viewing_allowed": True,
+        "can_create_new_contributor_links": True,
+        "existing_contributor_links_work": True,
+        "days_until_upload_disabled": None,
+        "days_until_view_disabled": None
+    }
+    
+    # Check if user has an override mode (bypasses all restrictions)
+    override_mode = user.get("override_mode")
+    override_expires_str = user.get("override_expires")
+    if override_mode and override_expires_str:
+        try:
+            override_expires = datetime.fromisoformat(override_expires_str.replace('Z', '+00:00'))
+            if now < override_expires:
+                # Override is active - full access
+                return result
+        except:
+            pass
+    
+    # Check subscription expiration
+    plan = user.get("plan", PLAN_FREE)
+    if plan == PLAN_FREE:
+        # Free users don't have subscription expiration logic
+        return result
+    
+    subscription_expires_str = user.get("subscription_expires")
+    if not subscription_expires_str:
+        return result
+    
+    try:
+        subscription_expires = datetime.fromisoformat(subscription_expires_str.replace('Z', '+00:00'))
+    except:
+        return result
+    
+    if now < subscription_expires:
+        # Subscription is still active
+        return result
+    
+    # Subscription has expired
+    result["subscription_expired"] = True
+    result["subscription_expired_at"] = subscription_expires_str
+    result["can_create_new_contributor_links"] = False  # Cannot create NEW contributor links
+    
+    # Calculate grace periods
+    days_since_expiry = (now - subscription_expires).days
+    
+    # Upload grace period (2 months = 60 days)
+    if days_since_expiry <= UPLOAD_GRACE_PERIOD_DAYS:
+        result["in_upload_grace_period"] = True
+        result["uploads_allowed"] = True
+        result["existing_contributor_links_work"] = True
+        result["days_until_upload_disabled"] = UPLOAD_GRACE_PERIOD_DAYS - days_since_expiry
+    else:
+        result["in_upload_grace_period"] = False
+        result["uploads_allowed"] = False
+        result["existing_contributor_links_work"] = False
+    
+    # View grace period (6 months = 180 days)
+    if days_since_expiry <= VIEW_GRACE_PERIOD_DAYS:
+        result["in_view_grace_period"] = True
+        result["viewing_allowed"] = True
+        result["days_until_view_disabled"] = VIEW_GRACE_PERIOD_DAYS - days_since_expiry
+    else:
+        result["in_view_grace_period"] = False
+        result["viewing_allowed"] = False
+    
+    # If gallery is provided, check if it was created before subscription expired
+    if gallery:
+        gallery_created_str = gallery.get("created_at")
+        if gallery_created_str:
+            try:
+                gallery_created = datetime.fromisoformat(gallery_created_str.replace('Z', '+00:00'))
+                # Gallery must have been created before subscription expired to be grandfathered
+                if gallery_created > subscription_expires:
+                    # Gallery was created after subscription expired - no grace period
+                    result["uploads_allowed"] = False
+                    result["existing_contributor_links_work"] = False
+            except:
+                pass
+    
+    return result
+
 # ============================================
 # EMAIL NOTIFICATION SERVICE
 # ============================================
