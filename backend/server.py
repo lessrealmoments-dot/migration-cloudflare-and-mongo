@@ -157,6 +157,7 @@ from tasks import (
     auto_sync_pcloud_sections,
     auto_sync_drive_backup_task,
     auto_delete_expired_galleries,
+    check_expiring_subscriptions,
 )
 
 # Import routes from routes package (Phase 4 refactoring)
