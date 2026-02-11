@@ -6621,13 +6621,28 @@ async def upload_contributor_photo(
     if not section or not section.get("contributor_enabled", False):
         raise HTTPException(status_code=404, detail="Contributor uploads are not enabled")
     
-    # Check 60-day collaborator access window
+    # Check 60-day collaborator access window (based on event date)
     access_windows = await check_gallery_access_windows(gallery)
     if not access_windows.get("collaborator_access_allowed", True):
         raise HTTPException(
             status_code=403, 
             detail="Contributor upload window has expired (60 days from event date). Please contact the photographer."
         )
+    
+    # Check subscription grace period (2 months from subscription expiry)
+    photographer = await db.users.find_one({"id": gallery["photographer_id"]}, {"_id": 0})
+    if photographer:
+        grace_periods = await check_subscription_grace_periods(photographer, gallery)
+        if grace_periods["subscription_expired"] and not grace_periods["uploads_allowed"]:
+            raise HTTPException(
+                status_code=403,
+                detail="The photographer's subscription has expired and the upload grace period has ended. Please contact the photographer."
+            )
+        if grace_periods["subscription_expired"] and not grace_periods["existing_contributor_links_work"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Contributor uploads have been disabled due to subscription expiration. Please contact the photographer."
+            )
     
     # Validate file type
     allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
