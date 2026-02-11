@@ -6479,13 +6479,6 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
     if not file.filename:
         raise HTTPException(status_code=400, detail="File must have a filename")
     
-    # Get full user data for storage quota calculation
-    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
-    
-    # Check storage quota using effective quota (considers override modes and billing settings)
-    storage_used = current_user.get("storage_used", 0)
-    storage_quota = await get_effective_storage_quota(user or current_user)
-    
     # Read file content with size limit (50MB max per file)
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
     try:
@@ -6503,11 +6496,16 @@ async def upload_photo(gallery_id: str, file: UploadFile = File(...), section_id
         logger.error(f"Error reading uploaded file: {e}")
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
     
-    # Check storage quota (skip if unlimited: -1)
-    if storage_quota != -1 and storage_used + file_size > storage_quota:
+    # Check per-gallery storage quota
+    gallery_storage_used = gallery.get("storage_used", 0)
+    gallery_storage_quota = gallery.get("storage_quota", -1)  # -1 = unlimited
+    
+    if gallery_storage_quota != -1 and gallery_storage_used + file_size > gallery_storage_quota:
+        used_gb = gallery_storage_used / (1024 * 1024 * 1024)
+        quota_gb = gallery_storage_quota / (1024 * 1024 * 1024)
         raise HTTPException(
             status_code=403, 
-            detail=f"Storage quota exceeded. Used: {storage_used/(1024*1024):.1f}MB / {storage_quota/(1024*1024):.0f}MB"
+            detail=f"Gallery storage limit reached ({used_gb:.1f}GB / {quota_gb:.0f}GB). Consider using Google Drive or pCloud for additional photos."
         )
     
     photo_id = str(uuid.uuid4())
