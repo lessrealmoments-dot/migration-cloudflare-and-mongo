@@ -3458,14 +3458,29 @@ const GalleryDetail = () => {
                 : 'border-zinc-300 hover:border-zinc-400 hover:bg-zinc-50/50'
             }`}
           >
-            <input {...getInputProps()} disabled={uploading} />
+            <input {...getInputProps()} disabled={smartUploading} />
             
-            {uploading && uploadProgress.length > 0 ? (
+            {smartUploading && smartProgress.length > 0 ? (
               <div className="space-y-4">
                 <Loader2 className="w-12 h-12 mx-auto text-zinc-600 animate-spin" strokeWidth={1.5} />
-                <p className="text-base font-medium text-zinc-700">Uploading {uploadProgress.length} photo(s)...</p>
-                <div className="max-w-md mx-auto space-y-2">
-                  {uploadProgress.map((file, index) => (
+                <div className="text-center">
+                  <p className="text-base font-medium text-zinc-700">
+                    Uploading {uploadStats.completed + uploadStats.failed}/{uploadStats.totalFiles} photos
+                  </p>
+                  {/* Speed and concurrency indicator */}
+                  <div className="flex items-center justify-center gap-4 mt-2 text-xs text-zinc-500">
+                    <span className="flex items-center gap-1">
+                      <Wifi className="w-3.5 h-3.5" />
+                      {formatSpeed(uploadStats.currentSpeed)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Zap className="w-3.5 h-3.5" />
+                      {uploadStats.concurrency} concurrent
+                    </span>
+                  </div>
+                </div>
+                <div className="max-w-md mx-auto space-y-2 max-h-48 overflow-y-auto">
+                  {smartProgress.map((file, index) => (
                     <div key={index} className="flex items-center gap-3 text-left bg-white rounded-md p-2 shadow-sm border border-zinc-200">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-zinc-700 truncate">{file.name}</p>
@@ -3496,11 +3511,24 @@ const GalleryDetail = () => {
                         {file.status === 'error' && (
                           <AlertCircle className="w-4 h-4 text-red-500" />
                         )}
+                        {file.status === 'pending' && (
+                          <div className="w-4 h-4 rounded-full border-2 border-zinc-300" />
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-zinc-500 mt-2">Please wait until all uploads complete</p>
+                <div className="flex items-center justify-center gap-4 mt-3">
+                  <button
+                    onClick={cancelSmartUpload}
+                    className="px-4 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <p className="text-xs text-zinc-500">
+                  Upload speed is measured automatically and concurrency adjusts for optimal performance
+                </p>
               </div>
             ) : isDragActive ? (
               <>
