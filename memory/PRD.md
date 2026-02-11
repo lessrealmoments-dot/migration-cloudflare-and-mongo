@@ -320,6 +320,44 @@ Admin-controlled features that can be independently toggled per package/mode:
 - Standard: 2 credits/month, 10GB storage, No Display Mode, No Contributor Links
 - Pro: 2 credits/month, 10GB storage, Display Mode + Contributor Links
 
+## Contributor Upload Flow (Enhanced - February 2026) ✅
+
+### Multi-Step Form
+1. **Company Name**: Enter business/company name for credits
+2. **Role Selection**: Choose from predefined categories or custom role
+3. **Confirmation**: Preview how credits will appear in gallery
+4. **Upload**: Drag & drop photos with smart upload
+
+### Predefined Role Categories
+**Core Team:**
+- Photographer
+- Videographer
+- Event Coordinator / Planner
+- Caterer
+- Event Stylist / Designer
+- Host / DJ / Emcee
+
+**Additional Services:**
+- Live Band / Musicians
+- Hair & Makeup Artist (HMUA)
+- Cake Designer
+- Photobooth Provider
+- Lights & Sounds / Technical Team
+
+**Premium Enhancements:**
+- Drone / Aerial Coverage
+- LED Wall / Visual Display
+- Special Effects (confetti, CO₂, fireworks, cold sparks)
+- Content Creators / Social Media Team
+- Live Streaming / Broadcast Team
+
+### Credits Display in Public Gallery
+Contributors appear in the hero section with:
+- Company name (prominent)
+- Role/Title (subtle, uppercase)
+
+Example: "Sample Photography Studio" / "VIDEOGRAPHER"
+
 ## Extra Credits Purchase Flow (NEW)
 
 ### From Dashboard
