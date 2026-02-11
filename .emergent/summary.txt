@@ -1,19 +1,21 @@
 <analysis>**original_problem_statement**: The user's goal is a comprehensive photo-sharing application. The project began with a migration to a personal Hostinger KVM VPS. The core focus has been on adding features, improving the UI/UX, and ensuring stable deployment.
 
-A critical issue arose where new photo uploads resulted in broken images, diagnosed as a bug where files saved to local container storage instead of Cloudflare R2. This led to a full code analysis and a major refactoring of the monolithic backend.
-
-Recent requests focused on improving data consistency and user experience:
-1.  **Photo Count**: Update the gallery photo count to be a sum of all sources (R2, Google Drive, pCloud, YouTube).
-2.  **Download Behavior**: When a guest enters a download password, the ZIP download should only contain R2 photos, and separate links to integrated services (Google Drive, pCloud) should be displayed.
-3.  **Data Integrity**: Ensure that deleting photos or entire galleries also deletes the corresponding files from the R2 bucket.
-4.  **Storage Consolidation**: Ensure all system-generated files (payment proofs, QR codes) are stored in R2, not the local VPS.
-5.  **UI/UX**: Show pending transactions in the admin dashboard and fix bugs related to broken image links and blank pages on file uploads.
+Recent requests focused on improving data consistency, billing, and user experience:
+1.  **Pending Transactions**: Ensure submitting payment proof creates a pending transaction visible to the admin.
+2.  **Auto-Refreshing UI**: The admin billing section should update automatically without a manual page refresh.
+3.  **Client Management**: Create a comprehensive admin section to view and manage all client accounts, including subscriptions, credits, storage, and perform actions like plan changes or adding credits.
+4.  **Docker Warnings**: Fix warnings appearing during the production deployment build process.
+5.  **System Analysis**: Generate a detailed document explaining the platform's complete business logic (subscriptions, credits, permissions, etc.) for an external advisor.
+6.  **Subscription Logic**: Define and enforce rules for what happens when a user's account expires or is downgraded (e.g., Pro to Free).
+7.  **Download Locks**: Fix a loophole where guests could download photos from a gallery even if the owner's payment was still pending.
+8.  **Storage Caps**: Change the storage limit model from a per-user quota to a more granular per-gallery quota.
+9.  **Contributor Credits**: Improve the professionalism of the credits display in the public gallery.
 
 **PRODUCT REQUIREMENTS**:
 - A professional contributor link workflow for Google Drive and pCloud.
 - A comprehensive theme and typography overhaul.
 - A Coordinator Hub page for photographers.
-- Fix for an image upload bug in the admin section.
+- An image upload bug fix in the admin section.
 - Dynamic pricing page reflecting admin settings.
 - Consistent copyright year display.
 - Dynamic Open Graph (OG) meta tags.
@@ -23,70 +25,84 @@ Recent requests focused on improving data consistency and user experience:
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack React/FastAPI app deployed on the user's Hostinger VPS using Docker Compose, using Cloudflare R2 for storage and MongoDB Atlas for the database.
+The application is a full-stack React/FastAPI app on a Hostinger VPS using Docker Compose, with Cloudflare R2 for storage and MongoDB Atlas for the database.
 
-A significant backend refactoring was performed, extracting background tasks into a dedicated module and consolidating dozens of Pydantic models, which reduced the main  file size by over 900 lines.
-
-Key features and fixes from this session include:
-- The public gallery now accurately displays separate counts for photos and videos, aggregating from all sources (R2, GDrive, pCloud, YouTube).
-- The download workflow has been enhanced to provide direct links to integration sources after password validation.
-- Critical bugs preventing file deletion from R2 when a gallery, photo, or photographer was deleted have been fixed.
-- All file uploads (payment proofs, QR codes, video thumbnails) now correctly use R2 storage.
-- A frontend bug causing broken image URLs from R2 was resolved.
-- A bug causing blank pages on file uploads was fixed.
-- Logic to create pending transaction records was added to the backend.
+In this session, the agent successfully implemented and tested several key features:
+- A pending transaction is now correctly created for both plan upgrades and extra credit requests.
+- The admin dashboard's billing section now auto-refreshes every 30 seconds to show new pending payments.
+- A new, comprehensive Clients tab was built in the admin dashboard, providing a detailed view of all users and enabling admins to perform actions like adding credits, changing plans, and resetting passwords.
+- The storage model was re-architected from a per-user quota to a per-gallery quota. This included a data migration for existing galleries and UI updates to show per-gallery storage bars.
+- The business logic for expired/downgraded subscriptions was solidified into a grandfathering policy, where existing galleries retain their paid-for features.
+- Download locks are now strictly enforced on all download endpoints for galleries created while a payment is pending.
+- Minor Docker build warnings were resolved.
+- Detailed system analysis documents (, ) were generated.
 
 **Last working item**:
-- Last item agent was working: Implementing a fix to ensure that when a user submits a payment proof for a plan upgrade or extra credits, a new transaction record with a  of pending is created in the database. This was missing, causing pending requests not to appear in the admin transaction history. The agent added calls to a  helper in the  and  endpoints in .
+- Last item agent was working: The user requested a more professional contributor credit display in the public gallery. The agent identified that a  field already exists but was not being used. The agent updated the backend  function to correctly structure the credit data to include the contributor's title. The frontend part is pending.
 - Status: IN PROGRESS
 - Agent Testing Done: N
-- Which testing method agent to use? backend testing agent
+- Which testing method agent to use? screenshot tool
 - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Test and verify the creation of pending transactions. (P0)
-  - Issue 2: Data inconsistency from before the R2 upload fix. (P1)
-  - Issue 3: The  background job needs monitoring on the live server. (P2)
-  - Issue 4: Local files are lost on container rebuilds due to a missing Docker volume mount. (P3)
+  - Issue 1: Complete the contributor credit display update. (P0)
+  - Issue 2: PDF generation failed due to a missing system library. (P1)
+  - Issue 3: Data inconsistency from before the R2 upload fix. (P2)
+  - Issue 4: The  background job needs monitoring. (P3)
+  - Issue 5: Local files are lost on container rebuilds due to a missing Docker volume mount. (P4)
   
   Issues Detail:
   - Issue 1: 
-     - Description: The agent implemented code to create a pending transaction when a user submits a payment proof. This fix has not been tested to confirm it works as expected.
-     - Next debug checklist:
-        1. Log in as a regular user.
-        2. Submit a plan upgrade request with a dummy payment proof.
-        3. Log in as an admin.
-        4. Call the  endpoint and verify that a new transaction record exists with .
-     - Why fix this issue and what will be achieved with the fix? This will allow admins to see and manage all incoming payment requests from the transaction history page, which is critical for the billing workflow.
+     - Description: The backend was updated to include the  in the public gallery data. The frontend needs to be checked and updated to render this new information, creating a more professional credit display (e.g., Curated by [Curator], with [Contributor Name], [Contributor Role]).
+     - Next debug checklist: 
+        1. Review  where credits are displayed.
+        2. Modify the React component to render the  field if it exists.
+        3. Take a screenshot to verify the UI change.
+     - Why fix this issue and what will be achieved with the fix? This improves the professionalism and clarity of the photographer and contributor credits in the public-facing gallery.
      - Status:  IN PROGRESS
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? frontend
+     - Blocked on other issue: None
+  - Issue 2: 
+     - Description: The user requested a PDF version of the analysis document. The agent attempted to use 
+-----
+
+WeasyPrint could not import some external libraries. Please carefully follow the installation steps before reporting an issue:
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting 
+
+----- but it failed due to a missing system dependency (). The agent installed  but did not complete the conversion.
+     - Attempted fixes: Installed  as an alternative.
+     - Next debug checklist:
+        1. Use  or another available tool to convert  to a PDF file.
+        2. Inform the user of the created file path.
+     - Why fix this issue and what will be achieved with the fix? Fulfills the user's request for an easily shareable PDF document.
+     - Status:  BLOCKED
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? backend
      - Blocked on other issue: None
-  - Issue 2: 
-     - Description: Before the R2 upload bug was fixed, photos were uploaded to the local Docker container storage. These files are not in R2, but the database records exist, causing broken images for older galleries.
-     - Attempted fixes: The user was instructed to manually re-upload the files.
+  - Issue 3: 
+     - Description: Photos uploaded before the R2 storage fix exist in the database but not in R2, causing broken images for older galleries.
      - Next debug checklist:
-        1. Discuss with the user if they want a migration script to automatically find local files, upload them to R2, and update the database.
-     - Why fix this issue and what will be achieved with the fix? To resolve all remaining broken images and ensure 100% data integrity between the database and R2 storage.
+        1. Discuss with the user if they want a migration script to find local files, upload them to R2, and update the database.
+     - Why fix this issue and what will be achieved with the fix? To resolve all remaining broken images and ensure 100% data integrity.
      - Status:  NOT STARTED
      - Is recurring issue? Y
      - Should Test frontend/backend/both after fix? backend
      - Blocked on other issue: None
-  - Issue 3: 
-     - Description: The  background job had a bug preventing it from working. While the code was fixed to correctly delete from R2, its successful execution on the live server has not been verified.
+  - Issue 4: 
+     - Description: The  background job's successful execution on the live server has not been verified.
      - Next debug checklist:
         1. Ask the user to monitor the backend logs on their live server for messages from this task.
-        2. Alternatively, create a test gallery with a past  to confirm it gets deleted.
-     - Why fix this issue and what will be achieved with the fix? To confirm that automated cleanup of old galleries is working, which is essential for managing storage costs.
+     - Why fix this issue and what will be achieved with the fix? To confirm automated cleanup of old galleries is working, which is essential for managing storage costs.
      - Status:  NOT STARTED
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? backend
      - Blocked on other issue: None
-  - Issue 4: 
-     - Description: The  file lacks a persistent volume mount for the  directory. This means any file saved locally (e.g., as a fallback if R2 is down) will be permanently deleted when the Docker container is rebuilt.
-     - Attempted fixes: The issue was diagnosed and explained to the user.
+  - Issue 5: 
+     - Description: The  file lacks a persistent volume mount for the  directory, risking data loss on container rebuilds.
      - Next debug checklist:
-        1. Add a volume mount to  as a safeguard: .
+        1. Add a volume mount to : .
      - Why fix this issue and what will be achieved with the fix? To prevent accidental data loss for any files that might be temporarily written to the local filesystem.
      - Status:  NOT STARTED
      - Is recurring issue? N
@@ -94,11 +110,11 @@ Key features and fixes from this session include:
      - Blocked on other issue: None
 
 **In progress Task List**:
-  - Task 1:  Complete  Refactoring (P0)
+  - Task 1: Complete  Refactoring (P1)
  
  Task Detail:
   - Task 1: 
-     - Where to resume: The agent has completed extracting background tasks and synchronizing models. The next step is to tackle Phase 4 from : Extracting API routes from  into the  directory.
+     - Where to resume: The next step is to tackle Phase 4 from : Extracting API routes from  into the  directory. This is a high-priority architectural improvement.
      - What will be achieved with this? A modular, maintainable, and scalable backend architecture, making future development easier.
      - Status:  IN PROGRESS
      - Should Test frontend/backend/both after fix? backend
@@ -110,125 +126,108 @@ Key features and fixes from this session include:
     *   **User-facing fix for broken images (P1)**: Implement a UI for the user to easily re-upload missing photos.
 *   **Future Tasks:**
     *   Enable Live Billing Mode (P1).
-    *   Migration script for old local files to R2 (P2).
     *   Photographer-Side Section Downloads (P2).
     *   Improve Mobile Experience for Collage Preset Builder (P2).
     *   Invoice Generation (P2).
     *   User Notifications for Plan Changes (P2).
 
 **Completed work in this session**
-- **Backend Refactoring (Phases 2 & 3)**: Extracted all background tasks and synchronized dozens of Pydantic models from  into  and  modules, reducing  by over 900 lines.
-- **Photo/Video Count Feature**: Updated backend and frontend to display an accurate, aggregated count of photos and videos from all sources (R2, GDrive, pCloud, YouTube) in the gallery's floating navigation bubble.
-- **Enhanced Download Feature**: The public gallery download modal now shows separate, direct links to external integration sources (GDrive, pCloud) after password verification.
-- **R2 Deletion Bug Fixes**: Corrected logic for deleting a gallery, bulk-deleting photos, and deleting a photographer to ensure corresponding files are also deleted from Cloudflare R2.
-- **Storage Consolidation**: Migrated payment proofs, QR codes, and video thumbnail uploads to use R2 storage instead of the local VPS filesystem.
-- **Frontend URL Bug Fix**: Fixed a  helper function that was causing broken image links by incorrectly prepending the backend URL to absolute R2 URLs.
-- **Upload Blank Page Bug Fix**: Resolved an issue where uploading payment proofs and other files led to a blank page due to incorrect handling of the  function's return value.
+- **Pending Transactions Fix**: Implemented and tested the creation of pending transaction records for plan upgrades and extra credit requests.
+- **Admin Billing Auto-Refresh**: Added polling to the admin dashboard to auto-refresh the pending payments section every 30 seconds.
+- **Comprehensive Client Management Section**: Built a new Clients tab in the admin dashboard with full-featured backend support to view and manage user accounts, subscriptions, and perform quick actions.
+- **Per-Gallery Storage System**: Re-architected storage from a per-user to a per-gallery model, including data migration, backend enforcement on all uploads, and frontend UI updates.
+- **Subscription Policy Enforcement**: Implemented a grandfathering policy for expired/downgraded accounts, ensuring existing galleries retain their features while new feature usage is blocked.
+- **Download Lock Enforcement**: Closed a loophole by adding a comprehensive check to all download endpoints, preventing downloads from galleries with a pending payment status.
+- **Docker Build Warning Fixes**: Removed obsolete  attribute from  and corrected casing in .
+- **System Analysis & Documentation**: Generated  and  by analyzing the codebase.
+- **Contributor Expiration Fix**: Enforced the existing 60-day expiration rule for contributor uploads.
+
+**Earlier issues found/mentioned but not fixed**
+   - Issue 1: Data inconsistency for photos uploaded before the R2 bug fix.
+   - Issue 2:  background job needs monitoring on the live server.
+   - Issue 3: Local files are lost on container rebuilds due to a missing Docker volume mount.
+   - Issue 4: The agent's attempt to create a PDF from a markdown file failed due to a missing system library ().
+
+**Known issue recurrence from previous fork**
+  - Issue recurrence in previous fork: Data inconsistency where database records for photos exist but the corresponding files are not in R2 storage, leading to broken images.
+  - Recurrence count: 2
+  - Status: NOT STARTED
 
 **Code Architecture**
-health.py
+
 
 **Key Technical Concepts**
-- **Incremental Refactoring**: A strategy to safely break down a monolithic FastAPI application into smaller, maintainable modules.
-- **Storage Abstraction**: Using a  service to correctly route file operations to Cloudflare R2, with a local fallback.
-- **Dependency Injection**: Refactored background tasks to receive dependencies like  and , making them modular and testable.
-- **Full-Stack Debugging**: Tracing bugs from frontend URL construction () through the backend API to the storage service logic.
-- **Live Server Deployment**: Guiding the user through  and  commands to deploy updates to their Hostinger VPS.
+- **Live API Testing**: Extensive use of  commands to test new endpoints and verify business logic.
+- **Data Migration**: Creating and executing a one-time admin API endpoint () to backfill data for existing records.
+- **Frontend Polling**: Using  in a React  hook to periodically fetch data and provide a real-time experience.
+- **Business Logic Refactoring**: Systematically analyzing, clarifying, and implementing complex business rules for subscriptions, storage caps, and permissions.
+- **Code-based System Documentation**: Analyzing the live codebase to produce detailed operational documents.
+- **Production Debugging**: Diagnosing a Cloudflare 522 error by checking container status and logs on the user's live server.
 
 **key DB schema**
-  - **transactions**: Records are now created with  upon user submission of payment proofs, in addition to the existing  status set by admins.
+  - **galleries**: Added , , and .
+  - **users**: The  field is now used to enforce download locks on associated galleries.
+  - **transactions**: Now correctly created with  upon payment proof submission.
 
 **changes in tech stack**
-  - No changes were made to the tech stack.
+  -  was installed as a potential alternative to 
+-----
+
+WeasyPrint could not import some external libraries. Please carefully follow the installation steps before reporting an issue:
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting 
+
+----- for PDF generation, but the task was not completed.
 
 **All files of reference**
-- : The monolithic file that was heavily refactored and had numerous bugs fixed.
-- : Contains the extracted background tasks.
-- : The directory containing all synchronized Pydantic models.
-- : The main public-facing page, modified for photo counts and download links.
-- : Modified to fix broken image URLs.
-- : The R2 storage service logic, which was audited and whose dependent functions were fixed.
-- : The roadmap for the ongoing backend refactoring.
+- : The central backend file, heavily modified to implement all new features and logic changes.
+- : The location of the new Clients tab and the auto-refreshing billing section.
+- : Modified to handle per-gallery instead of per-user storage limits.
+- : Modified to display the new per-gallery storage progress bar.
+- : Pydantic models were updated to include new storage and download lock fields.
+- : A detailed generated report on the platform's business logic.
+- : A second, more technical generated report on the platform's operational reality.
 
 **Areas that need refactoring**:
-- **CRITICAL**: The  file still contains ~9,100 lines and all API routes. This is the highest priority for continued refactoring, following the plan in  to extract routes.
+- **CRITICAL**: The  file remains a large monolith. The highest priority for refactoring is to extract API routes into the  directory as per .
 
 **key api endpoints**
-- : Modified to return  and .
-- : Modified to return .
--  & : Modified to create a pending transaction record.
-- , , : All fixed to properly delete files from R2.
-- All file upload endpoints (, , ) were fixed to use R2 and handle return values correctly.
+- : (New) Runs a one-time data migration to calculate and set storage quotas for all existing galleries.
+-  & : (New) Endpoints for the comprehensive client management dashboard.
+- : (New) Admin actions to manage user accounts.
+- : (Modified) Now check and update per-gallery storage instead of per-user.
+- : (Modified) Now check for a gallery-level  flag and the owner's .
+-  & : (Modified) Responses now include storage usage/quota and download lock status.
+- : (Modified) Updated to handle .
 
 **Critical Info for New Agent**
-- **Your immediate task is to test and verify the fix for creating pending transactions**. The code is written in  inside the  and  functions but has not been tested.
-- **The next major task is to continue the  refactoring**. The highest priority is extracting API routes into the  directory, following the plan in . Start with a simple group of routes like  or .
-- The user is managing their own deployment on a Hostinger VPS. Be prepared to provide clear usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
-           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
-           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
-           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-           [--super-prefix=<path>] [--config-env=<name>=<envvar>]
-           <command> [<args>]
+- **Your immediate task is to finish the contributor credit display update**. The backend has been changed to provide the ; you need to update the frontend in  to display it.
+- **The highest priority architectural task is the  refactoring**. Extracting API routes into modular files is crucial for future maintainability.
+- The user has a specific deployment workflow for their Hostinger VPS. Refer to their messages for the exact commands ( with a space).
+- The user's request to receive a PDF of the analysis document is still open. The previous attempt with 
+-----
 
-These are common Git commands used in various situations:
+WeasyPrint could not import some external libraries. Please carefully follow the installation steps before reporting an issue:
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting 
 
-start a working area (see also: git help tutorial)
-   clone     Clone a repository into a new directory
-   init      Create an empty Git repository or reinitialize an existing one
-
-work on the current change (see also: git help everyday)
-   add       Add file contents to the index
-   mv        Move or rename a file, a directory, or a symlink
-   restore   Restore working tree files
-   rm        Remove files from the working tree and from the index
-
-examine the history and state (see also: git help revisions)
-   bisect    Use binary search to find the commit that introduced a bug
-   diff      Show changes between commits, commit and working tree, etc
-   grep      Print lines matching a pattern
-   log       Show commit logs
-   show      Show various types of objects
-   status    Show the working tree status
-
-grow, mark and tweak your common history
-   branch    List, create, or delete branches
-   commit    Record changes to the repository
-   merge     Join two or more development histories together
-   rebase    Reapply commits on top of another base tip
-   reset     Reset current HEAD to the specified state
-   switch    Switch branches
-   tag       Create, list, delete or verify a tag object signed with GPG
-
-collaborate (see also: git help workflows)
-   fetch     Download objects and refs from another repository
-   pull      Fetch from and integrate with another repository or a local branch
-   push      Update remote refs along with associated objects
-
-'git help -a' and 'git help -g' list available subcommands and some
-concept guides. See 'git help <command>' or 'git help <concept>'
-to read about a specific subcommand or concept.
-See 'git help git' for an overview of the system. and  commands. Note their project directory is  and they use  (with a space).
-- Be aware of the long-standing data inconsistency issue (old local files vs. R2). The user may ask for a migration script in the future.
+----- failed due to a missing  library. You may need to try again with  or another method.
 
 **documents and test reports created in this job**
-  - 
-  -  (updated)
-  -  (updated)
+  - /app/COMPREHENSIVE_ANALYSIS.md
+  - /app/OPERATIONAL_TRUTH_DOCUMENT.md
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. **User**: Asked how to deploy the changes to their live server. (COMPLETE)
-2. **User**: Provided terminal output showing deployment commands were failing due to incorrect paths and  syntax. (COMPLETE)
-3. **User**: Provided new terminal output allowing the agent to identify the correct project path () and Docker command (). (COMPLETE)
-4. **User**: Provided corrected deployment commands. (COMPLETE)
-5. **User**: Showed the full, successful deployment log. (COMPLETE)
-6. **User**: Asked if deleting a photo or gallery in the app also deletes it from R2. (IN PROGRESS)
-7. **User**: Asked if all system-generated files go to R2, as they want to minimize data stored on the VPS. (IN PROGRESS)
-8. **User**: Confirmed that the fix should work for new uploads but asked if existing local files will be migrated. (COMPLETE)
-9. **User**: Clarified they just want to ensure the admin view can still see the R2 data after the change. (COMPLETE)
-10. **User**: Asked why photos uploaded to the local VPS get corrupted. (COMPLETE)
-11. **User**: Reported a new bug: Payment QR images in the admin section are broken, and uploading a new one leads to a blank page. Submitting proof of payment also leads to a blank page. (COMPLETE)
-12. **User**: Confirmed the blank page bug is fixed but now the image links are broken (e.g., ). (COMPLETE)
-13. **User**: Asked for pending transactions to be shown in the admin transaction history. (IN PROGRESS)
+1.  **User**: Confirmed the agent should enforce a grandfathering policy for expired accounts, allowing them to use features on galleries they already paid for. (COMPLETE)
+2.  **User**: Reported a loophole where downloads were still possible from within the gallery even when a payment was pending and asked for it to be fixed. (COMPLETE)
+3.  **User**: Noticed the contributor credits display was not professional and suggested an improved format including the contributor's official title. (IN PROGRESS)
+4.  **User**: Asked what their admin token is and how to get it to run the migration command. (COMPLETE)
+5.  **User**: Provided their admin credentials for the agent to run the migration on their behalf. (COMPLETE)
+6.  **User**: Asked if they need to run the migration code again on their VPS after deployment. (COMPLETE)
+7.  **User**: Reported a Cloudflare 522 error after deployment. (COMPLETE)
+8.  **User**: Confirmed the site was back up but the admin dashboard UI for feature toggles still showed Account Storage Limit instead of Gallery Storage Limit. (COMPLETE)
+9.  **User**: Asked if the new per-gallery storage limit rule is actually enforced. (COMPLETE)
+10. **User**: Asked for a detailed explanation of how the website reacts to downgraded or expired accounts, specifically regarding storage quotas and feature access. (COMPLETE)
 
 **Project Health Check:**
 - **Broken**: Data for photos uploaded *before* the R2 bug fix is inconsistent (DB records exist, files are not in R2).
@@ -244,10 +243,9 @@ See 'git help git' for an overview of the system. and  commands. Note their proj
 - **react-helmet-async**: Used for dynamic meta tags.
 
 **Testing status**
-  - Testing agent used after significant changes: YES (for backend refactoring, report at )
+  - Testing agent used after significant changes: NO
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created:
-    - 
+  - Test files created: []
   - Known regressions: None.
 
 **Credentials to test flow:**
@@ -257,6 +255,6 @@ See 'git help git' for an overview of the system. and  commands. Note their proj
 - **Admin Password**: 
 
 **What agent forgot to execute**
-- The agent has not yet tested the implementation for creating pending transactions.
-- A migration script to move existing local files to R2 has been discussed but not created.
-- A persistent volume mount was suggested for the  directory in  as a safeguard but was not implemented.</analysis>
+- The agent did not complete the user's request to generate a PDF file from the analysis document after the first attempt failed.
+- The major  refactoring (extracting routes) was on the plan but was superseded by the user's immediate feature requests.
+- The safeguard of adding a persistent volume mount for the  directory in  was not implemented.</analysis>

@@ -572,7 +572,7 @@ Integrated with **Resend** email service.
 - `transactions` - Payment transaction history with proof URLs
 
 ## Access URLs
-- Preview: https://imagestash-1.preview.emergentagent.com
+- Preview: https://photogalleryhub.preview.emergentagent.com
 - Pricing: /pricing
 - Admin: /admin
 
