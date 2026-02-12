@@ -293,18 +293,56 @@ const FotoshareContributorUpload = () => {
             </div>
             
             <form onSubmit={handleCompanySubmit} className="space-y-6">
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-zinc-300 mb-2">
                   Company / Business Name
                 </label>
                 <input
                   type="text"
                   value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
+                  onChange={(e) => handleCompanyNameChange(e.target.value)}
+                  onFocus={() => {
+                    if (companyName.trim() && filteredContributors.length > 0) {
+                      setShowSuggestions(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setShowSuggestions(false), 200);
+                  }}
                   placeholder="e.g., 360 Glam Booth Philippines"
                   className="w-full px-4 py-3 bg-zinc-900/50 border border-zinc-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-lg text-white placeholder-zinc-500"
                   autoFocus
+                  autoComplete="off"
                 />
+                
+                {/* Autocomplete Suggestions */}
+                {showSuggestions && filteredContributors.length > 0 && (
+                  <div className="absolute z-20 w-full mt-1 bg-zinc-800 border border-zinc-600 rounded-xl shadow-lg overflow-hidden">
+                    <div className="px-3 py-2 text-xs font-medium text-zinc-400 bg-zinc-900/50 border-b border-zinc-700">
+                      Existing contributors in this gallery
+                    </div>
+                    {filteredContributors.map((contributor, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => selectContributor(contributor)}
+                        className="w-full px-4 py-3 text-left hover:bg-zinc-700 transition-colors flex items-center justify-between group"
+                      >
+                        <div>
+                          <p className="font-medium text-white">{contributor.name}</p>
+                          <p className="text-sm text-zinc-400">{contributor.role}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {galleryInfo?.existing_contributors?.length > 0 && !companyName && (
+                  <p className="text-xs text-zinc-500 mt-2">
+                    💡 Start typing to see existing contributors in this gallery
+                  </p>
+                )}
               </div>
               
               <button
