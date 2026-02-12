@@ -719,14 +719,15 @@ const PublicGallery = () => {
     return result.sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [gallery?.sections]);
 
-  // Helper to get photos from all merged section IDs
+  // Helper to get photos from all merged section IDs (excluding highlights)
   const getPhotosByMergedSection = (mergedSection) => {
     if (!mergedSection.merged_section_ids) {
-      return getPhotosBySection(mergedSection.id);
+      return getRegularPhotosBySection(mergedSection.id);
     }
     return photos.filter(p => 
       mergedSection.merged_section_ids.includes(p.section_id) && 
-      (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor')
+      (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor') &&
+      !p.is_highlight
     );
   };
 
