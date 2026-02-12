@@ -854,7 +854,7 @@ const PublicGallery = () => {
   const ogImage = getCoverPhotoUrl();
 
   return (
-    <div className="themed-gallery min-h-screen overflow-x-hidden" style={themeStyles} data-testid="public-gallery">
+    <div className="themed-gallery min-h-screen" style={{...themeStyles, overflowX: 'clip'}} data-testid="public-gallery">
       
       {/* Dynamic Open Graph Meta Tags for Social Sharing */}
       <Helmet>
