@@ -1386,14 +1386,22 @@ const PublicGallery = () => {
 
         {/* Quick Section Navigation - Mobile optimized */}
         {getNavigationItems.length > 1 && (
-          <div className="sticky top-0 z-30 py-2 md:py-3 border-b"
-               style={{ 
-                 backgroundColor: currentTheme.colors.background,
-                 borderColor: getSubtleTextColor(currentTheme.colors.background, 0.1)
-               }}>
+          <nav 
+            className="sticky top-0 z-30 py-2 md:py-3 border-b will-change-transform"
+            style={{ 
+              backgroundColor: currentTheme.colors.background,
+              borderColor: getSubtleTextColor(currentTheme.colors.background, 0.1),
+              touchAction: 'pan-x'
+            }}
+          >
             <div className="max-w-screen-2xl mx-auto px-3 md:px-12">
-              <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto scrollbar-hide py-1 -mx-1 px-1"
-                   style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div 
+                className="flex items-center gap-1.5 md:gap-2 overflow-x-auto scrollbar-hide py-1 -mx-1 px-1"
+                style={{ 
+                  WebkitOverflowScrolling: 'touch',
+                  touchAction: 'pan-x'
+                }}
+              >
                 <span className="text-xs font-medium uppercase tracking-wider shrink-0 opacity-50 hidden sm:block"
                       style={{ color: getContrastTextColor(currentTheme.colors.background) }}>
                   Jump to:
@@ -1413,10 +1421,11 @@ const PublicGallery = () => {
                     <button
                       key={item.id}
                       onClick={() => scrollToSection(item.id)}
-                      className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1.5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap active:scale-95 transition-transform"
+                      className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1.5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap active:scale-95"
                       style={{ 
                         backgroundColor: getSubtleTextColor(currentTheme.colors.background, 0.08),
-                        color: getContrastTextColor(currentTheme.colors.background)
+                        color: getContrastTextColor(currentTheme.colors.background),
+                        touchAction: 'manipulation'
                       }}
                     >
                       <IconComponent className="w-3 h-3 md:w-3.5 md:h-3.5" />
@@ -1427,7 +1436,7 @@ const PublicGallery = () => {
                 })}
               </div>
             </div>
-          </div>
+          </nav>
         )}
 
         {/* Main Gallery Content */}
