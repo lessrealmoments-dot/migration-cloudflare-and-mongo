@@ -1480,12 +1480,12 @@ const PublicGallery = () => {
         {/* Main Gallery Content */}
         <div className="py-8" style={{ backgroundColor: currentTheme.colors.background }}>
 
-          {/* Sections - Photo, Video, and Fotoshare (using merged sections) */}
-          {getMergedSections.length > 0 ? (
-            getMergedSections.map((section) => {
+          {/* Sections - Photo, Video, and Fotoshare */}
+          {gallery?.sections && gallery.sections.length > 0 ? (
+            gallery.sections.map((section) => {
               // Check if this is a video section
               if (section.type === 'video') {
-                const sectionVideos = getVideosByMergedSection(section);
+                const sectionVideos = getVideosBySection(section.id);
                 if (sectionVideos.length === 0) return null;
                 
                 return (
@@ -1501,7 +1501,7 @@ const PublicGallery = () => {
               
               // Check if this is a fotoshare/360 booth section
               if (section.type === 'fotoshare') {
-                const sectionFotoshareVideos = getFotoshareVideosByMergedSection(section);
+                const sectionFotoshareVideos = getFotoshareVideosBySection(section.id);
                 if (sectionFotoshareVideos.length === 0 && !section.fotoshare_expired) return null;
                 
                 return (
@@ -1519,7 +1519,7 @@ const PublicGallery = () => {
               
               // Check if this is a pCloud section
               if (section.type === 'pcloud') {
-                const sectionPcloudPhotos = getPcloudPhotosByMergedSection(section);
+                const sectionPcloudPhotos = getPcloudPhotosBySection(section.id);
                 if (sectionPcloudPhotos.length === 0) return null;
                 
                 // Create lightbox-compatible photo objects for pCloud photos
