@@ -165,15 +165,19 @@ const SlideshowDisplay = () => {
     if (photos.length === 0 || isReady) return;
     
     const prepare = async () => {
-      const batch = photos.slice(0, Math.min(5, photos.length));
-      await Promise.all(batch.map(photo => {
-        preloadedSet.current.add(photo.id);
-        return preloadImage(getPhotoUrl(photo));
-      }));
-      
+      // Show first photo immediately - don't wait for preload
       setDisplayedPhoto(photos[0]);
       setFadeIn(true);
       setIsReady(true);
+      
+      // Preload next photos in background
+      const batch = photos.slice(0, Math.min(5, photos.length));
+      Promise.all(batch.map(photo => {
+        preloadedSet.current.add(photo.id);
+        return preloadImage(getPhotoUrl(photo)).catch(() => {});
+      })).then(() => {
+        console.log('[Slideshow] Initial batch preloaded');
+      });
     };
     
     prepare();
