@@ -31,7 +31,22 @@
   * {
     @apply border-border;
   }
+  
+  /* Enable smooth momentum scrolling on iOS */
+  html {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
   body {
     @apply bg-background text-foreground;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pan-x;
+  }
+  
+  /* Ensure sticky elements don't break scroll momentum */
+  .sticky {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
 }
