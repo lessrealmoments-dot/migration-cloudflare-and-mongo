@@ -762,7 +762,7 @@ const PublicGallery = () => {
     return gdrivePhotos.filter(p => mergedSection.merged_section_ids.includes(p.section_id));
   };
 
-  // Generate navigation items from sections
+  // Generate navigation items from sections (using merged sections)
   const getNavigationItems = useMemo(() => {
     const items = [];
     
@@ -778,40 +778,38 @@ const PublicGallery = () => {
       });
     }
     
-    // Add sections
-    if (gallery?.sections) {
-      gallery.sections.forEach(section => {
-        let count = 0;
-        let icon = 'image';
-        
-        if (section.type === 'video') {
-          count = getVideosBySection(section.id).length;
-          icon = 'video';
-        } else if (section.type === 'fotoshare') {
-          count = getFotoshareVideosBySection(section.id).length;
-          icon = 'film';
-        } else if (section.type === 'pcloud') {
-          count = getPcloudPhotosBySection(section.id).length;
-          icon = 'cloud';
-        } else if (section.type === 'gdrive') {
-          count = getGdrivePhotosBySection(section.id).length;
-          icon = 'drive';
-        } else {
-          count = getPhotosBySection(section.id).length;
-          icon = 'image';
-        }
-        
-        if (count > 0) {
-          items.push({
-            id: section.id,
-            name: section.name,
-            type: section.type || 'photo',
-            icon,
-            count
-          });
-        }
-      });
-    }
+    // Add merged sections (sections with same contributor are combined)
+    getMergedSections.forEach(section => {
+      let count = 0;
+      let icon = 'image';
+      
+      if (section.type === 'video') {
+        count = getVideosByMergedSection(section).length;
+        icon = 'video';
+      } else if (section.type === 'fotoshare') {
+        count = getFotoshareVideosByMergedSection(section).length;
+        icon = 'film';
+      } else if (section.type === 'pcloud') {
+        count = getPcloudPhotosByMergedSection(section).length;
+        icon = 'cloud';
+      } else if (section.type === 'gdrive') {
+        count = getGdrivePhotosByMergedSection(section).length;
+        icon = 'drive';
+      } else {
+        count = getPhotosByMergedSection(section).length;
+        icon = 'image';
+      }
+      
+      if (count > 0) {
+        items.push({
+          id: section.id,
+          name: section.name,
+          type: section.type || 'photo',
+          icon,
+          count
+        });
+      }
+    });
     
     // Add unsorted photos
     const unsortedPhotos = getRegularPhotosWithoutSection();
