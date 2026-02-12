@@ -129,7 +129,7 @@ const LazyMasonryGrid = ({
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} style={{ touchAction: 'pan-y' }}>
       {/* Responsive Masonry Grid */}
       <div className={`${getColumnClass()} gap-2 sm:gap-3 md:gap-4`}>
         {displayedPhotos.map((photo, index) => {
@@ -143,10 +143,7 @@ const LazyMasonryGrid = ({
             <div
               key={photo.id || index}
               className="break-inside-avoid mb-2 sm:mb-3 md:mb-4 group cursor-pointer relative overflow-hidden rounded-lg"
-              style={{ 
-                opacity: 1,
-                transform: 'translateY(0)',
-              }}
+              style={{ touchAction: 'manipulation' }}
               onClick={() => onPhotoClick && onPhotoClick(index, photo)}
               data-testid={`masonry-photo-${index}`}
             >
