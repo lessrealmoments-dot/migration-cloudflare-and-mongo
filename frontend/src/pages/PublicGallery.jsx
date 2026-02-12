@@ -1591,7 +1591,7 @@ const PublicGallery = () => {
               
               // Check if this is a Google Drive section
               if (section.type === 'gdrive') {
-                const sectionGdrivePhotos = getGdrivePhotosByMergedSection(section);
+                const sectionGdrivePhotos = getGdrivePhotosBySection(section.id);
                 if (sectionGdrivePhotos.length === 0) return null;
                 
                 return (
@@ -1609,7 +1609,7 @@ const PublicGallery = () => {
               }
               
               // Photo section
-              const sectionPhotos = getPhotosByMergedSection(section);
+              const sectionPhotos = getRegularPhotosBySection(section.id);
               if (sectionPhotos.length === 0) return null;
               const isExpanded = isSectionExpanded(section.id);
               const useLargeGalleryMode = sectionPhotos.length >= LARGE_GALLERY_THRESHOLD;
