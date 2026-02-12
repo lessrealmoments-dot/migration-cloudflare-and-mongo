@@ -8016,18 +8016,23 @@ async def get_display_data(share_link: str):
         photo["source"] = "upload"
     
     # Get pCloud photos and format them for display
+    # Use pCloud's thumbnail API for faster loading on large screens (1600px wide, sharp but compressed)
     pcloud_photos_raw = await db.pcloud_photos.find(
         {"gallery_id": gallery["id"]},
         {"_id": 0}
     ).to_list(None)
     
-    # Convert pCloud photos to display format
+    # Convert pCloud photos to display format with optimized thumbnail sizes
     for p in pcloud_photos_raw:
+        pcloud_code = p.get('pcloud_code')
+        fileid = p.get('fileid')
+        # Use 1600x1600 thumbnail for display - sharp but fast loading
+        display_url = f"/api/pcloud/thumb/{pcloud_code}/{fileid}?size=1600x1600"
         photos.append({
             "id": p.get("id"),
-            "url": f"/api/pcloud/serve/{p.get('pcloud_code')}/{p.get('fileid')}",
-            "thumbnail_url": f"/api/pcloud/serve/{p.get('pcloud_code')}/{p.get('fileid')}",
-            "thumbnail_medium_url": f"/api/pcloud/serve/{p.get('pcloud_code')}/{p.get('fileid')}",
+            "url": display_url,  # Use optimized size for display
+            "thumbnail_url": display_url,
+            "thumbnail_medium_url": display_url,
             "is_highlight": False,
             "uploaded_at": p.get("created_at", ""),
             "source": "pcloud",
@@ -8041,19 +8046,20 @@ async def get_display_data(share_link: str):
     ).to_list(None)
     
     # Convert Google Drive photos to display format
+    # Use w1600 for sharp display on large screens (max supported is w2000)
     for g in gdrive_photos_raw:
-        # Use the thumbnail URL for display (higher quality available)
-        thumbnail = g.get("thumbnail_url") or f"https://drive.google.com/thumbnail?id={g.get('file_id')}&sz=w800"
-        view_url = g.get("view_url") or f"https://drive.google.com/uc?export=view&id={g.get('file_id')}"
+        file_id = g.get('file_id')
+        # Use 1600px wide thumbnail - sharp for large screens, faster than full image
+        display_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w1600"
         photos.append({
             "id": g.get("id"),
-            "url": view_url,
-            "thumbnail_url": thumbnail,
-            "thumbnail_medium_url": thumbnail,
+            "url": display_url,
+            "thumbnail_url": display_url,
+            "thumbnail_medium_url": display_url,
             "is_highlight": False,
             "uploaded_at": g.get("created_at", ""),
             "source": "gdrive",
-            "file_id": g.get("file_id")
+            "file_id": file_id
         })
     
     # Get photographer info for branding
