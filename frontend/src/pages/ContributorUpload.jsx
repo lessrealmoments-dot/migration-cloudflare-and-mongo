@@ -61,6 +61,10 @@ const ContributorUpload = () => {
   const [customRole, setCustomRole] = useState('');
   const [useCustomRole, setUseCustomRole] = useState(false);
   
+  // Autocomplete state
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filteredContributors, setFilteredContributors] = useState([]);
+  
   // Upload state
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
   
@@ -70,6 +74,29 @@ const ContributorUpload = () => {
       return customRole.trim();
     }
     return selectedRole || info?.section_name || 'Contributor';
+  };
+  
+  // Filter contributors for autocomplete
+  const handleCompanyNameChange = (value) => {
+    setCompanyName(value);
+    
+    if (value.trim() && info?.existing_contributors?.length > 0) {
+      const filtered = info.existing_contributors.filter(c => 
+        c.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredContributors(filtered);
+      setShowSuggestions(filtered.length > 0);
+    } else {
+      setShowSuggestions(false);
+      setFilteredContributors([]);
+    }
+  };
+  
+  // Select a contributor from suggestions
+  const selectContributor = (contributor) => {
+    setCompanyName(contributor.name);
+    setSelectedRole(contributor.role);
+    setShowSuggestions(false);
   };
   
   // Smart uploader hook
