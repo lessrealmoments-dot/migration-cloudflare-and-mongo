@@ -8002,6 +8002,7 @@ async def get_display_data(share_link: str):
         raise HTTPException(status_code=404, detail="Gallery not found")
     
     # Get all visible photos for display (no limit - frontend handles pagination)
+    # Use thumbnail_medium_url for display - optimized size for large screens
     photos = await db.photos.find(
         {
             "gallery_id": gallery["id"],
@@ -8011,9 +8012,14 @@ async def get_display_data(share_link: str):
         {"_id": 0, "id": 1, "url": 1, "thumbnail_url": 1, "thumbnail_medium_url": 1, "is_highlight": 1, "uploaded_at": 1}
     ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).to_list(None)
     
-    # Mark regular photos with source type
+    # Mark regular photos with source type and optimize URL for display
     for photo in photos:
         photo["source"] = "upload"
+        # Prefer medium thumbnail (typically 1200px) for display - sharp but fast
+        if photo.get("thumbnail_medium_url"):
+            photo["display_url"] = photo["thumbnail_medium_url"]
+        else:
+            photo["display_url"] = photo.get("url", "")
     
     # Get pCloud photos and format them for display
     # Use pCloud's thumbnail API for faster loading on large screens (1600px wide, sharp but compressed)
