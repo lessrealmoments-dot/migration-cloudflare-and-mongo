@@ -513,7 +513,17 @@ const CollageDisplay = () => {
       photoPoolIndex.current = layout.length;
       
       const urls = firstSet.map(p => getPhotoUrl(p));
-      await imagePreloader.preloadAll(urls);
+      
+      // Add timeout wrapper to prevent hanging indefinitely
+      try {
+        const preloadPromise = imagePreloader.preloadAll(urls);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Preload timeout')), 30000)
+        );
+        await Promise.race([preloadPromise, timeoutPromise]);
+      } catch (err) {
+        console.warn('[Collage] Initial preload issue, continuing anyway:', err.message);
+      }
       
       setLayerA(firstSet);
       setActiveLayer('A');
