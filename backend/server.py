@@ -6458,8 +6458,30 @@ async def get_contributor_upload_info(contributor_link: str):
         # Contributor access window info
         "uploads_allowed": uploads_allowed,
         "days_until_expires": days_until_expires,
-        "upload_window_expired": not uploads_allowed
+        "upload_window_expired": not uploads_allowed,
+        # Existing contributors for autocomplete
+        "existing_contributors": await get_gallery_existing_contributors(gallery)
     }
+
+
+async def get_gallery_existing_contributors(gallery: dict) -> list:
+    """Get unique contributor names from all sections in the gallery for autocomplete"""
+    contributors = []
+    seen_names = set()
+    
+    for section in gallery.get("sections", []):
+        contributor_name = section.get("contributor_name", "").strip()
+        contributor_role = section.get("contributor_role", "").strip()
+        
+        if contributor_name and contributor_name.lower() not in seen_names:
+            seen_names.add(contributor_name.lower())
+            contributors.append({
+                "name": contributor_name,
+                "role": contributor_role or "Contributor"
+            })
+    
+    return contributors
+
 
 @api_router.post("/contributor/{contributor_link}/set-name")
 async def set_contributor_name(contributor_link: str, data: dict = Body(...)):
