@@ -676,92 +676,43 @@ const PublicGallery = () => {
     return photos.filter(p => !p.section_id && p.uploaded_by === 'photographer' && !p.is_highlight);
   };
 
-  // Merge sections that have the same contributor_name AND same type
-  // This allows multiple photographers from different companies while combining same-company sections
-  const getMergedSections = useMemo(() => {
+  // Group contributors by name for the credits section
+  // This merges the same contributor's sections together for display in credits
+  const getGroupedContributors = useMemo(() => {
     if (!gallery?.sections) return [];
     
-    const mergedMap = new Map(); // Key: `${type}-${contributor_name}` or `${type}-${section.id}` if no contributor
+    const contributorMap = new Map(); // Key: contributor_name (lowercase)
     
     gallery.sections.forEach(section => {
-      const contributorName = section.contributor_name?.trim().toLowerCase();
-      const sectionType = section.type || 'photo';
+      const contributorName = section.contributor_name?.trim();
+      if (!contributorName) return; // Skip sections without contributor
       
-      // Create a unique key: if contributor name exists, group by type+contributor, otherwise keep separate
-      const key = contributorName 
-        ? `${sectionType}-${contributorName}` 
-        : `${sectionType}-${section.id}`; // No contributor = unique section
+      const key = contributorName.toLowerCase();
       
-      if (mergedMap.has(key)) {
-        // Merge with existing section
-        const existing = mergedMap.get(key);
-        existing.merged_section_ids.push(section.id);
-        // Keep the first section's name, but could concatenate if needed
-        // Update order to be the minimum (show earlier)
-        existing.order = Math.min(existing.order || 0, section.order || 0);
+      if (contributorMap.has(key)) {
+        // Add section to existing contributor
+        const existing = contributorMap.get(key);
+        existing.sections.push({
+          id: section.id,
+          name: section.name,
+          type: section.type || 'photo'
+        });
       } else {
-        // Create new merged section entry
-        mergedMap.set(key, {
-          ...section,
-          merged_section_ids: [section.id], // Track all merged section IDs
-          is_merged: false // Will set to true if more sections are added
+        // Create new contributor entry
+        contributorMap.set(key, {
+          name: contributorName, // Keep original casing from first occurrence
+          role: section.contributor_role || 'Contributor',
+          sections: [{
+            id: section.id,
+            name: section.name,
+            type: section.type || 'photo'
+          }]
         });
       }
     });
     
-    // Mark sections that were actually merged
-    const result = Array.from(mergedMap.values()).map(section => ({
-      ...section,
-      is_merged: section.merged_section_ids.length > 1
-    }));
-    
-    // Sort by order
-    return result.sort((a, b) => (a.order || 0) - (b.order || 0));
+    return Array.from(contributorMap.values());
   }, [gallery?.sections]);
-
-  // Helper to get photos from all merged section IDs (excluding highlights)
-  const getPhotosByMergedSection = (mergedSection) => {
-    if (!mergedSection.merged_section_ids) {
-      return getRegularPhotosBySection(mergedSection.id);
-    }
-    return photos.filter(p => 
-      mergedSection.merged_section_ids.includes(p.section_id) && 
-      (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor') &&
-      !p.is_highlight
-    );
-  };
-
-  // Helper to get videos from all merged section IDs
-  const getVideosByMergedSection = (mergedSection) => {
-    if (!mergedSection.merged_section_ids) {
-      return getVideosBySection(mergedSection.id);
-    }
-    return videos.filter(v => mergedSection.merged_section_ids.includes(v.section_id));
-  };
-
-  // Helper to get fotoshare videos from all merged section IDs
-  const getFotoshareVideosByMergedSection = (mergedSection) => {
-    if (!mergedSection.merged_section_ids) {
-      return getFotoshareVideosBySection(mergedSection.id);
-    }
-    return fotoshareVideos.filter(v => mergedSection.merged_section_ids.includes(v.section_id));
-  };
-
-  // Helper to get pcloud photos from all merged section IDs
-  const getPcloudPhotosByMergedSection = (mergedSection) => {
-    if (!mergedSection.merged_section_ids) {
-      return getPcloudPhotosBySection(mergedSection.id);
-    }
-    return pcloudPhotos.filter(p => mergedSection.merged_section_ids.includes(p.section_id));
-  };
-
-  // Helper to get gdrive photos from all merged section IDs
-  const getGdrivePhotosByMergedSection = (mergedSection) => {
-    if (!mergedSection.merged_section_ids) {
-      return getGdrivePhotosBySection(mergedSection.id);
-    }
-    return gdrivePhotos.filter(p => mergedSection.merged_section_ids.includes(p.section_id));
-  };
 
   // Generate navigation items from sections (using merged sections)
   const getNavigationItems = useMemo(() => {
