@@ -60,6 +60,10 @@ const FotoshareContributorUpload = () => {
   const [useCustomRole, setUseCustomRole] = useState(false);
   const [fotoshareUrl, setFotoshareUrl] = useState('');
   
+  // Autocomplete state
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filteredContributors, setFilteredContributors] = useState([]);
+  
   // Get the final role value
   const getFinalRole = () => {
     if (useCustomRole && customRole.trim()) {
@@ -67,6 +71,29 @@ const FotoshareContributorUpload = () => {
     }
     // Default to Photobooth Provider for 360 booth
     return selectedRole || 'Photobooth Provider';
+  };
+  
+  // Filter contributors for autocomplete
+  const handleCompanyNameChange = (value) => {
+    setCompanyName(value);
+    
+    if (value.trim() && galleryInfo?.existing_contributors?.length > 0) {
+      const filtered = galleryInfo.existing_contributors.filter(c => 
+        c.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredContributors(filtered);
+      setShowSuggestions(filtered.length > 0);
+    } else {
+      setShowSuggestions(false);
+      setFilteredContributors([]);
+    }
+  };
+  
+  // Select a contributor from suggestions
+  const selectContributor = (contributor) => {
+    setCompanyName(contributor.name);
+    setSelectedRole(contributor.role);
+    setShowSuggestions(false);
   };
   
   // Navigate back to coordinator hub
