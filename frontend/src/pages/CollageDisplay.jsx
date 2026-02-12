@@ -512,25 +512,21 @@ const CollageDisplay = () => {
       }
       photoPoolIndex.current = layout.length;
       
-      const urls = firstSet.map(p => getPhotoUrl(p));
-      
-      // Add timeout wrapper to prevent hanging indefinitely
-      try {
-        const preloadPromise = imagePreloader.preloadAll(urls);
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Preload timeout')), 30000)
-        );
-        await Promise.race([preloadPromise, timeoutPromise]);
-      } catch (err) {
-        console.warn('[Collage] Initial preload issue, continuing anyway:', err.message);
-      }
-      
+      // Show immediately - don't wait for preloading
+      // Images will load progressively in the browser
       setLayerA(firstSet);
       setActiveLayer('A');
-      
-      preloadNextSets();
-      
       setIsReady(true);
+      
+      // Preload in background for smoother transitions
+      const urls = firstSet.map(p => getPhotoUrl(p));
+      imagePreloader.preloadAll(urls).then(() => {
+        console.log('[Collage] Initial set preloaded');
+        preloadNextSets();
+      }).catch(err => {
+        console.warn('[Collage] Background preload issue:', err.message);
+        preloadNextSets();
+      });
     };
     
     initialize();
