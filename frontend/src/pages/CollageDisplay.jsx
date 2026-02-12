@@ -133,8 +133,11 @@ class ImagePreloader {
       img.onload = succeed;
       img.onerror = fail;
       
-      // Use crossOrigin for external images to prevent CORS issues
-      if (src.startsWith('http') && !src.includes(window.location.hostname)) {
+      // Only set crossOrigin for images that support it
+      // Google Drive images don't work with crossOrigin due to their redirect/auth mechanism
+      // pCloud proxy goes through our server so it's same-origin
+      const isGoogleDrive = src.includes('drive.google.com') || src.includes('googleusercontent.com');
+      if (src.startsWith('http') && !src.includes(window.location.hostname) && !isGoogleDrive) {
         img.crossOrigin = 'anonymous';
       }
       
