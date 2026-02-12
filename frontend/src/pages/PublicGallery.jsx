@@ -1637,11 +1637,11 @@ const PublicGallery = () => {
               
               // Check if this is a Google Drive section
               if (section.type === 'gdrive') {
-                const sectionGdrivePhotos = getGdrivePhotosBySection(section.id);
+                const sectionGdrivePhotos = getGdrivePhotosByMergedSection(section);
                 if (sectionGdrivePhotos.length === 0) return null;
                 
                 return (
-                  <div key={section.id} className="py-16 md:py-24" style={{ backgroundColor: currentTheme.colors.background }}>
+                  <div key={section.id} id={`section-${section.id}`} className="py-16 md:py-24" style={{ backgroundColor: currentTheme.colors.background }}>
                     <div className="max-w-screen-2xl mx-auto px-6 md:px-12 lg:px-24">
                       <GoogleDriveSection
                         section={section}
@@ -1655,7 +1655,7 @@ const PublicGallery = () => {
               }
               
               // Photo section
-              const sectionPhotos = getRegularPhotosBySection(section.id);
+              const sectionPhotos = getPhotosByMergedSection(section);
               if (sectionPhotos.length === 0) return null;
               const isExpanded = isSectionExpanded(section.id);
               const useLargeGalleryMode = sectionPhotos.length >= LARGE_GALLERY_THRESHOLD;
