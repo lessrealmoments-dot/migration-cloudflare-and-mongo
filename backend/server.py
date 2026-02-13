@@ -5213,12 +5213,14 @@ async def refresh_fotoshare_section(
     # Scrape the URL again
     scrape_result = await scrape_fotoshare_videos(fotoshare_url)
     now = datetime.now(timezone.utc).isoformat()
+    content_type = scrape_result.get('content_type', section.get('fotoshare_content_type', '360_booth'))
     
     # Update section status
     for s in sections:
         if s["id"] == section_id:
             s["fotoshare_last_sync"] = now
             s["fotoshare_expired"] = scrape_result.get('expired', False)
+            s["fotoshare_content_type"] = content_type
             break
     
     await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
@@ -5228,7 +5230,8 @@ async def refresh_fotoshare_section(
             "success": False,
             "expired": scrape_result.get('expired', False),
             "error": scrape_result.get('error'),
-            "videos_count": 0
+            "videos_count": 0,
+            "photos_count": 0
         }
     
     # Get existing video hashes
@@ -5236,12 +5239,19 @@ async def refresh_fotoshare_section(
         {"gallery_id": gallery_id, "section_id": section_id},
         {"_id": 0, "hash": 1}
     ).to_list(1000)
-    existing_hashes = {v['hash'] for v in existing_videos}
+    existing_video_hashes = {v['hash'] for v in existing_videos}
+    
+    # Get existing photo hashes
+    existing_photos = await db.fotoshare_photos.find(
+        {"gallery_id": gallery_id, "section_id": section_id},
+        {"_id": 0, "hash": 1}
+    ).to_list(1000)
+    existing_photo_hashes = {p['hash'] for p in existing_photos}
     
     # Add new videos
     new_videos = []
     for video_data in scrape_result['videos']:
-        if video_data['hash'] not in existing_hashes:
+        if video_data['hash'] not in existing_video_hashes:
             video_entry = {
                 "id": str(uuid.uuid4()),
                 "gallery_id": gallery_id,
@@ -5262,11 +5272,41 @@ async def refresh_fotoshare_section(
     if new_videos:
         await db.fotoshare_videos.insert_many(new_videos)
     
+    # Add new photos
+    new_photos = []
+    for photo_data in scrape_result['photos']:
+        if photo_data['hash'] not in existing_photo_hashes:
+            photo_entry = {
+                "id": str(uuid.uuid4()),
+                "gallery_id": gallery_id,
+                "section_id": section_id,
+                "hash": photo_data['hash'],
+                "source_url": photo_data['source_url'],
+                "thumbnail_url": photo_data['thumbnail_url'],
+                "width": photo_data.get('width', 3600),
+                "height": photo_data.get('height', 2400),
+                "file_type": photo_data.get('file_type', 'jpg'),
+                "file_size": photo_data.get('file_size', 0),
+                "file_source": photo_data.get('file_source', 'photobooth'),
+                "created_at_source": photo_data.get('created_at_source'),
+                "session_id": photo_data.get('session_id'),
+                "has_session_items": photo_data.get('has_session_items', False),
+                "order": photo_data.get('order', 0),
+                "synced_at": now
+            }
+            new_photos.append(photo_entry)
+    
+    if new_photos:
+        await db.fotoshare_photos.insert_many(new_photos)
+    
     return {
         "success": True,
         "expired": False,
+        "content_type": content_type,
         "videos_count": len(scrape_result['videos']),
-        "new_videos_added": len(new_videos)
+        "photos_count": len(scrape_result['photos']),
+        "new_videos_added": len(new_videos),
+        "new_photos_added": len(new_photos)
     }
 
 @api_router.get("/galleries/{gallery_id}/fotoshare-videos")
