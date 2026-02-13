@@ -8033,12 +8033,13 @@ async def get_display_data(share_link: str):
         pcloud_code = p.get('pcloud_code')
         fileid = p.get('fileid')
         # Use 1600x1600 thumbnail for display - sharp but fast loading
-        display_url = f"/api/pcloud/thumb/{pcloud_code}/{fileid}?size=1600x1600"
+        optimized_url = f"/api/pcloud/thumb/{pcloud_code}/{fileid}?size=1600x1600"
         photos.append({
             "id": p.get("id"),
-            "url": display_url,  # Use optimized size for display
-            "thumbnail_url": display_url,
-            "thumbnail_medium_url": display_url,
+            "url": optimized_url,
+            "thumbnail_url": optimized_url,
+            "thumbnail_medium_url": optimized_url,
+            "display_url": optimized_url,  # Explicit display-optimized URL
             "is_highlight": False,
             "uploaded_at": p.get("created_at", ""),
             "source": "pcloud",
@@ -8056,12 +8057,13 @@ async def get_display_data(share_link: str):
     for g in gdrive_photos_raw:
         file_id = g.get('file_id')
         # Use 1600px wide thumbnail - sharp for large screens, faster than full image
-        display_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w1600"
+        optimized_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w1600"
         photos.append({
             "id": g.get("id"),
-            "url": display_url,
-            "thumbnail_url": display_url,
-            "thumbnail_medium_url": display_url,
+            "url": optimized_url,
+            "thumbnail_url": optimized_url,
+            "thumbnail_medium_url": optimized_url,
+            "display_url": optimized_url,  # Explicit display-optimized URL
             "is_highlight": False,
             "uploaded_at": g.get("created_at", ""),
             "source": "gdrive",
