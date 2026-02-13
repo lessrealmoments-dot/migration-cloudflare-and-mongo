@@ -11,6 +11,7 @@ import PublicGallery from '@/pages/PublicGallery';
 import ContributorUpload from '@/pages/ContributorUpload';
 import VideographerUpload from '@/pages/VideographerUpload';
 import FotoshareContributorUpload from '@/pages/FotoshareContributorUpload';
+import PhotoboothContributorUpload from '@/pages/PhotoboothContributorUpload';
 import GdriveContributorUpload from '@/pages/GdriveContributorUpload';
 import PcloudContributorUpload from '@/pages/PcloudContributorUpload';
 import CoordinatorHub from '@/pages/CoordinatorHub';
