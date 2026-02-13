@@ -1151,6 +1151,39 @@ const GalleryDetail = () => {
     }
   };
 
+  // Fetch photobooth sessions
+  const fetchPhotoboothSessions = async () => {
+    try {
+      const response = await axios.get(`${API}/galleries/${id}/photobooth-sessions`);
+      setPhotoboothSessions(response.data);
+    } catch (error) {
+      console.error('Failed to fetch photobooth sessions');
+    }
+  };
+
+  // Refresh photobooth section
+  const handleRefreshPhotobooth = async (sectionId) => {
+    setRefreshingSection(sectionId);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/galleries/${id}/photobooth-sections/${sectionId}/refresh`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        toast.success(`Refreshed! ${response.data.new_sessions_added} new sessions found.`);
+        fetchPhotoboothSessions();
+      } else if (response.data.expired) {
+        toast.error('This Fotoshare link has expired');
+      } else {
+        toast.error(response.data.error || 'Failed to refresh section');
+      }
+    } catch (error) {
+      toast.error('Failed to refresh section');
+    }
+    setRefreshingSection(null);
+  };
+
   // Refresh fotoshare section
   const handleRefreshFotoshare = async (sectionId) => {
     setRefreshingSection(sectionId);
