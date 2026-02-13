@@ -2555,7 +2555,7 @@ const GalleryDetail = () => {
                   type="text"
                   value={newSectionName}
                   onChange={(e) => setNewSectionName(e.target.value)}
-                  placeholder={newSectionType === 'fotoshare' ? "e.g., 360 Glam Booth Moments" : "e.g., Wedding Ceremony, Reception, Video Highlights"}
+                  placeholder={newSectionType === 'fotoshare' ? "e.g., 360 Glam Booth Moments" : newSectionType === 'fotoshare_photobooth' ? "e.g., Photobooth Fun" : "e.g., Wedding Ceremony, Reception, Video Highlights"}
                   className="flex h-10 flex-1 rounded-sm border border-input bg-white px-3 py-2 text-sm"
                   autoFocus
                 />
