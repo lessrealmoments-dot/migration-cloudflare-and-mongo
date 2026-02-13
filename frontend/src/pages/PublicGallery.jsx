@@ -1496,6 +1496,8 @@ const PublicGallery = () => {
                       videos={sectionVideos}
                       sectionName={section.name}
                       contributorName={section.contributor_name}
+                      themeColors={currentTheme.colors}
+                      themeFonts={currentTheme.fonts}
                     />
                   </div>
                 );
