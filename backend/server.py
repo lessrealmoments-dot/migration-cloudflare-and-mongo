@@ -9594,7 +9594,7 @@ async def get_public_pricing():
         "plan_features": {
             "free": {
                 "tokens_per_month": tokens_per_plan.get("free", 0),
-                "storage_per_gallery_gb": free_config.get("storage_limit_gb", 1),
+                "storage_per_gallery_gb": free_config.get("gallery_storage_limit_gb", free_config.get("storage_limit_gb", 1)),
                 "gallery_retention": days_to_text(free_config.get("gallery_expiration_days", 1)),
                 "gallery_expiration_days": free_config.get("gallery_expiration_days", 1),
                 "display_mode": free_config.get("display_mode", False),
@@ -9606,7 +9606,7 @@ async def get_public_pricing():
             },
             "standard": {
                 "tokens_per_month": tokens_per_plan.get("standard", 2),
-                "storage_per_gallery_gb": standard_config.get("storage_limit_gb", 10),
+                "storage_per_gallery_gb": standard_config.get("gallery_storage_limit_gb", standard_config.get("storage_limit_gb", 10)),
                 "gallery_retention": days_to_text(standard_config.get("gallery_expiration_days", 90)),
                 "gallery_expiration_days": standard_config.get("gallery_expiration_days", 90),
                 "display_mode": standard_config.get("display_mode", False),
@@ -9618,7 +9618,7 @@ async def get_public_pricing():
             },
             "pro": {
                 "tokens_per_month": tokens_per_plan.get("pro", 2),
-                "storage_per_gallery_gb": pro_config.get("storage_limit_gb", 15),
+                "storage_per_gallery_gb": pro_config.get("gallery_storage_limit_gb", pro_config.get("storage_limit_gb", 15)),
                 "gallery_retention": days_to_text(pro_config.get("gallery_expiration_days", 180)),
                 "gallery_expiration_days": pro_config.get("gallery_expiration_days", 180),
                 "display_mode": pro_config.get("display_mode", True),
