@@ -67,13 +67,17 @@ A comprehensive photo-sharing application for photographers with focus on:
 
 ## In Progress
 
-### Fotoshare Photobooth Integration
-- [x] Backend scraper updated to detect content type (360_booth vs photobooth)
-- [x] Session-based photo grouping
-- [x] New `fotoshare_photos` collection
-- [x] API endpoint `/api/galleries/{id}/fotoshare-photos`
-- [ ] Frontend `PhotoboothSection.jsx` component
-- [ ] Integration with PublicGallery.jsx
+### Completed: Fotoshare Photobooth Integration ✅
+- [x] Backend: Separate scraper for photobooth (`scrape_fotoshare_photobooth`)
+- [x] Backend: New section type `fotoshare_photobooth` (separate from `fotoshare`)
+- [x] Backend: New `photobooth_sessions` collection
+- [x] Backend: CRUD endpoints (`/photobooth-sections`, `/photobooth-sessions`)
+- [x] Frontend: `PhotoboothSection.jsx` component with premium modal
+- [x] Frontend: Session grid with stacked cards effect
+- [x] Frontend: Iframe embedding of Fotoshare viewer
+- [x] Frontend: "Open in Fotoshare" external link
+- [x] Integration in `PublicGallery.jsx`
+- [x] Integration in `GalleryDetail.jsx` (admin section creation)
 
 ## Upcoming Tasks
 1. **Fotoshare Photobooth Frontend** - Session grid with modal viewer
