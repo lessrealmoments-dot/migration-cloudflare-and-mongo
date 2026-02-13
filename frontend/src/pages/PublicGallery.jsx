@@ -14,6 +14,7 @@ import VirtualizedGalleryGrid from '@/components/VirtualizedGalleryGrid';
 import LazyMasonryGrid from '@/components/LazyMasonryGrid';
 import SocialSharePanel from '@/components/SocialSharePanel';
 import VideoSection from '@/components/VideoSection';
+import SmartVideoSection from '@/components/SmartVideoSection';
 import FotoshareSection from '@/components/FotoshareSection';
 import PhotoboothSection from '@/components/PhotoboothSection';
 import GoogleDriveSection from '@/components/GoogleDriveSection';
