@@ -27,9 +27,9 @@ A comprehensive photo-sharing application for photographers with focus on:
 ### External Integrations
 - [x] **Cloudflare R2**: Photo storage with CDN
 - [x] **pCloud**: Contributor workflow with download proxy
-- [x] **Google Drive**: Public folder scraping
+- [x] **Google Drive API**: Proper API integration for public folders (replaces web scraping) ✅
 - [x] **Fotoshare 360° Booth**: Video integration with iframe embedding
-- [x] **Fotoshare Photobooth**: Session-based photo integration (NEW - separate from 360°)
+- [x] **Fotoshare Photobooth**: Session-based photo integration (separate from 360°)
 
 ### Subscription System
 - [x] Free/Standard/Pro/Enterprise tiers
