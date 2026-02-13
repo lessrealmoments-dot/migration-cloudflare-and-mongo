@@ -1518,6 +1518,21 @@ const PublicGallery = () => {
                 );
               }
               
+              // Check if this is a Fotoshare Photobooth section (separate from 360° booth)
+              if (section.type === 'fotoshare_photobooth') {
+                return (
+                  <div key={section.id} id={`section-${section.id}`} className="py-16 md:py-24" style={{ backgroundColor: currentTheme.colors.background }}>
+                    <div className="max-w-screen-2xl mx-auto px-6 md:px-12 lg:px-24">
+                      <PhotoboothSection
+                        section={section}
+                        galleryId={gallery.id}
+                        isPublic={true}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+              
               // Check if this is a pCloud section
               if (section.type === 'pcloud') {
                 const sectionPcloudPhotos = getPcloudPhotosBySection(section.id);
