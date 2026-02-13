@@ -1041,6 +1041,19 @@ const GalleryDetail = () => {
         toast.success(`360 Booth section created with ${response.data.videos_count} videos!`);
         // Fetch the fotoshare videos
         fetchFotoshareVideos();
+      } else if (newSectionType === 'fotoshare_photobooth' && newPhotoboothUrl.trim()) {
+        // Create Photobooth section with URL - dedicated endpoint (separate from 360° booth)
+        const response = await axios.post(`${API}/galleries/${id}/photobooth-sections`, {
+          name: newSectionName,
+          fotoshare_url: newPhotoboothUrl
+        }, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        
+        setSections([...sections, response.data.section]);
+        toast.success(`Photobooth section created with ${response.data.sessions_count} sessions!`);
+        // Fetch the photobooth sessions
+        fetchPhotoboothSessions();
       } else if (newSectionType === 'pcloud' && newPcloudUrl.trim()) {
         // Create pCloud section with viewing URL - dedicated endpoint
         const response = await axios.post(`${API}/galleries/${id}/pcloud-sections`, {
