@@ -64,9 +64,7 @@ A comprehensive photo-sharing application with a focus on professional features 
 ## Known Issues (Priority Order)
 
 ### P0 - Critical
-1. **Google Drive Integration Broken**: Web scraping logic outdated after Google changed HTML structure
-   - File: `/app/backend/server.py` function `scrape_gdrive_folder_html`
-   - Last attempt: Updated regex patterns but still failing
+- None currently
 
 ### P1 - High
 1. **PayMongo Integration**: Blocked - waiting for user's business permit/API keys
