@@ -1492,7 +1492,7 @@ const PublicGallery = () => {
                 
                 return (
                   <div key={section.id} id={`section-${section.id}`}>
-                    <VideoSection
+                    <SmartVideoSection
                       videos={sectionVideos}
                       sectionName={section.name}
                       contributorName={section.contributor_name}
