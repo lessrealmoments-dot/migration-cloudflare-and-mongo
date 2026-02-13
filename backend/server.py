@@ -932,16 +932,26 @@ async def scrape_gdrive_folder_html(folder_id: str) -> dict:
 
 async def get_gdrive_photos(folder_id: str) -> dict:
     """
-    Try multiple methods to get photos from a Google Drive folder.
-    First tries API, then falls back to HTML scraping.
+    Get photos from a Google Drive folder using the API.
+    Falls back to HTML scraping only if API key is not configured.
     """
-    # First try the API method
-    result = await fetch_gdrive_folder_photos(folder_id)
+    # Check if API key is available
+    api_key = os.environ.get('GOOGLE_DRIVE_API_KEY', '')
     
-    # If API fails, try HTML scraping
-    if not result['success']:
-        logger.info(f"API method failed for folder {folder_id}, trying HTML scrape")
-        result = await scrape_gdrive_folder_html(folder_id)
+    if api_key:
+        # Use the proper API method
+        result = await fetch_gdrive_folder_photos(folder_id)
+        if result['success']:
+            return result
+        
+        # If API fails with auth error, don't fall back to scraping
+        if 'Access denied' in str(result.get('error', '')) or 'API key' in str(result.get('error', '')):
+            logger.warning(f"API access denied for folder {folder_id}: {result.get('error')}")
+            return result
+    
+    # Fall back to HTML scraping (legacy method)
+    logger.info(f"Using HTML scraping for folder {folder_id} (API key not configured or API failed)")
+    result = await scrape_gdrive_folder_html(folder_id)
     
     return result
 
