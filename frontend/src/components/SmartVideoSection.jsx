@@ -324,11 +324,11 @@ const SmartVideoSection = ({
           }}
         />
         
-        {/* Ambient glow effect */}
+        {/* Ambient glow effect - using opacity instead of blur for better performance */}
         <div 
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] opacity-20 blur-3xl pointer-events-none"
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] opacity-10 pointer-events-none"
           style={{ 
-            background: `radial-gradient(ellipse, ${backgroundStyle.accentColor}40, transparent 70%)`
+            background: `radial-gradient(ellipse, ${backgroundStyle.accentColor}, transparent 60%)`
           }}
         />
         
