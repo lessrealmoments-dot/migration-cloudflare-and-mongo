@@ -9058,6 +9058,7 @@ async def upload_photo_guest(
         "gallery_id": gallery["id"],
         "filename": filename,
         "original_filename": file.filename,
+        "content_hash": computed_hash,  # Store hash for future duplicate detection
         "url": photo_url,
         "storage_key": storage_key,
         "uploaded_by": "guest",
