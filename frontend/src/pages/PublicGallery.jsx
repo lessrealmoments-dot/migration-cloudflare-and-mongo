@@ -336,33 +336,67 @@ const PublicGallery = () => {
       return;
     }
 
-    // Server-side duplicate check
+    // Server-side duplicate check with content hashing
     setUploading(true);
-    setUploadProgress([{ name: 'Checking for duplicates...', status: 'uploading', progress: 50 }]);
+    setUploadProgress([{ name: 'Computing file signatures...', status: 'uploading', progress: 10 }]);
 
     let filesToUpload = validFiles;
+    let fileHashes = new Map(); // Store hashes for upload
     
     try {
+      // Step 1: Compute content hashes for all files (happens on client, fast)
+      setUploadProgress([{ name: 'Computing file signatures...', status: 'uploading', progress: 20 }]);
+      
+      const hashes = [];
+      for (let i = 0; i < validFiles.length; i++) {
+        try {
+          const hash = await calculateFileHash(validFiles[i]);
+          hashes.push(hash);
+          fileHashes.set(validFiles[i], hash);
+        } catch (e) {
+          console.warn(`Could not hash ${validFiles[i].name}, using filename fallback`);
+          hashes.push(null);
+        }
+        // Update progress for hashing
+        setUploadProgress([{ 
+          name: `Analyzing ${i + 1}/${validFiles.length} files...`, 
+          status: 'uploading', 
+          progress: 20 + Math.round((i / validFiles.length) * 30)
+        }]);
+      }
+      
+      setUploadProgress([{ name: 'Checking for duplicates...', status: 'uploading', progress: 60 }]);
+      
+      // Step 2: Send hashes to server to check for duplicates
       const checkResponse = await axios.post(
         `${API}/public/gallery/${shareLink}/check-duplicates`,
-        { filenames: validFiles.map(f => f.name) }
+        { 
+          filenames: validFiles.map(f => f.name),
+          hashes: hashes
+        }
       );
       
-      const { duplicates, new_files } = checkResponse.data;
+      const { duplicates, new_files, duplicate_hashes } = checkResponse.data;
       
       if (duplicates.length > 0) {
-        toast.warning(`${duplicates.length} file(s) already uploaded: ${duplicates.slice(0, 3).join(', ')}${duplicates.length > 3 ? '...' : ''}`);
+        toast.warning(`${duplicates.length} photo(s) already in gallery`, {
+          description: duplicates.length === 1 
+            ? 'This exact photo was already uploaded before'
+            : `${duplicates.slice(0, 2).join(', ')}${duplicates.length > 2 ? ` and ${duplicates.length - 2} more` : ''} are duplicates`
+        });
       }
       
       if (new_files.length === 0) {
-        toast.info('All selected files have already been uploaded');
+        toast.info('All selected photos have already been uploaded');
         setUploadProgress([]);
         setUploading(false);
         return;
       }
       
-      // Filter to only new files
-      filesToUpload = acceptedFiles.filter(f => new_files.includes(f.name));
+      // Filter to only new files (by filename since that's what backend returns)
+      const duplicateSet = new Set(duplicates.map(d => d.toLowerCase()));
+      filesToUpload = validFiles.filter(f => !duplicateSet.has(f.name.toLowerCase()));
+      
     } catch (error) {
       console.error('Duplicate check failed, proceeding with upload:', error);
       // Continue with all files if check fails
@@ -383,6 +417,7 @@ const PublicGallery = () => {
 
     for (let index = 0; index < filesToUpload.length; index++) {
       const file = filesToUpload[index];
+      const fileHash = fileHashes.get(file);
       
       // Update status to uploading
       setUploadProgress(prev => prev.map((item, i) => 
@@ -393,6 +428,10 @@ const PublicGallery = () => {
       formData.append('file', file);
       if (password) {
         formData.append('password', password);
+      }
+      // Include the content hash for server-side verification
+      if (fileHash) {
+        formData.append('content_hash', fileHash);
       }
       
       try {
