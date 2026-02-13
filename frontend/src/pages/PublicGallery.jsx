@@ -1427,19 +1427,17 @@ const PublicGallery = () => {
         {/* Quick Section Navigation - Mobile optimized */}
         {getNavigationItems.length > 1 && (
           <nav 
-            className="sticky top-0 z-30 py-2 md:py-3 border-b will-change-transform"
+            className="sticky top-0 z-30 py-2 md:py-3 border-b"
             style={{ 
               backgroundColor: currentTheme.colors.background,
-              borderColor: getSubtleTextColor(currentTheme.colors.background, 0.1),
-              touchAction: 'pan-x'
+              borderColor: getSubtleTextColor(currentTheme.colors.background, 0.1)
             }}
           >
             <div className="max-w-screen-2xl mx-auto px-3 md:px-12">
               <div 
                 className="flex items-center gap-1.5 md:gap-2 overflow-x-auto scrollbar-hide py-1 -mx-1 px-1"
                 style={{ 
-                  WebkitOverflowScrolling: 'touch',
-                  touchAction: 'pan-x'
+                  WebkitOverflowScrolling: 'touch'
                 }}
               >
                 <span className="text-xs font-medium uppercase tracking-wider shrink-0 opacity-50 hidden sm:block"
