@@ -198,14 +198,16 @@ class CoverPhotoPosition(BaseModel):
 
 
 class DuplicateCheckRequest(BaseModel):
-    """Request model for duplicate check"""
-    file_hashes: List[str]
+    """Request model for duplicate check - supports both filename and hash-based detection"""
+    filenames: List[str]
+    hashes: Optional[List[str]] = None  # MD5 hashes of file content for reliable detection
 
 
 class DuplicateCheckResponse(BaseModel):
     """Response model for duplicate check"""
-    existing_hashes: List[str]
-    new_hashes: List[str]
+    duplicates: List[str]  # Filenames that are duplicates
+    new_files: List[str]   # Filenames that are new
+    duplicate_hashes: Optional[List[str]] = None  # Which hashes matched (for debugging)
 
 
 class ThumbnailRepairRequest(BaseModel):
