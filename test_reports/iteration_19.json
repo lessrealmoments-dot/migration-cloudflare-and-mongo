@@ -52,7 +52,7 @@
   
   "should_main_agent_self_test": false,
   
-  "context_for_next_testing_agent": "pCloud contributor feature fully tested. Key test URLs: Contributor page at /p/DxujJsJZP_PbAhB8uIORyA was tested (section deleted after test). Gallery ID for Test GDrive Gallery: 9c18f814-2d34-4009-9b68-e4bb181f2549. Public gallery with contributors: https://pictreasury.preview.emergentagent.com/g/465f44a9",
+  "context_for_next_testing_agent": "pCloud contributor feature fully tested. Key test URLs: Contributor page at /p/DxujJsJZP_PbAhB8uIORyA was tested (section deleted after test). Gallery ID for Test GDrive Gallery: 9c18f814-2d34-4009-9b68-e4bb181f2549. Public gallery with contributors: https://snapflex.preview.emergentagent.com/g/465f44a9",
   
   "features_tested": {
     "auto_sync_gdrive_task": {
