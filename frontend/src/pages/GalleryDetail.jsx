@@ -2656,6 +2656,28 @@ const GalleryDetail = () => {
                   </p>
                 </div>
               )}
+
+              {/* Photobooth URL input - only shown when photobooth type selected */}
+              {newSectionType === 'fotoshare_photobooth' && (
+                <div className="mb-4 p-3 bg-violet-50 border border-violet-200 rounded-md">
+                  <label className="flex items-center gap-2 text-sm text-violet-700 font-medium mb-2">
+                    <Images className="w-4 h-4" />
+                    Fotoshare.co Photobooth URL (Required)
+                  </label>
+                  <input
+                    type="url"
+                    data-testid="photobooth-url-input"
+                    value={newPhotoboothUrl}
+                    onChange={(e) => setNewPhotoboothUrl(e.target.value)}
+                    placeholder="https://fotoshare.co/e/your-photobooth-event-id"
+                    className="flex h-10 w-full rounded-sm border border-violet-300 bg-white px-3 py-2 text-sm focus:border-violet-500 focus:ring-violet-500"
+                    required
+                  />
+                  <p className="text-xs text-violet-600 mt-1">
+                    Paste your Fotoshare.co photobooth link to import session photos
+                  </p>
+                </div>
+              )}
               
               {/* pCloud URL input - only shown when pcloud type selected */}
               {newSectionType === 'pcloud' && (
