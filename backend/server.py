@@ -5383,7 +5383,7 @@ async def delete_fotoshare_section(
     section_id: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Delete a fotoshare section and all its videos"""
+    """Delete a fotoshare section and all its videos and photos"""
     gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
@@ -5397,8 +5397,9 @@ async def delete_fotoshare_section(
     sections = [s for s in sections if s["id"] != section_id]
     await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
     
-    # Delete associated videos
+    # Delete associated videos and photos
     await db.fotoshare_videos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    await db.fotoshare_photos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
     
     return {"message": "Fotoshare section deleted"}
 
