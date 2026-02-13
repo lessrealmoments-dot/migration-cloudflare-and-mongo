@@ -6850,6 +6850,7 @@ async def get_coordinator_hub(hub_link: str):
             "photo": "/c/",
             "video": "/v/",
             "fotoshare": "/f/",
+            "fotoshare_photobooth": "/pb/",
             "gdrive": "/d/",
             "pcloud": "/p/"
         }
@@ -6860,6 +6861,7 @@ async def get_coordinator_hub(hub_link: str):
             "photo": "Official Photographer",
             "video": "Official Videographer", 
             "fotoshare": "Official 360 Booth Operator",
+            "fotoshare_photobooth": "Official Photobooth Operator",
             "gdrive": "Official Photo Contributor",
             "pcloud": "Official Photo Contributor"
         }
