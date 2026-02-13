@@ -1041,19 +1041,28 @@ const GalleryDetail = () => {
         toast.success(`360 Booth section created with ${response.data.videos_count} videos!`);
         // Fetch the fotoshare videos
         fetchFotoshareVideos();
-      } else if (newSectionType === 'fotoshare_photobooth' && newPhotoboothUrl.trim()) {
-        // Create Photobooth section with URL - dedicated endpoint (separate from 360° booth)
+      } else if (newSectionType === 'fotoshare_photobooth') {
+        // Create Photobooth section - URL is optional (contributor can add it later)
         const response = await axios.post(`${API}/galleries/${id}/photobooth-sections`, {
           name: newSectionName,
-          fotoshare_url: newPhotoboothUrl
+          fotoshare_url: newPhotoboothUrl.trim() || null,
+          contributor_name: newPhotoboothContributorName.trim() || null
         }, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
         
         setSections([...sections, response.data.section]);
-        toast.success(`Photobooth section created with ${response.data.sessions_count} sessions!`);
-        // Fetch the photobooth sessions
-        fetchPhotoboothSessions();
+        
+        if (response.data.sessions_count > 0) {
+          toast.success(`Photobooth section created with ${response.data.sessions_count} sessions!`);
+          fetchPhotoboothSessions();
+        } else {
+          // Show contributor link info
+          toast.success(
+            `Photobooth section created! Contributor link generated.`,
+            { description: 'Share the link with the photobooth provider to add their photos.' }
+          );
+        }
       } else if (newSectionType === 'pcloud' && newPcloudUrl.trim()) {
         // Create pCloud section with viewing URL - dedicated endpoint
         const response = await axios.post(`${API}/galleries/${id}/pcloud-sections`, {
