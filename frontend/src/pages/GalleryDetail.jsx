@@ -73,6 +73,7 @@ const GalleryDetail = () => {
   const [refreshingSection, setRefreshingSection] = useState(null);
   // Photobooth section state
   const [newPhotoboothUrl, setNewPhotoboothUrl] = useState('');
+  const [newPhotoboothContributorName, setNewPhotoboothContributorName] = useState('');
   const [photoboothSessions, setPhotoboothSessions] = useState([]);
   // pCloud section state
   const [newPcloudUrl, setNewPcloudUrl] = useState('');
