@@ -1,65 +1,51 @@
 # EventsGallery.vip - Photo Sharing Platform PRD
 
+## Last Updated: Feb 13, 2025
+
 ## Original Problem Statement
-A comprehensive photo-sharing application with a focus on professional features for photographers, performance, and monetization. Key features include:
-- Multi-source photo gallery (direct upload, pCloud, Google Drive)
-- Subscription & token-based billing system
-- Contributor workflow for multiple photographers/videographers
-- Dynamic pricing page
-- Social media sharing with OG tags
-- Cloudflare R2 storage with CDN
+A comprehensive photo-sharing application for photographers with focus on:
+- Professional features for event photographers
+- Performance optimization for large galleries (2000+ photos)
+- Monetization via subscription/credit system
+- Multiple photo source integrations (uploads, pCloud, GDrive, Fotoshare)
 
-## User Personas
-1. **Photographers**: Main users who create galleries, upload photos, manage contributors
-2. **Event Guests**: View galleries, upload their own photos
-3. **Contributors**: Videographers, additional photographers who upload via contributor links
-4. **Admin**: Platform administrators managing users, billing, and settings
+## Core Features Implemented
 
-## Current Architecture
+### Gallery Management
+- [x] Multi-section galleries with photos, videos, pCloud, GDrive, Fotoshare integration
+- [x] Public gallery sharing via unique share links
+- [x] QR code generation for galleries
+- [x] Premium lightbox with download/share capabilities
+- [x] Responsive masonry grid with lazy loading
+- [x] Quick section navigation bar
 
-### Tech Stack
-- **Frontend**: React 18 with Vite, Tailwind CSS, Shadcn/UI, Framer Motion
-- **Backend**: FastAPI (Python) with MongoDB Atlas
-- **Storage**: Cloudflare R2 with CDN (cdn.eventsgallery.vip)
-- **Email**: Resend
-- **Deployment**: Docker Compose on Hostinger VPS with Nginx
+### Display Modes
+- [x] Collage display mode (optimized for 2000+ photos, loads in ~3.5s)
+- [x] Slideshow display mode
+- [x] Photos aggregated from all sources (uploads, pCloud, GDrive)
 
-### Key Files
-- `/app/backend/server.py` - Main backend (monolithic, needs refactoring)
-- `/app/frontend/src/pages/PublicGallery.jsx` - Public gallery view
-- `/app/frontend/src/components/PremiumLightbox.jsx` - Photo lightbox component
-- `/app/backend/models/` - Pydantic models
-- `/app/backend/tasks/background.py` - Background jobs
+### External Integrations
+- [x] **Cloudflare R2**: Photo storage with CDN
+- [x] **pCloud**: Contributor workflow with download proxy
+- [x] **Google Drive**: Public folder scraping
+- [x] **Fotoshare 360° Booth**: Video integration with iframe embedding
+- [x] **Fotoshare Photobooth**: Backend scraping complete (sessions + photos)
 
-## Implemented Features
+### Subscription System
+- [x] Free/Standard/Pro/Enterprise tiers
+- [x] Token-based gallery creation
+- [x] Admin-configurable pricing and features
+- [x] Grandfathering for expired Pro galleries
 
-### Core Features
-- [x] User authentication (JWT)
-- [x] Gallery CRUD with sections
-- [x] Photo upload with R2 storage
-- [x] Thumbnail generation
-- [x] Password-protected galleries
-- [x] Guest uploads
-- [x] Contributor links (5 types: photo, video, pCloud, Google Drive, Fotoshare)
-- [x] Subscription system with tokens
-- [x] Grace periods for expired subscriptions
-- [x] Dynamic pricing page
-- [x] Open Graph meta tags for social sharing
-- [x] pCloud integration with download proxy
-- [x] Admin panel
-
-### Recent Fixes (Feb 2025)
+## Recent Fixes (Feb 2025)
 - [x] Fixed lightbox preview loading issue (CDN URL handling)
 - [x] Standardized token naming (subscription_tokens, addon_tokens)
 - [x] Implemented grandfathering for expired Pro galleries
 - [x] Added pCloud download proxy for ISP bypass
 - [x] Fixed dashboard crash (datetime serialization)
-- [x] **Collage/Slideshow Performance Optimization** (Feb 13): Fixed extremely slow loading of display modes for large galleries (2000+ photos). Both modes now load in ~3-4 seconds instead of being stuck on loading screen.
-  - Backend: Added `display_url` field to all photo types pointing to optimized images
-  - Upload photos: Use `thumbnail_medium_url` (~800px)
-  - pCloud photos: Use 1600x1600 thumbnail
-  - GDrive photos: Use w1600 thumbnail
-  - Frontend: Updated `getPhotoUrl` in CollageDisplay.jsx and SlideshowDisplay.jsx
+- [x] **Collage/Slideshow Performance** (Feb 13): Optimized from stuck loading to ~3.5s for 2000+ photos
+- [x] **Pricing Page Storage Display** (Feb 13): Fixed to use `gallery_storage_limit_gb` field
+- [x] **Fotoshare Photobooth Backend** (Feb 13): Added session-aware scraping and photo storage
 
 ## Known Issues (Priority Order)
 
@@ -69,64 +55,59 @@ A comprehensive photo-sharing application with a focus on professional features 
 ### P1 - High
 1. **PayMongo Integration**: Blocked - waiting for user's business permit/API keys
 
-### P2 - Medium  
-1. **Data Inconsistency**: Photos uploaded before R2 fix exist in DB but not in storage
-2. **PDF Generation**: Missing system library
-3. **server.py Refactoring**: 8000+ line monolith needs route extraction
+### P2 - Medium
+1. **Fotoshare Photobooth Frontend**: Component needed to display session photos
+2. **PDF Generation**: Failed due to missing `libpangoft2-1.0-0` system library
+3. **Data Inconsistency**: Photos uploaded before R2 fix exist in DB but not in storage
+4. **server.py Refactoring**: Large monolith needs modular route extraction
 
 ### P3 - Low
-1. **Auto-delete job monitoring**: Needs verification on production
-2. **Docker volume mount**: Missing for `/app/uploads`
+1. Auto-delete expired galleries job needs verification
+2. Docker volume mount for `/app/uploads` directory
 
-## API Endpoints (Key)
+## In Progress
 
-### Public
-- `GET /api/public/gallery/{share_link}` - Gallery info
-- `GET /api/public/gallery/{share_link}/photos` - Gallery photos
-- `POST /api/public/gallery/{share_link}/upload` - Guest upload
-- `GET /og/g/{share_link}` - OG tags for social sharing
+### Fotoshare Photobooth Integration
+- [x] Backend scraper updated to detect content type (360_booth vs photobooth)
+- [x] Session-based photo grouping
+- [x] New `fotoshare_photos` collection
+- [x] API endpoint `/api/galleries/{id}/fotoshare-photos`
+- [ ] Frontend `PhotoboothSection.jsx` component
+- [ ] Integration with PublicGallery.jsx
 
-### Auth Required
-- `POST /api/galleries` - Create gallery
-- `GET /api/galleries` - List user's galleries
-- `POST /api/photos/upload` - Upload photos
-- `GET /api/user/subscription` - Get subscription status
+## Upcoming Tasks
+1. **Fotoshare Photobooth Frontend** - Session grid with modal viewer
+2. **PayMongo Payment Integration** - When API keys received
+3. **UI for re-uploading broken images** - Address data inconsistency
+4. **Contributor autocomplete refactor** - Extract to reusable hook
 
-### Admin
-- `POST /api/admin/login` - Admin authentication
-- `GET /api/admin/photographers` - List all users
-- `POST /api/admin/user/{user_id}/assign-mode` - Assign override mode
+## Future/Backlog
+- Enable "Live Billing" Mode
+- Refactor GDrive to use official API
+- Photographer-side section downloads
+- Invoice generation
+- User notifications for plan changes
+- Mobile collage preset builder improvements
 
-## Database Schema (Key Collections)
+## Technical Architecture
 
-### users
-- `id`, `email`, `password_hash`
-- `subscription_tokens` (formerly event_credits)
-- `addon_tokens` (formerly extra_credits)
-- `override_mode` - special access modes
-- `current_plan` - free/standard/pro
-- `subscription_expires_at`
+### Backend: FastAPI
+- Main file: `/app/backend/server.py` (needs refactoring)
+- MongoDB with Motor async driver
+- R2 storage via boto3
 
-### galleries
-- `id`, `share_link`, `photographer_id`
-- `sections[]` - gallery sections
-- `contributors[]` - contributor info
-- `created_under_pro` - for grandfathering
-- `auto_delete_date`
+### Frontend: React
+- Key pages: PublicGallery, CollageDisplay, SlideshowDisplay
+- Key components: LazyMasonryGrid, FotoshareSection, PremiumLightbox
+- Shadcn/UI components
 
-### photos
-- `id`, `gallery_id`, `filename`
-- `url` - CDN URL (absolute)
-- `thumbnail_url`, `thumbnail_medium_url`
-- `uploaded_by` - photographer/guest/contributor
+### Database Collections
+- `galleries`, `photos`, `gallery_videos`
+- `pcloud_photos`, `gdrive_photos`
+- `fotoshare_videos`, `fotoshare_photos` (new)
+- `users`, `site_config`
 
 ## Test Credentials
-- **User Email**: lessrealmoments@gmail.com
-- **User Password**: 3tfL99B%u2qw
-- **Admin Username**: admin  
-- **Admin Password**: Aa@58798546521325
-
-## Reference Documents
-- `/app/SUBSCRIPTION_SYSTEM_REFERENCE.md` - Complete subscription logic
-- `/app/SUBSCRIPTION_AUDIT_REPORT.md` - Audit findings
-- `/app/backend/REFACTOR_PLAN.md` - Backend refactoring plan
+- Email: lessrealmoments@gmail.com
+- Password: 3tfL99B%u2qw
+- Admin: admin / Aa@58798546521325
