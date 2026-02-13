@@ -8878,8 +8878,13 @@ async def check_duplicate_files(share_link: str, request: DuplicateCheckRequest)
     return DuplicateCheckResponse(duplicates=duplicates, new_files=new_files)
 
 @api_router.post("/public/gallery/{share_link}/upload", response_model=Photo)
-async def upload_photo_guest(share_link: str, file: UploadFile = File(...), password: Optional[str] = Form(None)):
-    """Optimized guest photo upload with concurrency control and async I/O"""
+async def upload_photo_guest(
+    share_link: str, 
+    file: UploadFile = File(...), 
+    password: Optional[str] = Form(None),
+    content_hash: Optional[str] = Form(None)  # MD5 hash from frontend
+):
+    """Optimized guest photo upload with hash-based duplicate detection"""
     gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
@@ -8898,8 +8903,22 @@ async def upload_photo_guest(share_link: str, file: UploadFile = File(...), pass
     if not file.filename:
         raise HTTPException(status_code=400, detail="File must have a filename")
     
-    # Check for duplicate filename (uses indexed field for fast lookup)
     original_filename = file.filename
+    
+    # Check for duplicate by content hash first (most reliable)
+    if content_hash:
+        existing_by_hash = await db.photos.find_one({
+            "gallery_id": gallery["id"],
+            "content_hash": content_hash.lower()
+        }, {"_id": 0, "original_filename": 1})
+        
+        if existing_by_hash:
+            raise HTTPException(
+                status_code=409, 
+                detail=f"This photo has already been uploaded (matches '{existing_by_hash.get('original_filename', 'existing photo')}')"
+            )
+    
+    # Fallback: Check for duplicate filename (for backward compatibility)
     existing = await db.photos.find_one({
         "gallery_id": gallery["id"],
         "original_filename": {"$regex": f"^{original_filename}$", "$options": "i"}
