@@ -5574,69 +5574,90 @@ async def scrape_fotoshare_photobooth(url: str) -> dict:
 @api_router.post("/galleries/{gallery_id}/photobooth-sections")
 async def create_photobooth_section(
     gallery_id: str,
-    fotoshare_url: str = Body(..., embed=True),
+    fotoshare_url: Optional[str] = Body(None, embed=True),
     name: str = Body("Photobooth", embed=True),
+    contributor_name: Optional[str] = Body(None, embed=True),
     current_user: dict = Depends(get_current_user)
 ):
-    """Create a new Fotoshare Photobooth section (separate from 360° booth)"""
+    """Create a new Fotoshare Photobooth section (separate from 360° booth)
+    
+    The fotoshare_url is optional - if not provided, a contributor link will be
+    generated so the photobooth provider can submit their URL later.
+    """
     gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    # Validate and scrape
-    scrape_result = await scrape_fotoshare_photobooth(fotoshare_url)
-    
-    if not scrape_result['success']:
-        error_msg = scrape_result.get('error', 'Failed to scrape fotoshare URL')
-        if scrape_result.get('expired'):
-            raise HTTPException(status_code=400, detail=f"Link expired: {error_msg}")
-        raise HTTPException(status_code=400, detail=error_msg)
-    
-    if len(scrape_result['sessions']) == 0:
-        raise HTTPException(status_code=400, detail="No photobooth sessions found. This might be a 360° booth link - use the 360° booth section instead.")
-    
     section_id = str(uuid.uuid4())
     sections = gallery.get("sections", [])
     now = datetime.now(timezone.utc).isoformat()
+    
+    # Generate contributor link for photobooth provider
+    contributor_link = str(uuid.uuid4())[:8]
     
     new_section = {
         "id": section_id,
         "name": name,
         "type": "fotoshare_photobooth",
         "order": len(sections),
-        "fotoshare_url": fotoshare_url,
-        "fotoshare_event_title": scrape_result.get('event_title'),
-        "fotoshare_last_sync": now,
-        "fotoshare_expired": False
+        "contributor_enabled": True,
+        "contributor_link": contributor_link,
+        "contributor_name": contributor_name or "Photobooth Provider"
     }
+    
+    photobooth_sessions = []
+    
+    # If fotoshare URL is provided, validate and scrape immediately
+    if fotoshare_url and fotoshare_url.strip():
+        fotoshare_url = fotoshare_url.strip()
+        scrape_result = await scrape_fotoshare_photobooth(fotoshare_url)
+        
+        if not scrape_result['success']:
+            error_msg = scrape_result.get('error', 'Failed to scrape fotoshare URL')
+            if scrape_result.get('expired'):
+                raise HTTPException(status_code=400, detail=f"Link expired: {error_msg}")
+            raise HTTPException(status_code=400, detail=error_msg)
+        
+        if len(scrape_result['sessions']) == 0:
+            raise HTTPException(status_code=400, detail="No photobooth sessions found. This might be a 360° booth link - use the 360° booth section instead.")
+        
+        new_section["fotoshare_url"] = fotoshare_url
+        new_section["fotoshare_event_title"] = scrape_result.get('event_title')
+        new_section["fotoshare_last_sync"] = now
+        new_section["fotoshare_expired"] = False
+        
+        # Store sessions
+        for session_data in scrape_result['sessions']:
+            session_entry = {
+                "id": str(uuid.uuid4()),
+                "gallery_id": gallery_id,
+                "section_id": section_id,
+                "session_id": session_data['session_id'],
+                "first_item_hash": session_data['first_item_hash'],
+                "cover_thumbnail": session_data['cover_thumbnail'],
+                "item_url": f"https://fotoshare.co/i/{session_data['first_item_hash']}",
+                "has_multiple": session_data['has_multiple'],
+                "created_at_source": session_data.get('created_at'),
+                "order": session_data.get('order', 0),
+                "synced_at": now
+            }
+            photobooth_sessions.append(session_entry)
+        
+        if photobooth_sessions:
+            await db.photobooth_sessions.insert_many(photobooth_sessions)
+    
     sections.append(new_section)
     await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
-    
-    # Store sessions
-    photobooth_sessions = []
-    for session_data in scrape_result['sessions']:
-        session_entry = {
-            "id": str(uuid.uuid4()),
-            "gallery_id": gallery_id,
-            "section_id": section_id,
-            "session_id": session_data['session_id'],
-            "first_item_hash": session_data['first_item_hash'],
-            "cover_thumbnail": session_data['cover_thumbnail'],
-            "item_url": f"https://fotoshare.co/i/{session_data['first_item_hash']}",
-            "has_multiple": session_data['has_multiple'],
-            "created_at_source": session_data.get('created_at'),
-            "order": session_data.get('order', 0),
-            "synced_at": now
-        }
-        photobooth_sessions.append(session_entry)
-    
-    if photobooth_sessions:
-        await db.photobooth_sessions.insert_many(photobooth_sessions)
     
     return {
         "section": Section(**new_section),
         "sessions_count": len(photobooth_sessions),
-        "event_title": scrape_result.get('event_title')
+        "event_title": new_section.get('fotoshare_event_title'),
+        "contributor_link": contributor_link,
+        "message": "Photobooth section created. " + (
+            f"Found {len(photobooth_sessions)} sessions." if photobooth_sessions 
+            else "Share the contributor link with the photobooth provider to add their Fotoshare URL."
+        )
     }
 
 @api_router.get("/galleries/{gallery_id}/photobooth-sessions")
