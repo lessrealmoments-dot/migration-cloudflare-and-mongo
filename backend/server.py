@@ -5114,6 +5114,7 @@ async def create_fotoshare_section(
     section_id = str(uuid.uuid4())
     sections = gallery.get("sections", [])
     now = datetime.now(timezone.utc).isoformat()
+    content_type = scrape_result.get('content_type', '360_booth')
     
     new_section = {
         "id": section_id,
@@ -5122,12 +5123,13 @@ async def create_fotoshare_section(
         "order": len(sections),
         "fotoshare_url": data.fotoshare_url,
         "fotoshare_last_sync": now,
-        "fotoshare_expired": False
+        "fotoshare_expired": False,
+        "fotoshare_content_type": content_type  # '360_booth', 'photobooth', or 'mixed'
     }
     sections.append(new_section)
     await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
     
-    # Store the scraped videos
+    # Store the scraped videos (360° booth)
     fotoshare_videos = []
     for video_data in scrape_result['videos']:
         video_entry = {
@@ -5150,9 +5152,38 @@ async def create_fotoshare_section(
     if fotoshare_videos:
         await db.fotoshare_videos.insert_many(fotoshare_videos)
     
+    # Store the scraped photos (Photobooth)
+    fotoshare_photos = []
+    for photo_data in scrape_result['photos']:
+        photo_entry = {
+            "id": str(uuid.uuid4()),
+            "gallery_id": gallery_id,
+            "section_id": section_id,
+            "hash": photo_data['hash'],
+            "source_url": photo_data['source_url'],
+            "thumbnail_url": photo_data['thumbnail_url'],
+            "width": photo_data.get('width', 3600),
+            "height": photo_data.get('height', 2400),
+            "file_type": photo_data.get('file_type', 'jpg'),
+            "file_size": photo_data.get('file_size', 0),
+            "file_source": photo_data.get('file_source', 'photobooth'),
+            "created_at_source": photo_data.get('created_at_source'),
+            "session_id": photo_data.get('session_id'),
+            "has_session_items": photo_data.get('has_session_items', False),
+            "order": photo_data.get('order', 0),
+            "synced_at": now
+        }
+        fotoshare_photos.append(photo_entry)
+    
+    if fotoshare_photos:
+        await db.fotoshare_photos.insert_many(fotoshare_photos)
+    
     return {
         "section": Section(**new_section),
         "videos_count": len(fotoshare_videos),
+        "photos_count": len(fotoshare_photos),
+        "sessions_count": len(scrape_result.get('sessions', {})),
+        "content_type": content_type,
         "event_title": scrape_result.get('event_title')
     }
 
