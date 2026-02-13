@@ -2602,6 +2602,18 @@ const GalleryDetail = () => {
                   <input
                     type="radio"
                     name="sectionType"
+                    value="fotoshare_photobooth"
+                    checked={newSectionType === 'fotoshare_photobooth'}
+                    onChange={() => setNewSectionType('fotoshare_photobooth')}
+                    className="accent-violet-500"
+                  />
+                  <Images className="w-4 h-4 text-violet-500" />
+                  <span className="text-sm">Photobooth</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sectionType"
                     value="pcloud"
                     checked={newSectionType === 'pcloud'}
                     onChange={() => setNewSectionType('pcloud')}
