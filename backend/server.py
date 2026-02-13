@@ -8815,15 +8815,6 @@ async def get_display_data(share_link: str):
         "last_updated": max([p.get("uploaded_at", "") for p in photos if p.get("uploaded_at")]) if photos else ""
     }
 
-class DuplicateCheckRequest(BaseModel):
-    filenames: List[str]
-    hashes: Optional[List[str]] = None  # MD5 hashes of file content
-
-class DuplicateCheckResponse(BaseModel):
-    duplicates: List[str]
-    new_files: List[str]
-    duplicate_hashes: Optional[List[str]] = None  # Which hashes are duplicates
-
 @api_router.post("/public/gallery/{share_link}/check-duplicates", response_model=DuplicateCheckResponse)
 async def check_duplicate_files(share_link: str, request: DuplicateCheckRequest):
     """Check for duplicates using content hash (preferred) or filename fallback"""
