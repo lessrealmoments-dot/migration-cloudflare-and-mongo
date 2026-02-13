@@ -54,6 +54,12 @@ A comprehensive photo-sharing application with a focus on professional features 
 - [x] Implemented grandfathering for expired Pro galleries
 - [x] Added pCloud download proxy for ISP bypass
 - [x] Fixed dashboard crash (datetime serialization)
+- [x] **Collage/Slideshow Performance Optimization** (Feb 13): Fixed extremely slow loading of display modes for large galleries (2000+ photos). Both modes now load in ~3-4 seconds instead of being stuck on loading screen.
+  - Backend: Added `display_url` field to all photo types pointing to optimized images
+  - Upload photos: Use `thumbnail_medium_url` (~800px)
+  - pCloud photos: Use 1600x1600 thumbnail
+  - GDrive photos: Use w1600 thumbnail
+  - Frontend: Updated `getPhotoUrl` in CollageDisplay.jsx and SlideshowDisplay.jsx
 
 ## Known Issues (Priority Order)
 
