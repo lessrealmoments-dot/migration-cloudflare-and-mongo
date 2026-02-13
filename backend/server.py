@@ -8969,6 +8969,24 @@ async def upload_photo_guest(
         
         if file_size > MAX_FILE_SIZE:
             raise HTTPException(status_code=400, detail="File too large. Maximum size is 50MB")
+        
+        # Compute content hash on backend if not provided by frontend
+        import hashlib
+        computed_hash = hashlib.md5(file_content).hexdigest()
+        final_hash = content_hash.lower() if content_hash else computed_hash
+        
+        # Double-check for duplicate using computed hash (in case frontend hash was wrong)
+        existing_by_computed_hash = await db.photos.find_one({
+            "gallery_id": gallery["id"],
+            "content_hash": computed_hash
+        }, {"_id": 0, "original_filename": 1})
+        
+        if existing_by_computed_hash:
+            raise HTTPException(
+                status_code=409, 
+                detail=f"This photo has already been uploaded (matches '{existing_by_computed_hash.get('original_filename', 'existing photo')}')"
+            )
+            
     except HTTPException:
         raise
     except Exception as e:
