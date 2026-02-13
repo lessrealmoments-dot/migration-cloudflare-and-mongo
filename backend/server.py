@@ -1563,6 +1563,7 @@ async def create_database_indexes():
         await db.photos.create_index("filename")
         await db.photos.create_index([("gallery_id", 1), ("uploaded_at", -1)])  # For sorted photo queries
         await db.photos.create_index([("gallery_id", 1), ("original_filename", 1)])  # For duplicate detection
+        await db.photos.create_index([("gallery_id", 1), ("content_hash", 1)])  # For hash-based duplicate detection
         
         # Drive credentials and backups
         await db.drive_credentials.create_index("user_id", unique=True)
