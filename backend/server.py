@@ -632,8 +632,8 @@ def _extract_gdrive_folder_id_deprecated(url: str) -> Optional[str]:
 
 async def fetch_gdrive_folder_photos(folder_id: str) -> dict:
     """
-    Fetch photos from a public Google Drive folder.
-    Uses the Google Drive API to list files.
+    Fetch photos from a public Google Drive folder using the Google Drive API.
+    Requires GOOGLE_DRIVE_API_KEY environment variable.
     """
     result = {
         'success': False,
@@ -642,76 +642,102 @@ async def fetch_gdrive_folder_photos(folder_id: str) -> dict:
         'error': None
     }
     
+    api_key = os.environ.get('GOOGLE_DRIVE_API_KEY', '')
+    if not api_key:
+        result['error'] = "Google Drive API key not configured"
+        logger.error("GOOGLE_DRIVE_API_KEY not set in environment")
+        return result
+    
     try:
-        # Google Drive API endpoint for listing files in a folder
-        # For public folders, we can use the API key-less approach
-        api_url = f"https://www.googleapis.com/drive/v3/files"
-        params = {
-            "q": f"'{folder_id}' in parents and mimeType contains 'image/' and trashed=false",
-            "fields": "files(id,name,mimeType,size,imageMediaMetadata,thumbnailLink,webContentLink,createdTime)",
-            "pageSize": 1000,
-            "key": os.environ.get('GOOGLE_API_KEY', '')  # Optional API key
-        }
-        
-        # Try using public access first (works for "Anyone with link" folders)
         async with aiohttp.ClientSession() as session:
-            # First, try to get folder metadata
+            # First, get folder metadata to get the folder name
             folder_url = f"https://www.googleapis.com/drive/v3/files/{folder_id}"
             folder_params = {
-                "fields": "name",
-                "key": os.environ.get('GOOGLE_API_KEY', '')
+                "fields": "name,mimeType",
+                "key": api_key
             }
             
             async with session.get(folder_url, params=folder_params) as folder_response:
                 if folder_response.status == 200:
                     folder_data = await folder_response.json()
                     result['folder_name'] = folder_data.get('name', 'Google Drive Photos')
+                    logger.info(f"Found folder: {result['folder_name']}")
+                elif folder_response.status == 404:
+                    result['error'] = "Folder not found. Check if the link is correct."
+                    return result
+                elif folder_response.status == 403:
+                    error_data = await folder_response.json()
+                    error_msg = error_data.get('error', {}).get('message', 'Access denied')
+                    result['error'] = f"Access denied: {error_msg}. Make sure the folder is set to 'Anyone with the link can view'."
+                    return result
             
-            # Now get the files
-            async with session.get(api_url, params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    files = data.get('files', [])
-                    
-                    for file in files:
-                        # Build thumbnail URL - Google provides thumbnails for images
-                        file_id = file.get('id')
-                        thumbnail_url = file.get('thumbnailLink', '')
+            # Now get all image files in the folder
+            all_photos = []
+            next_page_token = None
+            
+            while True:
+                api_url = "https://www.googleapis.com/drive/v3/files"
+                params = {
+                    "q": f"'{folder_id}' in parents and (mimeType contains 'image/') and trashed=false",
+                    "fields": "nextPageToken,files(id,name,mimeType,size,imageMediaMetadata,thumbnailLink,createdTime)",
+                    "pageSize": 1000,
+                    "orderBy": "createdTime desc",
+                    "key": api_key
+                }
+                
+                if next_page_token:
+                    params["pageToken"] = next_page_token
+                
+                async with session.get(api_url, params=params) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        files = data.get('files', [])
                         
-                        # Higher quality thumbnail
-                        if thumbnail_url:
-                            thumbnail_url = thumbnail_url.replace('=s220', '=s800')
-                        else:
-                            thumbnail_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w800"
+                        for file in files:
+                            file_id = file.get('id')
+                            thumbnail_url = file.get('thumbnailLink', '')
+                            
+                            # Get higher quality thumbnail (up to 1600px)
+                            if thumbnail_url:
+                                thumbnail_url = thumbnail_url.replace('=s220', '=s1600')
+                            else:
+                                thumbnail_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w1600"
+                            
+                            # Full image URL for viewing/downloading
+                            view_url = f"https://drive.google.com/uc?export=view&id={file_id}"
+                            
+                            photo_data = {
+                                'file_id': file_id,
+                                'name': file.get('name', 'Untitled'),
+                                'mime_type': file.get('mimeType', 'image/jpeg'),
+                                'size': int(file.get('size', 0)) if file.get('size') else 0,
+                                'thumbnail_url': thumbnail_url,
+                                'view_url': view_url,
+                                'width': file.get('imageMediaMetadata', {}).get('width'),
+                                'height': file.get('imageMediaMetadata', {}).get('height'),
+                                'created_time': file.get('createdTime')
+                            }
+                            all_photos.append(photo_data)
                         
-                        # Full image URL for viewing
-                        view_url = f"https://drive.google.com/uc?export=view&id={file_id}"
-                        
-                        photo_data = {
-                            'file_id': file_id,
-                            'name': file.get('name', 'Untitled'),
-                            'mime_type': file.get('mimeType', 'image/jpeg'),
-                            'size': int(file.get('size', 0)) if file.get('size') else 0,
-                            'thumbnail_url': thumbnail_url,
-                            'view_url': view_url,
-                            'width': file.get('imageMediaMetadata', {}).get('width'),
-                            'height': file.get('imageMediaMetadata', {}).get('height'),
-                            'created_time': file.get('createdTime')
-                        }
-                        result['photos'].append(photo_data)
-                    
-                    result['success'] = True
-                    result['photo_count'] = len(result['photos'])
-                    logger.info(f"Fetched {len(result['photos'])} photos from Google Drive folder {folder_id}")
-                    
-                elif response.status == 404:
-                    result['error'] = "Folder not found. Make sure the folder is shared publicly."
-                elif response.status == 403:
-                    result['error'] = "Access denied. Please make sure the folder is set to 'Anyone with the link can view'."
-                else:
-                    error_text = await response.text()
-                    result['error'] = f"Failed to fetch folder: {error_text[:200]}"
-                    logger.error(f"Google Drive API error: {response.status} - {error_text}")
+                        next_page_token = data.get('nextPageToken')
+                        if not next_page_token:
+                            break
+                            
+                    elif response.status == 403:
+                        error_data = await response.json()
+                        error_msg = error_data.get('error', {}).get('message', 'Access denied')
+                        result['error'] = f"Cannot list files: {error_msg}. Make sure the folder is publicly shared."
+                        return result
+                    else:
+                        error_text = await response.text()
+                        result['error'] = f"API error ({response.status}): {error_text[:200]}"
+                        logger.error(f"Google Drive API error: {response.status} - {error_text}")
+                        return result
+            
+            result['success'] = True
+            result['photos'] = all_photos
+            result['photo_count'] = len(all_photos)
+            logger.info(f"Successfully fetched {len(all_photos)} photos from Google Drive folder '{result['folder_name']}'")
                     
     except Exception as e:
         result['error'] = f"Error fetching Google Drive folder: {str(e)}"
