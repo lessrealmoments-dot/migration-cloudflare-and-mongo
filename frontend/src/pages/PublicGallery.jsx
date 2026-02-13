@@ -1994,33 +1994,79 @@ const PublicGallery = () => {
                 
                 {uploading && uploadProgress.length > 0 ? (
                   <div className="space-y-4">
-                    <Loader2 className="w-10 h-10 mx-auto text-zinc-600 animate-spin" />
-                    <p className="font-medium text-zinc-700">Uploading {uploadProgress.length} photo(s)...</p>
-                    <div className="max-w-sm mx-auto space-y-2">
-                      {uploadProgress.slice(0, 3).map((file, index) => (
-                        <div key={index} className="flex items-center gap-3 text-left bg-zinc-50 rounded-lg p-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-zinc-700 truncate">{file.name}</p>
-                            <div className="w-full bg-zinc-200 rounded-full h-1.5 mt-1">
-                              <div 
-                                className={`h-1.5 rounded-full transition-all duration-300 ${
-                                  file.status === 'error' ? 'bg-red-500' : 
-                                  file.status === 'success' ? 'bg-green-500' : 'bg-zinc-600'
-                                }`}
-                                style={{ width: `${file.progress}%` }}
-                              />
-                            </div>
+                    {/* Upload Summary Header */}
+                    <div className="flex items-center justify-center gap-3">
+                      <Loader2 className="w-6 h-6 text-zinc-600 animate-spin" />
+                      <p className="font-medium text-zinc-700">
+                        Uploading {uploadProgress.filter(f => f.status === 'uploading' || f.status === 'pending').length} of {uploadProgress.length} photo(s)
+                      </p>
+                    </div>
+                    
+                    {/* Progress Summary Bar */}
+                    <div className="max-w-sm mx-auto">
+                      <div className="flex justify-between text-xs text-zinc-500 mb-1">
+                        <span>{uploadProgress.filter(f => f.status === 'success').length} completed</span>
+                        <span>{uploadProgress.filter(f => f.status === 'error').length > 0 ? `${uploadProgress.filter(f => f.status === 'error').length} failed` : ''}</span>
+                      </div>
+                      <div className="w-full bg-zinc-200 rounded-full h-2">
+                        <div 
+                          className="h-2 rounded-full bg-green-500 transition-all duration-300"
+                          style={{ 
+                            width: `${(uploadProgress.filter(f => f.status === 'success').length / uploadProgress.length) * 100}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* All Files List - Scrollable */}
+                    <div className="max-w-sm mx-auto max-h-64 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+                      {uploadProgress.map((file, index) => (
+                        <div 
+                          key={index} 
+                          className={`flex items-center gap-3 text-left rounded-lg p-2.5 transition-colors ${
+                            file.status === 'uploading' ? 'bg-blue-50 border border-blue-100' :
+                            file.status === 'success' ? 'bg-green-50 border border-green-100' :
+                            file.status === 'error' ? 'bg-red-50 border border-red-100' :
+                            'bg-zinc-50 border border-zinc-100'
+                          }`}
+                        >
+                          {/* File Number */}
+                          <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                            file.status === 'success' ? 'bg-green-500 text-white' :
+                            file.status === 'error' ? 'bg-red-500 text-white' :
+                            file.status === 'uploading' ? 'bg-blue-500 text-white' :
+                            'bg-zinc-300 text-zinc-600'
+                          }`}>
+                            {file.status === 'success' ? '✓' : file.status === 'error' ? '!' : index + 1}
                           </div>
+                          
+                          {/* File Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-zinc-700 truncate font-medium">{file.name}</p>
+                            {file.status === 'uploading' && (
+                              <div className="w-full bg-zinc-200 rounded-full h-1.5 mt-1.5">
+                                <div 
+                                  className="h-1.5 rounded-full bg-blue-500 transition-all duration-300"
+                                  style={{ width: `${file.progress}%` }}
+                                />
+                              </div>
+                            )}
+                            {file.status === 'error' && file.errorMsg && (
+                              <p className="text-xs text-red-500 mt-0.5">{file.errorMsg}</p>
+                            )}
+                          </div>
+                          
+                          {/* Status Icon */}
                           <div className="flex-shrink-0">
-                            {file.status === 'uploading' && <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />}
-                            {file.status === 'success' && <CheckCircle className="w-4 h-4 text-green-500" />}
-                            {file.status === 'error' && <AlertCircle className="w-4 h-4 text-red-500" />}
+                            {file.status === 'uploading' && (
+                              <span className="text-xs text-blue-600 font-medium">{file.progress}%</span>
+                            )}
+                            {file.status === 'success' && <CheckCircle className="w-5 h-5 text-green-500" />}
+                            {file.status === 'error' && <AlertCircle className="w-5 h-5 text-red-500" />}
+                            {file.status === 'pending' && <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />}
                           </div>
                         </div>
                       ))}
-                      {uploadProgress.length > 3 && (
-                        <p className="text-sm text-zinc-500">+ {uploadProgress.length - 3} more files</p>
-                      )}
                     </div>
                   </div>
                 ) : isDragActive ? (
