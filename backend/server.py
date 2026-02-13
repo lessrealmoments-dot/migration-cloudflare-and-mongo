@@ -5331,6 +5331,52 @@ async def get_fotoshare_videos(gallery_id: str, section_id: Optional[str] = None
     videos.sort(key=lambda v: v.get("order", 0))
     return videos
 
+@api_router.get("/galleries/{gallery_id}/fotoshare-photos")
+async def get_fotoshare_photos(gallery_id: str, section_id: Optional[str] = None):
+    """Get fotoshare photos for a gallery (supports both gallery_id and share_link)"""
+    # First try to find by gallery_id
+    gallery = await db.galleries.find_one({"id": gallery_id}, {"_id": 0, "id": 1})
+    
+    # If not found, try by share_link
+    if not gallery:
+        gallery = await db.galleries.find_one({"share_link": gallery_id}, {"_id": 0, "id": 1})
+    
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    actual_gallery_id = gallery["id"]
+    query = {"gallery_id": actual_gallery_id}
+    if section_id:
+        query["section_id"] = section_id
+    
+    photos = await db.fotoshare_photos.find(query, {"_id": 0}).to_list(500)
+    photos.sort(key=lambda p: p.get("order", 0))
+    
+    # Group photos by session for easier frontend consumption
+    sessions = {}
+    standalone_photos = []
+    
+    for photo in photos:
+        session_id = photo.get("session_id")
+        if session_id:
+            if session_id not in sessions:
+                sessions[session_id] = {
+                    "session_id": session_id,
+                    "cover_photo": photo,  # First photo is the cover
+                    "photos": []
+                }
+            sessions[session_id]["photos"].append(photo)
+        else:
+            standalone_photos.append(photo)
+    
+    return {
+        "photos": photos,
+        "sessions": list(sessions.values()),
+        "standalone_photos": standalone_photos,
+        "total_count": len(photos),
+        "sessions_count": len(sessions)
+    }
+
 @api_router.delete("/galleries/{gallery_id}/fotoshare-sections/{section_id}")
 async def delete_fotoshare_section(
     gallery_id: str,
