@@ -29,7 +29,7 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] **pCloud**: Contributor workflow with download proxy
 - [x] **Google Drive**: Public folder scraping
 - [x] **Fotoshare 360° Booth**: Video integration with iframe embedding
-- [x] **Fotoshare Photobooth**: Backend scraping complete (sessions + photos)
+- [x] **Fotoshare Photobooth**: Session-based photo integration (NEW - separate from 360°)
 
 ### Subscription System
 - [x] Free/Standard/Pro/Enterprise tiers
