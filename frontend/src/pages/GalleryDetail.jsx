@@ -375,7 +375,7 @@ const GalleryDetail = () => {
       // Check section type to use the correct URL prefix
       const section = sections.find(s => s.id === sectionId);
       const urlPrefix = section?.type === 'video' ? '/v/' : section?.type === 'fotoshare' ? '/f/' : section?.type === 'gdrive' ? '/d/' : section?.type === 'pcloud' ? '/p/' : '/c/';
-      const linkType = section?.type === 'video' ? 'Video upload' : section?.type === 'fotoshare' ? '360 Booth upload' : section?.type === 'gdrive' ? 'Google Drive' : section?.type === 'pcloud' ? 'pCloud upload' : 'Contributor';
+      const linkType = section?.type === 'video' ? 'Video upload' : section?.type === 'fotoshare' ? '360 Booth upload' : section?.type === 'fotoshare_photobooth' ? 'Photobooth' : section?.type === 'gdrive' ? 'Google Drive' : section?.type === 'pcloud' ? 'pCloud upload' : 'Contributor';
       const contributorUrl = `${window.location.origin}${urlPrefix}${response.data.contributor_link}`;
       await navigator.clipboard.writeText(contributorUrl);
       toast.success(`${linkType} link created and copied to clipboard!`);
