@@ -6983,8 +6983,8 @@ async def get_gallery_existing_contributors(gallery: dict) -> list:
     seen_names = set()
     
     for section in gallery.get("sections", []):
-        contributor_name = section.get("contributor_name", "").strip()
-        contributor_role = section.get("contributor_role", "").strip()
+        contributor_name = (section.get("contributor_name") or "").strip()
+        contributor_role = (section.get("contributor_role") or "").strip()
         
         if contributor_name and contributor_name.lower() not in seen_names:
             seen_names.add(contributor_name.lower())
