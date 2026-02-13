@@ -4981,8 +4981,8 @@ async def create_section(
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    if type not in ["photo", "video", "fotoshare"]:
-        raise HTTPException(status_code=400, detail="Section type must be 'photo', 'video', or 'fotoshare'")
+    if type not in ["photo", "video", "fotoshare", "fotoshare_photobooth"]:
+        raise HTTPException(status_code=400, detail="Section type must be 'photo', 'video', 'fotoshare', or 'fotoshare_photobooth'")
     
     section_id = str(uuid.uuid4())
     sections = gallery.get("sections", [])
