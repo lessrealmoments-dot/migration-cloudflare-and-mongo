@@ -8816,19 +8816,48 @@ async def get_display_data(share_link: str):
 
 class DuplicateCheckRequest(BaseModel):
     filenames: List[str]
+    hashes: Optional[List[str]] = None  # MD5 hashes of file content
 
 class DuplicateCheckResponse(BaseModel):
     duplicates: List[str]
     new_files: List[str]
+    duplicate_hashes: Optional[List[str]] = None  # Which hashes are duplicates
 
 @api_router.post("/public/gallery/{share_link}/check-duplicates", response_model=DuplicateCheckResponse)
 async def check_duplicate_files(share_link: str, request: DuplicateCheckRequest):
-    """Check which filenames already exist in the gallery"""
+    """Check for duplicates using content hash (preferred) or filename fallback"""
     gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    # Get all original filenames in this gallery
+    duplicates = []
+    new_files = []
+    duplicate_hashes = []
+    
+    # If hashes are provided, use hash-based detection (more reliable)
+    if request.hashes and len(request.hashes) == len(request.filenames):
+        # Get all content hashes in this gallery
+        existing_photos = await db.photos.find(
+            {"gallery_id": gallery["id"], "content_hash": {"$exists": True, "$ne": None}}, 
+            {"_id": 0, "content_hash": 1}
+        ).to_list(None)
+        
+        existing_hashes = set(p.get("content_hash", "").lower() for p in existing_photos if p.get("content_hash"))
+        
+        for filename, file_hash in zip(request.filenames, request.hashes):
+            if file_hash and file_hash.lower() in existing_hashes:
+                duplicates.append(filename)
+                duplicate_hashes.append(file_hash)
+            else:
+                new_files.append(filename)
+        
+        return DuplicateCheckResponse(
+            duplicates=duplicates, 
+            new_files=new_files,
+            duplicate_hashes=duplicate_hashes if duplicate_hashes else None
+        )
+    
+    # Fallback to filename-based detection (less reliable but works for desktop)
     existing_photos = await db.photos.find(
         {"gallery_id": gallery["id"]}, 
         {"_id": 0, "original_filename": 1}
@@ -8839,9 +8868,6 @@ async def check_duplicate_files(share_link: str, request: DuplicateCheckRequest)
         for p in existing_photos 
         if p.get("original_filename")
     )
-    
-    duplicates = []
-    new_files = []
     
     for filename in request.filenames:
         if filename.lower() in existing_filenames:
