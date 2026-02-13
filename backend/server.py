@@ -6990,6 +6990,8 @@ async def get_contributor_upload_info(contributor_link: str):
         "pcloud_code": section.get("pcloud_code"),
         "pcloud_folder_name": section.get("pcloud_folder_name"),
         "pcloud_upload_link": section.get("pcloud_upload_link"),
+        # Photobooth-specific data
+        "existing_photobooth_sessions": existing_photobooth_sessions,
         # Contributor access window info
         "uploads_allowed": uploads_allowed,
         "days_until_expires": days_until_expires,
