@@ -20,6 +20,7 @@ import PhotoboothSection from '@/components/PhotoboothSection';
 import GoogleDriveSection from '@/components/GoogleDriveSection';
 import useBrandConfig from '../hooks/useBrandConfig';
 import { getContrastTextColor, getTextColorForBackground, getSubtleTextColor } from '@/themes';
+import { calculateFileHash } from '@/utils/fileHash';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
