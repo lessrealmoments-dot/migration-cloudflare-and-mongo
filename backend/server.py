@@ -201,8 +201,9 @@ def _extract_fotoshare_event_id(url: str) -> Optional[str]:
 
 async def scrape_fotoshare_videos(url: str) -> dict:
     """
-    Scrape fotoshare.co event page to extract video thumbnails and metadata.
-    Returns dict with 'success', 'videos', 'event_title', 'error' keys.
+    Scrape fotoshare.co event page to extract video/photo thumbnails and metadata.
+    Supports both 360° Booth (videos) and Photobooth (photos with sessions).
+    Returns dict with 'success', 'videos', 'photos', 'sessions', 'event_title', 'content_type', 'error' keys.
     """
     import aiohttp
     from bs4 import BeautifulSoup
@@ -210,7 +211,10 @@ async def scrape_fotoshare_videos(url: str) -> dict:
     result = {
         'success': False,
         'videos': [],
+        'photos': [],
+        'sessions': {},  # session_id -> list of photos
         'event_title': None,
+        'content_type': 'unknown',  # '360_booth', 'photobooth', or 'mixed'
         'error': None,
         'expired': False
     }
@@ -259,45 +263,80 @@ async def scrape_fotoshare_videos(url: str) -> dict:
         if title_elem:
             result['event_title'] = title_elem.get_text(strip=True)
         
-        # Extract video thumbnails from the items container
-        video_items = soup.select('.thumb[data-type="mp4"], .thumb[data-filetype="mp4"], div[data-hash]')
+        # Extract ALL items from the items container
+        all_items = soup.select('.thumb[data-hash], div.thumb[data-hash]')
         
         videos = []
-        for idx, item in enumerate(video_items):
+        photos = []
+        sessions = {}  # Group photos by session_id
+        
+        for idx, item in enumerate(all_items):
             try:
-                video_hash = item.get('data-hash')
-                if not video_hash:
+                item_hash = item.get('data-hash')
+                if not item_hash:
                     continue
                 
                 thumbnail = item.get('data-thumb', '')
                 # Also try to get from img element
                 if not thumbnail:
-                    img = item.select_one('img')
+                    img = item.select_one('img:not(.session-thumb-overlay)')
                     if img:
                         thumbnail = img.get('data-src') or img.get('src', '')
                 
                 if not thumbnail:
                     continue
                 
-                video_data = {
-                    'hash': video_hash,
-                    'source_url': f'https://fotoshare.co/i/{video_hash}',
+                file_type = item.get('data-filetype', item.get('data-type', 'unknown')).lower()
+                session_id = item.get('data-session-id')
+                
+                # Check if this item has a session overlay (indicates multiple photos in session)
+                has_session_overlay = item.select_one('.session-thumb-overlay') is not None
+                
+                item_data = {
+                    'hash': item_hash,
+                    'source_url': f'https://fotoshare.co/i/{item_hash}',
                     'thumbnail_url': thumbnail,
                     'width': int(item.get('data-width', 1080)),
                     'height': int(item.get('data-height', 1920)),
-                    'file_type': item.get('data-filetype', 'mp4'),
+                    'file_type': file_type,
+                    'file_size': int(item.get('data-filesize', 0)),
                     'file_source': item.get('data-filesource', 'unknown'),
                     'created_at_source': item.get('data-filecreated'),
+                    'session_id': session_id,
+                    'has_session_items': has_session_overlay,
                     'order': idx
                 }
-                videos.append(video_data)
+                
+                if file_type == 'mp4':
+                    videos.append(item_data)
+                else:
+                    # Photo (jpg, png, etc.)
+                    photos.append(item_data)
+                    
+                    # Group by session
+                    if session_id:
+                        if session_id not in sessions:
+                            sessions[session_id] = []
+                        sessions[session_id].append(item_data)
+                        
             except Exception as e:
-                logging.warning(f"Error parsing video item: {e}")
+                logging.warning(f"Error parsing fotoshare item: {e}")
                 continue
+        
+        # Determine content type
+        if videos and not photos:
+            result['content_type'] = '360_booth'
+        elif photos and not videos:
+            result['content_type'] = 'photobooth'
+        elif videos and photos:
+            result['content_type'] = 'mixed'
         
         result['success'] = True
         result['videos'] = videos
-        logging.info(f"Scraped {len(videos)} videos from fotoshare.co event")
+        result['photos'] = photos
+        result['sessions'] = sessions
+        
+        logging.info(f"Scraped fotoshare.co: {len(videos)} videos, {len(photos)} photos, {len(sessions)} sessions (type: {result['content_type']})")
         
     except aiohttp.ClientError as e:
         result['error'] = f'Network error: {str(e)}'
