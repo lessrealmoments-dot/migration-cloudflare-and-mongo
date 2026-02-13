@@ -35,13 +35,14 @@
   /* Enable smooth momentum scrolling on iOS */
   html {
     -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
+    /* Note: scroll-behavior: smooth can interfere with momentum scrolling on mobile */
+    /* Use JS-based smooth scrolling for better control */
   }
   
   body {
     @apply bg-background text-foreground;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y pan-x;
+    overscroll-behavior-y: contain;
   }
   
   /* Ensure sticky elements don't break scroll momentum */
