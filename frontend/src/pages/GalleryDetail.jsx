@@ -1128,6 +1128,7 @@ const GalleryDetail = () => {
       setNewSectionName('');
       setNewSectionType('photo');
       setNewFotoshareUrl('');
+      setNewPhotoboothUrl('');
       setNewPcloudUrl('');
       setNewPcloudUploadLink('');
       setNewGdriveUrl('');
