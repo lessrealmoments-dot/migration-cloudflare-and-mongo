@@ -8965,7 +8965,6 @@ async def upload_photo_guest(
         # Compute content hash on backend if not provided by frontend
         import hashlib
         computed_hash = hashlib.md5(file_content).hexdigest()
-        final_hash = content_hash.lower() if content_hash else computed_hash
         
         # Double-check for duplicate using computed hash (in case frontend hash was wrong)
         existing_by_computed_hash = await db.photos.find_one({
