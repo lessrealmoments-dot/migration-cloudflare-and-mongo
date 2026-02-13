@@ -7140,6 +7140,165 @@ async def submit_contributor_fotoshare(contributor_link: str, data: dict = Body(
         "contributor_name": company_name
     }
 
+@api_router.post("/contributor/{contributor_link}/submit-photobooth")
+async def submit_contributor_photobooth(contributor_link: str, data: dict = Body(...)):
+    """Submit Fotoshare Photobooth URL as a contributor (separate from 360 booth)"""
+    fotoshare_url = data.get("fotoshare_url", "").strip()
+    
+    if not fotoshare_url:
+        raise HTTPException(status_code=400, detail="Fotoshare URL is required")
+    
+    # Find gallery with this contributor link
+    gallery = await db.galleries.find_one(
+        {"sections.contributor_link": contributor_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid contributor link")
+    
+    # Find the section
+    section = next((s for s in gallery.get("sections", []) if s.get("contributor_link") == contributor_link), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    # Get contributor name from section
+    company_name = section.get("contributor_name", "Photobooth Provider")
+    
+    # Scrape the fotoshare URL using photobooth-specific scraper
+    scrape_result = await scrape_fotoshare_photobooth(fotoshare_url)
+    
+    if not scrape_result['success']:
+        error_msg = scrape_result.get('error', 'Failed to scrape fotoshare URL')
+        if scrape_result.get('expired'):
+            raise HTTPException(status_code=400, detail=f"Link expired: {error_msg}")
+        raise HTTPException(status_code=400, detail=error_msg)
+    
+    if len(scrape_result['sessions']) == 0:
+        raise HTTPException(status_code=400, detail="No photobooth sessions found. This might be a 360° booth link.")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Update section with fotoshare URL
+    sections = gallery.get("sections", [])
+    section_idx = next((i for i, s in enumerate(sections) if s.get("contributor_link") == contributor_link), None)
+    if section_idx is not None:
+        sections[section_idx]["fotoshare_url"] = fotoshare_url
+        sections[section_idx]["fotoshare_last_sync"] = now
+        sections[section_idx]["fotoshare_expired"] = False
+        sections[section_idx]["fotoshare_event_title"] = scrape_result.get('event_title')
+        
+        await db.galleries.update_one({"id": gallery["id"]}, {"$set": {"sections": sections}})
+    
+    # Get existing session hashes to avoid duplicates
+    existing_sessions = await db.photobooth_sessions.find(
+        {"gallery_id": gallery["id"], "section_id": section["id"]},
+        {"_id": 0, "first_item_hash": 1}
+    ).to_list(500)
+    existing_hashes = {s['first_item_hash'] for s in existing_sessions}
+    
+    # Store the scraped sessions
+    new_sessions = []
+    for session_data in scrape_result['sessions']:
+        if session_data['first_item_hash'] not in existing_hashes:
+            session_entry = {
+                "id": str(uuid.uuid4()),
+                "gallery_id": gallery["id"],
+                "section_id": section["id"],
+                "session_id": session_data['session_id'],
+                "first_item_hash": session_data['first_item_hash'],
+                "cover_thumbnail": session_data['cover_thumbnail'],
+                "item_url": f"https://fotoshare.co/i/{session_data['first_item_hash']}",
+                "has_multiple": session_data['has_multiple'],
+                "created_at_source": session_data.get('created_at'),
+                "order": session_data.get('order', 0),
+                "synced_at": now,
+                "contributor_name": company_name
+            }
+            new_sessions.append(session_entry)
+    
+    if new_sessions:
+        await db.photobooth_sessions.insert_many(new_sessions)
+    
+    return {
+        "success": True,
+        "sessions_count": len(scrape_result['sessions']),
+        "new_sessions_added": len(new_sessions),
+        "event_title": scrape_result.get('event_title'),
+        "contributor_name": company_name
+    }
+
+@api_router.post("/contributor/{contributor_link}/refresh-photobooth")
+async def refresh_contributor_photobooth(contributor_link: str):
+    """Refresh photobooth sessions for a contributor section"""
+    gallery = await db.galleries.find_one(
+        {"sections.contributor_link": contributor_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid contributor link")
+    
+    section = next((s for s in gallery.get("sections", []) if s.get("contributor_link") == contributor_link), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    fotoshare_url = section.get("fotoshare_url")
+    if not fotoshare_url:
+        raise HTTPException(status_code=400, detail="No Fotoshare URL configured")
+    
+    scrape_result = await scrape_fotoshare_photobooth(fotoshare_url)
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Update section status
+    sections = gallery.get("sections", [])
+    section_idx = next((i for i, s in enumerate(sections) if s.get("contributor_link") == contributor_link), None)
+    if section_idx is not None:
+        sections[section_idx]["fotoshare_last_sync"] = now
+        sections[section_idx]["fotoshare_expired"] = scrape_result.get('expired', False)
+        await db.galleries.update_one({"id": gallery["id"]}, {"$set": {"sections": sections}})
+    
+    if not scrape_result['success']:
+        return {
+            "success": False,
+            "expired": scrape_result.get('expired', False),
+            "error": scrape_result.get('error'),
+            "sessions_count": 0
+        }
+    
+    # Get existing hashes
+    existing = await db.photobooth_sessions.find(
+        {"gallery_id": gallery["id"], "section_id": section["id"]},
+        {"_id": 0, "first_item_hash": 1}
+    ).to_list(500)
+    existing_hashes = {s['first_item_hash'] for s in existing}
+    
+    # Add new sessions
+    new_sessions = []
+    for session_data in scrape_result['sessions']:
+        if session_data['first_item_hash'] not in existing_hashes:
+            session_entry = {
+                "id": str(uuid.uuid4()),
+                "gallery_id": gallery["id"],
+                "section_id": section["id"],
+                "session_id": session_data['session_id'],
+                "first_item_hash": session_data['first_item_hash'],
+                "cover_thumbnail": session_data['cover_thumbnail'],
+                "item_url": f"https://fotoshare.co/i/{session_data['first_item_hash']}",
+                "has_multiple": session_data['has_multiple'],
+                "created_at_source": session_data.get('created_at'),
+                "order": session_data.get('order', 0),
+                "synced_at": now
+            }
+            new_sessions.append(session_entry)
+    
+    if new_sessions:
+        await db.photobooth_sessions.insert_many(new_sessions)
+    
+    return {
+        "success": True,
+        "sessions_count": len(scrape_result['sessions']),
+        "new_sessions_added": len(new_sessions)
+    }
+
 @api_router.post("/contributor/{contributor_link}/gdrive")
 async def submit_contributor_gdrive(contributor_link: str, data: dict = Body(...)):
     """Submit Google Drive folder URL as a contributor"""
