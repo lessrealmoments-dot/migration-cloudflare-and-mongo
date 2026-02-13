@@ -7,7 +7,7 @@ import {
   Camera, Video, Film, HardDrive, Cloud, 
   CheckCircle, Clock, RefreshCw, Copy, 
   ExternalLink, AlertCircle, Calendar,
-  User, ChevronDown, ChevronUp
+  User, ChevronDown, ChevronUp, Images
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,6 +19,7 @@ const sectionConfig = {
   photo: { icon: Camera, color: 'bg-blue-500', label: 'Photos' },
   video: { icon: Video, color: 'bg-red-500', label: 'Video' },
   fotoshare: { icon: Film, color: 'bg-pink-500', label: '360 Booth' },
+  fotoshare_photobooth: { icon: Images, color: 'bg-violet-500', label: 'Photobooth' },
   gdrive: { icon: HardDrive, color: 'bg-green-500', label: 'Google Drive' },
   pcloud: { icon: Cloud, color: 'bg-cyan-500', label: 'pCloud' }
 };
