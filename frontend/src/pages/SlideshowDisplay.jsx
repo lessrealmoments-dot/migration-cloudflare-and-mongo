@@ -70,6 +70,17 @@ const SlideshowDisplay = () => {
     // Handle different photo sources
     const source = photo.source || 'upload';
     
+    // PRIORITY: Use display_url if available (optimized for collage/slideshow)
+    // This is set by the backend to point to compressed, display-optimized images
+    if (photo.display_url) {
+      // display_url may be relative (pCloud) or absolute (GDrive/CDN)
+      if (photo.display_url.startsWith('http://') || photo.display_url.startsWith('https://')) {
+        return photo.display_url;
+      }
+      // Relative URL - prepend backend URL
+      return `${BACKEND_URL}${photo.display_url}`;
+    }
+    
     if (source === 'pcloud') {
       // pCloud photos use our proxy endpoint - needs BACKEND_URL prefix
       const url = photo.url || photo.thumbnail_medium_url || photo.thumbnail_url;
@@ -84,7 +95,10 @@ const SlideshowDisplay = () => {
       return photo.url || photo.thumbnail_medium_url || photo.thumbnail_url;
     }
     
-    // Regular uploaded photos
+    // Regular uploaded photos - prefer medium thumbnail for display
+    if (photo.thumbnail_medium_url) {
+      return getImageUrl(photo.thumbnail_medium_url);
+    }
     return getImageUrl(photo.url);
   }, []);
 
