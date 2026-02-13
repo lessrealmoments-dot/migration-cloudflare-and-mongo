@@ -108,7 +108,8 @@ A comprehensive photo-sharing application for photographers with focus on:
 ### Database Collections
 - `galleries`, `photos`, `gallery_videos`
 - `pcloud_photos`, `gdrive_photos`
-- `fotoshare_videos`, `fotoshare_photos` (new)
+- `fotoshare_videos` (360° booth videos)
+- `photobooth_sessions` (NEW - photobooth session cover photos)
 - `users`, `site_config`
 
 ## Test Credentials
