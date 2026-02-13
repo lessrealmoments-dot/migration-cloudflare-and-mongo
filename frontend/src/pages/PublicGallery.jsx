@@ -15,6 +15,7 @@ import LazyMasonryGrid from '@/components/LazyMasonryGrid';
 import SocialSharePanel from '@/components/SocialSharePanel';
 import VideoSection from '@/components/VideoSection';
 import FotoshareSection from '@/components/FotoshareSection';
+import PhotoboothSection from '@/components/PhotoboothSection';
 import GoogleDriveSection from '@/components/GoogleDriveSection';
 import useBrandConfig from '../hooks/useBrandConfig';
 import { getContrastTextColor, getTextColorForBackground, getSubtleTextColor } from '@/themes';
