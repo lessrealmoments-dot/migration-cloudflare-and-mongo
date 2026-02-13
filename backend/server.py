@@ -6813,7 +6813,7 @@ async def get_coordinator_hub(hub_link: str):
                     last_updated = last_video.get("created_at")
         
         elif section_type == "fotoshare":
-            # Check for fotoshare videos
+            # Check for fotoshare videos (360 Booth)
             fs_count = await db.fotoshare_videos.count_documents({
                 "gallery_id": gallery["id"],
                 "section_id": section["id"]
@@ -6821,6 +6821,17 @@ async def get_coordinator_hub(hub_link: str):
             if fs_count > 0 or section.get("fotoshare_url"):
                 status = "submitted"
                 item_count = fs_count
+                last_updated = section.get("fotoshare_last_sync")
+        
+        elif section_type == "fotoshare_photobooth":
+            # Check for photobooth sessions
+            pb_count = await db.photobooth_sessions.count_documents({
+                "gallery_id": gallery["id"],
+                "section_id": section["id"]
+            })
+            if pb_count > 0 or section.get("fotoshare_url"):
+                status = "submitted"
+                item_count = pb_count
                 last_updated = section.get("fotoshare_last_sync")
         
         elif section_type == "gdrive":
