@@ -6944,6 +6944,15 @@ async def get_contributor_upload_info(contributor_link: str):
         ).to_list(100)
         existing_fotoshare_videos = fvideos
     
+    # Get existing photobooth sessions if this is a photobooth section
+    existing_photobooth_sessions = []
+    if section.get("type") == "fotoshare_photobooth":
+        psessions = await db.photobooth_sessions.find(
+            {"gallery_id": gallery["id"], "section_id": section["id"]},
+            {"_id": 0}
+        ).to_list(500)
+        existing_photobooth_sessions = psessions
+    
     # Get existing gdrive photos if this is a gdrive section
     existing_gdrive_photos = []
     if section.get("type") == "gdrive":
