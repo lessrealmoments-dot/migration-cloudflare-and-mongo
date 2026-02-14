@@ -46,6 +46,13 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] **Collage/Slideshow Performance** (Feb 13): Optimized from stuck loading to ~3.5s for 2000+ photos
 - [x] **Pricing Page Storage Display** (Feb 13): Fixed to use `gallery_storage_limit_gb` field
 - [x] **Fotoshare Photobooth Backend** (Feb 13): Added session-aware scraping and photo storage
+- [x] **Gallery Loading Performance** (Feb 14): 
+  - Optimized backend API with MongoDB projection (reduced payload by ~70%)
+  - Fixed loading regression - galleries now correctly show all photos, not limited to 50
+- [x] **Viewport-Based Lazy Loading** (Feb 14):
+  - Changed photo grid from CSS columns (column-by-column) to flex-wrap (row-by-row)
+  - Photos now load top-to-bottom as user scrolls, not left-column-first
+  - IntersectionObserver triggers loading when images are 300px from viewport
 
 ## Known Issues (Priority Order)
 
@@ -60,6 +67,7 @@ A comprehensive photo-sharing application for photographers with focus on:
 2. **PDF Generation**: Failed due to missing `libpangoft2-1.0-0` system library
 3. **Data Inconsistency**: Photos uploaded before R2 fix exist in DB but not in storage
 4. **server.py Refactoring**: Large monolith needs modular route extraction
+5. **Integrate Premium Uploader UI**: `PremiumPhotoUpload.jsx` and `VideoHighlightSelector.jsx` placeholders need integration
 
 ### P3 - Low
 1. Auto-delete expired galleries job needs verification
