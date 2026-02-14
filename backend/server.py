@@ -4442,6 +4442,7 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
             # Priority: addon_tokens first (they expire), then subscription_tokens
             # Backward compatibility: also check old field names (extra_credits, event_credits)
             addon_tokens = user.get("addon_tokens", user.get("extra_credits", 0))
+            subscription_tokens = user.get("subscription_tokens", user.get("event_credits", 0))
             
             if addon_tokens > 0:
                 # Use addon token first (they expire in 12 months)
@@ -4450,14 +4451,22 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
                     {"id": current_user["id"]},
                     {"$inc": {"addon_tokens": -1, "extra_credits": -1}}
                 )
-                logger.info(f"Deducted 1 addon_token for gallery creation: user={current_user['id']}")
-            else:
-                # Fall back to subscription tokens
+                logger.info(f"Deducted 1 addon_token for gallery creation: user={current_user['id']}, remaining={addon_tokens - 1}")
+            elif subscription_tokens > 0:
+                # Use subscription token only if available (prevent negative)
                 await db.users.update_one(
                     {"id": current_user["id"]},
                     {"$inc": {"subscription_tokens": -1, "event_credits": -1}}
                 )
-                logger.info(f"Deducted 1 subscription_token for gallery creation: user={current_user['id']}")
+                logger.info(f"Deducted 1 subscription_token for gallery creation: user={current_user['id']}, remaining={subscription_tokens - 1}")
+            else:
+                # This shouldn't happen - credits_available check should have caught this
+                # But as a safety net, don't deduct and log a warning
+                logger.warning(f"Attempted to deduct credit with 0 tokens: user={current_user['id']}, addon={addon_tokens}, sub={subscription_tokens}")
+                raise HTTPException(
+                    status_code=403,
+                    detail="No event credits remaining. Purchase extra credits or wait for next billing cycle."
+                )
     
     gallery_id = str(uuid.uuid4())
     share_link = str(uuid.uuid4())[:8]
