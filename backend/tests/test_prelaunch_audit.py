@@ -33,8 +33,8 @@ class TestHealthAndBasicEndpoints:
         response = requests.get(f"{BASE_URL}/api/public/landing-config")
         assert response.status_code == 200
         data = response.json()
-        assert "site_name" in data or "hero_images" in data
-        print(f"Landing config loaded successfully")
+        assert "brand_name" in data or "hero_image_1" in data
+        print(f"Landing config loaded successfully: {data.get('brand_name')}")
     
     def test_public_feature_toggles(self):
         """Public feature toggles endpoint"""
@@ -245,10 +245,17 @@ class TestAdminFeatures:
         print("Global feature toggles retrieved")
     
     def test_collage_presets(self, admin_token):
-        """Test getting collage presets"""
+        """Test getting collage presets - requires photographer auth"""
+        # Collage presets require photographer auth, not admin
+        login_response = requests.post(
+            f"{BASE_URL}/api/auth/login",
+            json={"email": PHOTOGRAPHER_EMAIL, "password": PHOTOGRAPHER_PASSWORD}
+        )
+        photographer_token = login_response.json()["access_token"]
+        
         response = requests.get(
             f"{BASE_URL}/api/collage-presets",
-            headers={"Authorization": f"Bearer {admin_token}"}
+            headers={"Authorization": f"Bearer {photographer_token}"}
         )
         assert response.status_code == 200
         data = response.json()
