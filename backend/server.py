@@ -4786,7 +4786,10 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
         update_data["share_link_expiration_date"] = (created_at + timedelta(days=updates.share_link_expiration_days)).isoformat()
     if updates.guest_upload_enabled_days is not None:
         update_data["guest_upload_enabled_days"] = updates.guest_upload_enabled_days
-        if gallery.get("event_date"):
+        # If 0, guest uploads never expire (set expiration to None)
+        if updates.guest_upload_enabled_days == 0:
+            update_data["guest_upload_expiration_date"] = None
+        elif gallery.get("event_date"):
             try:
                 event_dt = datetime.fromisoformat(gallery["event_date"].replace('Z', '+00:00'))
                 update_data["guest_upload_expiration_date"] = (event_dt + timedelta(days=updates.guest_upload_enabled_days)).isoformat()
