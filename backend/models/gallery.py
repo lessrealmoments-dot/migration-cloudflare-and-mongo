@@ -168,6 +168,8 @@ class PublicGallery(BaseModel):
     photographer_name: str
     has_password: bool
     cover_photo_url: Optional[str] = None
+    cover_photo_medium_url: Optional[str] = None  # Optimized version for fast hero loading
+    cover_photo_thumb_url: Optional[str] = None   # Small thumbnail for previews
     cover_photo_position: Optional[dict] = None
     sections: List[Section] = []
     event_title: Optional[str] = None
