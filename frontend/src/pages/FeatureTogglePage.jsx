@@ -6,7 +6,7 @@ import {
   Link2, QrCode, Eye, Layout, Share2, 
   Infinity, Save, RefreshCw, Info,
   ChevronDown, ChevronUp, Check, X,
-  HardDrive, Clock
+  HardDrive, Clock, Settings
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
