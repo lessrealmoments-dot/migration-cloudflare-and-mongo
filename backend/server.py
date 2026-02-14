@@ -3700,7 +3700,8 @@ async def get_feature_toggles(admin: dict = Depends(get_admin_user)):
             "online_gallery": True,
             "display_mode": True,
             "contributor_link": True,
-            "auto_delete_enabled": True
+            "auto_delete_enabled": True,
+            "allow_guest_upload_never_expires": False
         }
     return toggles
 
