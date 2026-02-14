@@ -78,70 +78,73 @@ const SocialSharePanel = ({ galleryTitle, shareLink, isVisible = true }) => {
 
   return (
     <>
-      {/* Floating Share Button */}
+      {/* Floating Share Button - Smaller on mobile, positioned lower to avoid covering content */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         data-testid="social-share-toggle"
-        className={`fixed right-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full shadow-lg transition-all duration-300 ${
-          isOpen 
-            ? 'bg-zinc-900 text-white' 
-            : 'bg-white/80 backdrop-blur-sm text-zinc-700 hover:bg-white hover:shadow-xl'
-        }`}
+        className={`fixed z-40 transition-all duration-300 
+          right-3 bottom-24 md:right-4 md:top-1/2 md:-translate-y-1/2 md:bottom-auto
+          p-2 md:p-3 rounded-full shadow-lg
+          ${isOpen 
+            ? 'bg-zinc-900 text-white scale-90' 
+            : 'bg-white/90 backdrop-blur-sm text-zinc-600 hover:bg-white hover:shadow-xl hover:text-zinc-900'
+          }`}
         title="Share this gallery"
       >
-        {isOpen ? <X className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+        {isOpen ? <X className="w-4 h-4 md:w-5 md:h-5" /> : <Share2 className="w-4 h-4 md:w-5 md:h-5" />}
       </button>
 
-      {/* Share Panel */}
+      {/* Share Panel - Positioned above button on mobile, beside on desktop */}
       {isOpen && (
         <div 
-          className="fixed right-4 top-1/2 -translate-y-1/2 translate-x-0 z-30 mr-14"
+          className="fixed z-30
+            right-3 bottom-36 md:right-4 md:top-1/2 md:-translate-y-1/2 md:bottom-auto md:mr-14"
           data-testid="social-share-panel"
         >
-          <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl p-4 space-y-3 border border-zinc-200">
-            <p className="text-xs text-zinc-500 font-medium uppercase tracking-wide mb-2">Share Gallery</p>
+          <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl p-3 md:p-4 space-y-2 md:space-y-3 border border-zinc-200 min-w-[160px] md:min-w-[180px]">
+            <p className="text-[10px] md:text-xs text-zinc-500 font-medium uppercase tracking-wide mb-1 md:mb-2">Share Gallery</p>
             
             {/* Facebook */}
             <button
               onClick={() => handleShare('facebook')}
               data-testid="share-facebook"
-              className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+              className="flex items-center gap-2 md:gap-3 w-full p-1.5 md:p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
             >
               <FacebookIcon />
-              <span className="text-sm font-medium">Facebook</span>
+              <span className="text-xs md:text-sm font-medium">Facebook</span>
             </button>
 
             {/* Twitter/X */}
             <button
               onClick={() => handleShare('twitter')}
               data-testid="share-twitter"
-              className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-zinc-100 text-zinc-900 transition-colors"
+              className="flex items-center gap-2 md:gap-3 w-full p-1.5 md:p-2 rounded-lg hover:bg-zinc-100 text-zinc-900 transition-colors"
             >
               <TwitterIcon />
-              <span className="text-sm font-medium">X (Twitter)</span>
+              <span className="text-xs md:text-sm font-medium">X (Twitter)</span>
             </button>
 
             {/* WhatsApp */}
             <button
               onClick={() => handleShare('whatsapp')}
               data-testid="share-whatsapp"
-              className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-green-50 text-green-600 transition-colors"
+              className="flex items-center gap-2 md:gap-3 w-full p-1.5 md:p-2 rounded-lg hover:bg-green-50 text-green-600 transition-colors"
             >
               <WhatsAppIcon />
-              <span className="text-sm font-medium">WhatsApp</span>
+              <span className="text-xs md:text-sm font-medium">WhatsApp</span>
             </button>
 
             {/* Copy Link */}
             <button
               onClick={handleCopyLink}
               data-testid="share-copy-link"
-              className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-zinc-100 text-zinc-700 transition-colors border-t border-zinc-100 pt-3 mt-2"
+              className="flex items-center gap-2 md:gap-3 w-full p-1.5 md:p-2 rounded-lg hover:bg-zinc-100 text-zinc-700 transition-colors border-t border-zinc-100 pt-2 md:pt-3 mt-1 md:mt-2"
             >
-              {copied ? <Check className="w-5 h-5 text-green-500" /> : <Link className="w-5 h-5" />}
-              <span className="text-sm font-medium">{copied ? 'Copied!' : 'Copy Link'}</span>
+              {copied ? <Check className="w-4 h-4 md:w-5 md:h-5 text-green-500" /> : <Link className="w-4 h-4 md:w-5 md:h-5" />}
+              <span className="text-xs md:text-sm font-medium">{copied ? 'Copied!' : 'Copy Link'}</span>
             </button>
 
-            <p className="text-xs text-zinc-400 mt-2 pt-2 border-t border-zinc-100">
+            <p className="text-[10px] md:text-xs text-zinc-400 mt-1 md:mt-2 pt-1 md:pt-2 border-t border-zinc-100">
               Shared links are view-only
             </p>
           </div>
