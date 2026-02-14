@@ -4369,6 +4369,9 @@ const GalleryDetail = () => {
                     onChange={(e) => setEditFormData({ ...editFormData, guest_upload_enabled_days: e.target.value })}
                     className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm"
                   >
+                    {canUseNeverExpire && (
+                      <option value="0">Never expires ✨</option>
+                    )}
                     <option value="1">1 day</option>
                     <option value="2">2 days</option>
                     <option value="3">3 days</option>
@@ -4377,6 +4380,12 @@ const GalleryDetail = () => {
                     <option value="6">6 days</option>
                     <option value="7">7 days</option>
                   </select>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    {editFormData.guest_upload_enabled_days === '0' || editFormData.guest_upload_enabled_days === 0
+                      ? 'Guest uploads will remain open indefinitely'
+                      : 'How long guests can upload after the event'
+                    }
+                  </p>
                 </div>
               </div>
               <div>
