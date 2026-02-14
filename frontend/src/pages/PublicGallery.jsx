@@ -193,9 +193,6 @@ const PublicGallery = () => {
   const [downloadInfo, setDownloadInfo] = useState(null);
   const [downloadingSection, setDownloadingSection] = useState(null);
   
-  // Total photos count (for display only)
-  const [totalPhotos, setTotalPhotos] = useState(0);
-  
   // Scroll tracking for parallax effects
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({
