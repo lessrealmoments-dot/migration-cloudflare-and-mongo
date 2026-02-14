@@ -514,6 +514,64 @@ const FeatureTogglePage = () => {
         </div>
       </div>
 
+      {/* Global Settings Section */}
+      <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 overflow-hidden">
+        <button
+          onClick={() => toggleSection('global_settings')}
+          className="w-full px-6 py-4 flex items-center justify-between bg-zinc-800/50 hover:bg-zinc-800 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Settings className="w-5 h-5 text-amber-400" />
+            <h3 className="text-lg font-medium text-white">Global Settings</h3>
+            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-xs rounded-full">
+              Platform-wide
+            </span>
+          </div>
+          {expandedSections.global_settings ? (
+            <ChevronUp className="w-5 h-5 text-zinc-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-zinc-400" />
+          )}
+        </button>
+        
+        {expandedSections.global_settings && (
+          <div className="p-6 space-y-4">
+            <div className="bg-zinc-800 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">Allow "Never Expires" for Guest Uploads</h4>
+                    <p className="text-sm text-zinc-400">
+                      When enabled, photographers can set guest upload links to never expire. 
+                      Currently available for: <span className="text-amber-400">Founder's Circle</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleGlobalToggle('allow_guest_upload_never_expires')}
+                  className={`w-14 h-7 rounded-full transition-colors relative ${
+                    globalToggles.allow_guest_upload_never_expires ? 'bg-green-500' : 'bg-zinc-600'
+                  }`}
+                  data-testid="toggle-guest-upload-never-expires"
+                >
+                  <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform ${
+                    globalToggles.allow_guest_upload_never_expires ? 'right-1' : 'left-1'
+                  }`} />
+                </button>
+              </div>
+            </div>
+            
+            <p className="text-xs text-zinc-500 flex items-center gap-2">
+              <Info className="w-3 h-3" />
+              These settings apply platform-wide and affect all tiers where applicable.
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Override Modes Section */}
       <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 overflow-hidden">
         <button
