@@ -4928,12 +4928,15 @@ async def upload_cover_photo(gallery_id: str, file: UploadFile = File(...), curr
     if not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400, detail="Only image files are allowed")
     
-    # Delete old cover photo if exists
+    # Delete old cover photo and thumbnails if exists
     if gallery.get("cover_photo_url"):
         old_filename = gallery["cover_photo_url"].split('/')[-1]
+        old_photo_id = old_filename.replace('cover_', '').rsplit('.', 1)[0]
         if storage.r2_enabled:
-            old_key = f"photos/{old_filename}"
-            await storage.delete_file(old_key)
+            # Delete original and thumbnails
+            await storage.delete_file(f"photos/{old_filename}")
+            await storage.delete_file(f"thumbnails/{old_photo_id}_thumb.jpg")
+            await storage.delete_file(f"thumbnails/{old_photo_id}_medium.jpg")
         else:
             old_file_path = UPLOAD_DIR / old_filename
             if old_file_path.exists():
@@ -4946,28 +4949,51 @@ async def upload_cover_photo(gallery_id: str, file: UploadFile = File(...), curr
     # Read file content
     file_content = await file.read()
     
-    # Use R2 storage if enabled
+    # Use R2 storage if enabled - with thumbnail generation for fast loading
     if storage.r2_enabled:
-        r2_key = f"photos/{filename}"
-        success, url_or_error = await storage.upload_file(r2_key, file_content, file.content_type or 'image/jpeg')
-        if not success:
-            logger.error(f"R2 upload failed for cover photo {filename}: {url_or_error}")
+        # Upload with thumbnails for optimized loading
+        upload_result = await storage.upload_with_thumbnails(
+            photo_id=f"cover_{photo_id}",
+            content=file_content,
+            file_ext=file_ext,
+            content_type=file.content_type or 'image/jpeg'
+        )
+        
+        if not upload_result['success']:
+            logger.error(f"R2 upload failed for cover photo {filename}: {upload_result.get('error')}")
             raise HTTPException(status_code=500, detail="Failed to save cover photo. Please try again.")
-        cover_url = url_or_error
+        
+        cover_url = upload_result['original_url']
+        cover_thumb_url = upload_result.get('thumbnail_url')  # Small thumbnail
+        cover_medium_url = upload_result.get('thumbnail_medium_url')  # Medium for hero display
     else:
         # Fallback to local filesystem
         file_path = UPLOAD_DIR / filename
         with open(file_path, 'wb') as f:
             f.write(file_content)
         cover_url = f"/api/photos/serve/{filename}"
+        cover_thumb_url = None
+        cover_medium_url = None
     
     # Reset position when uploading new cover photo
-    await db.galleries.update_one({"id": gallery_id}, {"$set": {
+    update_data = {
         "cover_photo_url": cover_url,
         "cover_photo_position": {"scale": 1, "positionX": 50, "positionY": 50}
-    }})
+    }
     
-    return {"cover_photo_url": cover_url}
+    # Store optimized versions for fast loading
+    if cover_thumb_url:
+        update_data["cover_photo_thumb_url"] = cover_thumb_url
+    if cover_medium_url:
+        update_data["cover_photo_medium_url"] = cover_medium_url
+    
+    await db.galleries.update_one({"id": gallery_id}, {"$set": update_data})
+    
+    return {
+        "cover_photo_url": cover_url,
+        "cover_photo_medium_url": cover_medium_url,
+        "cover_photo_thumb_url": cover_thumb_url
+    }
 
 # NOTE: CoverPhotoPosition model is now imported from models/gallery.py
 
