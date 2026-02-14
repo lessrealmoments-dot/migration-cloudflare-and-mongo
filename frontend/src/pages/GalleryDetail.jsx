@@ -1732,7 +1732,7 @@ const GalleryDetail = () => {
               )}
             </div>
             <div className="flex items-center gap-3">
-              {gallery.is_edit_locked ? (
+              {gallery.is_edit_locked && !isFounder ? (
                 <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-sm border border-amber-200">
                   <Lock className="w-4 h-4" strokeWidth={1.5} />
                   Editing locked (7+ days since creation)
@@ -1746,7 +1746,12 @@ const GalleryDetail = () => {
                   >
                     Edit Details
                   </button>
-                  {gallery.days_until_edit_lock > 0 && (
+                  {isFounder && gallery.is_edit_locked && (
+                    <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                      ✨ Founder Edit Access
+                    </span>
+                  )}
+                  {!isFounder && gallery.days_until_edit_lock > 0 && (
                     <span className="text-xs text-zinc-500">
                       {gallery.days_until_edit_lock} days left to edit
                     </span>
