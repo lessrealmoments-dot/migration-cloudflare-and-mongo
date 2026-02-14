@@ -34,6 +34,8 @@ class Gallery(BaseModel):
     has_password: bool
     share_link: str
     cover_photo_url: Optional[str] = None
+    cover_photo_medium_url: Optional[str] = None  # Optimized version for fast hero loading
+    cover_photo_thumb_url: Optional[str] = None   # Small thumbnail for previews
     event_title: Optional[str] = None
     event_date: Optional[str] = None
     coordinator_name: Optional[str] = None  # Event coordinator/planner name
