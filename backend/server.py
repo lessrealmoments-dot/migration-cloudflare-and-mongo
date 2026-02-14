@@ -3687,6 +3687,7 @@ class FeatureToggle(BaseModel):
     display_mode: bool = True
     contributor_link: bool = True
     auto_delete_enabled: bool = True  # If false, disable auto-delete after 6 months
+    allow_guest_upload_never_expires: bool = False  # If true, show "Never expires" option for guest uploads
 
 @api_router.get("/admin/feature-toggles")
 async def get_feature_toggles(admin: dict = Depends(get_admin_user)):
