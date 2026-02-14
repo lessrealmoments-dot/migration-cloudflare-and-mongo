@@ -2535,15 +2535,20 @@ const AdminDashboard = () => {
                                 : imageUrl
                               } 
                               alt={`Hero ${num}`} 
-                              className="w-full h-24 object-cover rounded"
+                              className="w-full h-24 object-cover rounded bg-zinc-700"
                               onError={(e) => {
+                                // Show broken image placeholder instead of hiding
                                 e.target.onerror = null;
-                                e.target.src = '';
-                                e.target.className = 'hidden';
-                                e.target.parentElement.classList.add('broken-image');
-                                console.error(`Failed to load hero image ${num}:`, imageUrl);
+                                e.target.style.display = 'none';
+                                e.target.nextElementSibling?.classList.remove('hidden');
                               }}
                             />
+                            {/* Broken image placeholder - shown when image fails to load */}
+                            <div className="hidden w-full h-24 bg-zinc-700 rounded flex flex-col items-center justify-center text-red-400">
+                              <AlertTriangle className="w-5 h-5 mb-1" />
+                              <span className="text-xs">Missing</span>
+                            </div>
+                            {/* Hover overlay with replace/delete buttons - ALWAYS accessible */}
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded">
                               <button
                                 onClick={() => fileInputRefs.current[imageKey]?.click()}
@@ -2558,7 +2563,10 @@ const AdminDashboard = () => {
                                 )}
                               </button>
                               <button
-                                onClick={() => setLandingConfig({ ...landingConfig, [imageKey]: '' })}
+                                onClick={() => {
+                                  setLandingConfig({ ...landingConfig, [imageKey]: '' });
+                                  toast.success(`Hero image ${num} removed`);
+                                }}
                                 className="bg-red-500/50 hover:bg-red-500/70 p-2 rounded-full"
                                 title="Remove"
                               >
