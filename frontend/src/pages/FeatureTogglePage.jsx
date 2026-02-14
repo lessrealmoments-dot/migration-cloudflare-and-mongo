@@ -130,13 +130,52 @@ const FeatureTogglePage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
+    global_settings: true,
     override_modes: true,
     payment_plans: true
+  });
+  
+  // Global simple toggles (separate from per-plan toggles)
+  const [globalToggles, setGlobalToggles] = useState({
+    allow_guest_upload_never_expires: false
   });
 
   useEffect(() => {
     fetchToggles();
+    fetchGlobalToggles();
   }, []);
+
+  const fetchGlobalToggles = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.get(`${API}/admin/feature-toggles`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGlobalToggles({
+        allow_guest_upload_never_expires: response.data.allow_guest_upload_never_expires ?? false
+      });
+    } catch (error) {
+      console.error('Failed to fetch global toggles');
+    }
+  };
+
+  const handleGlobalToggle = async (key) => {
+    const newValue = !globalToggles[key];
+    setGlobalToggles(prev => ({ ...prev, [key]: newValue }));
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      await axios.put(`${API}/admin/feature-toggles`, 
+        { ...globalToggles, [key]: newValue },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Setting updated!');
+    } catch (error) {
+      toast.error('Failed to update setting');
+      // Revert on error
+      setGlobalToggles(prev => ({ ...prev, [key]: !newValue }));
+    }
+  };
 
   const fetchToggles = async () => {
     setLoading(true);
