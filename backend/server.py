@@ -3515,6 +3515,84 @@ async def add_client_credits(user_id: str, data: dict, admin: dict = Depends(get
         "new_total": current_credits + credits_to_add
     }
 
+@api_router.post("/admin/clients/{user_id}/fix-billing")
+async def fix_client_billing(user_id: str, data: dict, admin: dict = Depends(get_admin_user)):
+    """Fix corrupted billing state for a client (e.g., negative credits, missing billing cycle)"""
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    action = data.get("action", "reset")  # "reset" or "set"
+    
+    # Get current state
+    plan = user.get("plan", PLAN_FREE)
+    payment_status = user.get("payment_status", PAYMENT_NONE)
+    override_mode = user.get("override_mode")
+    current_tokens = user.get("subscription_tokens", 0)
+    active_galleries = await db.galleries.count_documents({"photographer_id": user_id})
+    
+    now = datetime.now(timezone.utc)
+    update_data = {}
+    
+    if action == "reset":
+        # Calculate correct token count based on plan and active galleries
+        if override_mode:
+            mode_credits = MODE_CREDITS.get(override_mode, 0)
+            base_credits = 999 if mode_credits == -1 else mode_credits
+        elif payment_status == PAYMENT_APPROVED:
+            base_credits = PLAN_CREDITS.get(plan, 0)
+        else:
+            base_credits = 0
+        
+        # Set credits to base minus active galleries (minimum 0)
+        correct_tokens = max(0, base_credits - active_galleries)
+        
+        update_data = {
+            "subscription_tokens": data.get("credits", correct_tokens),
+            "billing_cycle_start": now.isoformat(),
+            "subscription_expires": (now + timedelta(days=30)).isoformat() if payment_status == PAYMENT_APPROVED else None,
+            "galleries_created_total": active_galleries  # Reset to match active count
+        }
+    elif action == "set":
+        # Set specific values
+        if "credits" in data:
+            update_data["subscription_tokens"] = max(0, data["credits"])
+        if "addon_tokens" in data:
+            update_data["addon_tokens"] = max(0, data["addon_tokens"])
+        if "billing_cycle_start" in data:
+            update_data["billing_cycle_start"] = data["billing_cycle_start"]
+        if "subscription_expires" in data:
+            update_data["subscription_expires"] = data["subscription_expires"]
+    
+    if update_data:
+        await db.users.update_one({"id": user_id}, {"$set": update_data})
+    
+    # Log the fix
+    await db.activity_logs.insert_one({
+        "action": "fix_billing",
+        "admin": admin.get("username", "admin"),
+        "target_user": user_id,
+        "details": f"Fixed billing for {user.get('email')}: {action}, changes: {update_data}",
+        "previous_state": {
+            "subscription_tokens": current_tokens,
+            "plan": plan,
+            "payment_status": payment_status
+        },
+        "timestamp": now.isoformat()
+    })
+    
+    # Get updated user
+    updated_user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    
+    return {
+        "message": f"Billing fixed for {user.get('email')}",
+        "previous_tokens": current_tokens,
+        "new_tokens": updated_user.get("subscription_tokens"),
+        "active_galleries": active_galleries,
+        "changes": update_data
+    }
+
 @api_router.post("/admin/clients/{user_id}/extend-subscription")
 async def extend_client_subscription(user_id: str, data: dict, admin: dict = Depends(get_admin_user)):
     """Extend a client's subscription"""
