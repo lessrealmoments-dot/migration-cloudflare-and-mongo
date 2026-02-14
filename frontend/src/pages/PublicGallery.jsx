@@ -1873,37 +1873,6 @@ const PublicGallery = () => {
                       getFullUrl={getPhotoFullUrl}
                       themeColors={currentTheme.colors}
                     />
-                    
-                    {/* Load More Button */}
-                    {hasMorePhotos && (
-                      <div className="flex justify-center mt-12">
-                        <button
-                          onClick={loadMorePhotos}
-                          disabled={loadingMorePhotos}
-                          className="px-8 py-3 rounded-full font-medium transition-all duration-300 flex items-center gap-2"
-                          style={{
-                            backgroundColor: currentTheme.colors.accent,
-                            color: getContrastTextColor(currentTheme.colors.accent),
-                            opacity: loadingMorePhotos ? 0.7 : 1
-                          }}
-                          data-testid="load-more-photos"
-                        >
-                          {loadingMorePhotos ? (
-                            <>
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              Loading...
-                            </>
-                          ) : (
-                            <>
-                              Load More Photos
-                              <span className="text-sm opacity-75">
-                                ({photos.length} of {totalPhotos || gallery?.photo_count})
-                              </span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </motion.section>
               );
