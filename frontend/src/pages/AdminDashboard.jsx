@@ -118,7 +118,8 @@ const AdminDashboard = () => {
     online_gallery: true,
     display_mode: true,
     contributor_link: true,
-    auto_delete_enabled: true
+    auto_delete_enabled: true,
+    allow_guest_upload_never_expires: false
   });
   const [savingToggles, setSavingToggles] = useState(false);
   
