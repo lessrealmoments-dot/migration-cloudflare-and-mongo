@@ -4741,8 +4741,9 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    # Check if user is a Founder (bypass edit lock)
-    is_founder = current_user.get("override_mode") == MODE_FOUNDERS_CIRCLE
+    # Get full user data to check override_mode (not in JWT token)
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    is_founder = user.get("override_mode") == MODE_FOUNDERS_CIRCLE if user else False
     
     # Check if gallery is edit-locked (7 days after creation) - Founders are exempt
     edit_lock_info = get_edit_lock_info(gallery["created_at"])
