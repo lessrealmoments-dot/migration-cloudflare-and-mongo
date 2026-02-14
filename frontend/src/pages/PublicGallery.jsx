@@ -251,9 +251,6 @@ const PublicGallery = () => {
     }
   };
 
-  // Loading state for photos
-  const [loadingMorePhotos, setLoadingMorePhotos] = useState(false);
-
   const fetchPhotos = async (pwd = null) => {
     try {
       // Fetch all data in parallel - backend now returns optimized payload
@@ -277,16 +274,12 @@ const PublicGallery = () => {
       setFotoshareVideos(fotoshareRes.data);
       setPcloudPhotos(pcloudRes.data);
       setGdrivePhotos(gdriveRes.data);
-      setTotalPhotos(photosRes.data.length);
-      setHasMorePhotos(false); // All photos loaded, per-section pagination in LazyMasonryGrid
     } catch (error) {
       if (error.response?.status === 401) {
         toast.error('Invalid password');
       } else {
         toast.error('Failed to load photos');
       }
-    } finally {
-      setLoadingMorePhotos(false);
     }
   };
 
