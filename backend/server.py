@@ -2782,6 +2782,7 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         email=current_user["email"],
         name=current_user["name"],
         business_name=current_user.get("business_name"),
+        override_mode=user.get("override_mode"),  # Include override mode for Founder features
         max_galleries=current_user.get("max_galleries", DEFAULT_MAX_GALLERIES),
         galleries_created_total=current_user.get("galleries_created_total", 0),
         storage_quota=effective_storage if effective_storage != -1 else 999999999999,  # -1 means unlimited
