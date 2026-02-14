@@ -1,26 +1,25 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
 import { ChevronDown, Images } from 'lucide-react';
 
 /**
- * LazyMasonryGrid - High-performance responsive masonry grid with viewport-based lazy loading
+ * LazyMasonryGrid - True Pinterest-style waterfall layout with viewport-based lazy loading
  * 
  * Key Features:
- * - TOP-TO-BOTTOM loading (viewport-based, not column-based)
- * - Uses flex-wrap for row-first rendering
- * - IntersectionObserver for true viewport-priority loading
+ * - TRUE MASONRY: Images tightly packed with no vertical gaps (waterfall/Pinterest style)
+ * - TOP-TO-BOTTOM LOADING: Images load based on visual Y position, not column order
+ * - IntersectionObserver triggers loading when images approach viewport
  * - Responsive: 2 cols (mobile) / 3 cols (tablet) / 4 cols (desktop)
- * - Memory efficient - only loads images in/near viewport
  */
 
-// Lazy Image component with true viewport-based loading
+// Lazy Image component with viewport-based loading
 const LazyImage = ({ 
   src, 
   alt, 
   fallbackSrc, 
-  className, 
   onLoad,
   priority = false,
-  aspectRatio = null
+  style,
+  className
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
@@ -45,7 +44,7 @@ const LazyImage = ({
         });
       },
       {
-        rootMargin: '300px 0px', // Start loading 300px before entering viewport
+        rootMargin: '400px 0px', // Start loading 400px before viewport
         threshold: 0.01
       }
     );
@@ -64,22 +63,18 @@ const LazyImage = ({
     }
   }, [fallbackSrc, currentSrc, hasError]);
 
-  const handleLoad = useCallback(() => {
+  const handleLoad = useCallback((e) => {
     setIsLoaded(true);
-    onLoad?.();
+    if (onLoad) {
+      onLoad(e.target.naturalWidth, e.target.naturalHeight);
+    }
   }, [onLoad]);
 
-  // Estimate aspect ratio for placeholder sizing (prevents layout shift)
-  const placeholderPadding = aspectRatio ? `${(1 / aspectRatio) * 100}%` : '75%';
-
   return (
-    <div ref={imgRef} className="relative w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
-      {/* Placeholder with aspect ratio */}
+    <div ref={imgRef} style={style} className={className}>
+      {/* Skeleton placeholder */}
       {!isLoaded && (
-        <div 
-          className="w-full animate-pulse bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600"
-          style={{ paddingBottom: placeholderPadding }}
-        />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 animate-pulse rounded-lg" />
       )}
       
       {/* Actual image */}
@@ -87,7 +82,7 @@ const LazyImage = ({
         <img
           src={currentSrc || src}
           alt={alt}
-          className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0 absolute inset-0'} transition-opacity duration-300 w-full h-auto`}
+          className={`w-full h-full object-cover rounded-lg transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           loading="lazy"
           decoding="async"
           onLoad={handleLoad}
@@ -110,8 +105,14 @@ const LazyMasonryGrid = ({
   className = '',
 }) => {
   const [visibleCount, setVisibleCount] = useState(initialCount);
-  const totalPhotos = photos.length;
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [columns, setColumns] = useState(4);
+  const [itemPositions, setItemPositions] = useState([]);
+  const [containerHeight, setContainerHeight] = useState(0);
+  const [loadedImages, setLoadedImages] = useState(new Map()); // Track loaded image dimensions
+  
   const containerRef = useRef(null);
+  const totalPhotos = photos.length;
 
   const hasMore = visibleCount < totalPhotos;
   const remainingPhotos = totalPhotos - visibleCount;
@@ -121,6 +122,75 @@ const LazyMasonryGrid = ({
     [photos, visibleCount]
   );
 
+  // Determine column count based on container width
+  useEffect(() => {
+    const updateColumns = () => {
+      if (!containerRef.current) return;
+      const width = containerRef.current.offsetWidth;
+      setContainerWidth(width);
+      
+      if (width < 640) {
+        setColumns(2); // Mobile
+      } else if (width < 1024) {
+        setColumns(3); // Tablet
+      } else {
+        setColumns(4); // Desktop
+      }
+    };
+
+    updateColumns();
+    window.addEventListener('resize', updateColumns);
+    return () => window.removeEventListener('resize', updateColumns);
+  }, []);
+
+  // Calculate masonry positions
+  useLayoutEffect(() => {
+    if (!containerWidth || displayedPhotos.length === 0) return;
+
+    const gap = 12; // Gap between items in pixels
+    const columnWidth = (containerWidth - (gap * (columns - 1))) / columns;
+    const columnHeights = new Array(columns).fill(0);
+    const positions = [];
+
+    displayedPhotos.forEach((photo, index) => {
+      // Find shortest column
+      const shortestColumn = columnHeights.indexOf(Math.min(...columnHeights));
+      
+      // Calculate estimated height based on aspect ratio or loaded dimensions
+      let aspectRatio = photo.aspect_ratio || 1.33; // Default to 4:3
+      
+      // If we have loaded dimensions, use them
+      const loadedDims = loadedImages.get(photo.id);
+      if (loadedDims) {
+        aspectRatio = loadedDims.width / loadedDims.height;
+      }
+      
+      const itemHeight = columnWidth / aspectRatio;
+      
+      positions.push({
+        left: shortestColumn * (columnWidth + gap),
+        top: columnHeights[shortestColumn],
+        width: columnWidth,
+        height: itemHeight,
+        column: shortestColumn
+      });
+
+      columnHeights[shortestColumn] += itemHeight + gap;
+    });
+
+    setItemPositions(positions);
+    setContainerHeight(Math.max(...columnHeights));
+  }, [containerWidth, columns, displayedPhotos, loadedImages]);
+
+  // Handle image load to get real dimensions
+  const handleImageLoad = useCallback((photoId, width, height) => {
+    setLoadedImages(prev => {
+      const newMap = new Map(prev);
+      newMap.set(photoId, { width, height });
+      return newMap;
+    });
+  }, []);
+
   const handleLoadMore = useCallback(() => {
     setVisibleCount(prev => Math.min(prev + batchSize, totalPhotos));
   }, [batchSize, totalPhotos]);
@@ -129,71 +199,85 @@ const LazyMasonryGrid = ({
     setVisibleCount(totalPhotos);
   }, [totalPhotos]);
 
-  // Calculate which photos should have priority (first ~2 rows worth)
-  // With 4 columns desktop, 3 tablet, 2 mobile - first 8 is safe for all
-  const getPriority = (index) => index < 8;
+  // Determine priority based on Y position (top rows load first)
+  const getPriority = (position) => {
+    if (!position) return false;
+    // Priority for items in the first ~600px (approximately first 2-3 rows)
+    return position.top < 600;
+  };
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      {/* 
-        Flex-based masonry grid with row-first ordering
-        This ensures images load top-to-bottom as they appear visually
-      */}
-      <div className="flex flex-wrap -mx-1 sm:-mx-1.5 md:-mx-2">
+      {/* Masonry Grid Container */}
+      <div 
+        className="relative w-full"
+        style={{ height: containerHeight || 'auto', minHeight: 200 }}
+      >
         {displayedPhotos.map((photo, index) => {
           const thumbUrl = getThumbUrl ? getThumbUrl(photo) : photo.thumbnail_url || photo.url;
           const fullUrl = getFullUrl ? getFullUrl(photo) : photo.url;
-          const isPriority = getPriority(index);
+          const position = itemPositions[index];
+          const isPriority = getPriority(position);
+
+          if (!position) return null;
 
           return (
             <div
               key={photo.id || index}
-              className="px-1 sm:px-1.5 md:px-2 mb-2 sm:mb-3 md:mb-4 w-1/2 sm:w-1/2 md:w-1/3 lg:w-1/4"
-              style={{ touchAction: 'manipulation' }}
+              className="absolute group cursor-pointer"
+              style={{
+                left: position.left,
+                top: position.top,
+                width: position.width,
+                height: position.height,
+                transition: 'top 0.3s ease, left 0.3s ease, height 0.3s ease'
+              }}
+              onClick={() => onPhotoClick && onPhotoClick(index, photo)}
+              data-testid={`masonry-photo-${index}`}
             >
-              <div
-                className="group cursor-pointer relative overflow-hidden rounded-lg"
-                onClick={() => onPhotoClick && onPhotoClick(index, photo)}
-                data-testid={`masonry-photo-${index}`}
-              >
-                <LazyImage
-                  src={thumbUrl}
-                  fallbackSrc={fullUrl}
-                  alt={photo.name || photo.title || photo.filename || `Photo ${index + 1}`}
-                  className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
-                  priority={isPriority}
-                  aspectRatio={photo.aspect_ratio}
-                />
-                
-                {/* Hover overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
-                
-                {/* Supplier/Contributor name overlay */}
-                {showSupplierName && (photo.supplier_name || photo.contributor_name || photo.uploaded_by_name) && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 sm:p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                    <p className="text-white text-xs font-medium truncate">
-                      by {photo.supplier_name || photo.contributor_name || photo.uploaded_by_name}
-                    </p>
-                  </div>
-                )}
-                
-                {/* Guest badge */}
-                {photo.uploaded_by === 'guest' && (
-                  <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full pointer-events-none">
-                    Guest
-                  </div>
-                )}
-                
-                {/* Highlight badge */}
-                {photo.is_highlight && (
-                  <div className="absolute top-2 left-2 bg-yellow-500/90 text-white text-xs px-2 py-0.5 rounded-full pointer-events-none flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                    </svg>
-                    Featured
-                  </div>
-                )}
+              <LazyImage
+                src={thumbUrl}
+                fallbackSrc={fullUrl}
+                alt={photo.name || photo.title || photo.filename || `Photo ${index + 1}`}
+                priority={isPriority}
+                onLoad={(w, h) => handleImageLoad(photo.id, w, h)}
+                style={{ position: 'absolute', inset: 0 }}
+                className="overflow-hidden rounded-lg"
+              />
+              
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg pointer-events-none" />
+              
+              {/* Zoom effect on hover */}
+              <div className="absolute inset-0 overflow-hidden rounded-lg">
+                <div className="w-full h-full transition-transform duration-500 group-hover:scale-105" />
               </div>
+              
+              {/* Supplier/Contributor name overlay */}
+              {showSupplierName && (photo.supplier_name || photo.contributor_name || photo.uploaded_by_name) && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 sm:p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-b-lg pointer-events-none">
+                  <p className="text-white text-xs font-medium truncate">
+                    by {photo.supplier_name || photo.contributor_name || photo.uploaded_by_name}
+                  </p>
+                </div>
+              )}
+              
+              {/* Guest badge */}
+              {photo.uploaded_by === 'guest' && (
+                <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full pointer-events-none">
+                  Guest
+                </div>
+              )}
+              
+              {/* Highlight badge */}
+              {photo.is_highlight && (
+                <div className="absolute top-2 left-2 bg-yellow-500/90 text-white text-xs px-2 py-0.5 rounded-full pointer-events-none flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                  </svg>
+                  Featured
+                </div>
+              )}
             </div>
           );
         })}
