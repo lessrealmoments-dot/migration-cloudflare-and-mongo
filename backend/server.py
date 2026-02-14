@@ -8717,26 +8717,13 @@ async def get_public_gallery_photos(
     skip = (page - 1) * page_size
     
     # Get photos excluding hidden AND flagged ones - WITH PAGINATION
-    # Only fetch essential fields for grid display (reduces payload significantly)
     photos = await db.photos.find(
         {
             "gallery_id": gallery["id"], 
             "is_hidden": {"$ne": True},
             "is_flagged": {"$ne": True}
         }, 
-        {
-            "_id": 0,
-            "id": 1,
-            "url": 1,
-            "thumbnail_url": 1,
-            "thumbnail_medium_url": 1,
-            "original_filename": 1,
-            "is_highlight": 1,
-            "order": 1,
-            "uploaded_by": 1,
-            "section_id": 1,
-            "uploaded_at": 1
-        }
+        {"_id": 0}
     ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).skip(skip).limit(page_size).to_list(page_size)
     
     # Get total count for pagination info
