@@ -3729,7 +3729,8 @@ async def get_public_feature_toggles():
             "online_gallery": True,
             "display_mode": True,
             "contributor_link": True,
-            "auto_delete_enabled": True
+            "auto_delete_enabled": True,
+            "allow_guest_upload_never_expires": False
         }
     # Remove internal type field from response
     return {k: v for k, v in toggles.items() if k != "type"}
