@@ -29,6 +29,7 @@ class User(BaseModel):
     email: str
     name: str
     business_name: Optional[str] = None
+    override_mode: Optional[str] = None  # Founder, Early Partner, etc.
     max_galleries: int = DEFAULT_MAX_GALLERIES
     galleries_created_total: int = 0
     storage_quota: int = DEFAULT_STORAGE_QUOTA
