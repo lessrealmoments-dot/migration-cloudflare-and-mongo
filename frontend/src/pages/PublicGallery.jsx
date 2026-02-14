@@ -254,10 +254,8 @@ const PublicGallery = () => {
     }
   };
 
-  const [photosPage, setPhotosPage] = useState(1);
-  const [hasMorePhotos, setHasMorePhotos] = useState(true);
+  // Loading state for photos
   const [loadingMorePhotos, setLoadingMorePhotos] = useState(false);
-  const [totalPhotos, setTotalPhotos] = useState(0);
 
   const fetchPhotos = async (pwd = null) => {
     try {
