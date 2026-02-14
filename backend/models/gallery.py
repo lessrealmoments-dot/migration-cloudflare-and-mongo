@@ -40,7 +40,9 @@ class Gallery(BaseModel):
     event_date: Optional[str] = None
     coordinator_name: Optional[str] = None  # Event coordinator/planner name
     share_link_expiration_date: Optional[str] = None
+    share_link_expiration_days: Optional[int] = None
     guest_upload_expiration_date: Optional[str] = None
+    guest_upload_enabled_days: Optional[int] = None  # 0 = never expires
     guest_upload_enabled: bool = True
     has_download_all_password: bool = False
     theme: str = "classic"
