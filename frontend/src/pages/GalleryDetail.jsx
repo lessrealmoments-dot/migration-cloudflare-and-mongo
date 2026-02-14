@@ -643,7 +643,7 @@ const GalleryDetail = () => {
   const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/profile`, {
+      const response = await axios.get(`${API}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserProfile(response.data);
