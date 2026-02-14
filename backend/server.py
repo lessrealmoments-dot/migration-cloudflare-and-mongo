@@ -2506,18 +2506,54 @@ async def reset_user_credits_if_needed(user_id: str):
     
     billing_start = user.get("billing_cycle_start")
     now = datetime.now(timezone.utc)
+    plan = user.get("plan", PLAN_FREE)
+    payment_status = user.get("payment_status", PAYMENT_NONE)
+    override_mode = user.get("override_mode")
+    override_expires_str = user.get("override_expires")
+    
+    # Check if user has active override mode
+    has_active_override = False
+    if override_mode and override_expires_str:
+        try:
+            override_expires = datetime.fromisoformat(override_expires_str.replace('Z', '+00:00'))
+            has_active_override = override_expires > now
+        except:
+            pass
     
     if not billing_start:
-        # Initialize billing cycle
-        subscription_expires = (now + timedelta(days=30)).isoformat()
+        # Initialize billing cycle for the first time
+        # Only give credits if:
+        # 1. User has active override mode, OR
+        # 2. User has APPROVED payment status, OR
+        # 3. User is on FREE plan (demo gallery, no credits needed)
+        
+        if has_active_override:
+            # Override mode - give credits based on mode
+            mode_credits = MODE_CREDITS.get(override_mode, 0)
+            initial_credits = 999 if mode_credits == -1 else mode_credits
+            subscription_expires = override_expires_str
+        elif payment_status == PAYMENT_APPROVED:
+            # Paid user with approved payment - give plan credits
+            initial_credits = PLAN_CREDITS.get(plan, 0)
+            subscription_expires = (now + timedelta(days=30)).isoformat()
+        elif plan == PLAN_FREE:
+            # Free user - no credits (uses demo gallery system)
+            initial_credits = 0
+            subscription_expires = None
+        else:
+            # Paid plan but payment not approved - no credits yet
+            initial_credits = 0
+            subscription_expires = None
+        
         await db.users.update_one(
             {"id": user_id},
             {"$set": {
                 "billing_cycle_start": now.isoformat(),
                 "subscription_expires": subscription_expires,
-                "subscription_tokens": PLAN_CREDITS.get(user.get("plan", PLAN_FREE), 0),
+                "subscription_tokens": initial_credits,
             }}
         )
+        logger.info(f"Initialized billing cycle: user={user_id}, plan={plan}, payment={payment_status}, credits={initial_credits}")
         return
     
     try:
