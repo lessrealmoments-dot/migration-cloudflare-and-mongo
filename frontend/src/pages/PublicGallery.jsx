@@ -222,6 +222,12 @@ const PublicGallery = () => {
 
   const isSectionExpanded = (sectionId) => expandedSections[sectionId] ?? false;
 
+  useEffect(() => {
+    fetchGalleryInfo();
+    // Track view
+    trackView();
+  }, [shareLink]);
+
   const trackView = async () => {
     try {
       await axios.post(`${API}/public/gallery/${shareLink}/view`);
