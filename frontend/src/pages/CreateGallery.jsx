@@ -31,11 +31,40 @@ const CreateGallery = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pricing, setPricing] = useState({ extra_credit: 500 });
   const [subscription, setSubscription] = useState(null);
+  const [featureToggles, setFeatureToggles] = useState({ allow_guest_upload_never_expires: false });
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     fetchPricing();
     fetchSubscription();
+    fetchFeatureToggles();
+    fetchUserProfile();
   }, []);
+
+  const fetchFeatureToggles = async () => {
+    try {
+      const response = await axios.get(`${API}/public/feature-toggles`);
+      setFeatureToggles(response.data);
+    } catch (error) {
+      console.error('Failed to fetch feature toggles');
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserProfile(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user profile');
+    }
+  };
+
+  // Check if user is Founder (eligible for never-expire option)
+  const isFounder = userProfile?.override_mode === 'founders_circle';
+  const canUseNeverExpire = featureToggles.allow_guest_upload_never_expires && isFounder;
 
   const fetchPricing = async () => {
     try {
