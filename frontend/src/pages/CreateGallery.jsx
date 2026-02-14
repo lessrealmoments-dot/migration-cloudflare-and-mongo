@@ -360,6 +360,9 @@ const CreateGallery = () => {
                 onChange={(e) => setFormData({ ...formData, guest_upload_enabled_days: e.target.value })}
                 className="flex h-10 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200 focus:border-primary"
               >
+                {canUseNeverExpire && (
+                  <option value="0">Never expires ✨</option>
+                )}
                 <option value="1">1 day after event</option>
                 <option value="2">2 days after event</option>
                 <option value="3">3 days after event</option>
@@ -369,7 +372,10 @@ const CreateGallery = () => {
                 <option value="7">7 days after event</option>
               </select>
               <p className="text-xs text-zinc-500 mt-2">
-                How long guests can upload photos after the event
+                {formData.guest_upload_enabled_days === '0' || formData.guest_upload_enabled_days === 0
+                  ? 'Guest uploads will remain open indefinitely'
+                  : 'How long guests can upload photos after the event'
+                }
               </p>
             </div>
           </div>
