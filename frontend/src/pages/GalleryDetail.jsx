@@ -1603,8 +1603,8 @@ const GalleryDetail = () => {
       event_date: gallery.event_date || '',
       coordinator_name: gallery.coordinator_name || '',
       description: gallery.description || '',
-      share_link_expiration_days: 30,
-      guest_upload_enabled_days: 3,
+      share_link_expiration_days: gallery.share_link_expiration_days || 30,
+      guest_upload_enabled_days: gallery.guest_upload_enabled_days ?? 3,  // Load actual value, default 3
       theme: gallery.theme || 'classic',
       password: '',  // Leave blank - user enters new password to change
       download_all_password: '',  // Leave blank - user enters new password to change
