@@ -8694,9 +8694,9 @@ async def verify_gallery_password(share_link: str, password_data: PasswordVerify
     else:
         raise HTTPException(status_code=401, detail="Invalid password")
 
-@api_router.get("/public/gallery/{share_link}/photos", response_model=List[Photo])
+@api_router.get("/public/gallery/{share_link}/photos")
 async def get_public_gallery_photos(share_link: str, password: Optional[str] = None):
-    """Get all photos for a public gallery"""
+    """Get photos for a public gallery - optimized with projection for fast loading"""
     gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
@@ -8707,17 +8707,36 @@ async def get_public_gallery_photos(share_link: str, password: Optional[str] = N
     if gallery.get("password") and not verify_password(password, gallery["password"]):
         raise HTTPException(status_code=401, detail="Invalid password")
     
+    # Optimized projection - only fetch fields needed for gallery grid display
+    # This significantly reduces payload size for large galleries (2000+ photos)
+    projection = {
+        "_id": 0,
+        "id": 1,
+        "url": 1,
+        "thumbnail_url": 1,
+        "thumbnail_medium_url": 1,
+        "section_id": 1,
+        "is_highlight": 1,
+        "uploaded_by": 1,
+        "uploaded_by_type": 1,
+        "uploaded_by_name": 1,
+        "order": 1,
+        "aspect_ratio": 1,
+        "title": 1,
+        "filename": 1
+    }
+    
     # Get photos excluding hidden AND flagged ones
-    # Photos are displayed per-section on frontend, with lazy loading per section
     photos = await db.photos.find(
         {
             "gallery_id": gallery["id"], 
             "is_hidden": {"$ne": True},
             "is_flagged": {"$ne": True}
         }, 
-        {"_id": 0}
+        projection
     ).sort([("is_highlight", -1), ("order", 1), ("uploaded_at", -1)]).to_list(None)
-    return [Photo(**p) for p in photos]
+    
+    return photos
 
 @api_router.get("/public/gallery/{share_link}/videos")
 async def get_public_gallery_videos(share_link: str, password: Optional[str] = None):

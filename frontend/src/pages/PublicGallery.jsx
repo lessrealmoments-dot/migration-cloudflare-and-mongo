@@ -256,57 +256,31 @@ const PublicGallery = () => {
   const [loadingMorePhotos, setLoadingMorePhotos] = useState(false);
   const [totalPhotos, setTotalPhotos] = useState(0);
 
-  const fetchPhotos = async (pwd = null, page = 1, append = false) => {
+  const fetchPhotos = async (pwd = null) => {
     try {
-      if (page > 1) setLoadingMorePhotos(true);
-      
+      // Fetch all data in parallel - backend now returns optimized payload
       const [photosRes, videosRes, fotoshareRes, pcloudRes, gdriveRes] = await Promise.all([
         axios.get(
           `${API}/public/gallery/${shareLink}/photos`,
-          { params: { password: pwd || password, page, page_size: PHOTOS_PER_BATCH } }
+          { params: { password: pwd || password } }
         ),
-        // Only fetch these on first page
-        ...(page === 1 ? [
-          axios.get(
-            `${API}/public/gallery/${shareLink}/videos`,
-            { params: { password: pwd || password } }
-          ).catch(() => ({ data: [] })),
-          axios.get(`${API}/galleries/${shareLink}/fotoshare-videos`).catch(() => ({ data: [] })),
-          axios.get(`${API}/public/gallery/${shareLink}/pcloud-photos`).catch(() => ({ data: [] })),
-          axios.get(`${API}/public/gallery/${shareLink}/gdrive-photos`).catch(() => ({ data: [] }))
-        ] : [
-          Promise.resolve({ data: videos }),
-          Promise.resolve({ data: fotoshareVideos }),
-          Promise.resolve({ data: pcloudPhotos }),
-          Promise.resolve({ data: gdrivePhotos })
-        ])
+        axios.get(
+          `${API}/public/gallery/${shareLink}/videos`,
+          { params: { password: pwd || password } }
+        ).catch(() => ({ data: [] })),
+        axios.get(`${API}/galleries/${shareLink}/fotoshare-videos`).catch(() => ({ data: [] })),
+        axios.get(`${API}/public/gallery/${shareLink}/pcloud-photos`).catch(() => ({ data: [] })),
+        axios.get(`${API}/public/gallery/${shareLink}/gdrive-photos`).catch(() => ({ data: [] }))
       ]);
       
-      // Handle paginated response
-      const photosData = photosRes.data;
-      const newPhotos = photosData.photos || photosData; // Support both formats
-      
-      if (append) {
-        setPhotos(prev => [...prev, ...newPhotos]);
-      } else {
-        setPhotos(newPhotos);
-      }
-      
-      // Update pagination state
-      if (photosData.has_more !== undefined) {
-        setHasMorePhotos(photosData.has_more);
-        setTotalPhotos(photosData.total || 0);
-      } else {
-        setHasMorePhotos(false);
-      }
-      setPhotosPage(page);
-      
-      if (page === 1) {
-        setVideos(videosRes.data);
-        setFotoshareVideos(fotoshareRes.data);
-        setPcloudPhotos(pcloudRes.data);
-        setGdrivePhotos(gdriveRes.data);
-      }
+      // Set all photos at once - per-section lazy loading handled by LazyMasonryGrid
+      setPhotos(photosRes.data);
+      setVideos(videosRes.data);
+      setFotoshareVideos(fotoshareRes.data);
+      setPcloudPhotos(pcloudRes.data);
+      setGdrivePhotos(gdriveRes.data);
+      setTotalPhotos(photosRes.data.length);
+      setHasMorePhotos(false); // All photos loaded, per-section pagination in LazyMasonryGrid
     } catch (error) {
       if (error.response?.status === 401) {
         toast.error('Invalid password');
@@ -317,13 +291,6 @@ const PublicGallery = () => {
       setLoadingMorePhotos(false);
     }
   };
-
-  // Load more photos function
-  const loadMorePhotos = useCallback(() => {
-    if (!loadingMorePhotos && hasMorePhotos) {
-      fetchPhotos(password, photosPage + 1, true);
-    }
-  }, [loadingMorePhotos, hasMorePhotos, photosPage, password]);
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
