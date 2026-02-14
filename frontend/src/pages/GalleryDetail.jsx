@@ -159,6 +159,9 @@ const GalleryDetail = () => {
   const [showFlaggedPhotosModal, setShowFlaggedPhotosModal] = useState(false);
   const [repairingThumbnails, setRepairingThumbnails] = useState(false);
   const [photoHealthStatus, setPhotoHealthStatus] = useState(null);
+  // Feature toggles and user profile for Founder-specific features
+  const [featureToggles, setFeatureToggles] = useState({ allow_guest_upload_never_expires: false });
+  const [userProfile, setUserProfile] = useState(null);
 
   // Smart uploader hook for adaptive concurrent uploads
   const {
