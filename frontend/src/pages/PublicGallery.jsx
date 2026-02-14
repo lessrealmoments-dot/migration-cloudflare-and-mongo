@@ -1015,13 +1015,13 @@ const PublicGallery = () => {
           className="relative h-[100svh] overflow-hidden"
           data-testid="hero-section"
         >
-          {/* Parallax Background Image */}
+          {/* Parallax Background Image - Use optimized medium version for fast loading */}
           <motion.div 
             className="absolute inset-0"
             style={{ y: heroImageY, scale: heroScale }}
           >
             <OptimizedImage
-              src={getImageUrl(gallery.cover_photo_url)}
+              src={getImageUrl(gallery.cover_photo_medium_url || gallery.cover_photo_url)}
               alt="Cover"
               className="w-full h-full object-cover"
               showLoader={true}
