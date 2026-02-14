@@ -251,34 +251,79 @@ const PublicGallery = () => {
     }
   };
 
-  const fetchPhotos = async (pwd = null) => {
+  const [photosPage, setPhotosPage] = useState(1);
+  const [hasMorePhotos, setHasMorePhotos] = useState(true);
+  const [loadingMorePhotos, setLoadingMorePhotos] = useState(false);
+  const [totalPhotos, setTotalPhotos] = useState(0);
+
+  const fetchPhotos = async (pwd = null, page = 1, append = false) => {
     try {
+      if (page > 1) setLoadingMorePhotos(true);
+      
       const [photosRes, videosRes, fotoshareRes, pcloudRes, gdriveRes] = await Promise.all([
         axios.get(
           `${API}/public/gallery/${shareLink}/photos`,
-          { params: { password: pwd || password } }
+          { params: { password: pwd || password, page, page_size: PHOTOS_PER_BATCH } }
         ),
-        axios.get(
-          `${API}/public/gallery/${shareLink}/videos`,
-          { params: { password: pwd || password } }
-        ).catch(() => ({ data: [] })), // Videos are optional, don't fail if not available
-        axios.get(`${API}/galleries/${shareLink}/fotoshare-videos`).catch(() => ({ data: [] })), // Fotoshare videos
-        axios.get(`${API}/public/gallery/${shareLink}/pcloud-photos`).catch(() => ({ data: [] })), // pCloud photos
-        axios.get(`${API}/public/gallery/${shareLink}/gdrive-photos`).catch(() => ({ data: [] })) // Google Drive photos
+        // Only fetch these on first page
+        ...(page === 1 ? [
+          axios.get(
+            `${API}/public/gallery/${shareLink}/videos`,
+            { params: { password: pwd || password } }
+          ).catch(() => ({ data: [] })),
+          axios.get(`${API}/galleries/${shareLink}/fotoshare-videos`).catch(() => ({ data: [] })),
+          axios.get(`${API}/public/gallery/${shareLink}/pcloud-photos`).catch(() => ({ data: [] })),
+          axios.get(`${API}/public/gallery/${shareLink}/gdrive-photos`).catch(() => ({ data: [] }))
+        ] : [
+          Promise.resolve({ data: videos }),
+          Promise.resolve({ data: fotoshareVideos }),
+          Promise.resolve({ data: pcloudPhotos }),
+          Promise.resolve({ data: gdrivePhotos })
+        ])
       ]);
-      setPhotos(photosRes.data);
-      setVideos(videosRes.data);
-      setFotoshareVideos(fotoshareRes.data);
-      setPcloudPhotos(pcloudRes.data);
-      setGdrivePhotos(gdriveRes.data);
+      
+      // Handle paginated response
+      const photosData = photosRes.data;
+      const newPhotos = photosData.photos || photosData; // Support both formats
+      
+      if (append) {
+        setPhotos(prev => [...prev, ...newPhotos]);
+      } else {
+        setPhotos(newPhotos);
+      }
+      
+      // Update pagination state
+      if (photosData.has_more !== undefined) {
+        setHasMorePhotos(photosData.has_more);
+        setTotalPhotos(photosData.total || 0);
+      } else {
+        setHasMorePhotos(false);
+      }
+      setPhotosPage(page);
+      
+      if (page === 1) {
+        setVideos(videosRes.data);
+        setFotoshareVideos(fotoshareRes.data);
+        setPcloudPhotos(pcloudRes.data);
+        setGdrivePhotos(gdriveRes.data);
+      }
     } catch (error) {
       if (error.response?.status === 401) {
         toast.error('Invalid password');
       } else {
         toast.error('Failed to load photos');
       }
+    } finally {
+      setLoadingMorePhotos(false);
     }
   };
+
+  // Load more photos function
+  const loadMorePhotos = useCallback(() => {
+    if (!loadingMorePhotos && hasMorePhotos) {
+      fetchPhotos(password, photosPage + 1, true);
+    }
+  }, [loadingMorePhotos, hasMorePhotos, photosPage, password]);
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
