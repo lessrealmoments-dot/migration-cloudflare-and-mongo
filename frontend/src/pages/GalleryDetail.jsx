@@ -627,7 +627,34 @@ const GalleryDetail = () => {
     fetchPcloudPhotos();
     fetchFlaggedPhotos();
     checkPhotoHealth();
+    fetchFeatureToggles();
+    fetchUserProfile();
   }, [id]);
+
+  const fetchFeatureToggles = async () => {
+    try {
+      const response = await axios.get(`${API}/public/feature-toggles`);
+      setFeatureToggles(response.data);
+    } catch (error) {
+      console.error('Failed to fetch feature toggles');
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserProfile(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user profile');
+    }
+  };
+
+  // Check if user is Founder (eligible for never-expire option)
+  const isFounder = userProfile?.override_mode === 'founders_circle';
+  const canUseNeverExpire = featureToggles.allow_guest_upload_never_expires && isFounder;
 
   // Fetch Google Drive photos once we have gallery data
   useEffect(() => {
