@@ -4740,11 +4740,14 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
-    # Check if gallery is edit-locked (7 days after creation)
+    # Check if user is a Founder (bypass edit lock)
+    is_founder = current_user.get("override_mode") == MODE_FOUNDERS_CIRCLE
+    
+    # Check if gallery is edit-locked (7 days after creation) - Founders are exempt
     edit_lock_info = get_edit_lock_info(gallery["created_at"])
     locked_fields = ["title", "description", "event_title", "event_date", "theme"]
     
-    if edit_lock_info["is_locked"]:
+    if edit_lock_info["is_locked"] and not is_founder:
         # Check if any locked fields are being updated
         for field in locked_fields:
             if getattr(updates, field, None) is not None:
