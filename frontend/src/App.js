@@ -101,6 +101,8 @@ function App() {
           <Route path="/" element={<LandingPage user={user} />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth setUser={setUser} />} />
+          {/* Redirect /login to /auth for user convenience */}
+          <Route path="/login" element={<Navigate to="/auth" replace />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard user={user} setUser={setUser} /></ProtectedRoute>} />
           <Route path="/gallery/create" element={<ProtectedRoute><CreateGallery /></ProtectedRoute>} />
           <Route path="/gallery/:id" element={<ProtectedRoute><GalleryDetail /></ProtectedRoute>} />
