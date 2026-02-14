@@ -1902,38 +1902,6 @@ const PublicGallery = () => {
               <p style={{ color: getSubtleTextColor(currentTheme.colors.background, 0.6) }}>No photos yet. Be the first to upload!</p>
             </div>
           )}
-          
-          {/* Global Load More Button - Shows when there are more photos to load */}
-          {hasMorePhotos && photos.length > 0 && (
-            <div className="flex justify-center py-12">
-              <button
-                onClick={loadMorePhotos}
-                disabled={loadingMorePhotos}
-                className="px-8 py-3 rounded-full font-medium transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
-                style={{
-                  backgroundColor: currentTheme.colors.accent,
-                  color: getContrastTextColor(currentTheme.colors.accent),
-                  opacity: loadingMorePhotos ? 0.7 : 1
-                }}
-                data-testid="load-more-photos-global"
-              >
-                {loadingMorePhotos ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Loading more photos...
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-5 h-5" />
-                    Load More Photos
-                    <span className="text-sm opacity-75 ml-1">
-                      ({photos.length} of {totalPhotos || gallery?.photo_count})
-                    </span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
         </div>
         </>
       )}
