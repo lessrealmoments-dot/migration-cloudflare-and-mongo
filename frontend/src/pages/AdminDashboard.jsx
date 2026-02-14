@@ -255,7 +255,8 @@ const AdminDashboard = () => {
         online_gallery: response.data.online_gallery ?? true,
         display_mode: response.data.display_mode ?? true,
         contributor_link: response.data.contributor_link ?? true,
-        auto_delete_enabled: response.data.auto_delete_enabled ?? true
+        auto_delete_enabled: response.data.auto_delete_enabled ?? true,
+        allow_guest_upload_never_expires: response.data.allow_guest_upload_never_expires ?? false
       });
     } catch (error) {
       console.error('Failed to load feature toggles');
