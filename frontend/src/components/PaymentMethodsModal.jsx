@@ -54,7 +54,8 @@ const PaymentMethodsModal = ({
       setPaymentMethods(response.data.payment_methods || {
         gcash: { enabled: true, name: 'GCash', account_name: 'Less Real Moments', account_number: '09952568450' },
         maya: { enabled: true, name: 'Maya', account_name: 'Less Real Moments', account_number: '09952568450' },
-        bank: { enabled: false, name: 'Bank Transfer', account_name: '', account_number: '', bank_name: '' }
+        bank: { enabled: false, name: 'Bank Transfer', account_name: '', account_number: '', bank_name: '' },
+        paypal: { enabled: false, name: 'PayPal', account_name: '', account_number: '', paypal_email: '' }
       });
     } catch (error) {
       console.error('Failed to fetch payment methods');
