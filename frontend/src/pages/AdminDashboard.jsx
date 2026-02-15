@@ -2438,7 +2438,7 @@ const AdminDashboard = () => {
                     <div className="relative">
                       <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center border border-zinc-600 overflow-hidden">
                         <img 
-                          src={`${BACKEND_URL}${landingConfig.favicon_url}`} 
+                          src={landingConfig.favicon_url.startsWith('http') ? landingConfig.favicon_url : `${BACKEND_URL}${landingConfig.favicon_url}`} 
                           alt="Current favicon" 
                           className="w-full h-full object-contain p-2"
                         />
