@@ -233,7 +233,7 @@ const LiteUploadPage = ({
           }));
 
           await axios.post(
-            `${API}/api/public/gallery/${shareLink}/upload`,
+            `${API}/public/gallery/${shareLink}/upload`,
             formData,
             {
               headers: { 'Content-Type': 'multipart/form-data' },
