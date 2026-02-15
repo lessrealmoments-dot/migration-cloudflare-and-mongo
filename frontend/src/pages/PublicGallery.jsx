@@ -235,9 +235,9 @@ const PublicGallery = () => {
   }, [shareLink]);
 
   // Connection speed detection for Lite Mode
-  const { speed, isSlowConnection, isTesting: isTestingSpeed } = useConnectionSpeed({
+  const { speed, effectiveType, isSlowConnection, isTesting: isTestingSpeed } = useConnectionSpeed({
     enabled: gallery?.lite_mode_enabled && !liteModeChecked && authenticated,
-    threshold: 1 // 1 Mbps threshold
+    slowThresholdMs: 1500 // 1.5 second response time threshold
   });
 
   // Show Lite Mode modal when slow connection detected
