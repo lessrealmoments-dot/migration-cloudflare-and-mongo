@@ -1,6 +1,6 @@
 # EventsGallery.vip - Photo Sharing Platform PRD
 
-## Last Updated: Feb 13, 2025
+## Last Updated: Feb 15, 2025
 
 ## Original Problem Statement
 A comprehensive photo-sharing application for photographers with focus on:
@@ -8,6 +8,7 @@ A comprehensive photo-sharing application for photographers with focus on:
 - Performance optimization for large galleries (2000+ photos)
 - Monetization via subscription/credit system
 - Multiple photo source integrations (uploads, pCloud, GDrive, Fotoshare)
+- Smart adaptive UX for different connection speeds
 
 ## Core Features Implemented
 
