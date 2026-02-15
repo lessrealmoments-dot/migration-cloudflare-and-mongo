@@ -3,16 +3,43 @@ import { motion } from 'framer-motion';
 import { 
   Upload, Image, CheckCircle2, AlertCircle, 
   ExternalLink, Camera, CloudUpload, X,
-  Loader2, Wifi
+  Loader2, Wifi, AlertTriangle
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import SparkMD5 from 'spark-md5';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
+// Maximum photos per upload batch
+const MAX_UPLOAD_LIMIT = 10;
+
+/**
+ * Calculate MD5 hash of file content for duplicate detection
+ */
+const calculateFileHash = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const spark = new SparkMD5.ArrayBuffer();
+        spark.append(e.target.result);
+        resolve(spark.end());
+      } catch (err) {
+        reject(err);
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+};
+
 /**
  * LiteUploadPage - Minimal upload interface for slow connections
- * Shows only essential elements: event info, upload area, and link to full gallery
+ * Features:
+ * - 10 photo limit per batch
+ * - Duplicate detection with content hashing
+ * - Sequential uploads (one at a time)
  */
 const LiteUploadPage = ({
   gallery,
@@ -26,6 +53,7 @@ const LiteUploadPage = ({
   const [uploadProgress, setUploadProgress] = useState({});
   const [uploadedCount, setUploadedCount] = useState(0);
   const [guestName, setGuestName] = useState('');
+  const [duplicateFiles, setDuplicateFiles] = useState([]);
   const fileInputRef = useRef(null);
 
   const accentColor = themeColors?.accent || '#3b82f6';
@@ -36,6 +64,16 @@ const LiteUploadPage = ({
     const selectedFiles = Array.from(e.target.files || []);
     if (selectedFiles.length === 0) return;
 
+    // Check total count including already selected files
+    const totalFiles = files.length + selectedFiles.length;
+    if (totalFiles > MAX_UPLOAD_LIMIT) {
+      toast.error(`You can only upload up to ${MAX_UPLOAD_LIMIT} photos at a time. Please select fewer photos.`, {
+        duration: 5000,
+        icon: <AlertTriangle className="w-5 h-5 text-amber-500" />
+      });
+      return;
+    }
+
     // Filter for images only
     const imageFiles = selectedFiles.filter(file => 
       file.type.startsWith('image/')
@@ -45,11 +83,34 @@ const LiteUploadPage = ({
       toast.warning(`${selectedFiles.length - imageFiles.length} non-image files were excluded`);
     }
 
-    setFiles(prev => [...prev, ...imageFiles]);
-  }, []);
+    // Check file size (50MB max)
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    const validFiles = [];
+    const invalidFiles = [];
+
+    for (const file of imageFiles) {
+      if (file.size === 0) {
+        invalidFiles.push({ name: file.name, reason: 'File is empty' });
+      } else if (file.size > MAX_FILE_SIZE) {
+        invalidFiles.push({ name: file.name, reason: 'File too large (max 50MB)' });
+      } else {
+        validFiles.push(file);
+      }
+    }
+
+    if (invalidFiles.length > 0) {
+      invalidFiles.forEach(f => toast.error(`${f.name}: ${f.reason}`));
+    }
+
+    if (validFiles.length > 0) {
+      setFiles(prev => [...prev, ...validFiles]);
+      setDuplicateFiles([]); // Clear duplicate status when new files added
+    }
+  }, [files.length]);
 
   const removeFile = useCallback((index) => {
     setFiles(prev => prev.filter((_, i) => i !== index));
+    setDuplicateFiles(prev => prev.filter(i => i !== index));
   }, []);
 
   const handleUpload = useCallback(async () => {
@@ -58,51 +119,182 @@ const LiteUploadPage = ({
       return;
     }
 
+    if (files.length > MAX_UPLOAD_LIMIT) {
+      toast.error(`You can only upload up to ${MAX_UPLOAD_LIMIT} photos at a time.`);
+      return;
+    }
+
     setUploading(true);
+    setUploadProgress({});
+    setDuplicateFiles([]);
     let successCount = 0;
+    let duplicateCount = 0;
+    let failCount = 0;
 
     try {
+      // Step 1: Compute content hashes for duplicate detection
+      toast.info('Checking for duplicates...', { duration: 2000 });
+      
+      const hashes = [];
+      const fileHashMap = new Map();
+      
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        setUploadProgress(prev => ({ 
+          ...prev, 
+          [i]: { status: 'hashing', progress: 0 } 
+        }));
+        
+        try {
+          const hash = await calculateFileHash(files[i]);
+          hashes.push(hash);
+          fileHashMap.set(i, hash);
+        } catch (e) {
+          console.warn(`Could not hash ${files[i].name}, using filename fallback`);
+          hashes.push(null);
+        }
+      }
+
+      // Step 2: Check for duplicates on server
+      let filesToUpload = [...files];
+      let indicesToUpload = files.map((_, i) => i);
+      
+      try {
+        const checkResponse = await axios.post(
+          `${API}/api/public/gallery/${shareLink}/check-duplicates`,
+          { 
+            filenames: files.map(f => f.name),
+            hashes: hashes
+          }
+        );
+        
+        const { duplicates, new_files } = checkResponse.data;
+        
+        if (duplicates.length > 0) {
+          toast.warning(`${duplicates.length} photo(s) already in gallery`, {
+            description: duplicates.length === 1 
+              ? 'This exact photo was already uploaded before'
+              : `${duplicates.slice(0, 2).join(', ')}${duplicates.length > 2 ? ` and ${duplicates.length - 2} more` : ''} are duplicates`,
+            duration: 4000
+          });
+          
+          // Mark duplicate files
+          const duplicateSet = new Set(duplicates.map(d => d.toLowerCase()));
+          const dupIndices = [];
+          filesToUpload = [];
+          indicesToUpload = [];
+          
+          files.forEach((file, index) => {
+            if (duplicateSet.has(file.name.toLowerCase())) {
+              dupIndices.push(index);
+              setUploadProgress(prev => ({ 
+                ...prev, 
+                [index]: { status: 'duplicate', progress: 100 } 
+              }));
+              duplicateCount++;
+            } else {
+              filesToUpload.push(file);
+              indicesToUpload.push(index);
+            }
+          });
+          
+          setDuplicateFiles(dupIndices);
+        }
+        
+        if (new_files.length === 0) {
+          toast.info('All selected photos have already been uploaded');
+          setUploading(false);
+          return;
+        }
+      } catch (error) {
+        console.warn('Duplicate check failed, proceeding with upload:', error);
+      }
+
+      // Step 3: Sequential upload - one file at a time
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
+        const originalIndex = indicesToUpload[i];
         const formData = new FormData();
         formData.append('file', file);
         if (guestName.trim()) {
           formData.append('guest_name', guestName.trim());
         }
+        
+        // Add hash if available for server-side verification
+        const hash = fileHashMap.get(originalIndex);
+        if (hash) {
+          formData.append('content_hash', hash);
+        }
 
         try {
-          setUploadProgress(prev => ({ ...prev, [i]: 0 }));
+          setUploadProgress(prev => ({ 
+            ...prev, 
+            [originalIndex]: { status: 'uploading', progress: 0 } 
+          }));
 
           await axios.post(
-            `${API}/public/gallery/${shareLink}/upload`,
+            `${API}/api/public/gallery/${shareLink}/upload`,
             formData,
             {
               headers: { 'Content-Type': 'multipart/form-data' },
               onUploadProgress: (progressEvent) => {
                 const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                setUploadProgress(prev => ({ ...prev, [i]: percent }));
+                setUploadProgress(prev => ({ 
+                  ...prev, 
+                  [originalIndex]: { status: 'uploading', progress: percent } 
+                }));
               }
             }
           );
 
-          setUploadProgress(prev => ({ ...prev, [i]: 100 }));
+          setUploadProgress(prev => ({ 
+            ...prev, 
+            [originalIndex]: { status: 'success', progress: 100 } 
+          }));
           successCount++;
           setUploadedCount(prev => prev + 1);
         } catch (error) {
           console.error(`Failed to upload ${file.name}:`, error);
-          setUploadProgress(prev => ({ ...prev, [i]: -1 })); // -1 indicates error
+          const isDuplicate = error.response?.status === 409;
+          
+          setUploadProgress(prev => ({ 
+            ...prev, 
+            [originalIndex]: { 
+              status: isDuplicate ? 'duplicate' : 'error', 
+              progress: 100 
+            } 
+          }));
+          
+          if (isDuplicate) {
+            duplicateCount++;
+          } else {
+            failCount++;
+          }
         }
       }
 
-      if (successCount === files.length) {
-        toast.success(`All ${successCount} photos uploaded successfully!`);
-        setFiles([]);
-        setUploadProgress({});
-        onUploadComplete?.(successCount);
-      } else if (successCount > 0) {
-        toast.warning(`${successCount} of ${files.length} photos uploaded`);
-      } else {
-        toast.error('Upload failed. Please try again.');
+      // Show result messages
+      if (successCount > 0) {
+        toast.success(`${successCount} photo(s) uploaded successfully!`);
+        // Clear successfully uploaded files
+        const successIndices = new Set();
+        Object.entries(uploadProgress).forEach(([idx, data]) => {
+          if (data.status === 'success') successIndices.add(parseInt(idx));
+        });
+        
+        // Keep only failed files for retry
+        if (failCount === 0) {
+          setFiles([]);
+          setUploadProgress({});
+          onUploadComplete?.(successCount);
+        }
+      }
+      
+      if (duplicateCount > 0) {
+        toast.warning(`${duplicateCount} duplicate photo(s) skipped`);
+      }
+      
+      if (failCount > 0) {
+        toast.error(`${failCount} photo(s) failed to upload`);
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -110,7 +302,13 @@ const LiteUploadPage = ({
     } finally {
       setUploading(false);
     }
-  }, [files, guestName, shareLink, onUploadComplete]);
+  }, [files, guestName, shareLink, onUploadComplete, uploadProgress]);
+
+  const getProgressStatus = (index) => {
+    const progress = uploadProgress[index];
+    if (!progress) return null;
+    return progress;
+  };
 
   return (
     <div 
@@ -163,6 +361,9 @@ const LiteUploadPage = ({
             <p className="text-zinc-600 dark:text-zinc-400 mt-2">
               Upload your photos from {gallery?.event_title || 'the event'}
             </p>
+            <p className="text-xs text-zinc-500 mt-1">
+              Maximum {MAX_UPLOAD_LIMIT} photos per upload
+            </p>
           </div>
 
           {/* Guest Name Input */}
@@ -183,11 +384,11 @@ const LiteUploadPage = ({
 
           {/* Upload Area */}
           <div
-            onClick={() => !uploading && fileInputRef.current?.click()}
+            onClick={() => !uploading && files.length < MAX_UPLOAD_LIMIT && fileInputRef.current?.click()}
             className={`
               relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer
               transition-all duration-300
-              ${uploading ? 'border-zinc-300 bg-zinc-50' : 'border-zinc-300 hover:border-zinc-400 dark:border-zinc-600 dark:hover:border-zinc-500'}
+              ${uploading || files.length >= MAX_UPLOAD_LIMIT ? 'border-zinc-300 bg-zinc-50 cursor-not-allowed' : 'border-zinc-300 hover:border-zinc-400 dark:border-zinc-600 dark:hover:border-zinc-500'}
             `}
           >
             <input
@@ -197,81 +398,112 @@ const LiteUploadPage = ({
               accept="image/*"
               onChange={handleFileSelect}
               className="hidden"
-              disabled={uploading}
+              disabled={uploading || files.length >= MAX_UPLOAD_LIMIT}
             />
             
             <CloudUpload 
               className="w-12 h-12 mx-auto mb-4"
-              style={{ color: uploading ? '#9ca3af' : accentColor }}
+              style={{ color: uploading || files.length >= MAX_UPLOAD_LIMIT ? '#9ca3af' : accentColor }}
             />
             <p className="text-lg font-medium text-zinc-900 dark:text-white">
-              {uploading ? 'Uploading...' : 'Tap to select photos'}
+              {uploading ? 'Uploading...' : files.length >= MAX_UPLOAD_LIMIT ? `Maximum ${MAX_UPLOAD_LIMIT} photos reached` : 'Tap to select photos'}
             </p>
             <p className="text-sm text-zinc-500 mt-1">
-              or drag and drop your images here
+              {files.length >= MAX_UPLOAD_LIMIT 
+                ? 'Remove some photos to add more' 
+                : `Select up to ${MAX_UPLOAD_LIMIT - files.length} more photo${MAX_UPLOAD_LIMIT - files.length !== 1 ? 's' : ''}`}
             </p>
           </div>
 
           {/* Selected Files List */}
           {files.length > 0 && (
             <div className="mt-6 space-y-2">
-              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Selected: {files.length} photo{files.length !== 1 ? 's' : ''}
-              </p>
-              <div className="max-h-48 overflow-y-auto space-y-2">
-                {files.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-3 p-2 bg-zinc-50 dark:bg-zinc-700 rounded-lg"
-                  >
-                    <div className="w-10 h-10 rounded bg-zinc-200 dark:bg-zinc-600 flex items-center justify-center overflow-hidden">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-zinc-900 dark:text-white truncate">
-                        {file.name}
-                      </p>
-                      {uploadProgress[index] !== undefined && (
-                        <div className="mt-1">
-                          {uploadProgress[index] === -1 ? (
-                            <span className="text-xs text-red-500 flex items-center gap-1">
-                              <AlertCircle className="w-3 h-3" /> Failed
-                            </span>
-                          ) : uploadProgress[index] === 100 ? (
-                            <span className="text-xs text-green-500 flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3" /> Uploaded
-                            </span>
-                          ) : (
-                            <div className="h-1.5 bg-zinc-200 dark:bg-zinc-600 rounded-full overflow-hidden">
-                              <div
-                                className="h-full transition-all duration-300"
-                                style={{ 
-                                  width: `${uploadProgress[index]}%`,
-                                  backgroundColor: accentColor
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Selected: {files.length}/{MAX_UPLOAD_LIMIT} photo{files.length !== 1 ? 's' : ''}
+                </p>
+                {files.length >= MAX_UPLOAD_LIMIT && (
+                  <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                    Limit reached
+                  </span>
+                )}
+              </div>
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {files.map((file, index) => {
+                  const progress = getProgressStatus(index);
+                  const isDuplicate = progress?.status === 'duplicate' || duplicateFiles.includes(index);
+                  const isError = progress?.status === 'error';
+                  const isSuccess = progress?.status === 'success';
+                  const isUploading = progress?.status === 'uploading';
+                  const isHashing = progress?.status === 'hashing';
+                  
+                  return (
+                    <div
+                      key={index}
+                      className={`flex items-center gap-3 p-2 rounded-lg ${
+                        isDuplicate ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200' :
+                        isError ? 'bg-red-50 dark:bg-red-900/20 border border-red-200' :
+                        isSuccess ? 'bg-green-50 dark:bg-green-900/20 border border-green-200' :
+                        'bg-zinc-50 dark:bg-zinc-700'
+                      }`}
+                    >
+                      <div className="w-10 h-10 rounded bg-zinc-200 dark:bg-zinc-600 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-zinc-900 dark:text-white truncate">
+                          {file.name}
+                        </p>
+                        {progress && (
+                          <div className="mt-1">
+                            {isDuplicate ? (
+                              <span className="text-xs text-amber-600 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" /> Already uploaded
+                              </span>
+                            ) : isError ? (
+                              <span className="text-xs text-red-500 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" /> Failed
+                              </span>
+                            ) : isSuccess ? (
+                              <span className="text-xs text-green-500 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> Uploaded
+                              </span>
+                            ) : isHashing ? (
+                              <span className="text-xs text-blue-500 flex items-center gap-1">
+                                <Loader2 className="w-3 h-3 animate-spin" /> Checking...
+                              </span>
+                            ) : isUploading ? (
+                              <div className="h-1.5 bg-zinc-200 dark:bg-zinc-600 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full transition-all duration-300"
+                                  style={{ 
+                                    width: `${progress.progress}%`,
+                                    backgroundColor: accentColor
+                                  }}
+                                />
+                              </div>
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
+                      {!uploading && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFile(index);
+                          }}
+                          className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-full transition-colors"
+                        >
+                          <X className="w-4 h-4 text-zinc-500" />
+                        </button>
                       )}
                     </div>
-                    {!uploading && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFile(index);
-                        }}
-                        className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-full transition-colors"
-                      >
-                        <X className="w-4 h-4 text-zinc-500" />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -283,6 +515,7 @@ const LiteUploadPage = ({
               disabled={uploading}
               className="w-full mt-6 py-4 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
               style={{ backgroundColor: accentColor }}
+              data-testid="lite-upload-button"
             >
               {uploading ? (
                 <>
