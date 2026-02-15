@@ -4942,6 +4942,10 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
         # Check if the field was explicitly set to None in the request
         pass  # Will be handled below
     
+    # Lite mode setting
+    if updates.lite_mode_enabled is not None:
+        update_data["lite_mode_enabled"] = updates.lite_mode_enabled
+    
     if update_data:
         await db.galleries.update_one({"id": gallery_id}, {"$set": update_data})
     
