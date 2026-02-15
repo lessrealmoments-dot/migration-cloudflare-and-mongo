@@ -24,6 +24,14 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Collage display mode (optimized for 2000+ photos, loads in ~3.5s)
 - [x] Slideshow display mode
 - [x] Photos aggregated from all sources (uploads, pCloud, GDrive)
+- [x] **Lite Mode for Slow Connections** (Feb 15): Detects slow internet and offers minimal upload-only interface ✅
+
+### Lite Mode Feature (NEW - Feb 15, 2025)
+- [x] Gallery settings toggle to enable/disable "Slow Connection Mode"
+- [x] Connection speed detection using Navigator API with download test fallback
+- [x] LiteModeModal: Prompts slow connection users with Quick Upload vs Full Gallery options
+- [x] LiteUploadPage: Minimal upload-only interface for fast photo sharing
+- [x] Full Gallery option dismisses modal and loads complete gallery
 
 ### External Integrations
 - [x] **Cloudflare R2**: Photo storage with CDN
