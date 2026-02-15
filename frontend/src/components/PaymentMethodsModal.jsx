@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { X, Upload, Loader2, Check, CreditCard, Building2, Smartphone, QrCode } from 'lucide-react';
+import { X, Upload, Loader2, Check, CreditCard, Building2, Smartphone, QrCode, Globe } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
