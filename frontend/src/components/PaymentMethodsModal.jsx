@@ -144,6 +144,7 @@ const PaymentMethodsModal = ({
       case 'gcash': return <Smartphone className="w-5 h-5 text-blue-600" />;
       case 'maya': return <CreditCard className="w-5 h-5 text-green-600" />;
       case 'bank': return <Building2 className="w-5 h-5 text-zinc-600" />;
+      case 'paypal': return <Globe className="w-5 h-5 text-indigo-600" />;
       default: return <CreditCard className="w-5 h-5" />;
     }
   };
@@ -153,6 +154,7 @@ const PaymentMethodsModal = ({
       case 'gcash': return 'border-blue-500 bg-blue-50';
       case 'maya': return 'border-green-500 bg-green-50';
       case 'bank': return 'border-zinc-500 bg-zinc-50';
+      case 'paypal': return 'border-indigo-500 bg-indigo-50';
       default: return 'border-zinc-300 bg-zinc-50';
     }
   };
