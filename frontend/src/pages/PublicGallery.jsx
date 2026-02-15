@@ -193,6 +193,11 @@ const PublicGallery = () => {
   const [showUploadModal, setShowUploadModal] = useState(false); // Modal for quick upload
   const [showDownloadAllModal, setShowDownloadAllModal] = useState(false);
   const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+  
+  // Lite Mode state for slow connections
+  const [showLiteModeModal, setShowLiteModeModal] = useState(false);
+  const [isLiteMode, setIsLiteMode] = useState(false);
+  const [liteModeChecked, setLiteModeChecked] = useState(false);
   const [downloadInfo, setDownloadInfo] = useState(null);
   const [downloadingSection, setDownloadingSection] = useState(null);
   
