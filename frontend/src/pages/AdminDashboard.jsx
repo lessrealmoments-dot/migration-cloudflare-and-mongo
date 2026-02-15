@@ -2535,9 +2535,9 @@ const AdminDashboard = () => {
                         {imageUrl ? (
                           <div className="relative group">
                             <img 
-                              src={imageUrl.startsWith('/api') 
-                                ? `${BACKEND_URL}${imageUrl}` 
-                                : imageUrl
+                              src={imageUrl.startsWith('http') 
+                                ? imageUrl 
+                                : `${BACKEND_URL}${imageUrl}`
                               } 
                               alt={`Hero ${num}`} 
                               className="w-full h-24 object-cover rounded bg-zinc-700"
