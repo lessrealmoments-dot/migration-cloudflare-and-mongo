@@ -197,8 +197,8 @@ const PublicGallery = () => {
   
   // Lite Mode state for slow connections
   const [showLiteModeModal, setShowLiteModeModal] = useState(false);
-  const [isLiteMode, setIsLiteMode] = useState(false);
-  const [liteModeChecked, setLiteModeChecked] = useState(false);
+  const [isLiteMode, setIsLiteMode] = useState(forceLiteMode); // Initialize from URL param
+  const [liteModeChecked, setLiteModeChecked] = useState(forceLiteMode); // Skip check if forced
   const [downloadInfo, setDownloadInfo] = useState(null);
   const [downloadingSection, setDownloadingSection] = useState(null);
   
