@@ -1926,6 +1926,13 @@ async def resolve_user_features(user: dict) -> dict:
     
     # Get plan features from global_toggles first, then fall back to defaults
     plan_features = global_toggles.get(effective_plan, DEFAULT_PLAN_FEATURES.get(effective_plan, {})).copy()
+    
+    # Ensure all features have defaults (for newly added features not yet in DB)
+    default_features = DEFAULT_PLAN_FEATURES.get(effective_plan, {})
+    for key, value in default_features.items():
+        if key not in plan_features:
+            plan_features[key] = value
+    
     result["features"] = plan_features
     
     # Check unlimited credits from feature toggle (unlikely for regular plans)
