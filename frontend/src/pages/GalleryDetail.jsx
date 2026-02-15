@@ -4392,6 +4392,29 @@ const GalleryDetail = () => {
                     }
                   </p>
                 </div>
+
+                {/* Lite Mode Toggle */}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-sm font-medium">Slow Connection Mode</label>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        Detect slow connections and offer a lite upload experience
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditFormData({ ...editFormData, lite_mode_enabled: !editFormData.lite_mode_enabled })}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${
+                        editFormData.lite_mode_enabled ? 'bg-green-500' : 'bg-zinc-300'
+                      }`}
+                    >
+                      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                        editFormData.lite_mode_enabled ? 'right-0.5' : 'left-0.5'
+                      }`} />
+                    </button>
+                  </div>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-4">Gallery Theme</label>
