@@ -1869,14 +1869,16 @@ async def resolve_user_features(user: dict) -> dict:
                 result["override_mode"] = override_mode
                 result["override_expires"] = override_expires
                 
-                # Get mode features from global_toggles first, then fall back to defaults
-                mode_features = global_toggles.get(override_mode, DEFAULT_MODE_FEATURES.get(override_mode, {})).copy()
+                # Start with default mode features
+                default_mode_features = DEFAULT_MODE_FEATURES.get(override_mode, {}).copy()
                 
-                # Ensure all features have defaults (for newly added features not yet in DB)
-                default_mode_features = DEFAULT_MODE_FEATURES.get(override_mode, {})
-                for key, value in default_mode_features.items():
-                    if key not in mode_features:
-                        mode_features[key] = value
+                # Get stored features from global_toggles (admin overrides)
+                stored_mode_features = global_toggles.get(override_mode, {})
+                
+                # Merge: stored values override defaults
+                mode_features = default_mode_features.copy()
+                for key, value in stored_mode_features.items():
+                    mode_features[key] = value
                 
                 logger.info(f"Mode features for {override_mode}: {mode_features}")
                 result["features"] = mode_features
