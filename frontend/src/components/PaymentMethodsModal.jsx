@@ -201,7 +201,8 @@ const PaymentMethodsModal = ({
                   >
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
                       key === 'gcash' ? 'bg-blue-100' : 
-                      key === 'maya' ? 'bg-green-100' : 'bg-zinc-100'
+                      key === 'maya' ? 'bg-green-100' : 
+                      key === 'paypal' ? 'bg-indigo-100' : 'bg-zinc-100'
                     }`}>
                       {getMethodIcon(key)}
                     </div>
