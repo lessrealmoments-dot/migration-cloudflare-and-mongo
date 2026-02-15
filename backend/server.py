@@ -11359,7 +11359,7 @@ async def reject_payment(data: RejectPayment, background_tasks: BackgroundTasks,
 @api_router.post("/admin/upload-payment-qr")
 async def upload_payment_qr(file: UploadFile = File(...), method: str = Form(...), admin: dict = Depends(get_admin_user)):
     """Upload QR code image for a payment method - stores in R2"""
-    if method not in ["gcash", "maya", "bank"]:
+    if method not in ["gcash", "maya", "bank", "paypal"]:
         raise HTTPException(status_code=400, detail="Invalid payment method")
     
     # Generate filename with method name
