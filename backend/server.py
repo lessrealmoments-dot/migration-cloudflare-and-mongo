@@ -1931,14 +1931,16 @@ async def resolve_user_features(user: dict) -> dict:
     result["effective_plan"] = effective_plan
     result["subscription_expired"] = subscription_expired
     
-    # Get plan features from global_toggles first, then fall back to defaults
-    plan_features = global_toggles.get(effective_plan, DEFAULT_PLAN_FEATURES.get(effective_plan, {})).copy()
+    # Start with default features for the plan
+    default_features = DEFAULT_PLAN_FEATURES.get(effective_plan, {}).copy()
     
-    # Ensure all features have defaults (for newly added features not yet in DB)
-    default_features = DEFAULT_PLAN_FEATURES.get(effective_plan, {})
-    for key, value in default_features.items():
-        if key not in plan_features:
-            plan_features[key] = value
+    # Get stored features from global_toggles (admin overrides)
+    stored_features = global_toggles.get(effective_plan, {})
+    
+    # Merge: stored values override defaults
+    plan_features = default_features.copy()
+    for key, value in stored_features.items():
+        plan_features[key] = value
     
     result["features"] = plan_features
     
