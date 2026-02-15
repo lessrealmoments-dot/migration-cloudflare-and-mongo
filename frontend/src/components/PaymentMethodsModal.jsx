@@ -257,10 +257,17 @@ const PaymentMethodsModal = ({
                       <span className="text-sm text-zinc-600">Account Name:</span>
                       <span className="text-sm font-medium">{paymentMethods[selectedMethod]?.account_name}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-zinc-600">Account Number:</span>
-                      <span className="text-sm font-bold text-lg">{paymentMethods[selectedMethod]?.account_number}</span>
-                    </div>
+                    {selectedMethod === 'paypal' && paymentMethods[selectedMethod]?.paypal_email ? (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-zinc-600">PayPal Email:</span>
+                        <span className="text-sm font-bold text-lg">{paymentMethods[selectedMethod]?.paypal_email}</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-zinc-600">Account Number:</span>
+                        <span className="text-sm font-bold text-lg">{paymentMethods[selectedMethod]?.account_number}</span>
+                      </div>
+                    )}
                     {selectedMethod === 'bank' && paymentMethods[selectedMethod]?.bank_name && (
                       <div className="flex justify-between">
                         <span className="text-sm text-zinc-600">Bank:</span>
