@@ -9605,17 +9605,21 @@ async def get_public_download_info(share_link: str, request: SectionDownloadRequ
     
     # Build section info with photo counts
     section_info = []
+    DEFAULT_PHOTO_SIZE = 2 * 1024 * 1024  # 2MB default
     for section in sorted(sections, key=lambda s: s.get("order", 0)):
         # Only include photo sections (not video or fotoshare)
         if section.get("type", "photo") != "photo":
             continue
         section_photos = [p for p in photos if p.get("section_id") == section["id"]]
         if section_photos:
-            section_size = sum(
-                (UPLOAD_DIR / p["filename"]).stat().st_size 
-                for p in section_photos 
-                if (UPLOAD_DIR / p["filename"]).exists()
-            )
+            section_size = 0
+            for p in section_photos:
+                if p.get("size") and p["size"] > 0:
+                    section_size += p["size"]
+                elif p.get("filename") and (UPLOAD_DIR / p["filename"]).exists():
+                    section_size += (UPLOAD_DIR / p["filename"]).stat().st_size
+                else:
+                    section_size += DEFAULT_PHOTO_SIZE
             section_info.append({
                 "id": section["id"],
                 "title": section.get("name", section.get("title", "Untitled")),
