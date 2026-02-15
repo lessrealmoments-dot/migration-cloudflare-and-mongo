@@ -1016,6 +1016,7 @@ MODE_CREDITS = {
 # - view_public_gallery: Allow public gallery viewing
 # - display_mode: Slideshow/Collage display modes
 # - collaboration_link: Contributor upload links
+# - coordinator_hub: Coordinator Hub feature for managing suppliers
 
 # Default feature toggles per override mode
 DEFAULT_MODE_FEATURES = {
@@ -1026,6 +1027,7 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,
         "collaboration_link": True,
+        "coordinator_hub": True,
         "gallery_storage_limit_gb": -1,  # -1 = unlimited per gallery
         "gallery_expiration_days": 36500  # ~100 years (never)
     },
@@ -1036,6 +1038,7 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,
         "collaboration_link": True,
+        "coordinator_hub": True,
         "gallery_storage_limit_gb": 20,  # 20GB per gallery
         "gallery_expiration_days": 180  # 6 months
     },
@@ -1046,6 +1049,7 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,
         "collaboration_link": True,
+        "coordinator_hub": True,
         "gallery_storage_limit_gb": 20,  # 20GB per gallery
         "gallery_expiration_days": 180  # 6 months
     },
@@ -1056,6 +1060,7 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": False,
         "collaboration_link": False,
+        "coordinator_hub": False,
         "gallery_storage_limit_gb": 10,  # 10GB per gallery
         "gallery_expiration_days": 90  # 3 months
     },
@@ -1066,6 +1071,7 @@ DEFAULT_MODE_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,
         "collaboration_link": True,
+        "coordinator_hub": True,
         "gallery_storage_limit_gb": -1,  # -1 = unlimited per gallery
         "gallery_expiration_days": 36500  # ~100 years (never)
     }
@@ -1081,6 +1087,7 @@ DEFAULT_PLAN_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,  # Demo only (6hr gallery)
         "collaboration_link": True,  # Demo only (6hr gallery)
+        "coordinator_hub": True,  # Demo only (6hr gallery)
         "storage_limit_gb": 1,  # 1GB per gallery for demo
         "gallery_expiration_days": 1  # 6 hours (demo)
     },
@@ -1091,6 +1098,7 @@ DEFAULT_PLAN_FEATURES = {
         "view_public_gallery": True,
         "display_mode": False,
         "collaboration_link": False,
+        "coordinator_hub": False,
         "storage_limit_gb": 10,  # 10GB per gallery
         "gallery_expiration_days": 90  # 3 months
     },
@@ -1101,6 +1109,7 @@ DEFAULT_PLAN_FEATURES = {
         "view_public_gallery": True,
         "display_mode": True,
         "collaboration_link": True,
+        "coordinator_hub": True,
         "storage_limit_gb": 15,  # 15GB per gallery
         "gallery_expiration_days": 180  # 6 months
     }
