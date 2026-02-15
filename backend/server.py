@@ -2389,10 +2389,20 @@ async def get_billing_settings() -> dict:
             "paid_gallery_expiration_months": 6,
             "paid_storage_limit_gb": -1
         }
+    
+    # Merge stored payment methods with defaults to include new methods
+    stored_payment_methods = settings.get("payment_methods", {})
+    merged_payment_methods = default_payment_methods.copy()
+    for key, value in stored_payment_methods.items():
+        if key in merged_payment_methods:
+            merged_payment_methods[key] = value
+        else:
+            merged_payment_methods[key] = value
+    
     return {
         "billing_enforcement_enabled": settings.get("billing_enforcement_enabled", False),
         "pricing": settings.get("pricing", DEFAULT_PRICING.copy()),
-        "payment_methods": settings.get("payment_methods", default_payment_methods),
+        "payment_methods": merged_payment_methods,
         "paid_gallery_expiration_months": settings.get("paid_gallery_expiration_months", 6),
         "paid_storage_limit_gb": settings.get("paid_storage_limit_gb", -1)
     }
