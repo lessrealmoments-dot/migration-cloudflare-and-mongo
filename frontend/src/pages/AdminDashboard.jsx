@@ -711,7 +711,10 @@ const AdminDashboard = () => {
         link.rel = 'icon';
         document.head.appendChild(link);
       }
-      link.href = `${BACKEND_URL}${response.data.url}`;
+      // Handle both full URLs (CDN) and relative URLs
+      link.href = response.data.url.startsWith('http') 
+        ? response.data.url 
+        : `${BACKEND_URL}${response.data.url}`;
       
       toast.success('Favicon updated successfully! Refresh to see changes in browser tab.');
     } catch (error) {
