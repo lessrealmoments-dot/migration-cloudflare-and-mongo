@@ -1052,6 +1052,17 @@ const PublicGallery = () => {
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Helmet>
       
+      {/* Lite Mode Modal */}
+      <LiteModeModal
+        isOpen={showLiteModeModal}
+        onClose={() => setShowLiteModeModal(false)}
+        onSelectLiteMode={handleSelectLiteMode}
+        onSelectFullMode={handleSelectFullMode}
+        speed={speed}
+        eventTitle={gallery?.event_title || gallery?.title}
+        themeColors={currentTheme?.colors}
+      />
+      
       {/* Floating Glass Navigation */}
       <motion.nav 
         initial={{ y: -100, opacity: 0 }}
