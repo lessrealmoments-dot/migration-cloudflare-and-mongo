@@ -170,6 +170,7 @@ const PublicGallery = () => {
   const { shareLink } = useParams();
   const [searchParams] = useSearchParams();
   const isViewOnly = searchParams.get('view') === '1';
+  const forceLiteMode = searchParams.get('lite') === '1'; // For testing lite mode
   const brandConfig = useBrandConfig();
   const [gallery, setGallery] = useState(null);
   const [photos, setPhotos] = useState([]);
