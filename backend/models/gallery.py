@@ -88,6 +88,8 @@ class GalleryUpdate(BaseModel):
     display_transition: Optional[str] = None
     display_interval: Optional[int] = None
     collage_preset_id: Optional[str] = None
+    # Lite mode settings
+    lite_mode_enabled: Optional[bool] = None  # Enable slow connection detection
 
 
 class Section(BaseModel):
