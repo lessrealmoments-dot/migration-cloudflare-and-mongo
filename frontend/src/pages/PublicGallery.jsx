@@ -233,6 +233,36 @@ const PublicGallery = () => {
     trackView();
   }, [shareLink]);
 
+  // Connection speed detection for Lite Mode
+  const { speed, isSlowConnection, isTesting: isTestingSpeed } = useConnectionSpeed({
+    enabled: gallery?.lite_mode_enabled && !liteModeChecked && authenticated,
+    threshold: 1 // 1 Mbps threshold
+  });
+
+  // Show Lite Mode modal when slow connection detected
+  useEffect(() => {
+    if (gallery?.lite_mode_enabled && !liteModeChecked && authenticated && !isTestingSpeed) {
+      if (isSlowConnection) {
+        setShowLiteModeModal(true);
+      }
+      setLiteModeChecked(true);
+    }
+  }, [gallery?.lite_mode_enabled, liteModeChecked, authenticated, isSlowConnection, isTestingSpeed]);
+
+  const handleSelectLiteMode = () => {
+    setIsLiteMode(true);
+    setShowLiteModeModal(false);
+  };
+
+  const handleSelectFullMode = () => {
+    setIsLiteMode(false);
+    setShowLiteModeModal(false);
+  };
+
+  const handleSwitchToFull = () => {
+    setIsLiteMode(false);
+  };
+
   const trackView = async () => {
     try {
       await axios.post(`${API}/public/gallery/${shareLink}/view`);
