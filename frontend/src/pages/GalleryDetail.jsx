@@ -1922,19 +1922,38 @@ const GalleryDetail = () => {
               </button>
             )}
             {/* Coordinator Hub Button */}
-            <button
-              data-testid="coordinator-hub-button"
-              onClick={generateCoordinatorHubLink}
-              disabled={coordinatorHubLoading}
-              className="border border-orange-300 bg-white hover:bg-orange-50 text-orange-700 h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
-            >
-              {coordinatorHubLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <QrCode className="w-4 h-4" strokeWidth={1.5} />
-              )}
-              Coordinator Hub
-            </button>
+            {isFeatureEnabled('coordinator_hub') ? (
+              <button
+                data-testid="coordinator-hub-button"
+                onClick={generateCoordinatorHubLink}
+                disabled={coordinatorHubLoading}
+                className="border border-orange-300 bg-white hover:bg-orange-50 text-orange-700 h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
+              >
+                {coordinatorHubLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <QrCode className="w-4 h-4" strokeWidth={1.5} />
+                )}
+                Coordinator Hub
+              </button>
+            ) : (
+              <div className="relative group">
+                <button
+                  data-testid="coordinator-hub-button-disabled"
+                  disabled
+                  className="border border-zinc-300 bg-zinc-100 text-zinc-400 h-10 px-6 rounded-sm cursor-not-allowed flex items-center gap-2"
+                >
+                  <QrCode className="w-4 h-4" strokeWidth={1.5} />
+                  Coordinator Hub
+                  <Lock className="w-3 h-3" strokeWidth={1.5} />
+                </button>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-3 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 text-center">
+                  <span className="font-semibold text-amber-400">FEATURE NOT AVAILABLE ON YOUR CURRENT PLAN</span>
+                  <br />
+                  <span className="text-zinc-300">Contact Admin: 09952568450 / lessrealmoments@gmail.com</span>
+                </div>
+              </div>
+            )}
             {!canDownload ? (
               <div className="relative group">
                 <button
