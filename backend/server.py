@@ -9371,25 +9371,38 @@ async def get_download_info(gallery_id: str, current_user: dict = Depends(get_cu
     current_chunk = []
     current_chunk_size = 0
     chunk_number = 1
+    DEFAULT_PHOTO_SIZE = 2 * 1024 * 1024  # Default 2MB estimate per photo
     
     for photo in photos:
-        file_path = UPLOAD_DIR / photo["filename"]
-        if file_path.exists():
-            file_size = file_path.stat().st_size
-            
-            # If adding this file exceeds chunk size, start a new chunk
-            if current_chunk_size + file_size > MAX_ZIP_CHUNK_SIZE and current_chunk:
-                chunks.append({
-                    "chunk_number": chunk_number,
-                    "photo_count": len(current_chunk),
-                    "size_bytes": current_chunk_size
-                })
-                chunk_number += 1
-                current_chunk = []
-                current_chunk_size = 0
-            
-            current_chunk.append(photo)
-            current_chunk_size += file_size
+        # Try to get file size from multiple sources
+        file_size = 0
+        
+        # 1. Check if size is stored in the database
+        if photo.get("size") and photo["size"] > 0:
+            file_size = photo["size"]
+        # 2. Check local file (for legacy uploads)
+        elif photo.get("filename"):
+            file_path = UPLOAD_DIR / photo["filename"]
+            if file_path.exists():
+                file_size = file_path.stat().st_size
+        
+        # 3. Use default estimate for CDN photos without size info
+        if file_size == 0:
+            file_size = DEFAULT_PHOTO_SIZE
+        
+        # If adding this file exceeds chunk size, start a new chunk
+        if current_chunk_size + file_size > MAX_ZIP_CHUNK_SIZE and current_chunk:
+            chunks.append({
+                "chunk_number": chunk_number,
+                "photo_count": len(current_chunk),
+                "size_bytes": current_chunk_size
+            })
+            chunk_number += 1
+            current_chunk = []
+            current_chunk_size = 0
+        
+        current_chunk.append(photo)
+        current_chunk_size += file_size
     
     # Add the last chunk if it has photos
     if current_chunk:
