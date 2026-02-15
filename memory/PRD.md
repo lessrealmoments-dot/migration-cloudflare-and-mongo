@@ -31,7 +31,13 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Connection speed detection using Navigator API with download test fallback
 - [x] LiteModeModal: Prompts slow connection users with Quick Upload vs Full Gallery options
 - [x] LiteUploadPage: Minimal upload-only interface for fast photo sharing
+  - [x] **10 photo limit per upload** with clear error message
+  - [x] **Duplicate detection** using SparkMD5 content hashing
+  - [x] **Sequential uploads** (one at a time, not simultaneous)
+  - [x] Individual progress bars per file
+  - [x] "Already uploaded" status for duplicates
 - [x] Full Gallery option dismisses modal and loads complete gallery
+- [x] `?lite=1` URL parameter for testing (forces Lite Mode)
 
 ### External Integrations
 - [x] **Cloudflare R2**: Photo storage with CDN
