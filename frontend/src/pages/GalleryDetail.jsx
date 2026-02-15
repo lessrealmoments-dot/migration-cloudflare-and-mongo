@@ -1609,7 +1609,8 @@ const GalleryDetail = () => {
       password: '',  // Leave blank - user enters new password to change
       download_all_password: '',  // Leave blank - user enters new password to change
       hasGalleryPassword: gallery.has_password || false,  // Toggle state
-      hasDownloadPassword: gallery.has_download_all_password || false  // Toggle state
+      hasDownloadPassword: gallery.has_download_all_password || false,  // Toggle state
+      lite_mode_enabled: gallery.lite_mode_enabled || false  // Lite mode for slow connections
     });
     setShowEditModal(true);
   };
