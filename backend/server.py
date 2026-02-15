@@ -3574,6 +3574,52 @@ async def add_client_credits(user_id: str, data: dict, admin: dict = Depends(get
         "new_total": current_credits + credits_to_add
     }
 
+@api_router.post("/admin/clients/{user_id}/cleanup-transactions")
+async def cleanup_duplicate_transactions(user_id: str, admin: dict = Depends(get_admin_user)):
+    """
+    Clean up duplicate pending transactions that were not properly updated when approved.
+    This removes pending transactions that have a matching approved transaction.
+    """
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get all transactions for this user
+    transactions = await db.transactions.find({"user_id": user_id}).to_list(None)
+    
+    # Group by type and amount to find duplicates
+    approved_txs = {}
+    pending_to_remove = []
+    
+    for tx in transactions:
+        key = (tx.get("type"), tx.get("amount"))
+        if tx.get("status") == "approved":
+            if key not in approved_txs:
+                approved_txs[key] = []
+            approved_txs[key].append(tx)
+    
+    # Find pending transactions that have a matching approved one
+    for tx in transactions:
+        if tx.get("status") == "pending":
+            key = (tx.get("type"), tx.get("amount"))
+            if key in approved_txs and len(approved_txs[key]) > 0:
+                pending_to_remove.append(tx["id"])
+                approved_txs[key].pop(0)  # Remove one approved to match
+    
+    # Delete the duplicate pending transactions
+    if pending_to_remove:
+        result = await db.transactions.delete_many({"id": {"$in": pending_to_remove}})
+        return {
+            "message": f"Cleaned up {result.deleted_count} duplicate pending transactions",
+            "removed_count": result.deleted_count,
+            "removed_ids": pending_to_remove
+        }
+    
+    return {
+        "message": "No duplicate transactions found",
+        "removed_count": 0
+    }
+
 @api_router.post("/admin/clients/{user_id}/fix-billing")
 async def fix_client_billing(user_id: str, data: dict, admin: dict = Depends(get_admin_user)):
     """Fix corrupted billing state for a client (e.g., negative credits, missing billing cycle)"""
