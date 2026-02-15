@@ -22,6 +22,8 @@ class GalleryCreate(BaseModel):
     display_transition: str = "crossfade"  # "crossfade", "fade-zoom", "slide", "flip"
     display_interval: int = 6  # seconds between transitions (slideshow mode)
     collage_preset_id: Optional[str] = None  # Selected collage preset for collage mode
+    # Lite mode for slow connections
+    lite_mode_enabled: bool = False  # Enable slow connection detection & lite upload mode
 
 
 class Gallery(BaseModel):
