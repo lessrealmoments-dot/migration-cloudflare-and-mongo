@@ -161,7 +161,7 @@ const LiteUploadPage = ({
       
       try {
         const checkResponse = await axios.post(
-          `${API}/api/public/gallery/${shareLink}/check-duplicates`,
+          `${API}/public/gallery/${shareLink}/check-duplicates`,
           { 
             filenames: files.map(f => f.name),
             hashes: hashes
