@@ -9822,6 +9822,56 @@ async def serve_photo(filename: str, download: bool = False):
     
     raise HTTPException(status_code=404, detail="Photo not found")
 
+@api_router.get("/photos/download")
+async def proxy_download_photo(url: str, filename: str = "photo.jpg"):
+    """
+    Proxy download for CDN photos - fetches from CDN and returns with proper Content-Disposition header.
+    This is needed because CDN URLs don't support the download attribute due to cross-origin restrictions.
+    """
+    import httpx
+    
+    # Validate URL is from our CDN
+    if not url.startswith("photos/") and not url.startswith("https://cdn."):
+        raise HTTPException(status_code=400, detail="Invalid URL")
+    
+    # Build full URL if it's a relative path
+    if url.startswith("photos/"):
+        if storage.r2_enabled and storage.cdn_url:
+            full_url = f"{storage.cdn_url}/{url}"
+        else:
+            # Fall back to local serve
+            filename_only = url.split("/")[-1]
+            return await serve_photo(filename_only, download=True)
+    else:
+        full_url = url
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(full_url)
+            response.raise_for_status()
+            
+            # Determine content type
+            content_type = response.headers.get("content-type", "image/jpeg")
+            
+            # Sanitize filename
+            safe_filename = "".join(c for c in filename if c.isalnum() or c in "._- ").strip()
+            if not safe_filename:
+                safe_filename = "photo.jpg"
+            
+            return Response(
+                content=response.content,
+                media_type=content_type,
+                headers={
+                    "Content-Disposition": f'attachment; filename="{safe_filename}"',
+                    "Content-Length": str(len(response.content)),
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
+                }
+            )
+    except httpx.HTTPError as e:
+        logger.error(f"Failed to proxy download from {full_url}: {e}")
+        raise HTTPException(status_code=502, detail="Failed to fetch photo from CDN")
+
 @api_router.get("/photos/thumb/{filename}")
 async def serve_thumbnail(filename: str):
     """
