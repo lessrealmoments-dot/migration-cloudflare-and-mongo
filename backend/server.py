@@ -1880,6 +1880,13 @@ async def resolve_user_features(user: dict) -> dict:
                 for key, value in stored_mode_features.items():
                     mode_features[key] = value
                 
+                # IMPORTANT: If admin has saved ANY features for this mode,
+                # then new features not in stored config should default to FALSE (disabled)
+                if stored_mode_features:
+                    for key in default_mode_features.keys():
+                        if key not in stored_mode_features and key in ['display_mode', 'collaboration_link', 'coordinator_hub']:
+                            mode_features[key] = False
+                
                 logger.info(f"Mode features for {override_mode}: {mode_features}")
                 result["features"] = mode_features
                 
