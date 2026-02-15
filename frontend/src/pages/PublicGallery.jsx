@@ -507,26 +507,57 @@ const PublicGallery = () => {
       toast.loading('Preparing download...', { id: 'download-photo' });
       
       let downloadUrl;
+      const filename = photo.filename || photo.name || 'photo.jpg';
       
       // Check if this is a pCloud photo - use proxy download to bypass ISP blocks
       if (photo.download_url) {
         // Use the pre-built download URL from the API
-        downloadUrl = `${BACKEND_URL}/api${photo.download_url}?filename=${encodeURIComponent(photo.filename || photo.name || 'photo.jpg')}`;
+        downloadUrl = `${BACKEND_URL}/api${photo.download_url}?filename=${encodeURIComponent(filename)}`;
       } else if (photo.url && photo.url.includes('/pcloud/serve/')) {
         // Convert serve URL to download URL
         downloadUrl = photo.url.replace('/pcloud/serve/', '/pcloud/download/');
-        downloadUrl = `${BACKEND_URL}${downloadUrl}?filename=${encodeURIComponent(photo.filename || 'photo.jpg')}`;
+        downloadUrl = `${BACKEND_URL}${downloadUrl}?filename=${encodeURIComponent(filename)}`;
       } else if (photo.is_pcloud && photo.pcloud_code && photo.fileid) {
         // Build proxy download URL from photo metadata
-        downloadUrl = `${BACKEND_URL}/api/pcloud/download/${photo.pcloud_code}/${photo.fileid}?filename=${encodeURIComponent(photo.filename || 'photo.jpg')}`;
+        downloadUrl = `${BACKEND_URL}/api/pcloud/download/${photo.pcloud_code}/${photo.fileid}?filename=${encodeURIComponent(filename)}`;
       } else {
-        // Regular photo - use backend URL with download parameter
-        downloadUrl = `${getImageUrl(photo.url)}?download=true`;
+        // Regular photo - check if it's a CDN URL
+        const imageUrl = getImageUrl(photo.url);
+        
+        if (imageUrl.startsWith('https://cdn.') || imageUrl.includes('r2.cloudflarestorage')) {
+          // CDN URL - fetch as blob to force download (cross-origin doesn't support download attribute)
+          try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up blob URL after a short delay
+            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+            
+            toast.success('Photo downloaded!', { id: 'download-photo' });
+            return;
+          } catch (fetchError) {
+            console.error('CDN fetch failed, falling back to backend proxy:', fetchError);
+            // Fall back to backend proxy
+            downloadUrl = `${BACKEND_URL}/api/photos/download?url=${encodeURIComponent(photo.url)}&filename=${encodeURIComponent(filename)}`;
+          }
+        } else {
+          // Local URL - use backend with download parameter
+          downloadUrl = `${imageUrl}?download=true`;
+        }
       }
       
+      // For non-CDN URLs, use the link approach
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = photo.filename || photo.name || 'photo.jpg';
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
