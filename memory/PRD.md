@@ -77,6 +77,7 @@ A comprehensive photo-sharing application for photographers with focus on:
 
 ### P1 - High
 1. **PayMongo Integration**: Blocked - waiting for user's business permit/API keys
+2. **Slow Cover/Hero Images**: Older galleries need thumbnail re-upload
 
 ### P2 - Medium
 1. **Fotoshare Photobooth Frontend**: Component needed to display session photos
