@@ -60,7 +60,7 @@ const LiteModeModal = ({
               </h2>
               <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
                 We noticed your internet might be a bit slow.
-                {speed && <span className="block text-xs mt-1 opacity-75">({speed.toFixed(1)} Mbps)</span>}
+                {connectionInfo && <span className="block text-xs mt-1 opacity-75">({connectionInfo})</span>}
               </p>
             </div>
 
