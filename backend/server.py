@@ -4848,6 +4848,7 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         display_transition=gallery.get("display_transition", "crossfade"),
         display_interval=gallery.get("display_interval", 6),
         collage_preset_id=gallery.get("collage_preset_id"),
+        lite_mode_enabled=gallery.get("lite_mode_enabled", False),
         created_at=datetime_to_str(gallery["created_at"]),
         photo_count=photo_count,
         auto_delete_date=datetime_to_str(auto_delete_date),
