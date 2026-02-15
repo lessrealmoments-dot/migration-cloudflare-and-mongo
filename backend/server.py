@@ -11138,18 +11138,36 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
         }
     )
     
-    # Create transaction record
-    await create_transaction(
-        user_id=data.user_id,
-        tx_type=tx_type,
-        amount=tx_amount,
-        status="approved",
-        plan=requested_plan,
-        addon_tokens=requested_addon_tokens,
-        payment_proof_url=user.get("payment_proof_url"),
-        admin_notes=data.notes,
-        resolved_at=datetime.now(timezone.utc).isoformat()
+    # Update existing pending transaction(s) to approved instead of creating new ones
+    # Find the most recent pending transaction for this user
+    pending_tx = await db.transactions.find_one(
+        {"user_id": data.user_id, "status": "pending"},
+        sort=[("created_at", -1)]
     )
+    
+    if pending_tx:
+        # Update the pending transaction to approved
+        await db.transactions.update_one(
+            {"id": pending_tx["id"]},
+            {"$set": {
+                "status": "approved",
+                "admin_notes": data.notes,
+                "resolved_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+    else:
+        # No pending transaction found, create a new approved one
+        await create_transaction(
+            user_id=data.user_id,
+            tx_type=tx_type,
+            amount=tx_amount,
+            status="approved",
+            plan=requested_plan,
+            addon_tokens=requested_addon_tokens,
+            payment_proof_url=user.get("payment_proof_url"),
+            admin_notes=data.notes,
+            resolved_at=datetime.now(timezone.utc).isoformat()
+        )
     
     # Send approval email to customer
     subject, html = get_email_template("customer_payment_approved", {
