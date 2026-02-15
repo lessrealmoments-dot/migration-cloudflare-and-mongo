@@ -1301,7 +1301,7 @@ const AdminDashboard = () => {
             {/* Payment Methods Configuration */}
             <div className="bg-zinc-800 rounded-lg p-6">
               <h3 className="text-lg font-medium text-white mb-4">Payment Methods</h3>
-              <p className="text-sm text-zinc-400 mb-6">Configure payment options for users (GCash, Maya, Bank Transfer)</p>
+              <p className="text-sm text-zinc-400 mb-6">Configure payment options for users (GCash, Maya, Bank Transfer, PayPal)</p>
               
               <div className="space-y-6">
                 {Object.entries(billingSettings.payment_methods || {}).map(([key, method]) => (
