@@ -8813,6 +8813,7 @@ async def get_public_gallery(share_link: str):
         theme=gallery.get("theme", "classic"),
         photo_count=total_photo_count,
         video_count=total_video_count,
+        lite_mode_enabled=gallery.get("lite_mode_enabled", False),
         downloads_locked=downloads_locked,
         downloads_locked_reason=downloads_locked_reason
     )
