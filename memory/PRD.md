@@ -92,6 +92,17 @@ A comprehensive photo-sharing application for photographers with focus on:
 
 ## In Progress
 
+### Completed: Lite Mode for Slow Connections ✅ (Feb 15, 2025)
+- [x] Backend: `lite_mode_enabled` field in Gallery model
+- [x] Backend: Update endpoint supports `lite_mode_enabled`
+- [x] Frontend: `useConnectionSpeed.js` hook for speed detection
+- [x] Frontend: `LiteModeModal.jsx` component for user choice
+- [x] Frontend: `LiteUploadPage.jsx` minimal upload interface
+- [x] Frontend: Toggle in Gallery edit modal
+- [x] Frontend: `editFormData` initialization includes `lite_mode_enabled`
+- [x] Frontend: Update payload includes `lite_mode_enabled`
+- [x] Integration in `PublicGallery.jsx`
+
 ### Completed: Fotoshare Photobooth Integration ✅
 - [x] Backend: Separate scraper for photobooth (`scrape_fotoshare_photobooth`)
 - [x] Backend: New section type `fotoshare_photobooth` (separate from `fotoshare`)
