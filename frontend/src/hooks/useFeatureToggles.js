@@ -115,7 +115,7 @@ const useFeatureToggles = () => {
   const isFeatureEnabled = (featureName) => {
     if (!toggles || !toggles._loaded) {
       // Features not loaded yet - return false for restricted features
-      if (featureName === 'display_mode' || featureName === 'contributor_link') {
+      if (featureName === 'display_mode' || featureName === 'contributor_link' || featureName === 'coordinator_hub') {
         return false;
       }
       return true; // Basic features like qr_share are generally available
