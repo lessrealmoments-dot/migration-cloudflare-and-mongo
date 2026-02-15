@@ -1377,7 +1377,25 @@ const AdminDashboard = () => {
                             />
                           </div>
                         )}
-                        <div className={key === 'bank' ? '' : 'col-span-2'}>
+                        {key === 'paypal' && (
+                          <div>
+                            <label className="block text-xs text-zinc-400 mb-1">PayPal Email</label>
+                            <input
+                              type="email"
+                              value={method.paypal_email || ''}
+                              onChange={(e) => setBillingSettings(prev => ({
+                                ...prev,
+                                payment_methods: {
+                                  ...prev.payment_methods,
+                                  [key]: { ...method, paypal_email: e.target.value }
+                                }
+                              }))}
+                              className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white text-sm"
+                              placeholder="your@paypal.email"
+                            />
+                          </div>
+                        )}
+                        <div className={key === 'bank' || key === 'paypal' ? '' : 'col-span-2'}>
                           <label className="block text-xs text-zinc-400 mb-1">QR Code Image</label>
                           <div className="flex items-center gap-3">
                             {method.qr_code_url ? (
