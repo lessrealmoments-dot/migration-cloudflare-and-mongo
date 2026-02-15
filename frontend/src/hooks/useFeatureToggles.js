@@ -53,6 +53,7 @@ const useFeatureToggles = () => {
               online_gallery: features.view_public_gallery === true,
               display_mode: features.display_mode === true,
               contributor_link: features.collaboration_link === true,
+              coordinator_hub: features.coordinator_hub === true,
               auto_delete_enabled: true,
               // Also include new feature names
               unlimited_token: features.unlimited_token === true,
@@ -68,7 +69,7 @@ const useFeatureToggles = () => {
             cachedToken = token;
             setToggles(cachedToggles);
             setLoading(false);
-            console.log('[FeatureToggles] Loaded for plan:', data.effective_plan, 'display_mode:', features.display_mode);
+            console.log('[FeatureToggles] Loaded for plan:', data.effective_plan, 'display_mode:', features.display_mode, 'coordinator_hub:', features.coordinator_hub);
             return;
           }
         }
