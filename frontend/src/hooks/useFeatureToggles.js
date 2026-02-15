@@ -80,6 +80,7 @@ const useFeatureToggles = () => {
           online_gallery: true,
           display_mode: false,  // Restricted by default
           contributor_link: false,  // Restricted by default
+          coordinator_hub: false,  // Restricted by default
           auto_delete_enabled: true,
           unlimited_token: false,
           copy_share_link: true,
@@ -96,6 +97,7 @@ const useFeatureToggles = () => {
           online_gallery: true,
           display_mode: false,
           contributor_link: false,
+          coordinator_hub: false,
           auto_delete_enabled: true,
           _loaded: true
         };
