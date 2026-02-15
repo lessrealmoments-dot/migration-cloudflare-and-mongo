@@ -1627,7 +1627,8 @@ const GalleryDetail = () => {
         description: editFormData.description || null,
         share_link_expiration_days: parseInt(editFormData.share_link_expiration_days),
         guest_upload_enabled_days: parseInt(editFormData.guest_upload_enabled_days),
-        theme: editFormData.theme
+        theme: editFormData.theme,
+        lite_mode_enabled: editFormData.lite_mode_enabled || false
       };
       
       // Handle gallery access password
