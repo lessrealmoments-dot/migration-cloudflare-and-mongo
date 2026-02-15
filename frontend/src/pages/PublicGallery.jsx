@@ -929,6 +929,34 @@ const PublicGallery = () => {
     );
   }
 
+  // Lite Mode - Show minimal upload interface
+  if (isLiteMode && gallery) {
+    const currentTheme = themes[gallery?.theme || 'classic'];
+    return (
+      <>
+        <LiteUploadPage
+          gallery={gallery}
+          shareLink={shareLink}
+          onSwitchToFull={handleSwitchToFull}
+          themeColors={currentTheme?.colors}
+          onUploadComplete={(count) => {
+            // Refresh photos count
+            fetchPhotos();
+          }}
+        />
+        <LiteModeModal
+          isOpen={showLiteModeModal}
+          onClose={() => setShowLiteModeModal(false)}
+          onSelectLiteMode={handleSelectLiteMode}
+          onSelectFullMode={handleSelectFullMode}
+          speed={speed}
+          eventTitle={gallery?.event_title || gallery?.title}
+          themeColors={currentTheme?.colors}
+        />
+      </>
+    );
+  }
+
   if (passwordRequired && !authenticated) {
     const themeStyles = getThemeStyles(gallery?.theme || 'classic');
     const currentTheme = themes[gallery?.theme || 'classic'];
