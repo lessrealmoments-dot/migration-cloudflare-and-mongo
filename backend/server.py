@@ -2626,6 +2626,11 @@ async def is_subscription_active(user: dict) -> bool:
         except:
             pass
     
+    # Free plan users don't have an active paid subscription
+    plan = user.get("plan", PLAN_FREE)
+    if plan == PLAN_FREE:
+        return False
+    
     # Check regular subscription
     payment_status = user.get("payment_status", PAYMENT_NONE)
     if payment_status != PAYMENT_APPROVED:
