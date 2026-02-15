@@ -2376,7 +2376,8 @@ async def get_billing_settings() -> dict:
     default_payment_methods = {
         "gcash": {"enabled": True, "name": "GCash", "account_name": "Less Real Moments", "account_number": "09952568450", "qr_code_url": None},
         "maya": {"enabled": True, "name": "Maya", "account_name": "Less Real Moments", "account_number": "09952568450", "qr_code_url": None},
-        "bank": {"enabled": False, "name": "Bank Transfer", "account_name": "", "account_number": "", "bank_name": "", "qr_code_url": None}
+        "bank": {"enabled": False, "name": "Bank Transfer", "account_name": "", "account_number": "", "bank_name": "", "qr_code_url": None},
+        "paypal": {"enabled": False, "name": "PayPal", "account_name": "", "account_number": "", "paypal_email": "", "qr_code_url": None}
     }
     
     settings = await db.site_config.find_one({"type": "billing_settings"}, {"_id": 0})
