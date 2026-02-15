@@ -1120,7 +1120,7 @@ DEFAULT_PLAN_FEATURES = {
 STANDARD_FEATURES = ["qr_share", "online_gallery", "owner_uploads", "guest_uploads"]
 
 # Pro features (available to Pro only)
-PRO_FEATURES = ["display_mode", "contributor_link", "supplier_sections", "supplier_attribution", "photographer_moderation"]
+PRO_FEATURES = ["display_mode", "contributor_link", "coordinator_hub", "supplier_sections", "supplier_attribution", "photographer_moderation"]
 
 # Image optimization settings
 THUMBNAIL_SIZES = {
