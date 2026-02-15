@@ -9567,25 +9567,33 @@ async def get_public_download_info(share_link: str, request: SectionDownloadRequ
     current_chunk = []
     current_chunk_size = 0
     chunk_number = 1
+    DEFAULT_PHOTO_SIZE = 2 * 1024 * 1024  # 2MB default estimate
     
     for photo in photos:
-        file_path = UPLOAD_DIR / photo["filename"]
-        if file_path.exists():
-            file_size = file_path.stat().st_size
-            
-            if current_chunk_size + file_size > SECTION_ZIP_CHUNK_SIZE and current_chunk:
-                chunks.append({
-                    "chunk_number": chunk_number,
-                    "photo_count": len(current_chunk),
-                    "size_bytes": current_chunk_size,
-                    "size_mb": round(current_chunk_size / (1024 * 1024), 1)
-                })
-                chunk_number += 1
-                current_chunk = []
-                current_chunk_size = 0
-            
-            current_chunk.append(photo["id"])
-            current_chunk_size += file_size
+        # Get file size from stored value, local file, or use default
+        file_size = 0
+        if photo.get("size") and photo["size"] > 0:
+            file_size = photo["size"]
+        elif photo.get("filename"):
+            file_path = UPLOAD_DIR / photo["filename"]
+            if file_path.exists():
+                file_size = file_path.stat().st_size
+        if file_size == 0:
+            file_size = DEFAULT_PHOTO_SIZE
+        
+        if current_chunk_size + file_size > SECTION_ZIP_CHUNK_SIZE and current_chunk:
+            chunks.append({
+                "chunk_number": chunk_number,
+                "photo_count": len(current_chunk),
+                "size_bytes": current_chunk_size,
+                "size_mb": round(current_chunk_size / (1024 * 1024), 1)
+            })
+            chunk_number += 1
+            current_chunk = []
+            current_chunk_size = 0
+        
+        current_chunk.append(photo["id"])
+        current_chunk_size += file_size
     
     if current_chunk:
         chunks.append({
