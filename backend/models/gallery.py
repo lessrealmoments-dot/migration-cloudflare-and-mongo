@@ -55,8 +55,6 @@ class Gallery(BaseModel):
     collage_preset_id: Optional[str] = None  # Selected collage preset
     # Lite mode settings
     lite_mode_enabled: bool = False  # Enable slow connection detection
-    # Lite mode settings
-    lite_mode_enabled: bool = False  # Enable slow connection detection
     created_at: str
     photo_count: int = 0
     auto_delete_date: Optional[str] = None  # When gallery will be auto-deleted
