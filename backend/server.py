@@ -19,6 +19,7 @@ import string
 import asyncio
 import resend
 import zipfile
+import httpx
 from contextlib import asynccontextmanager
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
