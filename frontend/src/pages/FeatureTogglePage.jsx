@@ -43,6 +43,11 @@ const FEATURE_INFO = {
     label: 'Collaboration Link',
     description: 'Contributor upload links for external users',
     icon: Share2
+  },
+  coordinator_hub: {
+    label: 'Coordinator Hub',
+    description: 'Coordinator Hub for managing event suppliers',
+    icon: Users
   }
 };
 
