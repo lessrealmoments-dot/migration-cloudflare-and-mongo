@@ -12,12 +12,26 @@ const LiteModeModal = ({
   onSelectLiteMode, 
   onSelectFullMode,
   speed = null,
+  effectiveType = null,
   eventTitle = 'this event',
   themeColors = {}
 }) => {
   if (!isOpen) return null;
 
   const accentColor = themeColors?.accent || '#3b82f6';
+  
+  // Format connection info for display
+  const getConnectionInfo = () => {
+    if (effectiveType === 'save-data') return 'Data Saver enabled';
+    if (effectiveType === 'slow-2g') return 'Very slow connection';
+    if (effectiveType === '2g') return '2G connection';
+    if (effectiveType === '3g') return '3G connection';
+    if (speed && speed > 0) return `${speed.toFixed(1)} Mbps`;
+    if (effectiveType === 'slow') return 'Slow response time';
+    return null;
+  };
+  
+  const connectionInfo = getConnectionInfo();
   
   return (
     <AnimatePresence>
