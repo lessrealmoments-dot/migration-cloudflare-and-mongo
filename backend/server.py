@@ -1944,6 +1944,14 @@ async def resolve_user_features(user: dict) -> dict:
     for key, value in stored_features.items():
         plan_features[key] = value
     
+    # IMPORTANT: If admin has saved ANY features for this plan,
+    # then new features not in stored config should default to FALSE (disabled)
+    # This prevents new features from being auto-enabled on existing plans
+    if stored_features:
+        for key in default_features.keys():
+            if key not in stored_features and key in ['display_mode', 'collaboration_link', 'coordinator_hub']:
+                plan_features[key] = False
+    
     result["features"] = plan_features
     
     # Check unlimited credits from feature toggle (unlikely for regular plans)
