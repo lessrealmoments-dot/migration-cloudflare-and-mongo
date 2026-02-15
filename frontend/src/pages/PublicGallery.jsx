@@ -1061,6 +1061,7 @@ const PublicGallery = () => {
         onSelectLiteMode={handleSelectLiteMode}
         onSelectFullMode={handleSelectFullMode}
         speed={speed}
+        effectiveType={effectiveType}
         eventTitle={gallery?.event_title || gallery?.title}
         themeColors={currentTheme?.colors}
       />
