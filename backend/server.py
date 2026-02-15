@@ -9757,24 +9757,38 @@ async def download_section(share_link: str, request: SectionDownloadRequest, chu
     chunks = []
     current_chunk = []
     current_chunk_size = 0
+    DEFAULT_PHOTO_SIZE = 2 * 1024 * 1024  # 2MB default
     
     for photo in photos:
-        file_path = UPLOAD_DIR / photo["filename"]
-        if file_path.exists():
-            file_size = file_path.stat().st_size
-            
-            if current_chunk_size + file_size > SECTION_ZIP_CHUNK_SIZE and current_chunk:
-                chunks.append(current_chunk)
-                current_chunk = []
-                current_chunk_size = 0
-            
-            current_chunk.append(photo)
-            current_chunk_size += file_size
+        # Get file size from stored value, local file, or use default
+        file_size = 0
+        if photo.get("size") and photo["size"] > 0:
+            file_size = photo["size"]
+        elif photo.get("filename"):
+            file_path = UPLOAD_DIR / photo["filename"]
+            if file_path.exists():
+                file_size = file_path.stat().st_size
+        if file_size == 0:
+            file_size = DEFAULT_PHOTO_SIZE
+        
+        if current_chunk_size + file_size > SECTION_ZIP_CHUNK_SIZE and current_chunk:
+            chunks.append(current_chunk)
+            current_chunk = []
+            current_chunk_size = 0
+        
+        current_chunk.append(photo)
+        current_chunk_size += file_size
     
     if current_chunk:
         chunks.append(current_chunk)
     
+    # If no chunks were created (all CDN photos), create one chunk with all photos
+    if not chunks and photos:
+        chunks = [photos]
+    
     # Validate chunk number
+    if not chunks:
+        raise HTTPException(status_code=404, detail="No photos available for download")
     if chunk < 1 or chunk > len(chunks):
         raise HTTPException(status_code=404, detail=f"Chunk {chunk} not found. Download has {len(chunks)} chunks.")
     
@@ -9785,10 +9799,28 @@ async def download_section(share_link: str, request: SectionDownloadRequest, chu
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for photo in chunk_photos:
-            file_path = UPLOAD_DIR / photo["filename"]
-            if file_path.exists():
-                archive_name = photo.get("original_filename", photo["filename"])
-                zip_file.write(file_path, archive_name)
+            photo_data = None
+            archive_name = photo.get("original_filename", photo.get("filename", f"photo_{photo.get('id', 'unknown')}.jpg"))
+            
+            # Try local file first
+            if photo.get("filename"):
+                file_path = UPLOAD_DIR / photo["filename"]
+                if file_path.exists():
+                    zip_file.write(file_path, archive_name)
+                    continue
+            
+            # Try fetching from CDN/URL
+            if photo.get("url"):
+                try:
+                    async with httpx.AsyncClient(timeout=30.0) as client:
+                        response = await client.get(photo["url"])
+                        if response.status_code == 200:
+                            photo_data = response.content
+                except Exception as e:
+                    logger.warning(f"Failed to fetch photo from CDN: {photo.get('url')}: {e}")
+            
+            if photo_data:
+                zip_file.writestr(archive_name, photo_data)
     
     zip_buffer.seek(0)
     
