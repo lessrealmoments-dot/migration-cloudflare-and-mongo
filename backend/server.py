@@ -1871,6 +1871,13 @@ async def resolve_user_features(user: dict) -> dict:
                 
                 # Get mode features from global_toggles first, then fall back to defaults
                 mode_features = global_toggles.get(override_mode, DEFAULT_MODE_FEATURES.get(override_mode, {})).copy()
+                
+                # Ensure all features have defaults (for newly added features not yet in DB)
+                default_mode_features = DEFAULT_MODE_FEATURES.get(override_mode, {})
+                for key, value in default_mode_features.items():
+                    if key not in mode_features:
+                        mode_features[key] = value
+                
                 logger.info(f"Mode features for {override_mode}: {mode_features}")
                 result["features"] = mode_features
                 
