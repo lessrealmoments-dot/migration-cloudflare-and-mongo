@@ -10734,7 +10734,8 @@ async def get_public_pricing():
         "payment_methods": settings.get("payment_methods", {
             "gcash": {"enabled": True, "name": "GCash", "account_name": "Less Real Moments", "account_number": "09952568450"},
             "maya": {"enabled": True, "name": "Maya", "account_name": "Less Real Moments", "account_number": "09952568450"},
-            "bank": {"enabled": False, "name": "Bank Transfer", "account_name": "", "account_number": "", "bank_name": ""}
+            "bank": {"enabled": False, "name": "Bank Transfer", "account_name": "", "account_number": "", "bank_name": ""},
+            "paypal": {"enabled": False, "name": "PayPal", "account_name": "", "account_number": "", "paypal_email": ""}
         }),
         
         # Plan features - pulled directly from admin feature toggles
