@@ -41,7 +41,10 @@ export const useBrandConfig = () => {
               link.rel = 'icon';
               document.head.appendChild(link);
             }
-            link.href = `${BACKEND_URL}${data.favicon_url}`;
+            // Handle both full URLs (CDN) and relative URLs
+            link.href = data.favicon_url.startsWith('http') 
+              ? data.favicon_url 
+              : `${BACKEND_URL}${data.favicon_url}`;
           }
           
           // Update document title
