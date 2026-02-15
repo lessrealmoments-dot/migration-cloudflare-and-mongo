@@ -9,7 +9,8 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import SparkMD5 from 'spark-md5';
 
-const API = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 // Maximum photos per upload batch
 const MAX_UPLOAD_LIMIT = 10;
