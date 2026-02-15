@@ -62,6 +62,13 @@ A comprehensive photo-sharing application for photographers with focus on:
   - Changed photo grid from CSS columns (column-by-column) to flex-wrap (row-by-row)
   - Photos now load top-to-bottom as user scrolls, not left-column-first
   - IntersectionObserver triggers loading when images are 300px from viewport
+- [x] **Responsive Masonry Layout** (Feb 14): Replaced CSS grid with JS-powered masonry (Pinterest-style)
+- [x] **Founder's Circle Features** (Feb 14):
+  - Admin toggle for "Never Expires" guest upload option for Founder users
+  - Edit lock bypass for Founder users
+- [x] **Critical Bug Fix: Negative Credits** (Feb 14): Fixed token deduction logic, added admin repair endpoint
+- [x] **Photo Download Fix** (Feb 14): Fixed navigation instead of download issue with fetch+blob solution
+- [x] **Lite Mode for Slow Connections** (Feb 15): Complete implementation with toggle, modal, and minimal upload page ✅
 
 ## Known Issues (Priority Order)
 
