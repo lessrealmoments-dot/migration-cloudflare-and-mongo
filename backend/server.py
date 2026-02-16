@@ -4590,7 +4590,19 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     download_locked_until_payment = False
     
     if is_demo:
-        # Free users get 1 demo gallery total
+        # Check if this is an EXPIRED paid user (had subscription before)
+        # Expired users should NOT get demo galleries - they must resubscribe
+        subscription_expires_str = user.get("subscription_expires")
+        user_plan_in_db = user.get("plan", PLAN_FREE)
+        
+        if subscription_expires_str and user_plan_in_db in [PLAN_STANDARD, PLAN_PRO]:
+            # User had a paid subscription that expired - block demo creation
+            raise HTTPException(
+                status_code=403,
+                detail="Your subscription has expired. Please resubscribe to Standard or Pro to create new galleries. Your existing galleries are still accessible during the grace period."
+            )
+        
+        # Fresh FREE users get 1 demo gallery total
         existing_demo = await db.galleries.find_one({
             "photographer_id": current_user["id"],
             "is_demo": True
