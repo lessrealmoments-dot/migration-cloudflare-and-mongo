@@ -88,7 +88,51 @@ export default function CreateInvitation() {
   useEffect(() => {
     fetchTemplates();
     fetchDefaultFields();
-  }, []);
+    if (isEditMode) {
+      fetchInvitation();
+    }
+  }, [id]);
+
+  const fetchInvitation = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/invitations/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const inv = response.data;
+      setFormData({
+        event_type: inv.event_type || '',
+        title: inv.title || '',
+        host_names: inv.host_names || '',
+        event_date: inv.event_date || '',
+        event_time: inv.event_time || '',
+        event_end_time: inv.event_end_time || '',
+        venue_name: inv.venue_name || '',
+        venue_address: inv.venue_address || '',
+        venue_map_url: inv.venue_map_url || '',
+        message: inv.message || '',
+        additional_info: inv.additional_info || '',
+        template_id: inv.design?.template_id || 'wedding-elegant',
+        design: inv.design || {
+          cover_image_url: null,
+          background_color: '#ffffff',
+          primary_color: '#1a1a1a',
+          secondary_color: '#666666',
+          accent_color: '#d4a574',
+          font_family: 'Playfair Display'
+        },
+        rsvp_enabled: inv.rsvp_enabled !== false,
+        rsvp_deadline: inv.rsvp_deadline || '',
+        max_guests_per_rsvp: inv.max_guests_per_rsvp || 5,
+        rsvp_fields: inv.rsvp_fields || []
+      });
+    } catch (error) {
+      toast.error('Failed to load invitation');
+      navigate('/invitations');
+    } finally {
+      setInitialLoading(false);
+    }
+  };
 
   const fetchTemplates = async () => {
     try {
