@@ -832,9 +832,14 @@ def setup_invitation_routes(app, db, get_current_user):
         if not invitation:
             raise HTTPException(status_code=404, detail="Invitation not found")
         
-        # Get the frontend URL from environment or construct it
+        # Get the frontend URL from environment - fallback to backend URL without /api
         import os
-        frontend_url = os.environ.get('FRONTEND_URL', 'https://rsvp-invite-1.preview.emergentagent.com')
+        frontend_url = os.environ.get('FRONTEND_URL', '').strip()
+        if not frontend_url:
+            # Fallback: use REACT_APP equivalent or backend URL base
+            backend_url = os.environ.get('BACKEND_URL', 'https://rsvp-invite-1.preview.emergentagent.com')
+            frontend_url = backend_url
+        
         invitation_url = f"{frontend_url}/i/{invitation['share_link']}"
         
         # Generate QR code
@@ -876,7 +881,11 @@ def setup_invitation_routes(app, db, get_current_user):
         
         import os
         import base64
-        frontend_url = os.environ.get('FRONTEND_URL', 'https://rsvp-invite-1.preview.emergentagent.com')
+        frontend_url = os.environ.get('FRONTEND_URL', '').strip()
+        if not frontend_url:
+            backend_url = os.environ.get('BACKEND_URL', 'https://rsvp-invite-1.preview.emergentagent.com')
+            frontend_url = backend_url
+        
         invitation_url = f"{frontend_url}/i/{invitation['share_link']}"
         
         # Generate QR code
