@@ -757,6 +757,151 @@ def setup_invitation_routes(app, db, get_current_user):
         
         return {"rsvps": rsvps, "total": len(rsvps)}
     
+    @invitation_router.post("/{invitation_id}/upload-cover")
+    async def upload_invitation_cover(
+        invitation_id: str,
+        file: UploadFile = File(...),
+        current_user: dict = Depends(get_current_user)
+    ):
+        """Upload cover image for an invitation"""
+        # Verify ownership
+        invitation = await db.invitations.find_one(
+            {"id": invitation_id, "user_id": current_user["id"]}
+        )
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        if not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="Only image files are allowed")
+        
+        # Generate unique filename
+        photo_id = str(uuid.uuid4())
+        file_ext = file.filename.split('.')[-1].lower() if '.' in file.filename else 'jpg'
+        filename = f"invitation_cover_{photo_id}.{file_ext}"
+        
+        # Read file content
+        file_content = await file.read()
+        
+        # Import storage from server (it's already initialized)
+        from server import storage, UPLOAD_DIR
+        
+        # Upload to R2 if enabled
+        if storage.r2_enabled:
+            upload_result = await storage.upload_with_thumbnails(
+                photo_id=f"invitation_cover_{photo_id}",
+                content=file_content,
+                file_ext=file_ext,
+                content_type=file.content_type or 'image/jpeg'
+            )
+            
+            if not upload_result['success']:
+                raise HTTPException(status_code=500, detail="Failed to upload cover image")
+            
+            cover_url = upload_result['original_url']
+        else:
+            # Fallback to local filesystem
+            file_path = UPLOAD_DIR / filename
+            with open(file_path, 'wb') as f:
+                f.write(file_content)
+            cover_url = f"/api/photos/serve/{filename}"
+        
+        # Update invitation design with cover URL
+        current_design = invitation.get("design", {})
+        current_design["cover_image_url"] = cover_url
+        
+        await db.invitations.update_one(
+            {"id": invitation_id},
+            {"$set": {
+                "design": current_design,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        return {"cover_image_url": cover_url, "message": "Cover image uploaded successfully"}
+    
+    @invitation_router.get("/{invitation_id}/qr-code")
+    async def get_invitation_qr_code(
+        invitation_id: str,
+        current_user: dict = Depends(get_current_user)
+    ):
+        """Generate QR code for invitation share link"""
+        invitation = await db.invitations.find_one(
+            {"id": invitation_id, "user_id": current_user["id"]},
+            {"_id": 0, "share_link": 1}
+        )
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        # Get the frontend URL from environment or construct it
+        import os
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://rsvp-invite-1.preview.emergentagent.com')
+        invitation_url = f"{frontend_url}/i/{invitation['share_link']}"
+        
+        # Generate QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(invitation_url)
+        qr.make(fit=True)
+        
+        # Create image
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Convert to bytes
+        img_buffer = io.BytesIO()
+        img.save(img_buffer, format='PNG')
+        img_buffer.seek(0)
+        
+        return StreamingResponse(
+            img_buffer,
+            media_type="image/png",
+            headers={"Content-Disposition": f"attachment; filename=invitation_qr_{invitation['share_link']}.png"}
+        )
+    
+    @invitation_router.get("/{invitation_id}/qr-code-base64")
+    async def get_invitation_qr_code_base64(
+        invitation_id: str,
+        current_user: dict = Depends(get_current_user)
+    ):
+        """Generate QR code as base64 for embedding in UI"""
+        invitation = await db.invitations.find_one(
+            {"id": invitation_id, "user_id": current_user["id"]},
+            {"_id": 0, "share_link": 1}
+        )
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        import os
+        import base64
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://rsvp-invite-1.preview.emergentagent.com')
+        invitation_url = f"{frontend_url}/i/{invitation['share_link']}"
+        
+        # Generate QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(invitation_url)
+        qr.make(fit=True)
+        
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        img_buffer = io.BytesIO()
+        img.save(img_buffer, format='PNG')
+        img_buffer.seek(0)
+        
+        base64_img = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
+        
+        return {
+            "qr_code_base64": f"data:image/png;base64,{base64_img}",
+            "invitation_url": invitation_url
+        }
+    
     # Include router in app
     app.include_router(invitation_router, prefix="/api/invitations", tags=["Invitations"])
     
