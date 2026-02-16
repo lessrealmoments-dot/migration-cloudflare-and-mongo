@@ -828,6 +828,11 @@ const GalleryDetail = () => {
       setCollagePresets(presetsRes.data);
       setSelectedCollagePreset(galleryRes.data.collage_preset_id || null);
       
+      // Load existing coordinator hub link if present
+      if (galleryRes.data.coordinator_hub_link) {
+        setCoordinatorHubLink(`${window.location.origin}/coordinator/${galleryRes.data.coordinator_hub_link}`);
+      }
+      
       // Check gallery-specific download lock
       checkGalleryDownloadLock(galleryRes.data);
     } catch (error) {
