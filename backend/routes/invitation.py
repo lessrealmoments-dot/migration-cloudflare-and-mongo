@@ -298,6 +298,9 @@ async def update_rsvp_stats(db, invitation_id: str):
 def setup_invitation_routes(app, db, get_current_user):
     """Setup invitation routes with database and auth dependencies"""
     
+    # Import RSVP token functions
+    from routes.rsvp_token import consume_rsvp_token, get_user_token_balance
+    
     # ============================================
     # INVITATION CRUD ENDPOINTS
     # ============================================
@@ -317,9 +320,27 @@ def setup_invitation_routes(app, db, get_current_user):
         data: InvitationCreate,
         current_user: dict = Depends(get_current_user)
     ):
-        """Create a new invitation"""
+        """Create a new invitation (requires RSVP token)"""
+        user_id = current_user["id"]
+        
+        # Check if user has available RSVP tokens
+        balance = await get_user_token_balance(user_id)
+        if balance.available_tokens < 1 and not balance.has_unlimited:
+            raise HTTPException(
+                status_code=402,
+                detail="Insufficient RSVP tokens. Please purchase tokens to create an invitation."
+            )
+        
         invitation_id = str(uuid.uuid4())
         share_link = generate_share_link()
+        
+        # Consume the token
+        token_consumed = await consume_rsvp_token(user_id, invitation_id)
+        if not token_consumed:
+            raise HTTPException(
+                status_code=402,
+                detail="Failed to consume RSVP token. Please try again."
+            )
         
         # Set default design if not provided
         design = data.design or InvitationDesign()
@@ -363,7 +384,8 @@ def setup_invitation_routes(app, db, get_current_user):
             "total_guests": 0,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": None,
-            "status": "draft"
+            "status": "draft",
+            "token_consumed": True  # Track that a token was used
         }
         
         await db.invitations.insert_one(invitation_doc)
