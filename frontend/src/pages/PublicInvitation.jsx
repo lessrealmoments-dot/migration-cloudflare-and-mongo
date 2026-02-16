@@ -616,6 +616,62 @@ export default function PublicInvitation() {
                             </div>
                           )}
 
+                          {/* Dynamic RSVP Fields (Allergies, Dietary, Email, Phone, Message, etc.) */}
+                          {invitation.rsvp_fields?.filter(f => f.enabled && f.field_id !== 'attendance' && f.field_id !== 'guest_count').map(field => (
+                            <div key={field.field_id}>
+                              <label className="block text-xs font-medium text-zinc-700 mb-1">
+                                {field.label} {field.required && '*'}
+                              </label>
+                              
+                              {field.field_type === 'text' && (
+                                <input
+                                  type={field.field_id === 'email' ? 'email' : field.field_id === 'phone' ? 'tel' : 'text'}
+                                  value={field.field_id === 'email' ? rsvpData.guest_email : 
+                                         field.field_id === 'phone' ? rsvpData.guest_phone :
+                                         rsvpData.responses[field.field_id] || ''}
+                                  onChange={(e) => {
+                                    if (field.field_id === 'email') handleInputChange('guest_email', e.target.value);
+                                    else if (field.field_id === 'phone') handleInputChange('guest_phone', e.target.value);
+                                    else handleResponseChange(field.field_id, e.target.value);
+                                  }}
+                                  placeholder={field.placeholder}
+                                  required={field.required}
+                                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm"
+                                  data-testid={`field-${field.field_id}-mobile`}
+                                />
+                              )}
+
+                              {field.field_type === 'textarea' && (
+                                <textarea
+                                  value={field.field_id === 'message' ? rsvpData.message : rsvpData.responses[field.field_id] || ''}
+                                  onChange={(e) => {
+                                    if (field.field_id === 'message') handleInputChange('message', e.target.value);
+                                    else handleResponseChange(field.field_id, e.target.value);
+                                  }}
+                                  placeholder={field.placeholder}
+                                  rows={2}
+                                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm"
+                                  data-testid={`field-${field.field_id}-mobile`}
+                                />
+                              )}
+
+                              {field.field_type === 'select' && field.options && (
+                                <select
+                                  value={rsvpData.responses[field.field_id] || ''}
+                                  onChange={(e) => handleResponseChange(field.field_id, e.target.value)}
+                                  required={field.required}
+                                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm"
+                                  data-testid={`field-${field.field_id}-mobile`}
+                                >
+                                  <option value="">Select...</option>
+                                  {field.options.map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                  ))}
+                                </select>
+                              )}
+                            </div>
+                          ))}
+
                           {/* Submit Button */}
                           <button
                             type="submit"
