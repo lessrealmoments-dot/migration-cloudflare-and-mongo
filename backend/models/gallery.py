@@ -41,6 +41,7 @@ class Gallery(BaseModel):
     event_title: Optional[str] = None
     event_date: Optional[str] = None
     coordinator_name: Optional[str] = None  # Event coordinator/planner name
+    coordinator_hub_link: Optional[str] = None  # Coordinator hub unique link
     share_link_expiration_date: Optional[str] = None
     share_link_expiration_days: Optional[int] = None
     guest_upload_expiration_date: Optional[str] = None
