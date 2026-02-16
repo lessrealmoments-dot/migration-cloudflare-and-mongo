@@ -592,6 +592,58 @@ export default function CreateInvitation() {
                 ))}
               </div>
             </div>
+
+            {/* Cover Image Upload */}
+            <div className="border-t border-zinc-200 pt-6 mt-6">
+              <h3 className="text-sm font-medium text-zinc-900 mb-4 flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" /> Cover Image
+              </h3>
+              <p className="text-sm text-zinc-500 mb-4">
+                Upload a custom cover image for your invitation (optional)
+              </p>
+              
+              {formData.design.cover_image_url ? (
+                <div className="relative">
+                  <img 
+                    src={formData.design.cover_image_url} 
+                    alt="Cover preview" 
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <button
+                    onClick={removeCoverImage}
+                    className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    type="button"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div 
+                  onClick={() => coverInputRef.current?.click()}
+                  className="border-2 border-dashed border-zinc-300 rounded-lg p-8 text-center cursor-pointer hover:border-zinc-400 transition-colors"
+                >
+                  {uploadingCover ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-zinc-900"></div>
+                      <span className="text-zinc-600">Uploading...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
+                      <p className="text-sm text-zinc-600">Click to upload a cover image</p>
+                      <p className="text-xs text-zinc-400 mt-1">Recommended: 1200x800px, JPG or PNG</p>
+                    </>
+                  )}
+                </div>
+              )}
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleCoverUpload}
+                className="hidden"
+              />
+            </div>
           </div>
         )}
 
