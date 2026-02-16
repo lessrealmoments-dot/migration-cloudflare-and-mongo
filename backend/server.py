@@ -12100,6 +12100,10 @@ app.include_router(api_router)
 # Include modular routes (Phase 4 refactoring)
 app.include_router(health_router, prefix="/api")
 
+# Setup RSVP Token routes
+set_rsvp_token_db(db)
+app.include_router(rsvp_token_router)
+
 # Setup invitation routes
 from routes.invitation import setup_invitation_routes
 setup_invitation_routes(app, db, get_current_user)
