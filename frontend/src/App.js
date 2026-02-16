@@ -107,6 +107,8 @@ function App() {
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard user={user} setUser={setUser} /></ProtectedRoute>} />
           <Route path="/gallery/create" element={<ProtectedRoute><CreateGallery /></ProtectedRoute>} />
           <Route path="/gallery/:id" element={<ProtectedRoute><GalleryDetail /></ProtectedRoute>} />
+          {/* Invitations & RSVP Routes */}
+          <Route path="/invitations" element={<ProtectedRoute><InvitationsPage /></ProtectedRoute>} />
           <Route path="/g/:shareLink" element={<PublicGallery />} />
           {/* Contributor Upload Route */}
           <Route path="/c/:contributorLink" element={<ContributorUpload />} />
