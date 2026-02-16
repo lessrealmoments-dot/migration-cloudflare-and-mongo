@@ -413,8 +413,13 @@ async def get_pending_purchases():
 
 
 @router.post("/admin/approve/{transaction_id}")
-async def approve_purchase(transaction_id: str, notes: Optional[str] = None):
+async def approve_purchase(transaction_id: str, background_tasks: BackgroundTasks, notes: Optional[str] = None):
     """Admin approves a token purchase"""
+    # Get transaction info before updating
+    transaction = await db.rsvp_token_transactions.find_one({"id": transaction_id, "status": "pending"})
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found or already processed")
+    
     result = await db.rsvp_token_transactions.update_one(
         {"id": transaction_id, "status": "pending"},
         {
@@ -429,12 +434,38 @@ async def approve_purchase(transaction_id: str, notes: Optional[str] = None):
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Transaction not found or already processed")
     
+    # Send approval email to user
+    if send_email_func and get_email_template_func:
+        user_id = transaction.get("user_id")
+        user = await db.users.find_one({"_id": user_id})
+        if not user:
+            user = await db.users.find_one({"id": user_id})
+        
+        if user:
+            # Get new balance
+            balance = await get_user_token_balance(user_id)
+            dashboard_url = f"{FRONTEND_URL or ''}/invitations"
+            
+            subject, html = get_email_template_func("customer_rsvp_token_approved", {
+                "name": user.get("name", "User"),
+                "quantity": transaction.get("quantity", 0),
+                "new_balance": balance.available_tokens,
+                "expires_at": transaction.get("expires_at", "12 months from purchase"),
+                "dashboard_url": dashboard_url
+            })
+            background_tasks.add_task(send_email_func, user.get("email"), subject, html)
+    
     return {"message": "Purchase approved", "transaction_id": transaction_id}
 
 
 @router.post("/admin/reject/{transaction_id}")
-async def reject_purchase(transaction_id: str, reason: str):
+async def reject_purchase(transaction_id: str, reason: str, background_tasks: BackgroundTasks):
     """Admin rejects a token purchase"""
+    # Get transaction info before updating
+    transaction = await db.rsvp_token_transactions.find_one({"id": transaction_id, "status": "pending"})
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found or already processed")
+    
     result = await db.rsvp_token_transactions.update_one(
         {"id": transaction_id, "status": "pending"},
         {
