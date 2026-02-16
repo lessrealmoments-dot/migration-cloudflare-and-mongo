@@ -37,6 +37,12 @@ A comprehensive photo-sharing application for photographers with focus on:
 - Set/update token price
 - View pending token purchases
 - Approve/reject purchases
+- **Email Notifications** (Feb 17, 2025) ✅ NEW:
+  - Admin receives email on new token purchase request
+  - User receives confirmation email on purchase submission
+  - User receives approval email with new balance
+  - User receives rejection email with reason
+  - **Orange pulsing badge** on RSVP Tokens tab when pending purchases exist
 
 ### API Endpoints ✅ IMPLEMENTED
 - `GET /api/rsvp-tokens/balance` - User's token balance
