@@ -146,6 +146,7 @@ class InvitationCreate(BaseModel):
     venue_map_url: Optional[str] = None
     message: Optional[str] = None
     additional_info: Optional[str] = None
+    external_invitation_url: Optional[str] = None
     design: Optional[InvitationDesign] = None
     rsvp_enabled: bool = True
     rsvp_deadline: Optional[str] = None
@@ -166,6 +167,7 @@ class InvitationUpdate(BaseModel):
     venue_map_url: Optional[str] = None
     message: Optional[str] = None
     additional_info: Optional[str] = None
+    external_invitation_url: Optional[str] = None
     design: Optional[InvitationDesign] = None
     rsvp_enabled: Optional[bool] = None
     rsvp_deadline: Optional[str] = None
