@@ -214,9 +214,9 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Integration in `GalleryDetail.jsx` (admin section creation)
 
 ## Upcoming Tasks
-1. **Email RSVP Notifications** - Notify hosts when new RSVPs are received
-2. **RSVP Reminders** - Send reminder emails to guests who haven't responded
-3. **Multiple Cover Images** - Gallery-style cover images for invitations
+1. **Link Gallery to Invitation** - Better UX for linking galleries from Celebrant Dashboard
+2. **RSVP Reminders** - Manual or automated reminders for pending guests
+3. **Guest List Import** - Import guests from CSV/Excel for manual tracking
 4. **PayMongo Payment Integration** - When API keys received
 5. **UI for re-uploading broken images** - Address data inconsistency
 
