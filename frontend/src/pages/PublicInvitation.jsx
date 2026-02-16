@@ -674,15 +674,33 @@ export default function PublicInvitation() {
                 </div>
               </div>
 
-              {/* Right Column - Photo (2/5 width on lg) */}
+              {/* Right Column - Couple's Photo (2/5 width on lg) */}
               <div className="lg:col-span-2 hidden lg:block">
-                <div 
-                  className="sticky top-8 h-[600px] rounded-2xl overflow-hidden shadow-2xl bg-cover bg-center"
-                  style={{ backgroundImage: `url(${displayCoverImage})` }}
-                >
-                  {/* Optional: Add a subtle gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                <div className="sticky top-8 space-y-4">
+                  {/* Main Photo */}
+                  <div 
+                    className="h-[500px] rounded-2xl overflow-hidden shadow-2xl bg-cover bg-center relative"
+                    style={{ backgroundImage: `url(${displayCoverImage})` }}
+                  >
+                    {/* Subtle vignette effect */}
+                    <div className="absolute inset-0 shadow-[inset_0_0_50px_rgba(0,0,0,0.3)]"></div>
+                  </div>
+                  
+                  {/* Photo Caption */}
+                  <div className="text-center">
+                    <p className="text-white/60 text-sm font-light" style={{ fontFamily }}>
+                      {invitation.host_names}
+                    </p>
+                  </div>
                 </div>
+              </div>
+
+              {/* Mobile Photo - Show below the card on mobile */}
+              <div className="lg:hidden mt-6">
+                <div 
+                  className="h-64 rounded-2xl overflow-hidden shadow-xl bg-cover bg-center"
+                  style={{ backgroundImage: `url(${displayCoverImage})` }}
+                />
               </div>
             </div>
           </main>
