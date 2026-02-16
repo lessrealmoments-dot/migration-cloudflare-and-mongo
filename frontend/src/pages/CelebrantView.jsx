@@ -303,8 +303,9 @@ export default function CelebrantView() {
         <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-zinc-500">Celebrant Dashboard</p>
+              <p className="text-xs text-purple-600 font-medium uppercase tracking-wider">Celebrant View (Client Access)</p>
               <h1 className="text-xl font-semibold text-zinc-900">{invitation.title}</h1>
+              <p className="text-sm text-zinc-500">{invitation.host_names}</p>
             </div>
             <button
               onClick={() => setEditMode(!editMode)}
