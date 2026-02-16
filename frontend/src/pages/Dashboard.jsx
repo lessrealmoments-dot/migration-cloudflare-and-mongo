@@ -75,6 +75,11 @@ const Dashboard = ({ user, setUser }) => {
   const [uploadingProof, setUploadingProof] = useState(false);
   const paymentFileRef = useRef(null);
   
+  // RSVP Token state
+  const [rsvpTokenBalance, setRsvpTokenBalance] = useState(null);
+  const [rsvpTokenPrice, setRsvpTokenPrice] = useState(500);
+  const [showBuyRsvpTokenModal, setShowBuyRsvpTokenModal] = useState(false);
+  
   // Payment status and dispute state
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [showDisputeModal, setShowDisputeModal] = useState(false);
@@ -88,6 +93,7 @@ const Dashboard = ({ user, setUser }) => {
     fetchSubscription();
     fetchPricing();
     fetchPaymentStatus();
+    fetchRsvpTokenBalance();
   }, []);
 
   useEffect(() => {
