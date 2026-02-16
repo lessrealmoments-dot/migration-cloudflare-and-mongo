@@ -87,6 +87,10 @@ A comprehensive photo-sharing application for photographers with focus on:
   - Override mode users blocked from plan changes
   - Add-on tokens require active subscription
   - Token priority verified: add-on before subscription
+- [x] **Coordinator Hub Bug Fix** (Feb 16):
+  - Fixed feature toggle resolution to properly merge defaults with stored values
+  - Added `coordinator_hub_link` to Gallery model and API response
+  - Fixed frontend to show existing link without regenerating
 
 ## Known Issues (Priority Order)
 
