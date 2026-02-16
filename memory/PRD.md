@@ -16,28 +16,37 @@ A comprehensive photo-sharing application for photographers with focus on:
 - **1 RSVP Token = 1 Invitation** (unlimited guest responses)
 - **Price**: ₱500 per token (admin editable)
 - **Expiry**: 12 months from purchase
-- **Founder's Override**: Unlimited tokens automatically
+- **Founder's Override**: Unlimited tokens automatically ✅ IMPLEMENTED
 
 ### Token Rules
 - Tokens consumed on invitation creation (not refundable even if invitation deleted)
-- Guest RSVP responses **CANNOT be deleted** (data protection)
-- Invitations can be edited until event date passes
+- Guest RSVP responses **CANNOT be deleted** (data protection) ✅ IMPLEMENTED
+- Invitations can be edited until event date passes ✅ IMPLEMENTED
 - After event date: invitation locked from editing
 
-### Admin Features
+### User Dashboard Features ✅ IMPLEMENTED
+- RSVP Token balance card (purple theme)
+- Shows "Unlimited" badge for Founder's Circle users
+- "Buy Token (₱500)" button for non-unlimited users
+- "My Invitations" quick link
+
+### Admin Features ✅ IMPLEMENTED
+- **RSVP Tokens tab** in Admin Panel
 - Grant unlimited tokens to any user
 - Grant specific number of tokens
-- Revoke unlimited token access
 - Set/update token price
 - View pending token purchases
 - Approve/reject purchases
 
-### API Endpoints
+### API Endpoints ✅ IMPLEMENTED
 - `GET /api/rsvp-tokens/balance` - User's token balance
 - `GET /api/rsvp-tokens/price` - Current token price
 - `POST /api/rsvp-tokens/purchase` - Purchase tokens
 - `POST /api/rsvp-tokens/admin/grant` - Admin grant tokens
 - `PUT /api/rsvp-tokens/admin/settings/price` - Update price
+- `GET /api/rsvp-tokens/admin/pending-purchases` - View pending
+- `POST /api/rsvp-tokens/admin/approve/{id}` - Approve purchase
+- `POST /api/rsvp-tokens/admin/reject/{id}` - Reject purchase
 
 ## Core Features Implemented
 
