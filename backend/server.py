@@ -10707,14 +10707,16 @@ async def get_public_pricing():
     
     This endpoint dynamically pulls from admin-configured feature toggles
     for Free, Standard, and Pro plans.
+    
+    ADMIN SETTINGS ALWAYS WIN - features not set by admin are disabled.
     """
     settings = await get_billing_settings()
     global_toggles = await get_global_feature_toggles()
     
-    # Get plan-specific settings from admin feature toggles
-    free_config = global_toggles.get(PLAN_FREE, DEFAULT_PLAN_FEATURES.get(PLAN_FREE, {}))
-    standard_config = global_toggles.get(PLAN_STANDARD, DEFAULT_PLAN_FEATURES.get(PLAN_STANDARD, {}))
-    pro_config = global_toggles.get(PLAN_PRO, DEFAULT_PLAN_FEATURES.get(PLAN_PRO, {}))
+    # Get plan-specific settings from admin feature toggles (no defaults)
+    free_config = global_toggles.get(PLAN_FREE, {})
+    standard_config = global_toggles.get(PLAN_STANDARD, {})
+    pro_config = global_toggles.get(PLAN_PRO, {})
     
     # Calculate retention in human-readable format
     def days_to_text(days):
