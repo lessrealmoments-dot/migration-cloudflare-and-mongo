@@ -12099,6 +12099,10 @@ app.include_router(api_router)
 # Include modular routes (Phase 4 refactoring)
 app.include_router(health_router, prefix="/api")
 
+# Setup invitation routes
+from routes.invitation import setup_invitation_routes
+setup_invitation_routes(app, db, get_current_user)
+
 # Mount static files for uploads (payment proofs, QR codes, etc.)
 from fastapi.staticfiles import StaticFiles
 uploads_path = ROOT_DIR / "uploads"
