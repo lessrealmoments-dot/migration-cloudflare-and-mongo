@@ -1167,6 +1167,17 @@ const Dashboard = ({ user, setUser }) => {
         itemDescription="1 extra event credit"
       />
 
+      {/* Buy RSVP Token Modal */}
+      <PaymentMethodsModal
+        isOpen={showBuyRsvpTokenModal}
+        onClose={() => setShowBuyRsvpTokenModal(false)}
+        onPaymentProofUploaded={handleBuyRsvpTokens}
+        title="Buy RSVP Token"
+        subtitle="Purchase a token to create an invitation with unlimited guest responses"
+        amount={rsvpTokenPrice}
+        itemDescription="1 RSVP token (valid for 12 months)"
+      />
+
       {/* Payment Dispute Modal */}
       <PaymentDisputeModal
         isOpen={showDisputeModal}
