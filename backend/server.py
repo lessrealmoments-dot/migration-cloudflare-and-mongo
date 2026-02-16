@@ -11125,6 +11125,8 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
         update_data["plan"] = requested_plan
         update_data["requested_plan"] = None
         update_data["billing_cycle_start"] = datetime.now(timezone.utc).isoformat()
+        # CRITICAL: Set subscription expiration (30 days from now)
+        update_data["subscription_expires"] = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
         
         # Update storage quota based on new plan
         update_data["storage_quota"] = PLAN_STORAGE_QUOTAS.get(requested_plan, DEFAULT_STORAGE_QUOTA)
