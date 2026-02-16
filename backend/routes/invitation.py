@@ -441,13 +441,26 @@ def setup_invitation_routes(app, db, get_current_user):
         data: InvitationUpdate,
         current_user: dict = Depends(get_current_user)
     ):
-        """Update an invitation"""
+        """Update an invitation (blocked after event date)"""
         invitation = await db.invitations.find_one(
             {"id": invitation_id, "user_id": current_user["id"]}
         )
         
         if not invitation:
             raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        # Check if event date has passed - block editing
+        event_date = invitation.get("event_date")
+        if event_date:
+            try:
+                event_datetime = datetime.fromisoformat(event_date.replace('Z', '+00:00'))
+                if datetime.now(timezone.utc) > event_datetime:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="This invitation cannot be edited because the event date has passed."
+                    )
+            except ValueError:
+                pass  # Invalid date format, allow editing
         
         update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
         
