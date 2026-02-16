@@ -118,6 +118,8 @@ function App() {
           <Route path="/invitations/:id" element={<ProtectedRoute><InvitationDetail /></ProtectedRoute>} />
           <Route path="/invitations/:id/edit" element={<ProtectedRoute><CreateInvitation /></ProtectedRoute>} />
           <Route path="/invitations/:id/dashboard" element={<ProtectedRoute><CelebrantDashboard /></ProtectedRoute>} />
+          {/* Celebrant View - Special access link (no login required) */}
+          <Route path="/celebrant/:accessCode" element={<CelebrantView />} />
           {/* Public Invitation Page (for guests) */}
           <Route path="/i/:shareLink" element={<PublicInvitation />} />
           <Route path="/g/:shareLink" element={<PublicGallery />} />
