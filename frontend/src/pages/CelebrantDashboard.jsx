@@ -80,16 +80,23 @@ export default function CelebrantDashboard() {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [invRes, rsvpRes, statsRes] = await Promise.all([
+      const [invRes, rsvpRes, statsRes, galRes] = await Promise.all([
         axios.get(`${API}/api/invitations/${id}`, { headers }),
         axios.get(`${API}/api/invitations/${id}/rsvps`, { headers }),
-        axios.get(`${API}/api/invitations/${id}/stats`, { headers })
+        axios.get(`${API}/api/invitations/${id}/stats`, { headers }),
+        axios.get(`${API}/api/galleries`, { headers })
       ]);
 
       setInvitation(invRes.data);
       setRsvps(rsvpRes.data.rsvps || rsvpRes.data);
       setStats(statsRes.data);
+      setGalleries(galRes.data || []);
       setExternalUrl(invRes.data.external_invitation_url || '');
+      
+      // Set celebrant link if exists
+      if (invRes.data.celebrant_access_code) {
+        setCelebrantLink(`${window.location.origin}/celebrant/${invRes.data.celebrant_access_code}`);
+      }
     } catch (error) {
       toast.error('Failed to load data');
       navigate('/invitations');
@@ -114,6 +121,73 @@ export default function CelebrantDashboard() {
       setShowQRModal(true);
     } catch (error) {
       toast.error('Failed to generate QR code');
+    }
+  };
+
+  const generateCelebrantLink = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API}/api/invitations/${id}/generate-celebrant-link`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const newLink = `${window.location.origin}${response.data.celebrant_link}`;
+      setCelebrantLink(newLink);
+      setShowCelebrantLinkModal(true);
+      toast.success('Celebrant access link generated!');
+    } catch (error) {
+      toast.error('Failed to generate celebrant link');
+    }
+  };
+
+  const revokeCelebrantLink = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API}/api/invitations/${id}/revoke-celebrant-link`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCelebrantLink(null);
+      toast.success('Celebrant access revoked');
+    } catch (error) {
+      toast.error('Failed to revoke access');
+    }
+  };
+
+  const linkGallery = async (galleryId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API}/api/invitations/${id}/link-gallery?gallery_id=${galleryId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Gallery linked successfully!');
+      setShowLinkGalleryModal(false);
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to link gallery');
+    }
+  };
+
+  const unlinkGallery = async () => {
+    if (!window.confirm('Are you sure you want to unlink this gallery? The RSVP will no longer show gallery photos.')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `${API}/api/invitations/${id}`,
+        { linked_gallery_id: null, linked_gallery_share_link: null, linked_gallery_cover_photo: null },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Gallery unlinked');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to unlink gallery');
     }
   };
 
