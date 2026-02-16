@@ -2006,6 +2006,17 @@ const GalleryDetail = () => {
                 </div>
               </div>
             )}
+            {/* RSVP Management Button */}
+            {linkedInvitation ? (
+              <button
+                data-testid="rsvp-management-button"
+                onClick={() => navigate(`/invitations/${linkedInvitation.id}`)}
+                className="border border-blue-300 bg-white hover:bg-blue-50 text-blue-700 h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
+              >
+                <Mail className="w-4 h-4" strokeWidth={1.5} />
+                RSVP Management
+              </button>
+            ) : null}
             {!canDownload ? (
               <div className="relative group">
                 <button
