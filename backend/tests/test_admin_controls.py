@@ -12,7 +12,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://payment-fixes-7.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://rsvp-invite-1.preview.emergentagent.com')
 
 # Admin credentials
 ADMIN_USERNAME = "admin"
