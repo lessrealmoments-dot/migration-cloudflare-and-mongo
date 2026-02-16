@@ -236,6 +236,12 @@ A comprehensive photo-sharing application for photographers with focus on:
     - Cancel and "Yes, Update" buttons
     - Warning: "Changes will be visible to your guests"
   - **100% Frontend Test Pass Rate** - All Host/Celebrant flows verified
+- [x] **UI Clarity Improvements** (Feb 17):
+  - **Host Dashboard**: Renamed from "Manage RSVPs" to "Host Dashboard" with green badge
+  - **Client Access**: Renamed from "Celebrant Link" to "Client Access" with purple badge
+  - **Celebrant View**: Header shows "CELEBRANT VIEW (CLIENT ACCESS)" in purple
+  - Clear visual distinction between Host (green) and Client (purple) interfaces
+  - Warning note in Client Access modal: "Clients cannot link/unlink galleries or delete guest responses"
 
 ## Known Issues (Priority Order)
 
