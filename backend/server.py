@@ -1941,24 +1941,10 @@ async def resolve_user_features(user: dict) -> dict:
     result["effective_plan"] = effective_plan
     result["subscription_expired"] = subscription_expired
     
-    # Start with default features for the plan
-    default_features = DEFAULT_PLAN_FEATURES.get(effective_plan, {}).copy()
-    
-    # Get stored features from global_toggles (admin overrides)
-    stored_features = global_toggles.get(effective_plan, {})
-    
-    # Merge: stored values override defaults
-    plan_features = default_features.copy()
-    for key, value in stored_features.items():
-        plan_features[key] = value
-    
-    # IMPORTANT: If admin has saved ANY features for this plan,
-    # then new features not in stored config should default to FALSE (disabled)
-    # This prevents new features from being auto-enabled on existing plans
-    if stored_features:
-        for key in default_features.keys():
-            if key not in stored_features and key in ['display_mode', 'collaboration_link', 'coordinator_hub']:
-                plan_features[key] = False
+    # ADMIN SETTINGS ALWAYS WIN for features
+    # Get features directly from admin-configured global_toggles
+    # Missing features = disabled (for upselling control)
+    plan_features = global_toggles.get(effective_plan, {})
     
     result["features"] = plan_features
     
