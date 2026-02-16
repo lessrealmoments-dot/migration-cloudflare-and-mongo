@@ -217,12 +217,17 @@ async def get_token_price():
 
 
 @router.post("/purchase")
-async def purchase_tokens(user_id: str, purchase: RSVPTokenPurchase):
+async def purchase_tokens(user_id: str, purchase: RSVPTokenPurchase, background_tasks: BackgroundTasks):
     """Submit a token purchase request (requires payment proof)"""
     settings = await get_rsvp_token_settings()
     token_price = settings.get("token_price", DEFAULT_RSVP_TOKEN_PRICE)
     total_amount = token_price * purchase.quantity
     expiry_months = settings.get("expiry_months", 12)
+    
+    # Get user info for email
+    user = await db.users.find_one({"_id": user_id})
+    if not user:
+        user = await db.users.find_one({"id": user_id})
     
     # Calculate expiry date
     expires_at = datetime.now(timezone.utc) + timedelta(days=expiry_months * 30)
@@ -241,6 +246,32 @@ async def purchase_tokens(user_id: str, purchase: RSVPTokenPurchase):
     }
     
     await db.rsvp_token_transactions.insert_one(transaction)
+    
+    # Send email notifications
+    if send_email_func and get_email_template_func and user:
+        user_name = user.get("name", "User")
+        user_email = user.get("email", "")
+        admin_url = f"{FRONTEND_URL or ''}/admin/dashboard"
+        
+        # Email to Admin
+        admin_subject, admin_html = get_email_template_func("admin_rsvp_token_purchase", {
+            "name": user_name,
+            "email": user_email,
+            "quantity": purchase.quantity,
+            "amount": total_amount,
+            "submitted_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+            "admin_url": admin_url
+        })
+        background_tasks.add_task(send_email_func, ADMIN_EMAIL, admin_subject, admin_html)
+        
+        # Email to User
+        if user_email:
+            user_subject, user_html = get_email_template_func("customer_rsvp_token_pending", {
+                "name": user_name,
+                "quantity": purchase.quantity,
+                "amount": total_amount
+            })
+            background_tasks.add_task(send_email_func, user_email, user_subject, user_html)
     
     return {
         "message": "Purchase request submitted. Awaiting admin approval.",
