@@ -151,6 +151,14 @@ const AdminDashboard = () => {
   const [userTransactions, setUserTransactions] = useState([]);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   
+  // RSVP Token State
+  const [rsvpTokenSettings, setRsvpTokenSettings] = useState({ token_price: 500, expiry_months: 12 });
+  const [rsvpPendingPurchases, setRsvpPendingPurchases] = useState([]);
+  const [rsvpGrantUserId, setRsvpGrantUserId] = useState('');
+  const [rsvpGrantQuantity, setRsvpGrantQuantity] = useState(1);
+  const [rsvpGrantReason, setRsvpGrantReason] = useState('');
+  const [rsvpGrantUnlimited, setRsvpGrantUnlimited] = useState(false);
+  
   // Client Management State
   const [clients, setClients] = useState([]);
   const [clientsLoading, setClientsLoading] = useState(false);
@@ -183,10 +191,13 @@ const AdminDashboard = () => {
     fetchBillingSettings();
     fetchPendingPayments();
     fetchTransactions();
+    fetchRsvpTokenSettings();
+    fetchRsvpPendingPurchases();
     
     // Auto-refresh pending payments every 30 seconds
     const pendingPaymentsInterval = setInterval(() => {
       fetchPendingPayments();
+      fetchRsvpPendingPurchases();
     }, 30000);
     
     return () => clearInterval(pendingPaymentsInterval);
