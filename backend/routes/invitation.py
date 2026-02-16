@@ -694,13 +694,21 @@ def setup_invitation_routes(app, db, get_current_user):
         event_date = invitation.get("event_date")
         if event_date:
             try:
-                event_datetime = datetime.fromisoformat(event_date.replace('Z', '+00:00'))
+                # Handle different date formats
+                if 'T' in str(event_date):
+                    event_datetime = datetime.fromisoformat(str(event_date).replace('Z', '+00:00'))
+                else:
+                    # Simple date format like "2025-12-15"
+                    event_datetime = datetime.strptime(str(event_date), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                    # Set to end of day so events on that day can still be edited
+                    event_datetime = event_datetime.replace(hour=23, minute=59, second=59)
+                
                 if datetime.now(timezone.utc) > event_datetime:
                     raise HTTPException(
                         status_code=403,
                         detail="This invitation cannot be edited because the event date has passed."
                     )
-            except ValueError:
+            except (ValueError, TypeError):
                 pass  # Invalid date format, allow editing
         
         # Whitelist of editable fields for celebrant
