@@ -34,6 +34,7 @@ class RSVPResponse(BaseModel):
     message: Optional[str] = None  # Guest message/notes
     submitted_at: str
     ip_address: Optional[str] = None
+    added_via: Optional[str] = None  # online, manual, phone, in_person
 
 
 class RSVPResponseCreate(BaseModel):
