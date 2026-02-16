@@ -194,12 +194,11 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Integration in `GalleryDetail.jsx` (admin section creation)
 
 ## Upcoming Tasks
-1. **Link Gallery UI Enhancement** - Improve the gallery linking flow from invitation detail page
-2. **Cover Image Upload** - Allow photographers to upload custom cover images for invitations
-3. **QR Code for Invitations** - Generate QR codes for invitation share links
-4. **Email RSVP Notifications** - Notify hosts when new RSVPs are received
-5. **PayMongo Payment Integration** - When API keys received
-6. **UI for re-uploading broken images** - Address data inconsistency
+1. **Email RSVP Notifications** - Notify hosts when new RSVPs are received
+2. **RSVP Reminders** - Send reminder emails to guests who haven't responded
+3. **Multiple Cover Images** - Gallery-style cover images for invitations
+4. **PayMongo Payment Integration** - When API keys received
+5. **UI for re-uploading broken images** - Address data inconsistency
 
 ## Future/Backlog
 - Enable "Live Billing" Mode
