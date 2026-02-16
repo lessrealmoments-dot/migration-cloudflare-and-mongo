@@ -57,7 +57,7 @@ export default function InvitationsPage() {
   const fetchInvitations = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/invitations`, {
+      const response = await axios.get(`${API}/api/invitations`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setInvitations(response.data);
