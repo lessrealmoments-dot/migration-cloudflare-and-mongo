@@ -702,6 +702,9 @@ def setup_invitation_routes(app, db, get_current_user):
                 # Handle different date formats
                 if 'T' in str(event_date):
                     event_datetime = datetime.fromisoformat(str(event_date).replace('Z', '+00:00'))
+                    # Ensure timezone-aware
+                    if event_datetime.tzinfo is None:
+                        event_datetime = event_datetime.replace(tzinfo=timezone.utc)
                 else:
                     # Simple date format like "2025-12-15"
                     event_datetime = datetime.strptime(str(event_date), "%Y-%m-%d").replace(tzinfo=timezone.utc)
