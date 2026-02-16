@@ -524,6 +524,31 @@ def setup_invitation_routes(app, db, get_current_user):
         
         return {"message": "Gallery linked successfully"}
     
+    @invitation_router.get("/by-gallery/{gallery_id}")
+    async def get_invitation_by_gallery(
+        gallery_id: str,
+        current_user: dict = Depends(get_current_user)
+    ):
+        """Get invitation linked to a specific gallery"""
+        invitation = await db.invitations.find_one(
+            {"linked_gallery_id": gallery_id, "user_id": current_user["id"]},
+            {"_id": 0}
+        )
+        
+        if not invitation:
+            return {"invitation": None}
+        
+        return {
+            "invitation": {
+                "id": invitation["id"],
+                "title": invitation["title"],
+                "share_link": invitation["share_link"],
+                "status": invitation.get("status", "draft"),
+                "total_rsvps": invitation.get("total_rsvps", 0),
+                "attending_count": invitation.get("attending_count", 0)
+            }
+        }
+    
     # ============================================
     # PUBLIC INVITATION ENDPOINTS (for guests)
     # ============================================
