@@ -389,11 +389,11 @@ export default function PublicInvitation() {
           </header>
 
           {/* Main Content */}
-          <main className="max-w-5xl mx-auto px-4 pb-8">
+          <main className="max-w-5xl mx-auto lg:px-4 pb-8">
             {/* Mobile Layout: Hero image with overlay text */}
-            <div className="lg:hidden flex flex-col items-center gap-0">
+            <div className="lg:hidden flex flex-col items-center gap-0 px-4">
               {/* Mobile Hero - Image with text overlay */}
-              <div className="w-full max-w-md rounded-t-2xl overflow-hidden relative">
+              <div className="w-full rounded-t-2xl overflow-hidden relative">
                 {/* Hero Image */}
                 <div 
                   className="w-full bg-cover bg-center"
