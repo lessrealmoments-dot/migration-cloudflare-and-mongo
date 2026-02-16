@@ -26,6 +26,7 @@ import CreateInvitation from '@/pages/CreateInvitation';
 import InvitationDetail from '@/pages/InvitationDetail';
 import PublicInvitation from '@/pages/PublicInvitation';
 import CelebrantDashboard from '@/pages/CelebrantDashboard';
+import CelebrantView from '@/pages/CelebrantView';
 import '@/App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
