@@ -147,6 +147,26 @@ A comprehensive photo-sharing application for photographers with focus on:
     - Modal displays generated QR code with invitation URL
     - Download button to save QR code as PNG
     - API endpoints: `GET /api/invitations/{id}/qr-code` (PNG), `GET /api/invitations/{id}/qr-code-base64` (for UI)
+- [x] **RSVP & Invitation System - Phase 4 (Celebrant Dashboard)** (Feb 16):
+  - **Dedicated Celebrant Dashboard** (`CelebrantDashboard.jsx`):
+    - New route at `/invitations/:id/dashboard`
+    - Quick Actions bar: Copy Link, QR Code, Preview, Add Guest, External Link, Export
+    - Stats overview: Total RSVPs, Attending, Not Attending, Maybe/Pending
+    - Expected Guests banner with total count from attending RSVPs
+    - Search/filter for guest list (name, email, phone)
+    - Guest list sorted by status with collapsible sections
+  - **Manual Guest Addition**:
+    - Modal for adding guests who RSVPed via phone/in-person
+    - Fields: Name, Email, Phone, Attendance Status, Guest Count, Notes
+    - "How did they RSVP?" dropdown (Manual, Phone, In Person)
+    - Badges on guest cards: ✍️ Manual, 📞 Phone, 🤝 In Person
+    - API endpoints: `POST /api/invitations/{id}/guests`, `PUT /api/invitations/{id}/guests/{rsvp_id}`
+  - **External Invitation Link Support** (for Canva, etc.):
+    - Modal to save external invitation URL
+    - "View Invitation" button appears on public RSVP page
+    - Perfect for clients using other platforms for invitation design
+    - Field added: `external_invitation_url` to Invitation model
+  - **100% Test Pass Rate** - 16/16 backend tests, all frontend flows verified
 
 ## Known Issues (Priority Order)
 
