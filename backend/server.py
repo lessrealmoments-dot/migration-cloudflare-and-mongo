@@ -173,6 +173,7 @@ from tasks import (
 
 # Import routes from routes package (Phase 4 refactoring)
 from routes import health_router
+from routes.rsvp_token import router as rsvp_token_router, set_database as set_rsvp_token_db, consume_rsvp_token, get_user_token_balance
 
 # YouTube URL patterns and utilities - NOW IMPORTED FROM utils.helpers
 # Keeping local definitions as fallback for backward compatibility
