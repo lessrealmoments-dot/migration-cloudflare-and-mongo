@@ -1,6 +1,6 @@
 # EventsGallery.vip - Photo Sharing Platform PRD
 
-## Last Updated: Feb 15, 2025
+## Last Updated: Feb 16, 2025
 
 ## Original Problem Statement
 A comprehensive photo-sharing application for photographers with focus on:
@@ -48,6 +48,12 @@ A comprehensive photo-sharing application for photographers with focus on:
 
 ### Subscription System
 - [x] Free/Standard/Pro/Enterprise tiers
+- [x] **Payment System Bug Fixes (Feb 16, 2025)**:
+  - [x] Add-on token expiration dates (`addon_tokens_purchased_at`, `addon_tokens_expires_at`) now correctly set on admin approval
+  - [x] Downgrade restrictions enforced: Can't downgrade until 30-day subscription expires
+  - [x] Override mode users cannot change plan while override is active
+  - [x] Add-on token purchase requires active subscription
+  - [x] Token consumption priority: Add-on tokens deducted before subscription tokens
 - [x] Token-based gallery creation
 - [x] Admin-configurable pricing and features
 - [x] Grandfathering for expired Pro galleries
