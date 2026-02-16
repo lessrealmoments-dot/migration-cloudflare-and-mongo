@@ -699,21 +699,18 @@ export default function PublicInvitation() {
               </div>
 
               {/* Right Column - Couple's Photo (2/5 width on lg) */}
-              <div className="lg:col-span-2 hidden lg:flex flex-col">
-                {/* Photo container - matches card height */}
+              <div className="lg:col-span-2 hidden lg:block">
+                {/* Photo container - height matches RSVP card (collapsed) */}
                 <div 
-                  className="flex-1 min-h-[400px] rounded-2xl overflow-hidden shadow-2xl bg-cover bg-center relative"
-                  style={{ backgroundImage: `url(${displayCoverImage})` }}
+                  className="rounded-2xl overflow-hidden shadow-2xl bg-cover bg-center relative"
+                  style={{ 
+                    backgroundImage: `url(${displayCoverImage})`,
+                    height: cardHeight ? `${cardHeight}px` : '500px',
+                    backgroundColor: '#1a1a1a'
+                  }}
                 >
                   {/* Subtle vignette effect */}
                   <div className="absolute inset-0 shadow-[inset_0_0_50px_rgba(0,0,0,0.2)]"></div>
-                </div>
-                
-                {/* Photo Caption */}
-                <div className="text-center mt-3">
-                  <p className="text-white/60 text-sm font-light" style={{ fontFamily }}>
-                    {invitation.host_names}
-                  </p>
                 </div>
               </div>
 
