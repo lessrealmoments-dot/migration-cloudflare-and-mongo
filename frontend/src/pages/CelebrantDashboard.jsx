@@ -937,6 +937,109 @@ export default function CelebrantDashboard() {
           </div>
         </div>
       )}
+
+      {/* Link Gallery Modal */}
+      {showLinkGalleryModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-zinc-900 mb-2">Link Photo Gallery</h3>
+            <p className="text-sm text-zinc-500 mb-4">
+              Select a gallery to link with this invitation. The gallery's cover photo will be used on the RSVP page.
+            </p>
+            
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {galleries.length === 0 ? (
+                <p className="text-zinc-500 text-center py-4">No galleries available</p>
+              ) : (
+                galleries.map(gallery => (
+                  <button
+                    key={gallery.id}
+                    onClick={() => linkGallery(gallery.id)}
+                    className="w-full p-3 border border-zinc-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 text-left transition-colors"
+                  >
+                    <p className="font-medium text-zinc-900">{gallery.title || gallery.name || 'Untitled Gallery'}</p>
+                    <p className="text-sm text-zinc-500">{gallery.photo_count || 0} photos</p>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setShowLinkGalleryModal(false)}
+                className="flex-1 py-2 border border-zinc-300 rounded-lg hover:bg-zinc-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => navigate('/gallery/create')}
+                className="flex-1 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800"
+              >
+                Create New Gallery
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Celebrant Link Modal */}
+      {showCelebrantLinkModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-green-100 rounded-full">
+                <Key className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-zinc-900">Celebrant Access Link</h3>
+            </div>
+            
+            <p className="text-sm text-zinc-500 mb-4">
+              Share this link with the celebrant. They can use it to:
+            </p>
+            <ul className="text-sm text-zinc-600 mb-4 list-disc list-inside space-y-1">
+              <li>Edit event details (with confirmation)</li>
+              <li>View and manage guest responses</li>
+              <li>Add guests manually</li>
+              <li>Copy RSVP link and QR code</li>
+            </ul>
+            
+            <div className="bg-zinc-50 p-3 rounded-lg mb-4">
+              <p className="text-sm text-zinc-600 break-all font-mono">{celebrantLink}</p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(celebrantLink);
+                  toast.success('Celebrant link copied!');
+                }}
+                className="flex-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
+              >
+                <Copy className="w-4 h-4" />
+                Copy Link
+              </button>
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to revoke celebrant access? They will no longer be able to edit the invitation.')) {
+                    revokeCelebrantLink();
+                    setShowCelebrantLinkModal(false);
+                  }
+                }}
+                className="py-2 px-4 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
+              >
+                Revoke
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowCelebrantLinkModal(false)}
+              className="w-full mt-3 py-2 border border-zinc-300 rounded-lg hover:bg-zinc-50"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
