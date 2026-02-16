@@ -189,6 +189,53 @@ export default function CreateInvitation() {
     }));
   };
 
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // For new invitations, just show preview - will upload after creation
+    if (!isEditMode) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        handleDesignChange('cover_image_url', e.target.result);
+        handleDesignChange('cover_image_file', file);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // For existing invitations, upload immediately
+    setUploadingCover(true);
+    try {
+      const token = localStorage.getItem('token');
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+
+      const response = await axios.post(
+        `${API}/api/invitations/${id}/upload-cover`,
+        uploadData,
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
+      );
+
+      handleDesignChange('cover_image_url', response.data.cover_image_url);
+      toast.success('Cover image uploaded!');
+    } catch (error) {
+      toast.error('Failed to upload cover image');
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const removeCoverImage = () => {
+    handleDesignChange('cover_image_url', null);
+    handleDesignChange('cover_image_file', null);
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
