@@ -390,54 +390,56 @@ export default function PublicInvitation() {
 
           {/* Main Content */}
           <main className="max-w-5xl mx-auto px-4 pb-8">
-            {/* Mobile Layout: Image on top, then RSVP card */}
-            <div className="lg:hidden flex flex-col items-center gap-4">
-              {/* Mobile Photo - On top with decorative frame */}
-              <div 
-                className="w-full max-w-md p-2 rounded-2xl"
-                style={{ 
-                  background: `linear-gradient(135deg, ${accentColor}40, ${primaryColor}30)`,
-                  boxShadow: `0 4px 20px ${primaryColor}20`
-                }}
-              >
+            {/* Mobile Layout: Hero image with overlay text */}
+            <div className="lg:hidden flex flex-col items-center gap-0">
+              {/* Mobile Hero - Image with text overlay */}
+              <div className="w-full max-w-md rounded-t-2xl overflow-hidden relative">
+                {/* Hero Image */}
                 <div 
-                  className="w-full rounded-xl overflow-hidden bg-cover bg-center"
+                  className="w-full bg-cover bg-center"
                   style={{ 
                     backgroundImage: `url(${displayCoverImage})`,
                     aspectRatio: '4/5',
                     backgroundColor: '#1a1a1a'
                   }}
-                />
-              </div>
-              
-              {/* Mobile RSVP Card */}
-              <div className="w-full max-w-md">
-                <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden">
-                  {/* Card Header with Primary Color */}
+                >
+                  {/* Gradient overlay for text readability */}
                   <div 
-                    className="px-6 py-6 text-center"
-                    style={{ backgroundColor: primaryColor }}
-                  >
+                    className="absolute inset-0"
+                    style={{
+                      background: `linear-gradient(to top, ${primaryColor}ee 0%, ${primaryColor}99 25%, transparent 60%)`
+                    }}
+                  />
+                  
+                  {/* Text overlay at bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
                     <h1 
-                      className="text-2xl text-white mb-1"
+                      className="text-2xl sm:text-3xl text-white mb-1 drop-shadow-lg"
                       style={{ fontFamily }}
                       data-testid="invitation-title-mobile"
                     >
                       {invitation.title}
                     </h1>
-                    <p className="text-white/80 text-sm">
+                    <p className="text-white/90 text-sm drop-shadow">
                       {invitation.host_names}
                     </p>
                     
-                    {/* Countdown Timer in Header */}
+                    {/* Countdown Timer */}
                     {invitation.event_date && (
-                      <CountdownTimer 
-                        eventDate={invitation.event_date} 
-                        primaryColor={primaryColor}
-                      />
+                      <div className="mt-3">
+                        <CountdownTimer 
+                          eventDate={invitation.event_date} 
+                          primaryColor={primaryColor}
+                        />
+                      </div>
                     )}
                   </div>
-
+                </div>
+              </div>
+              
+              {/* Mobile RSVP Card - connected to hero */}
+              <div className="w-full max-w-md">
+                <div className="bg-white/95 backdrop-blur-xl rounded-b-2xl shadow-2xl overflow-hidden">
                   {/* Card Body */}
                   <div className="p-5">
                     {/* Message */}
