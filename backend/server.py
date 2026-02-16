@@ -598,13 +598,13 @@ PLAN_STORAGE_QUOTAS = {
 GALLERY_EXPIRATION_DAYS = 180
 
 # Free/Demo gallery expiration (in hours) - 6 hours
-FREE_GALLERY_EXPIRATION_HOURS = 6
+FREE_GALLERY_EXPIRATION_HOURS = 2  # Demo galleries expire after 2 hours
 
 # Gallery edit lock after 7 days from creation
 GALLERY_EDIT_LOCK_DAYS = 7
 
 # Demo gallery feature window (in hours) - same as expiration for free
-DEMO_FEATURE_WINDOW_HOURS = 6
+DEMO_FEATURE_WINDOW_HOURS = 2  # Demo features available for 2 hours
 
 # ============================================
 # SUBSCRIPTION GRACE PERIOD SETTINGS
