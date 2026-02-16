@@ -103,6 +103,35 @@ A comprehensive photo-sharing application for photographers with focus on:
   - RSVP statistics and tracking
   - Frontend InvitationsPage with invitation cards
   - Dashboard integration with Invitations button
+- [x] **RSVP & Invitation System - Phase 2 (COMPLETE)** (Feb 16):
+  - **GuestPix-inspired Public Invitation Page** (`PublicInvitation.jsx`):
+    - Dark themed background with event accent colors
+    - Split layout: Info card (left) + Cover image (right)
+    - Initials header (e.g., "J + J")
+    - Expandable RSVP form with smooth toggle
+    - Default cover images by event type (wedding, birthday, corporate, etc.)
+    - View Gallery + RSVP action buttons
+    - Thank You confirmation screen after RSVP
+  - **5-Step Create Invitation Wizard** (`CreateInvitation.jsx`):
+    - Step 1: Event Type selection (7 types with icons)
+    - Step 2: Event Details (title, hosts, date, time, venue, map URL)
+    - Step 3: Message & Additional Info
+    - Step 4: Template selection with color customization
+    - Step 5: RSVP settings (enable/disable, deadline, max guests, field toggles)
+    - Edit mode support (loads existing invitation data)
+  - **Invitation Detail/Management Page** (`InvitationDetail.jsx`):
+    - RSVP Summary stats (total RSVPs, attending, not attending, maybe, total guests)
+    - Event details card
+    - RSVP list with filter tabs (All/Attending/Not Attending/Maybe)
+    - Publish, Copy Link, Preview, Edit, Export RSVPs actions
+    - Link Gallery modal to connect invitation to photo gallery
+  - **Complete Routes Setup** in App.js:
+    - `/invitations` - List page
+    - `/invitations/create` - Create wizard
+    - `/invitations/:id` - Detail/stats page
+    - `/invitations/:id/edit` - Edit wizard
+    - `/i/:shareLink` - Public guest page
+  - **100% Test Pass Rate** - 22/22 backend tests, all frontend flows verified
 
 ## Known Issues (Priority Order)
 
