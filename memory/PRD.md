@@ -103,6 +103,14 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Grandfathering for expired Pro galleries
 
 ## Recent Fixes (Feb 2025)
+- [x] **RSVP Token Email Notifications** (Feb 17, 2025) ✅ NEW:
+  - 4 new email templates added to `server.py`:
+    - `admin_rsvp_token_purchase` - Notifies admin of new purchase
+    - `customer_rsvp_token_pending` - Confirms purchase submission to user
+    - `customer_rsvp_token_approved` - Notifies user of approval with new balance
+    - `customer_rsvp_token_rejected` - Notifies user of rejection with reason
+  - Admin dashboard badge on RSVP Tokens tab (orange pulsing when pending)
+  - Uses existing Resend email service integration
 - [x] Fixed lightbox preview loading issue (CDN URL handling)
 - [x] Standardized token naming (subscription_tokens, addon_tokens)
 - [x] Implemented grandfathering for expired Pro galleries
