@@ -112,6 +112,11 @@ function App() {
           <Route path="/gallery/:id" element={<ProtectedRoute><GalleryDetail /></ProtectedRoute>} />
           {/* Invitations & RSVP Routes */}
           <Route path="/invitations" element={<ProtectedRoute><InvitationsPage /></ProtectedRoute>} />
+          <Route path="/invitations/create" element={<ProtectedRoute><CreateInvitation /></ProtectedRoute>} />
+          <Route path="/invitations/:id" element={<ProtectedRoute><InvitationDetail /></ProtectedRoute>} />
+          <Route path="/invitations/:id/edit" element={<ProtectedRoute><CreateInvitation /></ProtectedRoute>} />
+          {/* Public Invitation Page (for guests) */}
+          <Route path="/i/:shareLink" element={<PublicInvitation />} />
           <Route path="/g/:shareLink" element={<PublicGallery />} />
           {/* Contributor Upload Route */}
           <Route path="/c/:contributorLink" element={<ContributorUpload />} />
