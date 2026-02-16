@@ -392,41 +392,41 @@ export default function PublicInvitation() {
           <main className="max-w-5xl mx-auto lg:px-4 pb-8">
             {/* Mobile Layout: Hero image with overlay text */}
             <div className="lg:hidden flex flex-col items-center gap-0 px-4">
-              {/* Mobile Hero - Image with text overlay */}
+              {/* Mobile Hero - Image with text overlay (3:2 ratio for better visibility) */}
               <div className="w-full rounded-t-2xl overflow-hidden relative">
-                {/* Hero Image */}
+                {/* Hero Image - 3:2 aspect ratio (landscape-ish, compact) */}
                 <div 
                   className="w-full bg-cover bg-center"
                   style={{ 
                     backgroundImage: `url(${displayCoverImage})`,
-                    aspectRatio: '4/5',
+                    aspectRatio: '3/2',
                     backgroundColor: '#1a1a1a'
                   }}
                 >
-                  {/* Gradient overlay for text readability */}
+                  {/* Gradient overlay for text readability - stronger at bottom */}
                   <div 
                     className="absolute inset-0"
                     style={{
-                      background: `linear-gradient(to top, ${primaryColor}ee 0%, ${primaryColor}99 25%, transparent 60%)`
+                      background: `linear-gradient(to top, ${primaryColor}f5 0%, ${primaryColor}cc 30%, ${primaryColor}40 60%, transparent 100%)`
                     }}
                   />
                   
-                  {/* Text overlay at bottom */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
+                  {/* Text overlay at bottom - larger text for visibility */}
+                  <div className="absolute bottom-0 left-0 right-0 p-5 text-center">
                     <h1 
-                      className="text-2xl sm:text-3xl text-white mb-1 drop-shadow-lg"
+                      className="text-xl sm:text-2xl text-white mb-1 drop-shadow-lg font-semibold"
                       style={{ fontFamily }}
                       data-testid="invitation-title-mobile"
                     >
                       {invitation.title}
                     </h1>
-                    <p className="text-white/90 text-sm drop-shadow">
+                    <p className="text-white/90 text-sm drop-shadow font-medium">
                       {invitation.host_names}
                     </p>
                     
-                    {/* Countdown Timer */}
+                    {/* Countdown Timer - compact version */}
                     {invitation.event_date && (
-                      <div className="mt-3">
+                      <div className="mt-2">
                         <CountdownTimer 
                           eventDate={invitation.event_date} 
                           primaryColor={primaryColor}
