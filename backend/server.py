@@ -1801,17 +1801,26 @@ async def get_global_feature_toggles():
             PLAN_STANDARD: DEFAULT_PLAN_FEATURES[PLAN_STANDARD].copy(),
             PLAN_PRO: DEFAULT_PLAN_FEATURES[PLAN_PRO].copy()
         }
+    
+    # CRITICAL FIX: Merge stored values with defaults to ensure new features are included
+    def merge_with_defaults(stored, defaults):
+        """Merge stored values with defaults - stored values take precedence"""
+        result = defaults.copy()
+        if stored:
+            result.update(stored)
+        return result
+    
     return {
-        # Override Modes
-        MODE_FOUNDERS_CIRCLE: toggles.get(MODE_FOUNDERS_CIRCLE, DEFAULT_MODE_FEATURES[MODE_FOUNDERS_CIRCLE]),
-        MODE_EARLY_PARTNER_BETA: toggles.get(MODE_EARLY_PARTNER_BETA, DEFAULT_MODE_FEATURES[MODE_EARLY_PARTNER_BETA]),
-        MODE_COMPED_PRO: toggles.get(MODE_COMPED_PRO, DEFAULT_MODE_FEATURES[MODE_COMPED_PRO]),
-        MODE_COMPED_STANDARD: toggles.get(MODE_COMPED_STANDARD, DEFAULT_MODE_FEATURES[MODE_COMPED_STANDARD]),
-        MODE_ENTERPRISE_ACCESS: toggles.get(MODE_ENTERPRISE_ACCESS, DEFAULT_MODE_FEATURES[MODE_ENTERPRISE_ACCESS]),
-        # Payment Plans
-        PLAN_FREE: toggles.get(PLAN_FREE, DEFAULT_PLAN_FEATURES[PLAN_FREE]),
-        PLAN_STANDARD: toggles.get(PLAN_STANDARD, DEFAULT_PLAN_FEATURES[PLAN_STANDARD]),
-        PLAN_PRO: toggles.get(PLAN_PRO, DEFAULT_PLAN_FEATURES[PLAN_PRO])
+        # Override Modes - merge with defaults to include new features
+        MODE_FOUNDERS_CIRCLE: merge_with_defaults(toggles.get(MODE_FOUNDERS_CIRCLE), DEFAULT_MODE_FEATURES[MODE_FOUNDERS_CIRCLE]),
+        MODE_EARLY_PARTNER_BETA: merge_with_defaults(toggles.get(MODE_EARLY_PARTNER_BETA), DEFAULT_MODE_FEATURES[MODE_EARLY_PARTNER_BETA]),
+        MODE_COMPED_PRO: merge_with_defaults(toggles.get(MODE_COMPED_PRO), DEFAULT_MODE_FEATURES[MODE_COMPED_PRO]),
+        MODE_COMPED_STANDARD: merge_with_defaults(toggles.get(MODE_COMPED_STANDARD), DEFAULT_MODE_FEATURES[MODE_COMPED_STANDARD]),
+        MODE_ENTERPRISE_ACCESS: merge_with_defaults(toggles.get(MODE_ENTERPRISE_ACCESS), DEFAULT_MODE_FEATURES[MODE_ENTERPRISE_ACCESS]),
+        # Payment Plans - merge with defaults to include new features
+        PLAN_FREE: merge_with_defaults(toggles.get(PLAN_FREE), DEFAULT_PLAN_FEATURES[PLAN_FREE]),
+        PLAN_STANDARD: merge_with_defaults(toggles.get(PLAN_STANDARD), DEFAULT_PLAN_FEATURES[PLAN_STANDARD]),
+        PLAN_PRO: merge_with_defaults(toggles.get(PLAN_PRO), DEFAULT_PLAN_FEATURES[PLAN_PRO])
     }
 
 async def resolve_user_features(user: dict) -> dict:
