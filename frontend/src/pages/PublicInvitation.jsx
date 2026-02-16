@@ -296,32 +296,9 @@ export default function PublicInvitation() {
 
   const design = invitation.design || {};
   const fontFamily = design.font_family || 'Playfair Display';
-  const defaultImage = defaultCoverImages[invitation.event_type] || defaultCoverImages.celebration;
-  // Use uploaded cover image if available, otherwise use default based on event type
-  const [coverImage, setCoverImage] = useState(design.cover_image_url || defaultImage);
-  const [imageError, setImageError] = useState(false);
   const primaryColor = design.primary_color || '#722f37';
   const accentColor = design.accent_color || '#d4a574';
-
-  // Preload cover image and handle errors
-  useEffect(() => {
-    if (design.cover_image_url) {
-      const img = new Image();
-      img.onload = () => {
-        // Only use the uploaded image if it loads successfully and has a reasonable size
-        if (img.width > 10 && img.height > 10) {
-          setCoverImage(design.cover_image_url);
-        } else {
-          setCoverImage(defaultImage);
-        }
-      };
-      img.onerror = () => {
-        setCoverImage(defaultImage);
-        setImageError(true);
-      };
-      img.src = design.cover_image_url;
-    }
-  }, [design.cover_image_url, defaultImage]);
+  const displayCoverImage = coverImage || defaultCoverImages[invitation.event_type] || defaultCoverImages.celebration;
 
   // Thank You Screen
   if (submitted) {
