@@ -65,9 +65,10 @@ class TestInvitationCRUD:
         })
         assert response.status_code == 200, f"Login failed: {response.text}"
         data = response.json()
-        assert "token" in data, "Response should contain token"
+        token = data.get("access_token") or data.get("token")
+        assert token, "Response should contain access_token or token"
         print(f"✓ Logged in as {TEST_USER_EMAIL}")
-        return data["token"]
+        return token
     
     @pytest.fixture(scope="class")
     def auth_headers(self, auth_token):
