@@ -359,7 +359,9 @@ async def get_pending_purchases():
         user = await db.users.find_one({"_id": txn["user_id"]})
         if not user:
             user = await db.users.find_one({"id": txn["user_id"]})
-        txn["id"] = str(txn.pop("_id", txn.get("id", "")))
+        
+        # Remove MongoDB _id but keep the custom id field
+        txn.pop("_id", None)
         txn["user_email"] = user.get("email") if user else "Unknown"
         txn["user_name"] = user.get("name") if user else "Unknown"
         pending.append(txn)
