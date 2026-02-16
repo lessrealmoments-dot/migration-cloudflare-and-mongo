@@ -81,6 +81,12 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] **Critical Bug Fix: Negative Credits** (Feb 14): Fixed token deduction logic, added admin repair endpoint
 - [x] **Photo Download Fix** (Feb 14): Fixed navigation instead of download issue with fetch+blob solution
 - [x] **Lite Mode for Slow Connections** (Feb 15): Complete implementation with toggle, modal, and minimal upload page ✅
+- [x] **Payment System Audit & Bug Fixes** (Feb 16):
+  - Fixed add-on token expiration not being set on approval
+  - Implemented downgrade restrictions (30-day subscription rule)
+  - Override mode users blocked from plan changes
+  - Add-on tokens require active subscription
+  - Token priority verified: add-on before subscription
 
 ## Known Issues (Priority Order)
 
