@@ -449,8 +449,24 @@ def setup_invitation_routes(app, db, get_current_user):
         if not invitation:
             raise HTTPException(status_code=404, detail="Invitation not found")
         
-        # Note: Hosts (owners) can always edit their invitations even after event date
-        # Only celebrants have the date restriction (implemented in celebrant update endpoint)
+        # Check if event date has passed - block editing for everyone
+        event_date = invitation.get("event_date")
+        if event_date:
+            try:
+                # Handle different date formats
+                if 'T' in str(event_date):
+                    event_datetime = datetime.fromisoformat(str(event_date).replace('Z', '+00:00'))
+                else:
+                    # Simple date format like "2025-12-15"
+                    event_datetime = datetime.strptime(str(event_date), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                
+                if datetime.now(timezone.utc) > event_datetime:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="This invitation cannot be edited because the event date has passed."
+                    )
+            except (ValueError, TypeError) as e:
+                pass  # Invalid date format, allow editing
         
         update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
         
