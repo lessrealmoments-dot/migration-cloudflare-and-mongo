@@ -676,13 +676,26 @@ def setup_invitation_routes(app, db, get_current_user):
         access_code: str,
         updates: dict
     ):
-        """Update invitation details as celebrant (LIMITED FIELDS ONLY)"""
+        """Update invitation details as celebrant (LIMITED FIELDS ONLY, blocked after event)"""
         invitation = await db.invitations.find_one(
             {"celebrant_access_code": access_code}
         )
         
         if not invitation:
             raise HTTPException(status_code=404, detail="Invalid access code")
+        
+        # Check if event date has passed - block editing
+        event_date = invitation.get("event_date")
+        if event_date:
+            try:
+                event_datetime = datetime.fromisoformat(event_date.replace('Z', '+00:00'))
+                if datetime.now(timezone.utc) > event_datetime:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="This invitation cannot be edited because the event date has passed."
+                    )
+            except ValueError:
+                pass  # Invalid date format, allow editing
         
         # Whitelist of editable fields for celebrant
         allowed_fields = {
