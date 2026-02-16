@@ -100,10 +100,26 @@ export default function CreateInvitation() {
   const fetchInvitation = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/api/invitations/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const [invResponse, defaultFieldsResponse] = await Promise.all([
+        axios.get(`${API}/api/invitations/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API}/api/invitations/default-rsvp-fields`)
+      ]);
+      const inv = invResponse.data;
+      const defaultFields = defaultFieldsResponse.data;
+      
+      // Merge existing fields with default fields (to include new fields added later)
+      const existingFieldIds = new Set((inv.rsvp_fields || []).map(f => f.field_id));
+      const mergedFields = [...(inv.rsvp_fields || [])];
+      
+      // Add any default fields that don't exist in the invitation yet (disabled by default)
+      defaultFields.forEach(defaultField => {
+        if (!existingFieldIds.has(defaultField.field_id)) {
+          mergedFields.push({ ...defaultField, enabled: false });
+        }
       });
-      const inv = response.data;
+      
       setFormData({
         event_type: inv.event_type || '',
         title: inv.title || '',
@@ -128,7 +144,7 @@ export default function CreateInvitation() {
         rsvp_enabled: inv.rsvp_enabled !== false,
         rsvp_deadline: inv.rsvp_deadline || '',
         max_guests_per_rsvp: inv.max_guests_per_rsvp || 5,
-        rsvp_fields: inv.rsvp_fields || []
+        rsvp_fields: mergedFields
       });
     } catch (error) {
       toast.error('Failed to load invitation');
