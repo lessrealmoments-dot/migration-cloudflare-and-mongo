@@ -439,24 +439,24 @@ export default function CelebrantDashboard() {
                 </button>
               )}
               
-              {/* Generate/View Celebrant Link */}
+              {/* Generate/View Client Access Link */}
               {celebrantLink ? (
                 <button
                   onClick={() => setShowCelebrantLinkModal(true)}
-                  className="flex items-center justify-center gap-2 p-3 rounded-xl border border-green-200 bg-green-50 hover:bg-green-100 text-green-700 transition-colors"
+                  className="flex items-center justify-center gap-2 p-3 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 transition-colors"
                   data-testid="view-celebrant-link-btn"
                 >
                   <Key className="w-5 h-5" />
-                  <span className="text-sm font-medium">Celebrant Link</span>
+                  <span className="text-sm font-medium">Client Access</span>
                 </button>
               ) : (
                 <button
                   onClick={generateCelebrantLink}
-                  className="flex items-center justify-center gap-2 p-3 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors"
+                  className="flex items-center justify-center gap-2 p-3 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 transition-colors"
                   data-testid="generate-celebrant-link-btn"
                 >
                   <Key className="w-5 h-5" />
-                  <span className="text-sm font-medium">Generate Celebrant Link</span>
+                  <span className="text-sm font-medium">Generate Client Link</span>
                 </button>
               )}
               
