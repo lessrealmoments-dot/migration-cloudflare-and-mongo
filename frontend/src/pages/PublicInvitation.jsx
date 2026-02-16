@@ -698,14 +698,15 @@ export default function PublicInvitation() {
                 </div>
               </div>
 
-              {/* Right Column - Couple's Photo (2/5 width on lg) */}
-              <div className="lg:col-span-2 hidden lg:block">
-                {/* Photo container - height matches RSVP card (collapsed) */}
+              {/* Right Column - Couple's Photo (45% width on lg) */}
+              <div className="hidden lg:flex lg:w-[45%] justify-center">
+                {/* Photo container - 4:5 aspect ratio, height matches RSVP card */}
                 <div 
                   className="rounded-2xl overflow-hidden shadow-2xl bg-cover bg-center relative"
                   style={{ 
                     backgroundImage: `url(${displayCoverImage})`,
                     height: cardHeight ? `${cardHeight}px` : '500px',
+                    width: cardHeight ? `${(cardHeight * 4) / 5}px` : '400px',
                     backgroundColor: '#1a1a1a'
                   }}
                 >
@@ -715,10 +716,14 @@ export default function PublicInvitation() {
               </div>
 
               {/* Mobile Photo - Show below the card on mobile */}
-              <div className="lg:hidden mt-6">
+              <div className="lg:hidden mt-6 w-full flex justify-center">
                 <div 
-                  className="h-64 rounded-2xl overflow-hidden shadow-xl bg-cover bg-center"
-                  style={{ backgroundImage: `url(${displayCoverImage})` }}
+                  className="rounded-2xl overflow-hidden shadow-xl bg-cover bg-center"
+                  style={{ 
+                    backgroundImage: `url(${displayCoverImage})`,
+                    width: '280px',
+                    height: '350px'
+                  }}
                 />
               </div>
             </div>
