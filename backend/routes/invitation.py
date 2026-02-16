@@ -518,6 +518,7 @@ def setup_invitation_routes(app, db, get_current_user):
             {"$set": {
                 "linked_gallery_id": gallery_id,
                 "linked_gallery_share_link": gallery["share_link"],
+                "linked_gallery_cover_photo": gallery.get("cover_photo_url"),
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )
