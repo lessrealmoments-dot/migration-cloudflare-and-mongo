@@ -130,6 +130,8 @@ const CreateGallery = () => {
         const detail = error.response?.data?.detail || '';
         if (detail.includes('Demo gallery already created')) {
           setLimitMessage('You have used your free demo gallery. Upgrade to Standard or Pro to create more galleries.');
+        } else if (detail.includes('subscription has expired')) {
+          setLimitMessage('Your subscription has expired. Please resubscribe to create new galleries. Your existing galleries are still accessible during the grace period.');
         } else if (detail.includes('No event credits')) {
           setLimitMessage('You have run out of event credits. Purchase extra credits or wait for your next billing cycle.');
         } else {
