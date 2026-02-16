@@ -666,7 +666,7 @@ export default function CreateInvitation() {
               disabled={loading}
               className="flex items-center gap-2 px-8 py-3 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:bg-zinc-300"
             >
-              {loading ? 'Creating...' : 'Create Invitation'}
+              {loading ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Invitation')}
               <Check className="w-4 h-4" />
             </button>
           )}
