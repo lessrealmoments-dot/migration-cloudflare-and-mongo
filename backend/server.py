@@ -2399,7 +2399,11 @@ async def get_gallery_storage_quota(user: dict) -> int:
     Calculate storage quota for a NEW gallery based on user's plan/mode.
     Returns storage in bytes. -1 means unlimited.
     Used when creating galleries to set their storage_quota field.
+    
+    ADMIN SETTINGS ALWAYS WIN - no defaults, only what admin configured.
     """
+    global_toggles = await get_global_feature_toggles()
+    
     override_mode = user.get("override_mode")
     override_expires = user.get("override_expires")
     
@@ -2408,38 +2412,29 @@ async def get_gallery_storage_quota(user: dict) -> int:
         try:
             expires = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
             if expires > datetime.now(timezone.utc):
-                global_toggles = await get_global_feature_toggles()
-                if override_mode in global_toggles:
-                    storage_gb = global_toggles[override_mode].get("gallery_storage_limit_gb", 20)
+                mode_config = global_toggles.get(override_mode, {})
+                storage_gb = mode_config.get("gallery_storage_limit_gb")
+                if storage_gb is not None:
                     if storage_gb == -1:
                         return -1  # Unlimited
                     return int(storage_gb * 1024 * 1024 * 1024)
-                # Fallback to default mode features
-                mode_features = DEFAULT_MODE_FEATURES.get(override_mode, {})
-                storage_gb = mode_features.get("gallery_storage_limit_gb", 20)
-                if storage_gb == -1:
-                    return -1
-                return int(storage_gb * 1024 * 1024 * 1024)
+                # Admin hasn't set storage for this mode - default to unlimited per gallery
+                return -1
         except:
             pass
     
-    # Use plan-based storage
+    # Use plan-based storage from admin settings
     plan = user.get("plan", PLAN_FREE)
-    global_toggles = await get_global_feature_toggles()
     plan_config = global_toggles.get(plan, {})
     
-    if plan_config.get("gallery_storage_limit_gb") is not None:
-        storage_gb = plan_config.get("gallery_storage_limit_gb")
+    storage_gb = plan_config.get("gallery_storage_limit_gb")
+    if storage_gb is not None:
         if storage_gb == -1:
             return -1
         return int(storage_gb * 1024 * 1024 * 1024)
     
-    # Fallback to default plan features
-    default_features = DEFAULT_PLAN_FEATURES.get(plan, {})
-    storage_gb = default_features.get("gallery_storage_limit_gb", 10)
-    if storage_gb == -1:
-        return -1
-    return int(storage_gb * 1024 * 1024 * 1024)
+    # Admin hasn't set storage for this plan - default to unlimited per gallery
+    return -1
 
 async def get_effective_storage_quota(user: dict) -> int:
     """
