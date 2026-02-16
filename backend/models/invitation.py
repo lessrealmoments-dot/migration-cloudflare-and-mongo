@@ -127,9 +127,15 @@ class Invitation(BaseModel):
     is_public: bool = True
     password: Optional[str] = None
     
+    # Celebrant Access (separate from public RSVP link)
+    celebrant_access_code: Optional[str] = None
+    celebrant_name: Optional[str] = None
+    celebrant_email: Optional[str] = None
+    
     # Gallery Link (optional - linked later)
     linked_gallery_id: Optional[str] = None
     linked_gallery_share_link: Optional[str] = None
+    linked_gallery_cover_photo: Optional[str] = None
     
     # Stats
     total_views: int = 0
