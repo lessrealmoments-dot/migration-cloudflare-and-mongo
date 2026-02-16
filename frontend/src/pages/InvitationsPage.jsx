@@ -275,10 +275,10 @@ export default function InvitationsPage() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => navigate(`/invitations/${invitation.id}/dashboard`)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-zinc-100 text-zinc-700 rounded-lg hover:bg-zinc-200 transition-colors text-sm"
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors text-sm border border-emerald-200"
                       >
                         <Eye className="w-4 h-4" />
-                        Manage RSVPs
+                        Host Dashboard
                       </button>
                       {invitation.linked_gallery_id ? (
                         <button
