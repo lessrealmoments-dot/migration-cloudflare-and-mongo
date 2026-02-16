@@ -1941,7 +1941,7 @@ const GalleryDetail = () => {
             {isFeatureEnabled('coordinator_hub') ? (
               <button
                 data-testid="coordinator-hub-button"
-                onClick={generateCoordinatorHubLink}
+                onClick={handleCoordinatorHubClick}
                 disabled={coordinatorHubLoading}
                 className="border border-orange-300 bg-white hover:bg-orange-50 text-orange-700 h-10 px-6 rounded-sm transition-all duration-300 flex items-center gap-2"
               >
