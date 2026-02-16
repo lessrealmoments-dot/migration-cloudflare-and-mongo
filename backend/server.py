@@ -11160,6 +11160,12 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
         if not email_plan:
             email_plan = get_effective_plan(user).capitalize()
     
+    # CRITICAL: Ensure subscription_expires is set if user has approved payment but no expiry
+    if not user.get("subscription_expires") and user.get("plan") and user.get("plan") != PLAN_FREE:
+        update_data["subscription_expires"] = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+        if "billing_cycle_start" not in update_data:
+            update_data["billing_cycle_start"] = datetime.now(timezone.utc).isoformat()
+    
     await db.users.update_one(
         {"id": data.user_id},
         {"$set": update_data}
