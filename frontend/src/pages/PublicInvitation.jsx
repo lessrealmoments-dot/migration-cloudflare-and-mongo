@@ -434,6 +434,20 @@ export default function PublicInvitation() {
 
               {/* Action Buttons - GuestPix Style */}
               <div className="grid grid-cols-2 gap-3">
+                {/* External Invitation Link (e.g., Canva) */}
+                {invitation.external_invitation_url && (
+                  <a
+                    href={invitation.external_invitation_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-colors hover:bg-zinc-50"
+                    style={{ borderColor: accentColor, color: primaryColor }}
+                    data-testid="view-invitation-btn"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    View Invitation
+                  </a>
+                )}
                 {invitation.linked_gallery_share_link && (
                   <a
                     href={`/g/${invitation.linked_gallery_share_link}`}
@@ -449,7 +463,7 @@ export default function PublicInvitation() {
                   <button
                     onClick={() => setShowRSVPForm(!showRSVPForm)}
                     className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-colors ${
-                      invitation.linked_gallery_share_link ? '' : 'col-span-2'
+                      (invitation.linked_gallery_share_link || invitation.external_invitation_url) ? '' : 'col-span-2'
                     }`}
                     style={{ 
                       borderColor: accentColor, 
