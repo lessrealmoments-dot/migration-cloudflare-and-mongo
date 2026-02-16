@@ -3917,43 +3917,46 @@ async def get_admin_global_feature_toggles(admin: dict = Depends(get_admin_user)
     """
     Get global feature toggles for all override modes and payment plans.
     Admin can configure which features are available for each mode/plan.
+    
+    ADMIN SETTINGS ALWAYS WIN - shows exactly what admin configured.
+    Empty features = nothing configured yet (admin should set them).
     """
     toggles = await get_global_feature_toggles()
     return {
         "override_modes": {
             MODE_FOUNDERS_CIRCLE: {
                 "label": "Founders Circle",
-                "features": toggles.get(MODE_FOUNDERS_CIRCLE, DEFAULT_MODE_FEATURES[MODE_FOUNDERS_CIRCLE])
+                "features": toggles.get(MODE_FOUNDERS_CIRCLE, {})
             },
             MODE_EARLY_PARTNER_BETA: {
                 "label": "Early Partner Beta",
-                "features": toggles.get(MODE_EARLY_PARTNER_BETA, DEFAULT_MODE_FEATURES[MODE_EARLY_PARTNER_BETA])
+                "features": toggles.get(MODE_EARLY_PARTNER_BETA, {})
             },
             MODE_COMPED_PRO: {
                 "label": "Comped Pro",
-                "features": toggles.get(MODE_COMPED_PRO, DEFAULT_MODE_FEATURES[MODE_COMPED_PRO])
+                "features": toggles.get(MODE_COMPED_PRO, {})
             },
             MODE_COMPED_STANDARD: {
                 "label": "Comped Standard",
-                "features": toggles.get(MODE_COMPED_STANDARD, DEFAULT_MODE_FEATURES[MODE_COMPED_STANDARD])
+                "features": toggles.get(MODE_COMPED_STANDARD, {})
             },
             MODE_ENTERPRISE_ACCESS: {
                 "label": "Enterprise Access",
-                "features": toggles.get(MODE_ENTERPRISE_ACCESS, DEFAULT_MODE_FEATURES[MODE_ENTERPRISE_ACCESS])
+                "features": toggles.get(MODE_ENTERPRISE_ACCESS, {})
             }
         },
         "payment_plans": {
             PLAN_FREE: {
                 "label": "Free",
-                "features": toggles.get(PLAN_FREE, DEFAULT_PLAN_FEATURES[PLAN_FREE])
+                "features": toggles.get(PLAN_FREE, {})
             },
             PLAN_STANDARD: {
                 "label": "Standard",
-                "features": toggles.get(PLAN_STANDARD, DEFAULT_PLAN_FEATURES[PLAN_STANDARD])
+                "features": toggles.get(PLAN_STANDARD, {})
             },
             PLAN_PRO: {
                 "label": "Pro",
-                "features": toggles.get(PLAN_PRO, DEFAULT_PLAN_FEATURES[PLAN_PRO])
+                "features": toggles.get(PLAN_PRO, {})
             }
         },
         "feature_definitions": {
