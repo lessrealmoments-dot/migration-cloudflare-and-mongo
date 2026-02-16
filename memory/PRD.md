@@ -91,6 +91,18 @@ A comprehensive photo-sharing application for photographers with focus on:
   - Fixed feature toggle resolution to properly merge defaults with stored values
   - Added `coordinator_hub_link` to Gallery model and API response
   - Fixed frontend to show existing link without regenerating
+- [x] **Demo Gallery Logic** (Feb 16):
+  - Demo duration changed from 6 hours to 2 hours
+  - Expired Pro/Standard users blocked from creating galleries
+  - Demo warning messages added to API and frontend
+- [x] **RSVP & Invitation System - Phase 1** (Feb 16):
+  - Backend models and API routes created
+  - 10 invitation templates (wedding, birthday, corporate, celebration)
+  - RSVP form with customizable fields
+  - Public invitation page for guests
+  - RSVP statistics and tracking
+  - Frontend InvitationsPage with invitation cards
+  - Dashboard integration with Invitations button
 
 ## Known Issues (Priority Order)
 
