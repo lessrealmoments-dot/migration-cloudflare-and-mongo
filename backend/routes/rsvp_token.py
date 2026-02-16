@@ -47,14 +47,31 @@ async def get_rsvp_token_settings():
 
 async def check_user_has_unlimited_rsvp(user_id: str) -> tuple[bool, str]:
     """Check if user has unlimited RSVP tokens"""
-    # Check for founder's override
+    # Check for founder's override - try both _id and id field
     user = await db.users.find_one({"_id": user_id})
+    if not user:
+        user = await db.users.find_one({"id": user_id})
+    
     if user:
         override_mode = user.get("override_mode")
-        if override_mode == "founders_circle":
-            return True, "founders_override"
-        if override_mode == "enterprise_access":
-            return True, "enterprise_access"
+        override_expires = user.get("override_expires")
+        
+        # Check if override is still valid
+        if override_mode and override_expires:
+            try:
+                from datetime import datetime, timezone
+                if isinstance(override_expires, str):
+                    expires_dt = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
+                else:
+                    expires_dt = override_expires
+                    
+                if datetime.now(timezone.utc) < expires_dt:
+                    if override_mode == "founders_circle":
+                        return True, "founders_override"
+                    if override_mode == "enterprise_access":
+                        return True, "enterprise_access"
+            except (ValueError, TypeError):
+                pass
     
     # Check for admin-granted unlimited
     unlimited_grant = await db.rsvp_token_grants.find_one({
