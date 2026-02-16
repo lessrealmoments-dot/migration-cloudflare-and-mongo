@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -23,7 +23,9 @@ import {
   Trash2,
   GripVertical,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Upload,
+  X
 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL;
