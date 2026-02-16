@@ -49,6 +49,8 @@ export default function CreateInvitation() {
   const [initialLoading, setInitialLoading] = useState(isEditMode);
   const [templates, setTemplates] = useState([]);
   const [defaultFields, setDefaultFields] = useState([]);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const coverInputRef = useRef(null);
   
   // Form state
   const [formData, setFormData] = useState({
