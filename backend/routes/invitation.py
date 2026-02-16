@@ -595,6 +595,7 @@ def setup_invitation_routes(app, db, get_current_user):
             rsvp_fields=[RSVPFieldConfig(**f) for f in invitation.get("rsvp_fields", [])],
             max_guests_per_rsvp=invitation.get("max_guests_per_rsvp", 5),
             linked_gallery_share_link=invitation.get("linked_gallery_share_link"),
+            linked_gallery_cover_photo=invitation.get("linked_gallery_cover_photo"),
             has_password=invitation.get("password") is not None
         )
     
