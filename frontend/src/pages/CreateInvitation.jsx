@@ -231,6 +231,14 @@ export default function CreateInvitation() {
 
   const selectedTemplate = templates.find(t => t.id === formData.template_id);
 
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-zinc-50">
       {/* Header */}
