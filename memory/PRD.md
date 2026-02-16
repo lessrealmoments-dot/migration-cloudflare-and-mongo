@@ -184,6 +184,29 @@ A comprehensive photo-sharing application for photographers with focus on:
     - Cover image fallback when uploaded image fails to load
     - Responsive: photo hidden on mobile
   - **91% Backend / 100% Frontend Test Pass Rate**
+- [x] **RSVP & Invitation System - Phase 6 (Host/Celebrant Role Separation)** (Feb 17):
+  - **Complete Host/Celebrant Access Control Model**:
+    - Host (Photographer) has FULL control via `CelebrantDashboard.jsx`
+    - Celebrant (Client) has LIMITED access via `CelebrantView.jsx`
+  - **Host Dashboard Features** (`/invitations/:id/dashboard`):
+    - Quick Actions: Copy Link, QR Code, Preview, Add Guest, External Link, Export
+    - Host Controls: Unlink Gallery, Celebrant Link, Edit Invitation
+    - RSVP Stats with expected guests count
+    - Searchable/filterable guest list
+  - **Celebrant Access Link Generation**:
+    - Host can generate unique access URL for celebrant
+    - Modal shows link with Copy and Revoke buttons
+    - API: `POST /api/invitations/{id}/generate-celebrant-link`
+  - **CelebrantView Limited Controls** (`/celebrant/:accessCode`):
+    - Only shows: Copy Link, QR Code, Preview, Add Guest
+    - NO gallery linking capabilities
+    - Edit Details button with confirmation dialogs
+  - **Edit Confirmation Dialogs** (User-Requested Feature):
+    - Every edit action triggers "Confirm Change" dialog
+    - Shows: Field name, Previous value (red strikethrough), New value (green)
+    - Cancel and "Yes, Update" buttons
+    - Warning: "Changes will be visible to your guests"
+  - **100% Frontend Test Pass Rate** - All Host/Celebrant flows verified
 
 ## Known Issues (Priority Order)
 
