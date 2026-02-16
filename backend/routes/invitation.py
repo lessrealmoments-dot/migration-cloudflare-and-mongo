@@ -589,9 +589,23 @@ def setup_invitation_routes(app, db, get_current_user):
         
         # Check deadline
         if invitation.get("rsvp_deadline"):
-            deadline = datetime.fromisoformat(invitation["rsvp_deadline"].replace('Z', '+00:00'))
-            if datetime.now(timezone.utc) > deadline:
-                raise HTTPException(status_code=400, detail="RSVP deadline has passed")
+            deadline_str = invitation["rsvp_deadline"]
+            try:
+                # Handle both date-only and datetime formats
+                if 'T' in deadline_str:
+                    deadline = datetime.fromisoformat(deadline_str.replace('Z', '+00:00'))
+                else:
+                    # Date only format - set to end of day
+                    deadline = datetime.fromisoformat(deadline_str + "T23:59:59+00:00")
+                
+                # Make sure deadline is timezone-aware
+                if deadline.tzinfo is None:
+                    deadline = deadline.replace(tzinfo=timezone.utc)
+                    
+                if datetime.now(timezone.utc) > deadline:
+                    raise HTTPException(status_code=400, detail="RSVP deadline has passed")
+            except ValueError:
+                pass  # Invalid date format, skip deadline check
         
         # Check max guests
         if data.guest_count > invitation.get("max_guests_per_rsvp", 5):
