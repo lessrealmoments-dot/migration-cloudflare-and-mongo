@@ -623,7 +623,8 @@ class TestCleanup:
         })
         if response.status_code != 200:
             pytest.skip("Cannot login for cleanup")
-        return response.json()["token"]
+        data = response.json()
+        return data.get("access_token") or data.get("token")
     
     @pytest.fixture(scope="class")
     def auth_headers(self, auth_token):
