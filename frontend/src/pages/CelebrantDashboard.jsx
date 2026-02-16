@@ -413,6 +413,63 @@ export default function CelebrantDashboard() {
             </button>
           </div>
 
+          {/* Host-Only Actions */}
+          <div className="mt-4 pt-4 border-t border-zinc-200">
+            <p className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Host Controls</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {/* Link/Unlink Gallery */}
+              {invitation.linked_gallery_id ? (
+                <button
+                  onClick={unlinkGallery}
+                  className="flex items-center justify-center gap-2 p-3 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
+                  data-testid="unlink-gallery-btn"
+                >
+                  <Unlink className="w-5 h-5" />
+                  <span className="text-sm font-medium">Unlink Gallery</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowLinkGalleryModal(true)}
+                  className="flex items-center justify-center gap-2 p-3 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors"
+                  data-testid="link-gallery-btn"
+                >
+                  <Link2 className="w-5 h-5" />
+                  <span className="text-sm font-medium">Link Gallery</span>
+                </button>
+              )}
+              
+              {/* Generate/View Celebrant Link */}
+              {celebrantLink ? (
+                <button
+                  onClick={() => setShowCelebrantLinkModal(true)}
+                  className="flex items-center justify-center gap-2 p-3 rounded-xl border border-green-200 bg-green-50 hover:bg-green-100 text-green-700 transition-colors"
+                  data-testid="view-celebrant-link-btn"
+                >
+                  <Key className="w-5 h-5" />
+                  <span className="text-sm font-medium">Celebrant Link</span>
+                </button>
+              ) : (
+                <button
+                  onClick={generateCelebrantLink}
+                  className="flex items-center justify-center gap-2 p-3 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors"
+                  data-testid="generate-celebrant-link-btn"
+                >
+                  <Key className="w-5 h-5" />
+                  <span className="text-sm font-medium">Generate Celebrant Link</span>
+                </button>
+              )}
+              
+              {/* Edit Invitation */}
+              <Link
+                to={`/invitations/${id}/edit`}
+                className="flex items-center justify-center gap-2 p-3 rounded-xl border border-zinc-200 hover:bg-zinc-50 text-zinc-700 transition-colors"
+              >
+                <Edit className="w-5 h-5" />
+                <span className="text-sm font-medium">Edit Invitation</span>
+              </Link>
+            </div>
+          </div>
+
           {/* External Invitation Link Display */}
           {invitation.external_invitation_url && (
             <div className="mt-4 p-3 bg-rose-50 rounded-lg flex items-center justify-between">
