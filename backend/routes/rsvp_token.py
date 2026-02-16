@@ -355,8 +355,10 @@ async def get_pending_purchases():
     
     pending = []
     async for txn in cursor:
-        # Get user info
+        # Get user info - try both _id and id field
         user = await db.users.find_one({"_id": txn["user_id"]})
+        if not user:
+            user = await db.users.find_one({"id": txn["user_id"]})
         txn["id"] = str(txn.pop("_id", txn.get("id", "")))
         txn["user_email"] = user.get("email") if user else "Unknown"
         txn["user_name"] = user.get("name") if user else "Unknown"
