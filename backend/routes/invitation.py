@@ -562,6 +562,7 @@ def setup_invitation_routes(app, db, get_current_user):
             venue_map_url=invitation.get("venue_map_url"),
             message=invitation.get("message"),
             additional_info=invitation.get("additional_info"),
+            external_invitation_url=invitation.get("external_invitation_url"),
             design=InvitationDesign(**invitation.get("design", {})),
             rsvp_enabled=invitation.get("rsvp_enabled", True),
             rsvp_deadline=invitation.get("rsvp_deadline"),
