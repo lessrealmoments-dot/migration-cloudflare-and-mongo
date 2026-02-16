@@ -480,6 +480,20 @@ async def reject_purchase(transaction_id: str, reason: str, background_tasks: Ba
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Transaction not found or already processed")
     
+    # Send rejection email to user
+    if send_email_func and get_email_template_func:
+        user_id = transaction.get("user_id")
+        user = await db.users.find_one({"_id": user_id})
+        if not user:
+            user = await db.users.find_one({"id": user_id})
+        
+        if user:
+            subject, html = get_email_template_func("customer_rsvp_token_rejected", {
+                "name": user.get("name", "User"),
+                "reason": reason
+            })
+            background_tasks.add_task(send_email_func, user.get("email"), subject, html)
+    
     return {"message": "Purchase rejected", "transaction_id": transaction_id}
 
 
