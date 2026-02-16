@@ -2819,6 +2819,178 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* RSVP Tokens Tab */}
+      {activeTab === 'rsvp-tokens' && (
+        <div className="space-y-6">
+          {/* RSVP Token Settings */}
+          <div className="bg-zinc-800 rounded-lg p-6">
+            <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+              <Mail className="w-5 h-5 text-purple-400" />
+              RSVP Token Settings
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">Token Price (PHP)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={rsvpTokenSettings.token_price}
+                    onChange={(e) => setRsvpTokenSettings(prev => ({ ...prev, token_price: parseInt(e.target.value) || 0 }))}
+                    className="flex-1 px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white"
+                    data-testid="rsvp-token-price-input"
+                  />
+                  <button
+                    onClick={handleUpdateRsvpTokenPrice}
+                    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save
+                  </button>
+                </div>
+                <p className="text-xs text-zinc-500 mt-1">1 token = 1 invitation with unlimited guests</p>
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">Token Expiry</label>
+                <p className="text-white">12 months from purchase</p>
+                <p className="text-xs text-zinc-500 mt-1">Unused tokens expire after 12 months</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Grant RSVP Tokens */}
+          <div className="bg-zinc-800 rounded-lg p-6">
+            <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+              <Key className="w-5 h-5 text-green-400" />
+              Grant RSVP Tokens to User
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">User ID</label>
+                <input
+                  type="text"
+                  value={rsvpGrantUserId}
+                  onChange={(e) => setRsvpGrantUserId(e.target.value)}
+                  placeholder="Enter user ID"
+                  className="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white"
+                  data-testid="rsvp-grant-user-id"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">Quantity</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={rsvpGrantQuantity}
+                    onChange={(e) => setRsvpGrantQuantity(parseInt(e.target.value) || 1)}
+                    disabled={rsvpGrantUnlimited}
+                    className="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white disabled:opacity-50"
+                    min="1"
+                    data-testid="rsvp-grant-quantity"
+                  />
+                  <label className="flex items-center gap-1 text-sm text-zinc-400 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={rsvpGrantUnlimited}
+                      onChange={(e) => setRsvpGrantUnlimited(e.target.checked)}
+                      className="rounded"
+                    />
+                    Unlimited
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">Reason</label>
+                <input
+                  type="text"
+                  value={rsvpGrantReason}
+                  onChange={(e) => setRsvpGrantReason(e.target.value)}
+                  placeholder="e.g., Promo, Compensation"
+                  className="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white"
+                  data-testid="rsvp-grant-reason"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={handleGrantRsvpTokens}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500 flex items-center justify-center gap-2"
+                  data-testid="rsvp-grant-btn"
+                >
+                  <Plus className="w-4 h-4" />
+                  Grant Tokens
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-zinc-500 mt-3">
+              💡 Tip: Copy a user ID from the Photographers or Clients tab. Granting "Unlimited" is permanent until manually revoked.
+            </p>
+          </div>
+
+          {/* Pending RSVP Token Purchases */}
+          <div className="bg-zinc-800 rounded-lg p-6">
+            <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-amber-400" />
+              Pending RSVP Token Purchases
+              {rsvpPendingPurchases.length > 0 && (
+                <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full ml-2">
+                  {rsvpPendingPurchases.length}
+                </span>
+              )}
+            </h2>
+            {rsvpPendingPurchases.length === 0 ? (
+              <p className="text-zinc-500 text-center py-8">No pending purchases</p>
+            ) : (
+              <div className="space-y-3">
+                {rsvpPendingPurchases.map((purchase) => (
+                  <div key={purchase.id} className="bg-zinc-700/50 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-white font-medium">{purchase.user_name || 'Unknown User'}</p>
+                        <p className="text-sm text-zinc-400">{purchase.user_email}</p>
+                        <p className="text-xs text-zinc-500 mt-1">
+                          User ID: <code className="bg-zinc-700 px-1 rounded">{purchase.user_id}</code>
+                        </p>
+                        <div className="flex items-center gap-4 mt-2 text-sm">
+                          <span className="text-purple-400">{purchase.quantity} token(s)</span>
+                          <span className="text-green-400">₱{purchase.price_paid}</span>
+                          <span className="text-zinc-500">{new Date(purchase.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {purchase.proof_url && (
+                          <button
+                            onClick={() => window.open(purchase.proof_url, '_blank')}
+                            className="px-3 py-1.5 bg-zinc-600 text-zinc-300 rounded hover:bg-zinc-500 text-sm flex items-center gap-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Proof
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleApproveRsvpPurchase(purchase.id)}
+                          className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-500 text-sm flex items-center gap-1"
+                          data-testid={`approve-rsvp-${purchase.id}`}
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleRejectRsvpPurchase(purchase.id)}
+                          className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-500 text-sm flex items-center gap-1"
+                          data-testid={`reject-rsvp-${purchase.id}`}
+                        >
+                          <XCircle className="w-4 h-4" />
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
