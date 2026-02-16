@@ -4753,6 +4753,11 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     auto_delete_dt = created_at + timedelta(days=GALLERY_EXPIRATION_DAYS)
     days_until_deletion = (auto_delete_dt - datetime.now(timezone.utc)).days
     
+    # Prepare demo warning message
+    demo_warning = None
+    if is_demo:
+        demo_warning = f"⚠️ This is a DEMO gallery. It will expire in 2 hours and all content will be permanently deleted. Upgrading to a paid plan will NOT extend this demo gallery. Create a new gallery after upgrading to keep your photos permanently."
+    
     return Gallery(
         id=gallery_id,
         photographer_id=current_user["id"],
@@ -4775,7 +4780,10 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         days_until_deletion=days_until_deletion,
         is_edit_locked=False,
         days_until_edit_lock=GALLERY_EDIT_LOCK_DAYS,
-        download_locked_until_payment=download_locked_until_payment
+        download_locked_until_payment=download_locked_until_payment,
+        is_demo=is_demo,
+        demo_warning=demo_warning,
+        demo_expires_at=demo_features_expire
     )
 
 def calculate_days_until_deletion(auto_delete_date: str) -> int:
