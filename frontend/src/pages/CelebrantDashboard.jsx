@@ -988,21 +988,27 @@ export default function CelebrantDashboard() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-green-100 rounded-full">
-                <Key className="w-6 h-6 text-green-600" />
+              <div className="p-2 bg-purple-100 rounded-full">
+                <Key className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="text-lg font-semibold text-zinc-900">Celebrant Access Link</h3>
+              <div>
+                <h3 className="text-lg font-semibold text-zinc-900">Client Access Link</h3>
+                <p className="text-xs text-purple-600 font-medium">Share with your celebrant/client</p>
+              </div>
             </div>
             
             <p className="text-sm text-zinc-500 mb-4">
-              Share this link with the celebrant. They can use it to:
+              This link gives your client limited access to manage their event:
             </p>
             <ul className="text-sm text-zinc-600 mb-4 list-disc list-inside space-y-1">
-              <li>Edit event details (with confirmation)</li>
-              <li>View and manage guest responses</li>
+              <li>Edit event details (with confirmation prompts)</li>
+              <li>View guest responses</li>
               <li>Add guests manually</li>
               <li>Copy RSVP link and QR code</li>
             </ul>
+            <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg mb-4">
+              ⚠️ Note: Clients cannot link/unlink galleries or delete guest responses.
+            </p>
             
             <div className="bg-zinc-50 p-3 rounded-lg mb-4">
               <p className="text-sm text-zinc-600 break-all font-mono">{celebrantLink}</p>
@@ -1012,16 +1018,16 @@ export default function CelebrantDashboard() {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(celebrantLink);
-                  toast.success('Celebrant link copied!');
+                  toast.success('Client access link copied!');
                 }}
-                className="flex-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
+                className="flex-1 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2"
               >
                 <Copy className="w-4 h-4" />
                 Copy Link
               </button>
               <button
                 onClick={() => {
-                  if (window.confirm('Are you sure you want to revoke celebrant access? They will no longer be able to edit the invitation.')) {
+                  if (window.confirm('Are you sure you want to revoke client access? They will no longer be able to view or edit the invitation.')) {
                     revokeCelebrantLink();
                     setShowCelebrantLinkModal(false);
                   }
