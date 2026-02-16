@@ -114,6 +114,10 @@ export default function PublicInvitation() {
   const [needsPassword, setNeedsPassword] = useState(false);
   const [showRSVPForm, setShowRSVPForm] = useState(false);
   const [coverImage, setCoverImage] = useState(null);
+  const [cardHeight, setCardHeight] = useState(null);
+  
+  // Refs for height matching
+  const rsvpCardRef = useRef(null);
   
   // RSVP Form
   const [rsvpData, setRsvpData] = useState({
@@ -125,6 +129,14 @@ export default function PublicInvitation() {
     responses: {},
     message: ''
   });
+  
+  // Measure card height when NOT showing form (collapsed state)
+  useEffect(() => {
+    if (rsvpCardRef.current && !showRSVPForm) {
+      const height = rsvpCardRef.current.offsetHeight;
+      setCardHeight(height);
+    }
+  }, [invitation, showRSVPForm]);
 
   useEffect(() => {
     fetchInvitation();
