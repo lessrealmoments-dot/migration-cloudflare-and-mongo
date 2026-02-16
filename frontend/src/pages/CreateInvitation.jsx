@@ -189,17 +189,26 @@ export default function CreateInvitation() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API}/api/invitations`, {
+      const payload = {
         ...formData,
         rsvp_fields: formData.rsvp_fields.filter(f => f.enabled)
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      toast.success('Invitation created successfully!');
-      navigate(`/invitations/${response.data.id}`);
+      };
+
+      if (isEditMode) {
+        await axios.put(`${API}/api/invitations/${id}`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success('Invitation updated successfully!');
+        navigate(`/invitations/${id}`);
+      } else {
+        const response = await axios.post(`${API}/api/invitations`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success('Invitation created successfully!');
+        navigate(`/invitations/${response.data.id}`);
+      }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to create invitation');
+      toast.error(error.response?.data?.detail || `Failed to ${isEditMode ? 'update' : 'create'} invitation`);
     } finally {
       setLoading(false);
     }
