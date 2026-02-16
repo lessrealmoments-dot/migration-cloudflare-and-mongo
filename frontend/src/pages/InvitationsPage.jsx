@@ -116,9 +116,18 @@ export default function InvitationsPage() {
       <header className="bg-white border-b border-zinc-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-zinc-900">Invitations & RSVP</h1>
-              <p className="text-sm text-zinc-500 mt-1">Create beautiful event invitations and track RSVPs</p>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+                data-testid="back-to-dashboard-btn"
+              >
+                <ArrowLeft className="w-5 h-5 text-zinc-600" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-semibold text-zinc-900">Invitations & RSVP</h1>
+                <p className="text-sm text-zinc-500 mt-1">Create beautiful event invitations and track RSVPs</p>
+              </div>
             </div>
             <button
               onClick={() => navigate('/invitations/create')}
