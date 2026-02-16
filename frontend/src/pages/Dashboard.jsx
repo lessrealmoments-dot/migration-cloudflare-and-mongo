@@ -138,6 +138,39 @@ const Dashboard = ({ user, setUser }) => {
     }
   };
 
+  const fetchRsvpTokenBalance = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const [balanceRes, priceRes] = await Promise.all([
+        axios.get(`${API}/rsvp-tokens/balance?user_id=${user?.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API}/rsvp-tokens/price`)
+      ]);
+      setRsvpTokenBalance(balanceRes.data);
+      setRsvpTokenPrice(priceRes.data.token_price);
+    } catch (error) {
+      console.error('Failed to fetch RSVP token balance');
+    }
+  };
+
+  const handleBuyRsvpTokens = async (proofUrl) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/rsvp-tokens/purchase?user_id=${user?.id}`, {
+        quantity: 1,
+        proof_url: proofUrl
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('RSVP token purchase request submitted! Admin will approve shortly.');
+      setShowBuyRsvpTokenModal(false);
+      fetchRsvpTokenBalance();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to submit request');
+    }
+  };
+
   const handleBuyCredits = async (proofUrl) => {
     try {
       const token = localStorage.getItem('token');
