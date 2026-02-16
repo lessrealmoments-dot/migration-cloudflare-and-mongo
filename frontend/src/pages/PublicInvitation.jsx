@@ -22,7 +22,7 @@ import {
 const API = process.env.REACT_APP_BACKEND_URL;
 
 // Countdown Timer Component
-const CountdownTimer = ({ eventDate, accentColor, primaryColor }) => {
+const CountdownTimer = ({ eventDate, primaryColor }) => {
   const [timeLeft, setTimeLeft] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isEventPassed, setIsEventPassed] = React.useState(false);
 
@@ -56,11 +56,12 @@ const CountdownTimer = ({ eventDate, accentColor, primaryColor }) => {
   }, [eventDate]);
 
   if (!eventDate) return null;
+  
   if (isEventPassed) {
     return (
-      <div className="text-center py-4 px-6 rounded-xl mb-6" style={{ backgroundColor: `${accentColor}20` }}>
-        <p className="text-sm font-medium" style={{ color: primaryColor }}>
-          🎉 The event has started!
+      <div className="text-center py-3">
+        <p className="text-white/90 text-sm font-medium">
+          🎉 The celebration has begun!
         </p>
       </div>
     );
@@ -68,29 +69,22 @@ const CountdownTimer = ({ eventDate, accentColor, primaryColor }) => {
 
   const TimeBlock = ({ value, label }) => (
     <div className="text-center">
-      <div 
-        className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-bold mb-1"
-        style={{ backgroundColor: `${accentColor}20`, color: primaryColor }}
-      >
+      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl sm:text-2xl font-bold text-white mb-1">
         {String(value).padStart(2, '0')}
       </div>
-      <p className="text-xs text-zinc-500 uppercase tracking-wider">{label}</p>
+      <p className="text-[10px] sm:text-xs text-white/70 uppercase tracking-wider">{label}</p>
     </div>
   );
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-center gap-1 mb-3">
-        <Timer className="w-4 h-4" style={{ color: accentColor }} />
-        <p className="text-sm font-medium" style={{ color: primaryColor }}>Counting down to the big day!</p>
-      </div>
-      <div className="flex items-center justify-center gap-3">
+    <div className="py-4">
+      <div className="flex items-center justify-center gap-2 sm:gap-3">
         <TimeBlock value={timeLeft.days} label="Days" />
-        <span className="text-2xl font-bold" style={{ color: accentColor }}>:</span>
+        <span className="text-xl sm:text-2xl font-bold text-white/50 mt-[-20px]">:</span>
         <TimeBlock value={timeLeft.hours} label="Hours" />
-        <span className="text-2xl font-bold" style={{ color: accentColor }}>:</span>
+        <span className="text-xl sm:text-2xl font-bold text-white/50 mt-[-20px]">:</span>
         <TimeBlock value={timeLeft.minutes} label="Mins" />
-        <span className="text-2xl font-bold hidden sm:block" style={{ color: accentColor }}>:</span>
+        <span className="text-xl sm:text-2xl font-bold text-white/50 mt-[-20px] hidden sm:block">:</span>
         <div className="hidden sm:block">
           <TimeBlock value={timeLeft.seconds} label="Secs" />
         </div>
@@ -101,13 +95,13 @@ const CountdownTimer = ({ eventDate, accentColor, primaryColor }) => {
 
 // Default cover images based on event type
 const defaultCoverImages = {
-  wedding: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80',
-  birthday: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80',
-  corporate: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80',
-  baby_shower: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80',
-  graduation: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80',
-  anniversary: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=800&q=80',
-  celebration: 'https://images.unsplash.com/photo-1496843916299-590492c751f4?w=800&q=80'
+  wedding: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80',
+  birthday: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=1200&q=80',
+  corporate: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&q=80',
+  baby_shower: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1200&q=80',
+  graduation: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80',
+  anniversary: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=1200&q=80',
+  celebration: 'https://images.unsplash.com/photo-1496843916299-590492c751f4?w=1200&q=80'
 };
 
 export default function PublicInvitation() {
@@ -233,11 +227,11 @@ export default function PublicInvitation() {
   if (needsPassword) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-900 to-zinc-800 p-4">
-        <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 max-w-md w-full border border-white/20">
           <div className="text-center mb-6">
-            <Heart className="w-12 h-12 text-rose-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-serif text-zinc-900">Private Invitation</h1>
-            <p className="text-zinc-500 mt-2">Enter the password to view this invitation</p>
+            <Heart className="w-12 h-12 text-white/80 mx-auto mb-4" />
+            <h1 className="text-2xl font-serif text-white">Private Invitation</h1>
+            <p className="text-white/60 mt-2">Enter the password to view this invitation</p>
           </div>
           <form onSubmit={handlePasswordSubmit}>
             <input
@@ -245,12 +239,12 @@ export default function PublicInvitation() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter password"
-              className="w-full px-4 py-3 border border-zinc-300 rounded-lg mb-4 focus:ring-2 focus:ring-zinc-900"
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-white/30 focus:border-transparent"
               data-testid="password-input"
             />
             <button
               type="submit"
-              className="w-full py-3 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors"
+              className="w-full mt-4 py-3 bg-white text-zinc-900 rounded-lg hover:bg-white/90 transition-colors font-medium"
               data-testid="view-invitation-btn"
             >
               View Invitation
@@ -283,15 +277,14 @@ export default function PublicInvitation() {
   if (submitted) {
     return (
       <div 
-        className="min-h-screen flex items-center justify-center p-4"
-        style={{ 
-          background: `linear-gradient(135deg, ${primaryColor}22 0%, ${primaryColor}11 100%)`,
-        }}
+        className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center"
+        style={{ backgroundImage: `url(${coverImage})` }}
       >
-        <div className="text-center max-w-md bg-white rounded-2xl p-8 shadow-xl">
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div className="relative z-10 text-center max-w-md bg-white/95 backdrop-blur-xl rounded-2xl p-8 shadow-2xl">
           <div 
             className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-            style={{ backgroundColor: accentColor }}
+            style={{ backgroundColor: primaryColor }}
           >
             <Check className="w-10 h-10 text-white" />
           </div>
@@ -322,342 +315,359 @@ export default function PublicInvitation() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: primaryColor }}>
-      {/* Header with Initials */}
-      <header className="py-4 text-center">
-        <p 
-          className="text-white/80 text-lg tracking-widest"
-          style={{ fontFamily }}
-        >
-          {getInitials(invitation.host_names)}
-        </p>
-      </header>
-
-      {/* Main Content - Split Layout */}
-      <main className="max-w-6xl mx-auto px-4 pb-8">
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2">
-            {/* Left Column - Event Info */}
-            <div className="p-8 lg:p-12 bg-white/95">
-              {/* Title */}
-              <h1 
-                className="text-3xl lg:text-4xl mb-4"
-                style={{ fontFamily, color: primaryColor }}
-                data-testid="invitation-title"
+    <div 
+      className="min-h-screen bg-cover bg-center bg-fixed"
+      style={{ backgroundImage: `url(${coverImage})` }}
+    >
+      {/* Frosted Overlay */}
+      <div className="min-h-screen" style={{ backgroundColor: `${primaryColor}dd` }}>
+        <div className="min-h-screen backdrop-blur-md">
+          
+          {/* Header with Initials */}
+          <header className="pt-8 pb-4 text-center">
+            <div 
+              className="inline-block px-6 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20"
+            >
+              <p 
+                className="text-white text-lg tracking-[0.3em] font-light"
+                style={{ fontFamily }}
               >
-                {invitation.title}
-              </h1>
+                {getInitials(invitation.host_names)}
+              </p>
+            </div>
+          </header>
 
-              {/* Countdown Timer */}
-              {invitation.event_date && (
-                <CountdownTimer 
-                  eventDate={invitation.event_date} 
-                  accentColor={accentColor}
-                  primaryColor={primaryColor}
-                />
-              )}
-
-              {/* Message */}
-              {invitation.message && (
-                <p className="text-zinc-600 mb-6 leading-relaxed">
-                  {invitation.message}
-                </p>
-              )}
-
-              {/* RSVP Deadline Notice */}
-              {invitation.rsvp_deadline && (
-                <p className="text-sm mb-6" style={{ color: primaryColor }}>
-                  If you can kindly RSVP below before {formatDate(invitation.rsvp_deadline)}.
-                </p>
-              )}
-
-              {/* Quick Info */}
-              {(invitation.venue_name || invitation.event_time) && (
-                <div className="text-sm text-zinc-600 mb-6">
-                  {invitation.venue_name && <p>Location: {invitation.venue_name}</p>}
-                  {invitation.event_time && <p>Time: {formatTime(invitation.event_time)}</p>}
-                </div>
-              )}
-
-              {/* Event Details Card */}
-              <div className="border border-zinc-200 rounded-xl p-6 mb-6 space-y-4">
-                {/* Location */}
-                {invitation.venue_name && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 mt-0.5" style={{ color: accentColor }} />
-                    <div>
-                      <p className="text-xs text-zinc-500 uppercase tracking-wider">Location</p>
-                      <p className="font-medium text-zinc-900">{invitation.venue_name}</p>
-                      {invitation.venue_address && (
-                        <p className="text-sm text-zinc-500">{invitation.venue_address}</p>
-                      )}
-                      {invitation.venue_map_url && (
-                        <a
-                          href={invitation.venue_map_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-sm mt-1 hover:underline"
-                          style={{ color: primaryColor }}
-                          data-testid="map-link"
-                        >
-                          Open in Google Maps <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Date & Time */}
-                {invitation.event_date && (
-                  <div className="flex items-start gap-3">
-                    <Calendar className="w-5 h-5 mt-0.5" style={{ color: accentColor }} />
-                    <div>
-                      <p className="text-xs text-zinc-500 uppercase tracking-wider">Date & Time</p>
-                      <p className="font-medium text-zinc-900">
-                        {formatDate(invitation.event_date)}
-                        {invitation.event_time && ` at ${formatTime(invitation.event_time)}`}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Additional Info */}
-              {invitation.additional_info && (
-                <div 
-                  className="text-sm p-4 rounded-lg mb-6"
-                  style={{ backgroundColor: `${accentColor}20`, color: primaryColor }}
-                >
-                  {invitation.additional_info}
-                </div>
-              )}
-
-              {/* Action Buttons - GuestPix Style */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* External Invitation Link (e.g., Canva) */}
-                {invitation.external_invitation_url && (
-                  <a
-                    href={invitation.external_invitation_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-colors hover:bg-zinc-50"
-                    style={{ borderColor: accentColor, color: primaryColor }}
-                    data-testid="view-invitation-btn"
+          {/* Main Content */}
+          <main className="max-w-5xl mx-auto px-4 pb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              
+              {/* Left Column - Info Card (3/5 width on lg) */}
+              <div className="lg:col-span-3">
+                <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden">
+                  {/* Card Header with Primary Color */}
+                  <div 
+                    className="px-6 py-8 text-center"
+                    style={{ backgroundColor: primaryColor }}
                   >
-                    <ExternalLink className="w-4 h-4" />
-                    View Invitation
-                  </a>
-                )}
-                {invitation.linked_gallery_share_link && (
-                  <a
-                    href={`/g/${invitation.linked_gallery_share_link}`}
-                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-colors hover:bg-zinc-50"
-                    style={{ borderColor: accentColor, color: primaryColor }}
-                    data-testid="view-gallery-btn"
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    View Gallery
-                  </a>
-                )}
-                {invitation.rsvp_enabled && (
-                  <button
-                    onClick={() => setShowRSVPForm(!showRSVPForm)}
-                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-colors ${
-                      (invitation.linked_gallery_share_link || invitation.external_invitation_url) ? '' : 'col-span-2'
-                    }`}
-                    style={{ 
-                      borderColor: accentColor, 
-                      backgroundColor: showRSVPForm ? accentColor : 'transparent',
-                      color: showRSVPForm ? 'white' : primaryColor
-                    }}
-                    data-testid="rsvp-toggle-btn"
-                  >
-                    <Mail className="w-4 h-4" />
-                    RSVP
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showRSVPForm ? 'rotate-180' : ''}`} />
-                  </button>
-                )}
-              </div>
-
-              {/* RSVP Form - Expandable */}
-              {invitation.rsvp_enabled && showRSVPForm && (
-                <div className="mt-6 pt-6 border-t border-zinc-200">
-                  <h2 
-                    className="text-xl mb-4"
-                    style={{ fontFamily, color: primaryColor }}
-                  >
-                    RSVP
-                  </h2>
-
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Name */}
-                    <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">
-                        Your Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={rsvpData.guest_name}
-                        onChange={(e) => handleInputChange('guest_name', e.target.value)}
-                        required
-                        className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-offset-0 focus:outline-none"
-                        style={{ focusRing: primaryColor }}
-                        data-testid="guest-name-input"
+                    <h1 
+                      className="text-2xl sm:text-3xl lg:text-4xl text-white mb-2"
+                      style={{ fontFamily }}
+                      data-testid="invitation-title"
+                    >
+                      {invitation.title}
+                    </h1>
+                    <p className="text-white/80 text-sm">
+                      {invitation.host_names}
+                    </p>
+                    
+                    {/* Countdown Timer in Header */}
+                    {invitation.event_date && (
+                      <CountdownTimer 
+                        eventDate={invitation.event_date} 
+                        primaryColor={primaryColor}
                       />
-                    </div>
+                    )}
+                  </div>
 
-                    {/* Attendance */}
-                    <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-2">
-                        Will you attend? *
-                      </label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {[
-                          { value: 'attending', label: 'Yes', icon: Check, bgColor: 'bg-green-50', borderColor: 'border-green-500', textColor: 'text-green-700' },
-                          { value: 'not_attending', label: 'No', icon: X, bgColor: 'bg-red-50', borderColor: 'border-red-500', textColor: 'text-red-700' },
-                          { value: 'maybe', label: 'Maybe', icon: HelpCircle, bgColor: 'bg-amber-50', borderColor: 'border-amber-500', textColor: 'text-amber-700' }
-                        ].map(option => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => handleInputChange('attendance_status', option.value)}
-                            className={`p-3 rounded-lg border-2 transition-all ${
-                              rsvpData.attendance_status === option.value
-                                ? `${option.bgColor} ${option.borderColor} ${option.textColor}`
-                                : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
-                            }`}
-                            data-testid={`attendance-${option.value}`}
+                  {/* Card Body */}
+                  <div className="p-6 sm:p-8">
+                    {/* Message */}
+                    {invitation.message && (
+                      <p className="text-zinc-600 mb-6 leading-relaxed text-center">
+                        {invitation.message}
+                      </p>
+                    )}
+
+                    {/* Event Details */}
+                    <div className="space-y-4 mb-6">
+                      {/* Location */}
+                      {invitation.venue_name && (
+                        <div className="flex items-start gap-4 p-4 bg-zinc-50 rounded-xl">
+                          <div 
+                            className="p-2 rounded-lg"
+                            style={{ backgroundColor: `${accentColor}30` }}
                           >
-                            <option.icon className="w-5 h-5 mx-auto mb-1" />
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </button>
-                        ))}
-                      </div>
+                            <MapPin className="w-5 h-5" style={{ color: primaryColor }} />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Location</p>
+                            <p className="font-medium text-zinc-900">{invitation.venue_name}</p>
+                            {invitation.venue_address && (
+                              <p className="text-sm text-zinc-500 mt-1">{invitation.venue_address}</p>
+                            )}
+                            {invitation.venue_map_url && (
+                              <a
+                                href={invitation.venue_map_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-sm mt-2 hover:underline"
+                                style={{ color: primaryColor }}
+                                data-testid="map-link"
+                              >
+                                Open in Google Maps <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Date & Time */}
+                      {invitation.event_date && (
+                        <div className="flex items-start gap-4 p-4 bg-zinc-50 rounded-xl">
+                          <div 
+                            className="p-2 rounded-lg"
+                            style={{ backgroundColor: `${accentColor}30` }}
+                          >
+                            <Calendar className="w-5 h-5" style={{ color: primaryColor }} />
+                          </div>
+                          <div>
+                            <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Date & Time</p>
+                            <p className="font-medium text-zinc-900">
+                              {formatDate(invitation.event_date)}
+                            </p>
+                            {invitation.event_time && (
+                              <p className="text-sm text-zinc-500 mt-1">
+                                {formatTime(invitation.event_time)}
+                                {invitation.event_end_time && ` - ${formatTime(invitation.event_end_time)}`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Guest Count - only show if attending */}
-                    {rsvpData.attendance_status === 'attending' && (
-                      <div>
-                        <label className="block text-sm font-medium text-zinc-700 mb-1">
-                          <Users className="w-4 h-4 inline mr-1" />
-                          Number of Guests
-                        </label>
-                        <select
-                          value={rsvpData.guest_count}
-                          onChange={(e) => handleInputChange('guest_count', parseInt(e.target.value))}
-                          className="w-full px-4 py-3 border border-zinc-300 rounded-lg"
-                          data-testid="guest-count-select"
-                        >
-                          {Array.from({ length: invitation.max_guests_per_rsvp }, (_, i) => i + 1).map(n => (
-                            <option key={n} value={n}>{n} {n === 1 ? 'guest' : 'guests'}</option>
-                          ))}
-                        </select>
+                    {/* Additional Info */}
+                    {invitation.additional_info && (
+                      <div 
+                        className="text-sm p-4 rounded-xl mb-6 text-center"
+                        style={{ backgroundColor: `${accentColor}20`, color: primaryColor }}
+                      >
+                        {invitation.additional_info}
                       </div>
                     )}
 
-                    {/* Dynamic RSVP Fields */}
-                    {invitation.rsvp_fields?.filter(f => f.enabled && f.field_id !== 'attendance' && f.field_id !== 'guest_count').map(field => (
-                      <div key={field.field_id}>
-                        <label className="block text-sm font-medium text-zinc-700 mb-1">
-                          {field.label} {field.required && '*'}
-                        </label>
-                        
-                        {field.field_type === 'text' && (
-                          <input
-                            type={field.field_id === 'email' ? 'email' : field.field_id === 'phone' ? 'tel' : 'text'}
-                            value={field.field_id === 'email' ? rsvpData.guest_email : 
-                                   field.field_id === 'phone' ? rsvpData.guest_phone :
-                                   rsvpData.responses[field.field_id] || ''}
-                            onChange={(e) => {
-                              if (field.field_id === 'email') handleInputChange('guest_email', e.target.value);
-                              else if (field.field_id === 'phone') handleInputChange('guest_phone', e.target.value);
-                              else handleResponseChange(field.field_id, e.target.value);
-                            }}
-                            placeholder={field.placeholder}
-                            required={field.required}
-                            className="w-full px-4 py-3 border border-zinc-300 rounded-lg"
-                            data-testid={`field-${field.field_id}`}
-                          />
-                        )}
+                    {/* RSVP Deadline */}
+                    {invitation.rsvp_deadline && (
+                      <p className="text-sm text-center mb-6" style={{ color: primaryColor }}>
+                        Kindly RSVP by {formatDate(invitation.rsvp_deadline)}
+                      </p>
+                    )}
 
-                        {field.field_type === 'textarea' && (
-                          <textarea
-                            value={field.field_id === 'message' ? rsvpData.message : rsvpData.responses[field.field_id] || ''}
-                            onChange={(e) => {
-                              if (field.field_id === 'message') handleInputChange('message', e.target.value);
-                              else handleResponseChange(field.field_id, e.target.value);
-                            }}
-                            placeholder={field.placeholder}
-                            rows={3}
-                            className="w-full px-4 py-3 border border-zinc-300 rounded-lg"
-                            data-testid={`field-${field.field_id}`}
-                          />
-                        )}
-
-                        {field.field_type === 'select' && field.options && (
-                          <select
-                            value={rsvpData.responses[field.field_id] || ''}
-                            onChange={(e) => handleResponseChange(field.field_id, e.target.value)}
-                            required={field.required}
-                            className="w-full px-4 py-3 border border-zinc-300 rounded-lg"
-                            data-testid={`field-${field.field_id}`}
-                          >
-                            <option value="">Select...</option>
-                            {field.options.map(opt => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-                    ))}
-
-                    {/* Submit Button */}
-                    <button
-                      type="submit"
-                      disabled={submitting || !rsvpData.guest_name || !rsvpData.attendance_status}
-                      className="w-full py-4 rounded-lg text-white font-medium flex items-center justify-center gap-2 transition-opacity disabled:opacity-50"
-                      style={{ backgroundColor: primaryColor }}
-                      data-testid="submit-rsvp-btn"
-                    >
-                      {submitting ? 'Submitting...' : (
-                        <>
-                          <Send className="w-4 h-4" />
-                          Submit RSVP
-                        </>
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* External Invitation Link (e.g., Canva) */}
+                      {invitation.external_invitation_url && (
+                        <a
+                          href={invitation.external_invitation_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-white transition-all hover:opacity-90"
+                          style={{ backgroundColor: accentColor }}
+                          data-testid="view-invitation-btn"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          View Invitation
+                        </a>
                       )}
-                    </button>
-                  </form>
+                      {invitation.linked_gallery_share_link && (
+                        <a
+                          href={`/g/${invitation.linked_gallery_share_link}`}
+                          className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-colors hover:bg-zinc-50"
+                          style={{ borderColor: primaryColor, color: primaryColor }}
+                          data-testid="view-gallery-btn"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                          View Gallery
+                        </a>
+                      )}
+                      {invitation.rsvp_enabled && (
+                        <button
+                          onClick={() => setShowRSVPForm(!showRSVPForm)}
+                          className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all ${
+                            !invitation.linked_gallery_share_link && !invitation.external_invitation_url ? 'sm:col-span-2' : ''
+                          }`}
+                          style={{ 
+                            backgroundColor: showRSVPForm ? primaryColor : 'transparent',
+                            borderWidth: '2px',
+                            borderColor: primaryColor,
+                            color: showRSVPForm ? 'white' : primaryColor
+                          }}
+                          data-testid="rsvp-toggle-btn"
+                        >
+                          <Mail className="w-4 h-4" />
+                          RSVP Now
+                          <ChevronDown className={`w-4 h-4 transition-transform ${showRSVPForm ? 'rotate-180' : ''}`} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* RSVP Form - Expandable */}
+                    {invitation.rsvp_enabled && showRSVPForm && (
+                      <div className="mt-6 pt-6 border-t border-zinc-200">
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                          {/* Name */}
+                          <div>
+                            <label className="block text-sm font-medium text-zinc-700 mb-1">
+                              Your Name *
+                            </label>
+                            <input
+                              type="text"
+                              value={rsvpData.guest_name}
+                              onChange={(e) => handleInputChange('guest_name', e.target.value)}
+                              required
+                              className="w-full px-4 py-3 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-offset-0 focus:outline-none"
+                              data-testid="guest-name-input"
+                            />
+                          </div>
+
+                          {/* Attendance */}
+                          <div>
+                            <label className="block text-sm font-medium text-zinc-700 mb-2">
+                              Will you attend? *
+                            </label>
+                            <div className="grid grid-cols-3 gap-2">
+                              {[
+                                { value: 'attending', label: 'Yes', icon: Check, bgColor: 'bg-green-50', borderColor: 'border-green-500', textColor: 'text-green-700' },
+                                { value: 'not_attending', label: 'No', icon: X, bgColor: 'bg-red-50', borderColor: 'border-red-500', textColor: 'text-red-700' },
+                                { value: 'maybe', label: 'Maybe', icon: HelpCircle, bgColor: 'bg-amber-50', borderColor: 'border-amber-500', textColor: 'text-amber-700' }
+                              ].map(option => (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() => handleInputChange('attendance_status', option.value)}
+                                  className={`p-3 rounded-xl border-2 transition-all ${
+                                    rsvpData.attendance_status === option.value
+                                      ? `${option.bgColor} ${option.borderColor} ${option.textColor}`
+                                      : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                                  }`}
+                                  data-testid={`attendance-${option.value}`}
+                                >
+                                  <option.icon className="w-5 h-5 mx-auto mb-1" />
+                                  <span className="text-sm font-medium">{option.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Guest Count - only show if attending */}
+                          {rsvpData.attendance_status === 'attending' && (
+                            <div>
+                              <label className="block text-sm font-medium text-zinc-700 mb-1">
+                                <Users className="w-4 h-4 inline mr-1" />
+                                Number of Guests
+                              </label>
+                              <select
+                                value={rsvpData.guest_count}
+                                onChange={(e) => handleInputChange('guest_count', parseInt(e.target.value))}
+                                className="w-full px-4 py-3 border border-zinc-300 rounded-xl"
+                                data-testid="guest-count-select"
+                              >
+                                {Array.from({ length: invitation.max_guests_per_rsvp }, (_, i) => i + 1).map(n => (
+                                  <option key={n} value={n}>{n} {n === 1 ? 'guest' : 'guests'}</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+
+                          {/* Dynamic RSVP Fields */}
+                          {invitation.rsvp_fields?.filter(f => f.enabled && f.field_id !== 'attendance' && f.field_id !== 'guest_count').map(field => (
+                            <div key={field.field_id}>
+                              <label className="block text-sm font-medium text-zinc-700 mb-1">
+                                {field.label} {field.required && '*'}
+                              </label>
+                              
+                              {field.field_type === 'text' && (
+                                <input
+                                  type={field.field_id === 'email' ? 'email' : field.field_id === 'phone' ? 'tel' : 'text'}
+                                  value={field.field_id === 'email' ? rsvpData.guest_email : 
+                                         field.field_id === 'phone' ? rsvpData.guest_phone :
+                                         rsvpData.responses[field.field_id] || ''}
+                                  onChange={(e) => {
+                                    if (field.field_id === 'email') handleInputChange('guest_email', e.target.value);
+                                    else if (field.field_id === 'phone') handleInputChange('guest_phone', e.target.value);
+                                    else handleResponseChange(field.field_id, e.target.value);
+                                  }}
+                                  placeholder={field.placeholder}
+                                  required={field.required}
+                                  className="w-full px-4 py-3 border border-zinc-300 rounded-xl"
+                                  data-testid={`field-${field.field_id}`}
+                                />
+                              )}
+
+                              {field.field_type === 'textarea' && (
+                                <textarea
+                                  value={field.field_id === 'message' ? rsvpData.message : rsvpData.responses[field.field_id] || ''}
+                                  onChange={(e) => {
+                                    if (field.field_id === 'message') handleInputChange('message', e.target.value);
+                                    else handleResponseChange(field.field_id, e.target.value);
+                                  }}
+                                  placeholder={field.placeholder}
+                                  rows={3}
+                                  className="w-full px-4 py-3 border border-zinc-300 rounded-xl"
+                                  data-testid={`field-${field.field_id}`}
+                                />
+                              )}
+
+                              {field.field_type === 'select' && field.options && (
+                                <select
+                                  value={rsvpData.responses[field.field_id] || ''}
+                                  onChange={(e) => handleResponseChange(field.field_id, e.target.value)}
+                                  required={field.required}
+                                  className="w-full px-4 py-3 border border-zinc-300 rounded-xl"
+                                  data-testid={`field-${field.field_id}`}
+                                >
+                                  <option value="">Select...</option>
+                                  {field.options.map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                  ))}
+                                </select>
+                              )}
+                            </div>
+                          ))}
+
+                          {/* Submit Button */}
+                          <button
+                            type="submit"
+                            disabled={submitting || !rsvpData.guest_name || !rsvpData.attendance_status}
+                            className="w-full py-4 rounded-xl text-white font-medium flex items-center justify-center gap-2 transition-opacity disabled:opacity-50"
+                            style={{ backgroundColor: primaryColor }}
+                            data-testid="submit-rsvp-btn"
+                          >
+                            {submitting ? 'Submitting...' : (
+                              <>
+                                <Send className="w-4 h-4" />
+                                Submit RSVP
+                              </>
+                            )}
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
 
-            {/* Right Column - Cover Image */}
-            <div 
-              className="hidden lg:block min-h-[500px] bg-cover bg-center relative"
-              style={{ backgroundImage: `url(${coverImage})` }}
-            >
-              {/* Overlay gradient for better text readability if needed */}
-              <div 
-                className="absolute inset-0"
-                style={{ background: `linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%)` }}
-              />
+              {/* Right Column - Photo (2/5 width on lg) */}
+              <div className="lg:col-span-2 hidden lg:block">
+                <div 
+                  className="sticky top-8 h-[600px] rounded-2xl overflow-hidden shadow-2xl bg-cover bg-center"
+                  style={{ backgroundImage: `url(${coverImage})` }}
+                >
+                  {/* Optional: Add a subtle gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                </div>
+              </div>
             </div>
-          </div>
+          </main>
+
+          {/* Footer */}
+          <footer className="py-6 text-center">
+            <p className="text-white/30 text-xs">
+              Powered by EventsGallery.vip
+            </p>
+          </footer>
         </div>
-
-        {/* Mobile Cover Image */}
-        <div 
-          className="lg:hidden mt-4 h-64 rounded-2xl bg-cover bg-center"
-          style={{ backgroundImage: `url(${coverImage})` }}
-        />
-      </main>
-
-      {/* Footer */}
-      <footer className="py-6 text-center">
-        <p className="text-white/40 text-xs">
-          Powered by EventsGallery.vip
-        </p>
-      </footer>
+      </div>
     </div>
   );
 }
