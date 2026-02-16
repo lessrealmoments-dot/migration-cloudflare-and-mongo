@@ -687,23 +687,21 @@ export default function PublicInvitation() {
               </div>
 
               {/* Right Column - Couple's Photo (2/5 width on lg) */}
-              <div className="lg:col-span-2 hidden lg:block">
-                <div className="sticky top-8 space-y-4">
-                  {/* Main Photo */}
-                  <div 
-                    className="h-[500px] rounded-2xl overflow-hidden shadow-2xl bg-cover bg-center relative"
-                    style={{ backgroundImage: `url(${displayCoverImage})` }}
-                  >
-                    {/* Subtle vignette effect */}
-                    <div className="absolute inset-0 shadow-[inset_0_0_50px_rgba(0,0,0,0.3)]"></div>
-                  </div>
-                  
-                  {/* Photo Caption */}
-                  <div className="text-center">
-                    <p className="text-white/60 text-sm font-light" style={{ fontFamily }}>
-                      {invitation.host_names}
-                    </p>
-                  </div>
+              <div className="lg:col-span-2 hidden lg:flex flex-col">
+                {/* Photo container - matches card height */}
+                <div 
+                  className="flex-1 min-h-[400px] rounded-2xl overflow-hidden shadow-2xl bg-cover bg-center relative"
+                  style={{ backgroundImage: `url(${displayCoverImage})` }}
+                >
+                  {/* Subtle vignette effect */}
+                  <div className="absolute inset-0 shadow-[inset_0_0_50px_rgba(0,0,0,0.2)]"></div>
+                </div>
+                
+                {/* Photo Caption */}
+                <div className="text-center mt-3">
+                  <p className="text-white/60 text-sm font-light" style={{ fontFamily }}>
+                    {invitation.host_names}
+                  </p>
                 </div>
               </div>
 
