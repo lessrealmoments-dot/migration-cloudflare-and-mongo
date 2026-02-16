@@ -167,6 +167,23 @@ A comprehensive photo-sharing application for photographers with focus on:
     - Perfect for clients using other platforms for invitation design
     - Field added: `external_invitation_url` to Invitation model
   - **100% Test Pass Rate** - 16/16 backend tests, all frontend flows verified
+- [x] **RSVP & Invitation System - Phase 5 (Photographer Integration)** (Feb 16):
+  - **RSVP Button in Gallery Detail Page**:
+    - Rose/pink button with mail icon shows when gallery is linked to invitation
+    - Displays attending count: "RSVP (4 attending)"
+    - Clicking navigates directly to Celebrant Dashboard
+    - API: `GET /api/invitations/by-gallery/{gallery_id}` fetches linked invitation
+  - **GuestPix-Inspired Public RSVP Page Redesign** (`PublicInvitation.jsx`):
+    - Frosted glass design with primaryColor overlay on blurred cover image
+    - Initials badge in header (e.g., "J + J")
+    - Split layout: 3/5 info card (left) + 2/5 photo (right) on desktop
+    - Countdown timer in card header (shows "The celebration has begun!" for past events)
+    - Location and Date/Time info cards with icons
+    - Two CTA buttons: "View Invitation" (external link) + "RSVP Now"
+    - Expandable RSVP form with attendance selection
+    - Cover image fallback when uploaded image fails to load
+    - Responsive: photo hidden on mobile
+  - **91% Backend / 100% Frontend Test Pass Rate**
 
 ## Known Issues (Priority Order)
 
