@@ -254,11 +254,12 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Integration in `GalleryDetail.jsx` (admin section creation)
 
 ## Upcoming Tasks
-1. **Link Gallery to Invitation** - Better UX for linking galleries from Celebrant Dashboard
+1. **Pinterest-Style Collage Option** - Alternative photo display for public invitation page
 2. **RSVP Reminders** - Manual or automated reminders for pending guests
 3. **Guest List Import** - Import guests from CSV/Excel for manual tracking
 4. **PayMongo Payment Integration** - When API keys received
-5. **UI for re-uploading broken images** - Address data inconsistency
+5. **Improved Uploader UI** - Integrate `PremiumPhotoUpload.jsx` into workflows
+6. **Mobile Performance** - Skeleton loaders, hero image preloading
 
 ## Future/Backlog
 - Enable "Live Billing" Mode
