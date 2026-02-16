@@ -1,7 +1,7 @@
 """
 RSVP Token routes for invitation creation tokens
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 import secrets
@@ -21,10 +21,22 @@ router = APIRouter(prefix="/api/rsvp-tokens", tags=["rsvp-tokens"])
 
 # Get database from server.py (will be injected)
 db = None
+# Email functions - will be injected from server.py
+send_email_func = None
+get_email_template_func = None
+ADMIN_EMAIL = None
+FRONTEND_URL = None
 
 def set_database(database):
     global db
     db = database
+
+def set_email_functions(send_email, get_email_template, admin_email, frontend_url):
+    global send_email_func, get_email_template_func, ADMIN_EMAIL, FRONTEND_URL
+    send_email_func = send_email
+    get_email_template_func = get_email_template
+    ADMIN_EMAIL = admin_email
+    FRONTEND_URL = frontend_url
 
 
 def get_current_user_id(request) -> str:
