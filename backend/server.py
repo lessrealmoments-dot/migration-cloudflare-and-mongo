@@ -2691,8 +2691,20 @@ async def is_subscription_active(user: dict) -> bool:
         return False
     
     subscription_expires_str = user.get("subscription_expires")
+    
+    # If user has approved payment and paid plan but no expiration set,
+    # they should be treated as active (legacy data fix)
     if not subscription_expires_str:
-        return False
+        # Auto-fix: Set subscription_expires for this user
+        user_id = user.get("id")
+        if user_id:
+            new_expires = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+            await db.users.update_one(
+                {"id": user_id},
+                {"$set": {"subscription_expires": new_expires}}
+            )
+            logger.info(f"Auto-fixed subscription_expires for user {user_id}")
+        return True  # Allow access while fixing
     
     try:
         subscription_expires = datetime.fromisoformat(subscription_expires_str.replace('Z', '+00:00'))
