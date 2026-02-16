@@ -116,6 +116,7 @@ function App() {
           <Route path="/invitations/create" element={<ProtectedRoute><CreateInvitation /></ProtectedRoute>} />
           <Route path="/invitations/:id" element={<ProtectedRoute><InvitationDetail /></ProtectedRoute>} />
           <Route path="/invitations/:id/edit" element={<ProtectedRoute><CreateInvitation /></ProtectedRoute>} />
+          <Route path="/invitations/:id/dashboard" element={<ProtectedRoute><CelebrantDashboard /></ProtectedRoute>} />
           {/* Public Invitation Page (for guests) */}
           <Route path="/i/:shareLink" element={<PublicInvitation />} />
           <Route path="/g/:shareLink" element={<PublicGallery />} />
