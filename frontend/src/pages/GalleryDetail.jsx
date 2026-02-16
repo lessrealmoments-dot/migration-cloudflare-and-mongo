@@ -846,6 +846,18 @@ const GalleryDetail = () => {
         setCoordinatorHubLink(`${window.location.origin}/coordinator/${galleryRes.data.coordinator_hub_link}`);
       }
       
+      // Fetch linked invitation if any
+      try {
+        const invRes = await axios.get(`${API}/invitations/by-gallery/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (invRes.data.invitation) {
+          setLinkedInvitation(invRes.data.invitation);
+        }
+      } catch (e) {
+        // No linked invitation, that's fine
+      }
+      
       // Check gallery-specific download lock
       checkGalleryDownloadLock(galleryRes.data);
     } catch (error) {
