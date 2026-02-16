@@ -101,6 +101,16 @@ from models.billing import (
     ExtraCreditRequest,
     # Note: FeatureToggle and UserFeatureToggle in server.py have different fields
 )
+from models.invitation import (
+    Invitation,
+    InvitationCreate,
+    InvitationUpdate,
+    InvitationSummary,
+    PublicInvitation,
+    RSVPResponse,
+    RSVPResponseCreate,
+    RSVPStats,
+)
 from models.notification import (
     Notification,
     NotificationCreate,
