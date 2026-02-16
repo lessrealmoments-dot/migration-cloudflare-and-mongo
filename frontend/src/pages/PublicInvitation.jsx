@@ -15,10 +15,89 @@ import {
   Send,
   Image as ImageIcon,
   Mail,
-  ChevronDown
+  ChevronDown,
+  Timer
 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL;
+
+// Countdown Timer Component
+const CountdownTimer = ({ eventDate, accentColor, primaryColor }) => {
+  const [timeLeft, setTimeLeft] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [isEventPassed, setIsEventPassed] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!eventDate) return;
+
+    const calculateTimeLeft = () => {
+      const eventTime = new Date(eventDate).getTime();
+      const now = new Date().getTime();
+      const difference = eventTime - now;
+
+      if (difference <= 0) {
+        setIsEventPassed(true);
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
+
+      return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((difference % (1000 * 60)) / 1000)
+      };
+    };
+
+    setTimeLeft(calculateTimeLeft());
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [eventDate]);
+
+  if (!eventDate) return null;
+  if (isEventPassed) {
+    return (
+      <div className="text-center py-4 px-6 rounded-xl mb-6" style={{ backgroundColor: `${accentColor}20` }}>
+        <p className="text-sm font-medium" style={{ color: primaryColor }}>
+          🎉 The event has started!
+        </p>
+      </div>
+    );
+  }
+
+  const TimeBlock = ({ value, label }) => (
+    <div className="text-center">
+      <div 
+        className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-bold mb-1"
+        style={{ backgroundColor: `${accentColor}20`, color: primaryColor }}
+      >
+        {String(value).padStart(2, '0')}
+      </div>
+      <p className="text-xs text-zinc-500 uppercase tracking-wider">{label}</p>
+    </div>
+  );
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-center gap-1 mb-3">
+        <Timer className="w-4 h-4" style={{ color: accentColor }} />
+        <p className="text-sm font-medium" style={{ color: primaryColor }}>Counting down to the big day!</p>
+      </div>
+      <div className="flex items-center justify-center gap-3">
+        <TimeBlock value={timeLeft.days} label="Days" />
+        <span className="text-2xl font-bold" style={{ color: accentColor }}>:</span>
+        <TimeBlock value={timeLeft.hours} label="Hours" />
+        <span className="text-2xl font-bold" style={{ color: accentColor }}>:</span>
+        <TimeBlock value={timeLeft.minutes} label="Mins" />
+        <span className="text-2xl font-bold hidden sm:block" style={{ color: accentColor }}>:</span>
+        <div className="hidden sm:block">
+          <TimeBlock value={timeLeft.seconds} label="Secs" />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Default cover images based on event type
 const defaultCoverImages = {
