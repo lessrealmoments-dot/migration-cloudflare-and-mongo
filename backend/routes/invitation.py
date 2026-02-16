@@ -551,6 +551,195 @@ def setup_invitation_routes(app, db, get_current_user):
         }
     
     # ============================================
+    # CELEBRANT ACCESS ENDPOINTS
+    # ============================================
+    
+    @invitation_router.post("/{invitation_id}/generate-celebrant-link")
+    async def generate_celebrant_access_link(
+        invitation_id: str,
+        celebrant_name: Optional[str] = None,
+        celebrant_email: Optional[str] = None,
+        current_user: dict = Depends(get_current_user)
+    ):
+        """Generate a special access link for the celebrant (HOST ONLY)"""
+        invitation = await db.invitations.find_one(
+            {"id": invitation_id, "user_id": current_user["id"]}
+        )
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        # Generate unique access code
+        access_code = secrets.token_urlsafe(16)
+        
+        await db.invitations.update_one(
+            {"id": invitation_id},
+            {"$set": {
+                "celebrant_access_code": access_code,
+                "celebrant_name": celebrant_name,
+                "celebrant_email": celebrant_email,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        return {
+            "access_code": access_code,
+            "celebrant_link": f"/celebrant/{access_code}",
+            "message": "Celebrant access link generated successfully"
+        }
+    
+    @invitation_router.post("/{invitation_id}/revoke-celebrant-link")
+    async def revoke_celebrant_access_link(
+        invitation_id: str,
+        current_user: dict = Depends(get_current_user)
+    ):
+        """Revoke the celebrant's access link (HOST ONLY)"""
+        invitation = await db.invitations.find_one(
+            {"id": invitation_id, "user_id": current_user["id"]}
+        )
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        await db.invitations.update_one(
+            {"id": invitation_id},
+            {"$set": {
+                "celebrant_access_code": None,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        return {"message": "Celebrant access revoked"}
+    
+    @invitation_router.get("/celebrant/{access_code}")
+    async def get_celebrant_dashboard(access_code: str):
+        """Get invitation data for celebrant dashboard (LIMITED ACCESS)"""
+        invitation = await db.invitations.find_one(
+            {"celebrant_access_code": access_code},
+            {"_id": 0, "password": 0, "user_id": 0}  # Exclude sensitive fields
+        )
+        
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invalid access code")
+        
+        # Get RSVPs
+        rsvps = await db.rsvp_responses.find(
+            {"invitation_id": invitation["id"]},
+            {"_id": 0}
+        ).to_list(1000)
+        
+        return {
+            "invitation": invitation,
+            "rsvps": rsvps,
+            "can_edit": ["title", "host_names", "event_date", "event_time", "event_end_time", 
+                        "venue_name", "venue_address", "venue_map_url", "message", 
+                        "additional_info", "rsvp_deadline", "design"],
+            "cannot_edit": ["linked_gallery_id", "linked_gallery_share_link", "share_link", 
+                          "celebrant_access_code", "user_id", "status"]
+        }
+    
+    @invitation_router.put("/celebrant/{access_code}")
+    async def update_invitation_as_celebrant(
+        access_code: str,
+        updates: dict
+    ):
+        """Update invitation details as celebrant (LIMITED FIELDS ONLY)"""
+        invitation = await db.invitations.find_one(
+            {"celebrant_access_code": access_code}
+        )
+        
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invalid access code")
+        
+        # Whitelist of editable fields for celebrant
+        allowed_fields = {
+            "title", "host_names", "event_date", "event_time", "event_end_time",
+            "venue_name", "venue_address", "venue_map_url", "message",
+            "additional_info", "rsvp_deadline", "external_invitation_url"
+        }
+        
+        # Also allow design sub-fields
+        allowed_design_fields = {
+            "cover_image_url", "primary_color", "secondary_color", 
+            "accent_color", "font_family"
+        }
+        
+        # Filter updates to only allowed fields
+        safe_updates = {}
+        for key, value in updates.items():
+            if key in allowed_fields:
+                safe_updates[key] = value
+            elif key == "design" and isinstance(value, dict):
+                # Handle design updates
+                current_design = invitation.get("design", {})
+                for design_key, design_value in value.items():
+                    if design_key in allowed_design_fields:
+                        current_design[design_key] = design_value
+                safe_updates["design"] = current_design
+        
+        if not safe_updates:
+            raise HTTPException(status_code=400, detail="No valid fields to update")
+        
+        # Blocked fields that celebrant cannot edit
+        blocked_fields = ["linked_gallery_id", "linked_gallery_share_link", "share_link",
+                        "celebrant_access_code", "user_id", "status", "id"]
+        
+        for field in blocked_fields:
+            if field in updates:
+                raise HTTPException(
+                    status_code=403, 
+                    detail=f"You don't have permission to edit '{field}'. Please contact your host."
+                )
+        
+        safe_updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+        
+        await db.invitations.update_one(
+            {"id": invitation["id"]},
+            {"$set": safe_updates}
+        )
+        
+        return {
+            "message": "Invitation updated successfully",
+            "updated_fields": list(safe_updates.keys())
+        }
+    
+    @invitation_router.post("/celebrant/{access_code}/add-guest")
+    async def add_guest_as_celebrant(
+        access_code: str,
+        guest_data: ManualGuestAdd
+    ):
+        """Add a guest manually as celebrant"""
+        invitation = await db.invitations.find_one(
+            {"celebrant_access_code": access_code}
+        )
+        
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invalid access code")
+        
+        # Create RSVP record
+        rsvp_id = str(uuid.uuid4())
+        rsvp_record = {
+            "id": rsvp_id,
+            "invitation_id": invitation["id"],
+            "guest_name": guest_data.guest_name,
+            "guest_email": guest_data.guest_email,
+            "guest_phone": guest_data.guest_phone,
+            "attendance_status": guest_data.attendance_status,
+            "guest_count": guest_data.guest_count,
+            "responses": {},
+            "message": guest_data.notes,
+            "submitted_at": datetime.now(timezone.utc).isoformat(),
+            "added_via": guest_data.added_via,
+            "added_by": "celebrant"
+        }
+        
+        await db.rsvp_responses.insert_one(rsvp_record)
+        await update_rsvp_stats(db, invitation["id"])
+        
+        return {
+            "id": rsvp_id,
+            "message": "Guest added successfully"
+        }
+    
+    # ============================================
     # PUBLIC INVITATION ENDPOINTS (for guests)
     # ============================================
     
