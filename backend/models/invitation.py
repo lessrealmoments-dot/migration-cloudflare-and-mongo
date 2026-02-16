@@ -224,6 +224,7 @@ class PublicInvitation(BaseModel):
     venue_map_url: Optional[str] = None
     message: Optional[str] = None
     additional_info: Optional[str] = None
+    external_invitation_url: Optional[str] = None
     design: InvitationDesign
     rsvp_enabled: bool
     rsvp_deadline: Optional[str] = None
