@@ -521,6 +521,80 @@ const AdminDashboard = () => {
     }
   };
 
+  // RSVP Token Admin Functions
+  const fetchRsvpTokenSettings = async () => {
+    try {
+      const response = await axios.get(`${API}/rsvp-tokens/admin/settings`, getAuthHeader());
+      setRsvpTokenSettings(response.data);
+    } catch (error) {
+      console.error('Failed to load RSVP token settings');
+    }
+  };
+
+  const fetchRsvpPendingPurchases = async () => {
+    try {
+      const response = await axios.get(`${API}/rsvp-tokens/admin/pending-purchases`, getAuthHeader());
+      setRsvpPendingPurchases(response.data);
+    } catch (error) {
+      console.error('Failed to load pending RSVP purchases');
+    }
+  };
+
+  const handleUpdateRsvpTokenPrice = async () => {
+    try {
+      await axios.put(`${API}/rsvp-tokens/admin/settings/price`, {
+        token_price: rsvpTokenSettings.token_price
+      }, getAuthHeader());
+      toast.success('RSVP token price updated');
+      fetchRsvpTokenSettings();
+    } catch (error) {
+      toast.error('Failed to update price');
+    }
+  };
+
+  const handleGrantRsvpTokens = async () => {
+    if (!rsvpGrantUserId || !rsvpGrantReason) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    try {
+      await axios.post(`${API}/rsvp-tokens/admin/grant`, {
+        user_id: rsvpGrantUserId,
+        quantity: rsvpGrantUnlimited ? -1 : rsvpGrantQuantity,
+        reason: rsvpGrantReason
+      }, getAuthHeader());
+      toast.success(rsvpGrantUnlimited ? 'Unlimited RSVP tokens granted!' : `${rsvpGrantQuantity} RSVP token(s) granted!`);
+      setRsvpGrantUserId('');
+      setRsvpGrantQuantity(1);
+      setRsvpGrantReason('');
+      setRsvpGrantUnlimited(false);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to grant tokens');
+    }
+  };
+
+  const handleApproveRsvpPurchase = async (transactionId) => {
+    try {
+      await axios.post(`${API}/rsvp-tokens/admin/approve/${transactionId}`, {}, getAuthHeader());
+      toast.success('RSVP token purchase approved');
+      fetchRsvpPendingPurchases();
+    } catch (error) {
+      toast.error('Failed to approve purchase');
+    }
+  };
+
+  const handleRejectRsvpPurchase = async (transactionId) => {
+    const reason = prompt('Enter rejection reason:');
+    if (!reason) return;
+    try {
+      await axios.post(`${API}/rsvp-tokens/admin/reject/${transactionId}?reason=${encodeURIComponent(reason)}`, {}, getAuthHeader());
+      toast.success('RSVP token purchase rejected');
+      fetchRsvpPendingPurchases();
+    } catch (error) {
+      toast.error('Failed to reject purchase');
+    }
+  };
+
   const fetchUserTransactions = async (userId, userName) => {
     try {
       const response = await axios.get(`${API}/admin/users/${userId}/transactions`, getAuthHeader());
