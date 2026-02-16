@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { ArrowLeft, Upload, Trash2, Copy, ExternalLink, Lock, X, Plus, Image as ImageIcon, AlertTriangle, Cloud, CloudOff, Check, Loader2, RefreshCw, CheckCircle, AlertCircle, Download, Package, Settings2, QrCode, Star, EyeOff, Eye, GripVertical, CheckSquare, Square, FolderInput, ChevronDown, ChevronUp, Code, Monitor, Grid, Play, Edit2, Film, Video, Camera, Sparkles, RotateCcw, HardDrive, Zap, Wifi, Images, Users } from 'lucide-react';
+import { ArrowLeft, Upload, Trash2, Copy, ExternalLink, Lock, X, Plus, Image as ImageIcon, AlertTriangle, Cloud, CloudOff, Check, Loader2, RefreshCw, CheckCircle, AlertCircle, Download, Package, Settings2, QrCode, Star, EyeOff, Eye, GripVertical, CheckSquare, Square, FolderInput, ChevronDown, ChevronUp, Code, Monitor, Grid, Play, Edit2, Film, Video, Camera, Sparkles, RotateCcw, HardDrive, Zap, Wifi, Images, Users, Mail } from 'lucide-react';
 import { themes, getThemesByCategory } from '@/themes';
 import PremiumLightbox from '@/components/PremiumLightbox';
 import OptimizedImage from '@/components/OptimizedImage';
