@@ -1197,7 +1197,7 @@ def setup_invitation_routes(app, db, get_current_user):
         frontend_url = os.environ.get('FRONTEND_URL', '').strip()
         if not frontend_url:
             # Fallback: use REACT_APP equivalent or backend URL base
-            backend_url = os.environ.get('BACKEND_URL', 'https://invite-master-2.preview.emergentagent.com')
+            backend_url = os.environ.get('BACKEND_URL', 'https://rsvp-master-9.preview.emergentagent.com')
             frontend_url = backend_url
         
         invitation_url = f"{frontend_url}/i/{invitation['share_link']}"
@@ -1243,7 +1243,7 @@ def setup_invitation_routes(app, db, get_current_user):
         import base64
         frontend_url = os.environ.get('FRONTEND_URL', '').strip()
         if not frontend_url:
-            backend_url = os.environ.get('BACKEND_URL', 'https://invite-master-2.preview.emergentagent.com')
+            backend_url = os.environ.get('BACKEND_URL', 'https://rsvp-master-9.preview.emergentagent.com')
             frontend_url = backend_url
         
         invitation_url = f"{frontend_url}/i/{invitation['share_link']}"
