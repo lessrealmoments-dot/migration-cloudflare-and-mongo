@@ -1728,6 +1728,28 @@ const GalleryDetail = () => {
           Back to Dashboard
         </button>
 
+        {/* Demo Gallery Warning Banner */}
+        {gallery.is_demo && (
+          <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-lg" data-testid="demo-gallery-warning">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-amber-800 mb-1">Demo Gallery</h3>
+                <p className="text-sm text-amber-700">
+                  This is a demo gallery that will expire in 2 hours. All photos and content will be permanently deleted.
+                  <strong className="block mt-1">Upgrading to a paid plan will NOT extend this demo gallery.</strong>
+                  After upgrading, create a new gallery to keep your photos permanently.
+                </p>
+                {gallery.demo_expires_at && (
+                  <p className="text-xs text-amber-600 mt-2">
+                    Expires: {new Date(gallery.demo_expires_at).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-12">
           <div className="flex items-start justify-between mb-6">
             <div className="flex-1">
