@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Edit,
   Link2,
+  Unlink,
   Calendar,
   Clock,
   MapPin,
@@ -28,7 +29,9 @@ import {
   Share2,
   ChevronDown,
   ChevronUp,
-  Filter
+  Filter,
+  Key,
+  Trash2
 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -45,6 +48,10 @@ export default function CelebrantDashboard() {
   const [qrCodeData, setQrCodeData] = useState(null);
   const [showAddGuestModal, setShowAddGuestModal] = useState(false);
   const [showExternalLinkModal, setShowExternalLinkModal] = useState(false);
+  const [showLinkGalleryModal, setShowLinkGalleryModal] = useState(false);
+  const [showCelebrantLinkModal, setShowCelebrantLinkModal] = useState(false);
+  const [galleries, setGalleries] = useState([]);
+  const [celebrantLink, setCelebrantLink] = useState(null);
   const [expandedSections, setExpandedSections] = useState({
     attending: true,
     not_attending: true,
