@@ -558,6 +558,43 @@ export default function InvitationDetail() {
           </div>
         </div>
       )}
+
+      {/* QR Code Modal */}
+      {showQRModal && qrCodeData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6">
+            <h3 className="text-lg font-semibold text-zinc-900 mb-4 text-center">Invitation QR Code</h3>
+            
+            <div className="bg-white p-4 rounded-lg border border-zinc-200 mb-4">
+              <img 
+                src={qrCodeData.qr_code_base64} 
+                alt="Invitation QR Code"
+                className="w-full max-w-[200px] mx-auto"
+              />
+            </div>
+            
+            <p className="text-sm text-zinc-500 text-center mb-4 break-all">
+              {qrCodeData.invitation_url}
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowQRModal(false)}
+                className="flex-1 py-2 border border-zinc-300 rounded-lg hover:bg-zinc-50"
+              >
+                Close
+              </button>
+              <button
+                onClick={downloadQRCode}
+                className="flex-1 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
