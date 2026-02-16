@@ -214,7 +214,8 @@ class TestPublicInvitation:
             "password": TEST_USER_PASSWORD
         })
         assert response.status_code == 200, f"Login failed: {response.text}"
-        return response.json()["token"]
+        data = response.json()
+        return data.get("access_token") or data.get("token")
     
     @pytest.fixture(scope="class")
     def auth_headers(self, auth_token):
@@ -292,7 +293,8 @@ class TestRSVPSubmission:
             "password": TEST_USER_PASSWORD
         })
         assert response.status_code == 200, f"Login failed: {response.text}"
-        return response.json()["token"]
+        data = response.json()
+        return data.get("access_token") or data.get("token")
     
     @pytest.fixture(scope="class")
     def auth_headers(self, auth_token):
@@ -424,7 +426,8 @@ class TestRSVPManagement:
             "password": TEST_USER_PASSWORD
         })
         assert response.status_code == 200, f"Login failed: {response.text}"
-        return response.json()["token"]
+        data = response.json()
+        return data.get("access_token") or data.get("token")
     
     @pytest.fixture(scope="class")
     def auth_headers(self, auth_token):
@@ -556,7 +559,8 @@ class TestGalleryLinking:
             "password": TEST_USER_PASSWORD
         })
         assert response.status_code == 200, f"Login failed: {response.text}"
-        return response.json()["token"]
+        data = response.json()
+        return data.get("access_token") or data.get("token")
     
     @pytest.fixture(scope="class")
     def auth_headers(self, auth_token):
