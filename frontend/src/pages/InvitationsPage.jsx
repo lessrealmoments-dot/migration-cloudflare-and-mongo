@@ -274,11 +274,11 @@ export default function InvitationsPage() {
                     {/* Actions */}
                     <div className="flex gap-2">
                       <button
-                        onClick={() => navigate(`/invitations/${invitation.id}`)}
+                        onClick={() => navigate(`/invitations/${invitation.id}/dashboard`)}
                         className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-zinc-100 text-zinc-700 rounded-lg hover:bg-zinc-200 transition-colors text-sm"
                       >
                         <Eye className="w-4 h-4" />
-                        View RSVPs
+                        Manage RSVPs
                       </button>
                       {invitation.linked_gallery_id ? (
                         <button
@@ -290,7 +290,7 @@ export default function InvitationsPage() {
                         </button>
                       ) : (
                         <button
-                          onClick={() => navigate(`/invitations/${invitation.id}/link-gallery`)}
+                          onClick={() => navigate(`/invitations/${invitation.id}/dashboard`)}
                           className="flex items-center justify-center gap-2 px-3 py-2 border border-zinc-300 text-zinc-700 rounded-lg hover:bg-zinc-50 transition-colors text-sm"
                         >
                           <Link2 className="w-4 h-4" />
