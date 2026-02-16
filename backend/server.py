@@ -12182,6 +12182,7 @@ app.include_router(health_router, prefix="/api")
 
 # Setup RSVP Token routes
 set_rsvp_token_db(db)
+set_rsvp_token_email(send_email, get_email_template, ADMIN_EMAIL, os.environ.get("FRONTEND_URL", ""))
 app.include_router(rsvp_token_router)
 
 # Setup invitation routes
