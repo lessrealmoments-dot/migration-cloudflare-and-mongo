@@ -336,6 +336,7 @@ export default function CelebrantDashboard() {
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
+                <p className="text-xs text-emerald-600 font-medium uppercase tracking-wider">Host Dashboard</p>
                 <h1 className="text-xl font-semibold text-zinc-900">{invitation.title}</h1>
                 <p className="text-sm text-zinc-500">{invitation.host_names}</p>
               </div>
