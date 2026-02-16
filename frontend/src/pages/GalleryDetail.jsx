@@ -439,6 +439,16 @@ const GalleryDetail = () => {
   };
 
   // Coordinator Hub functions
+  const handleCoordinatorHubClick = async () => {
+    // If link already exists, just show the modal
+    if (coordinatorHubLink) {
+      setShowCoordinatorHubModal(true);
+      return;
+    }
+    // Otherwise, generate a new link
+    await generateCoordinatorHubLink();
+  };
+  
   const generateCoordinatorHubLink = async () => {
     setCoordinatorHubLoading(true);
     try {
@@ -455,6 +465,7 @@ const GalleryDetail = () => {
       await navigator.clipboard.writeText(hubUrl);
       toast.success('Coordinator Hub link created and copied!');
     } catch (error) {
+      console.error('Failed to generate coordinator hub link:', error);
       toast.error('Failed to generate coordinator hub link');
     } finally {
       setCoordinatorHubLoading(false);
