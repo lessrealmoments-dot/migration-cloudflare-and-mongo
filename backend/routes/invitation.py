@@ -1,11 +1,14 @@
 """
 Invitation and RSVP API Routes
 """
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, UploadFile, File
+from fastapi.responses import StreamingResponse
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
 import secrets
+import qrcode
+import io
 
 from models.invitation import (
     Invitation, InvitationCreate, InvitationUpdate, InvitationSummary,
