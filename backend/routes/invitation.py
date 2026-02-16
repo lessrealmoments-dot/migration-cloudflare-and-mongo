@@ -343,6 +343,7 @@ def setup_invitation_routes(app, db, get_current_user):
             "venue_map_url": data.venue_map_url,
             "message": data.message,
             "additional_info": data.additional_info,
+            "external_invitation_url": data.external_invitation_url,
             "design": design.model_dump(),
             "rsvp_enabled": data.rsvp_enabled,
             "rsvp_deadline": data.rsvp_deadline,
