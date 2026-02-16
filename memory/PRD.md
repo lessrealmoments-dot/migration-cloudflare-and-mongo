@@ -193,6 +193,9 @@ A comprehensive photo-sharing application for photographers with focus on:
 - Invoice generation
 - User notifications for plan changes
 - Mobile collage preset builder improvements
+- RSVP guest list import (CSV/Excel)
+- Multiple invitation designs per event
+- RSVP reminders automation
 
 ## Technical Architecture
 
