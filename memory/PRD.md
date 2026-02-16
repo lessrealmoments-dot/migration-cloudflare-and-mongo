@@ -132,6 +132,21 @@ A comprehensive photo-sharing application for photographers with focus on:
     - `/invitations/:id/edit` - Edit wizard
     - `/i/:shareLink` - Public guest page
   - **100% Test Pass Rate** - 22/22 backend tests, all frontend flows verified
+- [x] **RSVP & Invitation System - Phase 3 (Enhancements)** (Feb 16):
+  - **Countdown Timer** on public invitation page:
+    - Live countdown showing Days/Hours/Mins/Secs until event
+    - Automatically shows "🎉 The event has started!" for past events
+    - Styled with accent colors from invitation design
+  - **Cover Image Upload**:
+    - New section in Step 4 (Design) of Create Invitation wizard
+    - Upload dropzone with recommended dimensions (1200x800px)
+    - Preview with remove button for uploaded images
+    - API endpoint: `POST /api/invitations/{id}/upload-cover`
+  - **QR Code Generation**:
+    - "QR Code" button in invitation detail page header
+    - Modal displays generated QR code with invitation URL
+    - Download button to save QR code as PNG
+    - API endpoints: `GET /api/invitations/{id}/qr-code` (PNG), `GET /api/invitations/{id}/qr-code-base64` (for UI)
 
 ## Known Issues (Priority Order)
 
