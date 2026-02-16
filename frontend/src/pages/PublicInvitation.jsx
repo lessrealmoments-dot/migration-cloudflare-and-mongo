@@ -393,7 +393,7 @@ export default function PublicInvitation() {
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
               
               {/* Left Column - Info Card (3/5 width on lg) */}
-              <div className="lg:col-span-3" id="rsvp-card">
+              <div className="lg:col-span-3" id="rsvp-card" ref={rsvpCardRef}>
                 <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden">
                   {/* Card Header with Primary Color */}
                   <div 
