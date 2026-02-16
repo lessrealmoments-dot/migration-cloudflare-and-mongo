@@ -2240,6 +2240,86 @@ def get_email_template(template_type: str, data: dict) -> tuple:
         """
         return subject, html
     
+    elif template_type == "admin_rsvp_token_purchase":
+        subject = f"🎟️ RSVP Token Purchase - {data.get('name', 'Unknown')}"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #7c3aed;">New RSVP Token Purchase Request</h2>
+            <p>A user has submitted a purchase request for RSVP tokens:</p>
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #f59e0b;">
+                <p><strong>Name:</strong> {data.get('name', 'N/A')}</p>
+                <p><strong>Email:</strong> {data.get('email', 'N/A')}</p>
+                <p><strong>Tokens Requested:</strong> {data.get('quantity', 0)}</p>
+                <p><strong>Amount:</strong> ₱{data.get('amount', 0):,}</p>
+                <p><strong>Submitted:</strong> {data.get('submitted_at', 'N/A')}</p>
+            </div>
+            <p><a href="{data.get('admin_url', '#')}" style="display: inline-block; background: #7c3aed; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Review in Admin Panel</a></p>
+            <p style="color: #71717a; font-size: 12px;">Please review this purchase in the RSVP Tokens section of the admin dashboard.</p>
+        </div>
+        """
+        return subject, html
+    
+    elif template_type == "customer_rsvp_token_pending":
+        subject = f"⏳ RSVP Token Purchase Received"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #7c3aed;">RSVP Token Purchase Submitted!</h2>
+            <p>Hi {data.get('name', 'there')},</p>
+            <p>We've received your RSVP token purchase request and it's now being reviewed.</p>
+            <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #3b82f6;">
+                <p><strong>Tokens:</strong> {data.get('quantity', 0)}</p>
+                <p><strong>Amount:</strong> ₱{data.get('amount', 0):,}</p>
+                <p><strong>Status:</strong> Pending Review</p>
+            </div>
+            <p>You'll receive an email once your purchase has been approved. This usually takes less than 24 hours.</p>
+            <p>Once approved, your tokens will be available in your dashboard and can be used to create invitations.</p>
+            <p>Thank you for choosing {brand_name}!</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #71717a; font-size: 12px;">Questions? Contact us at {ADMIN_EMAIL}</p>
+        </div>
+        """
+        return subject, html
+    
+    elif template_type == "customer_rsvp_token_approved":
+        subject = f"✅ RSVP Tokens Added to Your Account!"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #22c55e;">RSVP Tokens Approved! 🎉</h2>
+            <p>Hi {data.get('name', 'there')},</p>
+            <p>Great news! Your RSVP token purchase has been approved.</p>
+            <div style="background: #dcfce7; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #22c55e;">
+                <p><strong>Tokens Added:</strong> {data.get('quantity', 0)}</p>
+                <p><strong>New Balance:</strong> {data.get('new_balance', 'N/A')}</p>
+                <p><strong>Expires:</strong> {data.get('expires_at', '12 months from purchase')}</p>
+            </div>
+            <p>You can now use your tokens to create beautiful event invitations!</p>
+            <p><a href="{data.get('dashboard_url', '#')}" style="display: inline-block; background: #7c3aed; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Create an Invitation</a></p>
+            <p>Thank you for being part of {brand_name}!</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #71717a; font-size: 12px;">Questions? Contact us at {ADMIN_EMAIL}</p>
+        </div>
+        """
+        return subject, html
+    
+    elif template_type == "customer_rsvp_token_rejected":
+        subject = f"❌ RSVP Token Purchase Update"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #ef4444;">RSVP Token Purchase Not Approved</h2>
+            <p>Hi {data.get('name', 'there')},</p>
+            <p>Unfortunately, we were unable to approve your RSVP token purchase.</p>
+            <div style="background: #fef2f2; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ef4444;">
+                <p><strong>Reason:</strong> {data.get('reason', 'Payment could not be verified')}</p>
+            </div>
+            <p>You can submit a new purchase request with valid payment proof from your dashboard.</p>
+            <p>If you need assistance, please contact us:</p>
+            <p>📧 {ADMIN_EMAIL}<br>📱 09952568450</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #71717a; font-size: 12px;">This is an automated message from {brand_name}.</p>
+        </div>
+        """
+        return subject, html
+    
     return "Notification", "<p>You have a notification from Less Real Moments.</p>"
 
 # ============================================
