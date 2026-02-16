@@ -97,6 +97,9 @@ class Invitation(BaseModel):
     message: Optional[str] = None  # Main invitation message
     additional_info: Optional[str] = None  # Dress code, parking, etc.
     
+    # External Invitation Link (for clients using other services like Canva)
+    external_invitation_url: Optional[str] = None
+    
     # Design
     design: InvitationDesign
     
