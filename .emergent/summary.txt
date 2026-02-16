@@ -2,49 +2,58 @@
 
 **PRODUCT REQUIREMENTS for RSVP & Invitation System**:
 *   **Separate Service**: The invitation/RSVP flow should not consume gallery tokens and should be creatable months in advance of an event.
-*   **Linkable**: The ability to link an invitation to a gallery should be possible later.
-*   **Template-Based**: Users should be able to choose from pre-defined templates (e.g., Modern Minimalist).
-*   **Customizable**: Users can design the invitation (title, hosts, date, location, details).
-*   **Public Page**: A shareable link leads to a public page where guests can view details and RSVP.
-*   **RSVP Management**: The photographer can view RSVP stats (attending, not attending, maybe) and a list of guest responses.
+*   **Linkable**: The ability to link an invitation to a gallery. The host should have easy controls to link and unlink galleries.
+*   **Template-Based & Customizable**: Users can choose from templates and customize the invitation (title, hosts, date, location, details, cover image).
+*   **Public Page**: A shareable link leads to a public page where guests can view details and RSVP. The design should be modern, inspired by GuestPix, featuring a frosted-glass effect and the couple's photo prominently displayed and aligned with the content.
+*   **RSVP Management**: The photographer (Host) can view RSVP stats, a filterable guest list, and manage all aspects of the invitation.
+*   **Role-Based Access**:
+    *   **Host (Photographer)**: Has full control over the invitation, including linking/unlinking galleries, editing all details, and generating a special access link for the celebrant.
+    *   **Celebrant (Client)**: Accesses a limited-control dashboard via a special link. They can view guest lists and edit some details (like names, date/time), but these actions must require a confirmation pop-up.
+*   **External Invitation Link**: Ability to link to an external invitation created on another platform (e.g., Canva), with the link being displayed on the RSVP page.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack React/FastAPI photo-sharing platform. This session heavily focused on auditing and hardening the application's core logic. The principle of **Admin Settings ALWAYS Win** was established and implemented, removing hardcoded default fallbacks for features and storage to give the user full control via the admin UI. Several critical bugs in the payment system (addon token expiration, plan upgrade rules) and feature toggles (Coordinator Hub) were fixed. The subscription expiration flow was also corrected to block expired paid users from creating new demo galleries, and clear UI warnings for demo galleries were added.
+The RSVP and Invitation system is now functionally complete and fully integrated into the application. The system was built from the ground up, starting with the backend APIs and progressing to a feature-rich frontend.
 
-The backend foundation for the new **RSVP & Invitation system** has been completed, including models, API routes, and initial testing. A basic frontend page () to list existing invitations has been created and is functional. Placeholder files for the creation and public-facing pages are ready.
+The public-facing invitation page has been redesigned to match the user's GuestPix inspiration, featuring a frosted-glass effect over a blurred background, a split layout with the event details on one side, and the couple's actual, non-blurred photo prominently displayed on the other. The photo's height is now aligned with the main content card.
+
+A critical Host vs. Celebrant access model has been implemented. The photographer (Host) manages invitations from a full-featured dashboard () where they can link/unlink galleries and generate a unique, revocable access link. This link leads to a separate, limited-control page () for the client (Celebrant).
+
+The photographer's main  page is now integrated with the RSVP system, displaying an RSVP button with the current attendance count if a gallery is linked to an invitation, providing seamless access to the Host Dashboard.
 
 **Last working item**:
-- Last item agent was working: Building the RSVP & Invitation system. The agent had just finished the backend API and the initial frontend page to list invitations (). The next step was to build out the UI for creating an invitation () and the public page for guests ().
-- Status: IN PROGRESS
-- Agent Testing Done: Y (for backend APIs and the invitation list page)
-- Which testing method agent to use? Frontend testing agent to test the full user journey: creating an invitation, viewing the public page, and submitting an RSVP.
+- Last item agent was working: Implementing the Host/Celebrant role-based access control and fixing the photo alignment on the public invitation page. The agent created the backend endpoints and frontend pages for this new access model and adjusted the CSS to align the photo height.
+- Status: USER VERIFICATION PENDING
+- Agent Testing Done: Y
+- Which testing method agent to use? Frontend testing agent to conduct an end-to-end test of the Host and Celebrant flows. This should include:
+    1. Host links a gallery.
+    2. Host generates a Celebrant Access Link.
+    3. Accessing the Celebrant View via the link.
+    4. Verifying the limited controls on the Celebrant View.
+    5. Host revoking the access link.
+    6. Host unlinking the gallery.
 - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Complete the frontend implementation for the RSVP & Invitation system. (P0)
+  - Issue 1: Photo alignment on the public page needs user verification. (P0)
   - Issue 2: Slow loading of cover/hero images due to missing thumbnails for older uploads. (P1)
   - Issue 3: PDF generation failure due to a missing system dependency (). (P2)
   - Issue 4: Data inconsistency for photos uploaded before a previous R2 storage fix (broken images). (P2)
   
   Issues Detail:
   - Issue 1: 
-     - Description: The backend for the RSVP system is complete, but the frontend pages for creating, editing, and viewing public invitations are currently blank placeholders.
-     - Next debug checklist:
-        - Implement the UI and logic in .
-        - Implement the UI and logic in .
-        - Create a new page for viewing RSVP responses and stats.
-        - Add routing and navigation for these new pages.
-     - Why fix this issue and what will be achieved with the fix? This will deliver the first usable version of the new RSVP feature requested by the user.
-     - Status:  IN PROGRESS
-     - Is recurring issue? N
+     - Attempted fixes: The agent used a combination of flexbox, , and  to measure the height of the main content card and dynamically apply it to the container of the photo on the right, ensuring they are the same height.
+     - Next debug checklist: The user needs to visually confirm if the alignment now meets their expectations. No further code changes are needed unless feedback is provided.
+     - Why fix this issue and what will be achieved with the fix? To satisfy the user's design requirement for a clean, professional-looking public invitation page.
+     - Status:  USER VERIFICATION PENDING
+     - Is recurring issue? Y
      - Should Test frontend/backend/both after fix? frontend
-     - Blocked on other issue: none
+     - Blocked on other issue: None
 
 **In progress Task List**:
   - Task 1:  Complete  Refactoring (P2)
-     - Where to resume: Continue extracting routes from the monolithic  into the  directory, using the new  as a template.
+     - Where to resume: Continue extracting routes from the monolithic  into the  directory.
      - What will be achieved with this? A more modular, maintainable, and scalable backend architecture.
      - Status:  IN PROGRESS
      - Should Test frontend/backend/both after fix? backend
@@ -52,107 +61,114 @@ The backend foundation for the new **RSVP & Invitation system** has been complet
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **RSVP System (Phase 2)**:
-        *   Implement the Link to Gallery functionality.
-        *   Implement the invitation design/edit form ().
-        *   Implement the public RSVP submission page ().
-        *   Implement the RSVP stats/details view for the photographer.
+    *   **Celebrant View Enhancements (P0)**: Implement the edit functionality within , ensuring every change action triggers a confirmation dialog as requested by the user.
+    *   **Pinterest-Style Collage (P1)**: Explore and implement an option for a collage-style photo display on the public invitation page as an alternative to a single photo.
     *   **Improved Uploader UI (P1)**: Integrate  and  into contributor workflows.
     *   **Mobile Performance Optimizations (P1)**: Implement skeleton loaders and hero image preloading.
-    *   **Payment Gateway Integration (PayMongo) (P1)**: Awaiting API keys from the user.
 *   **Future Tasks:**
     *   Add a Download QR Code button to the gallery admin page.
     *   Enable Live Billing Mode.
     *   Allow photographers to download entire sections of photos.
     *   Generate invoices for payments.
     *   Add user notifications for plan changes.
+    *   Integrate with Twilio for automated RSVP reminders.
 
 **Completed work in this session**
-- **Payment System Audit & Fixes**: Corrected addon token expiration logic, enforced plan upgrade/downgrade rules, and ensured extra credits require an active subscription.
-- **Admin Settings ALWAYS Win Logic**: Refactored the entire feature toggle system () to strictly adhere to admin configurations, removing default fallbacks to give the user full control over upselling.
-- **Coordinator Hub Bug Fix**: Resolved a critical bug where the feature was incorrectly disabled for premium users by fixing the feature resolution logic and updating the  API model.
-- **Subscription Expiration Logic Fix**: Blocked expired Pro/Standard users from creating new demo galleries (forcing re-subscription) and added clear UI warnings about demo gallery expirations. The demo duration was changed from 6 to 2 hours.
-- **RSVP & Invitation System (Phase 1)**: Built and tested the complete backend API (models, routes) for creating invitations, submitting RSVPs, and viewing stats. The initial frontend page for listing invitations () was also created and made functional.
-- **Storage Logic Update**: Removed account-level storage limits, making per-gallery storage limits the single source of truth, controlled by admin settings.
+- **RSVP Frontend Implementation**: Built the complete frontend UI, including the 5-step creation wizard, the main invitations list, and the public invitation page.
+- **GuestPix-Inspired Redesign**: Iteratively redesigned the public invitation page to feature a split layout, frosted-glass effect, and prominent placement of the couple's photo, with corrected height alignment.
+- **Feature Enhancements**: Implemented a countdown timer, custom cover image uploads, and QR code generation for sharing invitations.
+- **Host Dashboard Creation**: Transformed the initial detail page into a full-featured Host Dashboard () with quick actions, guest list management (search, filter), manual guest addition, and external invitation link support.
+- **Host/Celebrant Role Separation**:
+    - Implemented backend logic and UI for the Host to link/unlink galleries and generate/revoke a unique access link for the celebrant.
+    - Created a new dedicated  page for celebrants with limited access.
+- **Photographer/Gallery Integration**: Added a dynamic RSVP button to the  page, which appears when a gallery is linked to an invitation and shows the number of attending guests.
+- **Image Fallback Logic**: Implemented a robust image fallback chain: Custom Uploaded Image -> Linked Gallery's Cover Photo -> Default Template Image.
+
+**Earlier issues found/mentioned but not fixed**
+   - Issue 1: Data inconsistency where database records for photos exist but the corresponding files are not in R2 storage. This is a recurring issue from a previous fork.
+     - Debug checklist: A script needs to be created to scan the database for photo records, check for the corresponding file's existence in R2, and flag or attempt to repair the inconsistencies.
+     - Why to solve this issue and what will be achieved with this? This will fix broken images throughout the application, improving user experience and data integrity.
+     - Should Test frontend/backend/both after fix: backend
+     - Is recurring issue? Y
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: Data inconsistency where database records for photos exist but the corresponding files are not in R2 storage.
-  - Recurrence count: 8
+  - Issue recurrence in previous fork: Data inconsistency for photos in R2 storage.
+  - Recurrence count: 9
   - Status: NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Admin Settings Always Win**: An architectural principle ensuring admin configurations in the database are the single source of truth for features, overriding any hardcoded defaults. This is critical for the user's upselling strategy.
-- **Decoupled Service Design**: The RSVP system was architected with its own models and routes, separate from the gallery creation and token-billing flow, to accommodate its different lifecycle (creation months in advance).
-- **Runtime Plan Resolution**: The  function dynamically determines a user's effective plan (e.g., an expired 'pro' user is treated as 'free' at runtime) to apply the correct feature set.
-- **Timezone-Aware Datetimes**: A bug was fixed by ensuring all datetime comparisons are between offset-aware objects (), preventing  crashes.
+- **Host vs. Celebrant Roles**: An access control pattern where the account owner (Host) has full administrative control over a resource (invitation) and can generate a unique, revocable token-based URL to grant limited, fire-walled access to an external party (Celebrant).
+- **Dynamic Component Sizing**: Using  and  to measure the height of one UI element (the main content card) and dynamically apply that height to a sibling element (the photo container) to ensure perfect visual alignment in a flexbox layout.
+- **Image Fallback Chain**: A multi-step logic for displaying an image, which gracefully degrades through a series of sources (Custom Upload > Linked Gallery Photo > Default Template Photo) to prevent missing images.
 
 **key DB schema**
-  - ** (new)**: 
-  - ** (new)**: 
-  - ****: Added , ,  fields.
-  - ****: Stores admin-configured feature toggles. Logic was updated to no longer fall back to defaults if a setting is missing.
+  - ****: Added , , .
+  - ****: Added  (e.g., 'manual', 'phone') to track how a guest was added.
+  - ****: New model for capturing manually added guests.
 
 **All files of reference**
-- **/app/backend/server.py**: Core logic for features, payments, and storage was hardened. Integrated the new invitation routes.
-- **/app/backend/routes/invitation.py**: New file containing all API endpoints for the invitation system.
-- **/app/backend/models/invitation.py**: New file defining the  and  Pydantic models.
-- **/app/backend/models/gallery.py**: Modified to add  and demo-related fields.
-- **/app/frontend/src/pages/InvitationsPage.jsx**: New file to list a user's invitations.
-- **/app/frontend/src/pages/GalleryDetail.jsx**: Modified to fix Coordinator Hub logic and add demo gallery banners.
-- **/app/frontend/src/pages/CreateGallery.jsx**: Modified to add warnings when creating a demo gallery.
-- **/app/frontend/src/App.js** & **/app/frontend/src/pages/Dashboard.jsx**: Modified to add routing and navigation for the new Invitations page.
+- **/app/frontend/src/pages/PublicInvitation.jsx**: Heavily modified to implement the GuestPix-inspired design with a frosted-glass effect and aligned photo.
+- **/app/frontend/src/pages/CelebrantDashboard.jsx**: New file created to serve as the Host Dashboard with full control over the invitation.
+- **/app/frontend/src/pages/CelebrantView.jsx**: New file for the limited-access Celebrant View.
+- **/app/frontend/src/pages/GalleryDetail.jsx**: Modified to include the conditional RSVP Management button.
+- **/app/frontend/src/App.js**: Modified to add routes for the new dashboard and view pages.
+- **/app/backend/routes/invitation.py**: Heavily modified to add endpoints for cover image upload, QR codes, manual guest addition, and the entire Host/Celebrant access flow.
+- **/app/backend/models/invitation.py**: Modified to support new fields for external links, celebrant access, and fallback cover photos.
 
 **Areas that need refactoring**:
-- **/app/backend/server.py**: Remains a high-priority candidate for refactoring. The progress made by creating separate invitation routes should be continued for other features.
-- **/app/frontend/src/pages/GalleryDetail.jsx**: This component is overly large and complex. It should be broken down into smaller, more focused components to improve maintainability.
+- **/app/backend/server.py**: Still a high-priority candidate for modularization.
+- **/app/frontend/src/pages/CelebrantDashboard.jsx**: This component has grown large with the addition of modals and host controls. It could be broken down into smaller components (e.g., , , ).
 
 **key api endpoints**
-- **NEW (Invitation System)**:
-    - : Create a new invitation.
-    - : Get all invitations for the logged-in user.
-    - : Publish an invitation.
-    - : Submit an RSVP for a public invitation.
-    - : Get RSVP list for an invitation.
+- **NEW**:
+    - : Upload a custom cover image.
+    - : Generate a QR code for the public link.
+    - : Manually add a guest to the RSVP list.
+    - : Get invitation details linked to a gallery.
+    - : Generate or revoke the celebrant access link.
+    - : Fetch data for the limited Celebrant View.
+    - : Endpoint for celebrant to submit edits (requires confirmation logic).
 - **MODIFIED**:
-    - : Logic was completely overhauled to implement the Admin Settings Always Win principle.
-    - : Logic added to block expired paid users from creating new demo galleries.
-    - : Response now includes  and demo-related fields.
+    - : Logic updated to also save the gallery's cover photo URL as a fallback.
 
 **Critical Info for New Agent**
-- **Your immediate task is to continue building the frontend for the RSVP & Invitation system.** The backend is complete and working. You must now implement the UI for  (the form to create/edit an invitation) and  (the public page for guests to view details and RSVP).
-- **Admin Settings ALWAYS Win is the core principle for all feature-related logic.** Do not add default fallbacks. The user must have explicit control over all features from the admin panel.
-- **The RSVP system is intentionally separate from the gallery token system.** Do not attempt to integrate token deduction logic into invitation creation. They are designed to be created long before an event, with linking to a gallery as a future step.
+- **Your immediate task is to implement the edit functionality on the  page.** The user was very specific that celebrants should be able to edit details, but every edit must trigger a Are you sure? confirmation dialog. The page exists, but this interactive logic is missing.
+- **The distinction between Host and Celebrant is critical.**  is the **Host's** full-control panel.  is the **Celebrant's** limited-access page. Do not confuse them.
+- After implementing the celebrant edit functionality, seek user verification on both that feature and the photo alignment on the public page, which was the user's last point of feedback.
 
 **documents and test reports created in this job**
-  - /app/test_reports/iteration_30.json
+  - /app/test_reports/iteration_31.json
+  - /app/test_reports/iteration_32.json
+  - /app/test_reports/iteration_33.json
+  - /app/test_reports/iteration_34.json
 
 **Last 10 User Messages and any pending HUMAN messages** 
-- User wants to continue building the RSVP/Invitation system as the UI is currently blank.
-- User confirmed the plan to build the RSVP system as a separate, linkable service, citing guestpix.com as an example.
-- User proposed the idea of adding an RSVP and Online Invitation system.
-- User asked for a walkthrough of the subscription expiration logic (Pro/Standard -> Free).
-- User asked to check the grandparent logic for subscription expiration.
-- User confirmed they prefer to manually configure features in the admin UI.
-- User asked for an audit to ensure no features were hidden from the admin UI.
-- User confirmed Admin settings always win for features and reiterated that account-level storage limits should be removed.
-- User asked the agent to find any other conflicting code logic.
-- User chose Option A: Admin Settings ALWAYS Win to maintain full control over feature upselling.
+1.  **Request**: User asked for the couple's photo to be displayed clearly beside the RSVP card, not as a blurred background. (COMPLETED)
+2.  **Feedback**: User noted the photo was not aligned properly with the RSVP card. (FIX IMPLEMENTED, PENDING VERIFICATION)
+3.  **Request**: User asked for an easier way for the host/account owner to link and unlink galleries. (COMPLETED)
+4.  **Clarification**: User defined strict role separation: the **Host** (photographer) should have full control, including linking galleries. The **Celebrant** (client) should have limited control and not be able to link galleries. (COMPLETED)
+5.  **Request**: The Host should be able to do everything the celebrant can. (COMPLETED)
+6.  **Request**: The celebrant should get a special access link generated by the host. (COMPLETED)
+7.  **Request**: The celebrant should be able to see guest lists (attending, not, pending) and edit details like names, date/time, but must get a confirmation pop-up for any change. (PARTIALLY COMPLETED - View exists, edit with confirmation is pending).
+8.  **Request**: Allow linking an external invitation URL (e.g., from Canva). (COMPLETED)
+9.  **Request**: A page specially made for the celebrant to view RSVPs and manage their event. (COMPLETED -  was created).
+10. **Feedback**: No need for email notifications. (ACKNOWLEDGED).
 
 **Project Health Check:**
-- **Broken**: The core user flows for the RSVP & Invitation system are incomplete because the frontend pages for creating an invitation and for guests to RSVP are still placeholders.
+- **Broken**: None
 - **Mocked**: ,  are present but not integrated into any workflow.
 
 **3rd Party Integrations**
 - **Cloudflare R2**: For all photo and file storage.
 - **MongoDB Atlas**: Primary database.
 - ****: Frontend library for client-side hashing.
-- ****: Used in the backend for asynchronous HTTP requests.
+- ****: Backend library for generating QR codes.
 
 **Testing status**
-  - Testing agent used after significant changes: YES, for the payment system audit.
+  - Testing agent used after significant changes: YES, used 4 times to validate the invitation system, new enhancements, the celebrant dashboard, and the final redesign.
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
   - Known regressions: None identified.
@@ -163,4 +179,4 @@ The backend foundation for the new **RSVP & Invitation system** has been complet
 - **User (Standard/Pro)**:  / 
 
 **What agent forgot to execute**
-- The agent created placeholder files for  and  but did not create a file for the page where the photographer would view RSVP responses and stats. This will need to be created as part of the frontend implementation.</analysis>
+- The user explicitly requested that when a celebrant edits details on their limited-access page, a **confirmation dialog** (e.g., Are you sure you want to change the date?) must appear. While the agent created the  page and the backend endpoints, the implementation of the frontend edit forms and their corresponding confirmation modals within that component was not completed. This is the highest priority upcoming task.</analysis>
