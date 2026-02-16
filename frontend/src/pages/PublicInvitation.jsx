@@ -946,33 +946,28 @@ export default function PublicInvitation() {
                 </div>
               </div>
 
-              {/* Right Column - Couple's Photo (45% width on lg) */}
-              <div className="hidden lg:flex lg:w-[45%] justify-center">
-                {/* Photo container - 4:5 aspect ratio, height matches RSVP card */}
+              {/* Right Column - Couple's Photo (45% width on lg) with decorative frame */}
+              <div className="w-[45%] flex justify-center">
                 <div 
-                  className="rounded-2xl overflow-hidden shadow-2xl bg-cover bg-center relative"
+                  className="p-2 rounded-2xl"
                   style={{ 
-                    backgroundImage: `url(${displayCoverImage})`,
-                    height: cardHeight ? `${cardHeight}px` : '500px',
-                    width: cardHeight ? `${(cardHeight * 4) / 5}px` : '400px',
-                    backgroundColor: '#1a1a1a'
+                    background: `linear-gradient(135deg, ${accentColor}50, ${primaryColor}40)`,
+                    boxShadow: `0 8px 32px ${primaryColor}30`
                   }}
                 >
-                  {/* Subtle vignette effect */}
-                  <div className="absolute inset-0 shadow-[inset_0_0_50px_rgba(0,0,0,0.2)]"></div>
+                  <div 
+                    className="rounded-xl overflow-hidden bg-cover bg-center relative"
+                    style={{ 
+                      backgroundImage: `url(${displayCoverImage})`,
+                      height: cardHeight ? `${cardHeight - 16}px` : '484px',
+                      width: cardHeight ? `${((cardHeight - 16) * 4) / 5}px` : '387px',
+                      backgroundColor: '#1a1a1a'
+                    }}
+                  >
+                    {/* Subtle vignette effect */}
+                    <div className="absolute inset-0 shadow-[inset_0_0_50px_rgba(0,0,0,0.2)]"></div>
+                  </div>
                 </div>
-              </div>
-
-              {/* Mobile Photo - Show below the card on mobile */}
-              <div className="lg:hidden mt-6 w-full flex justify-center">
-                <div 
-                  className="rounded-2xl overflow-hidden shadow-xl bg-cover bg-center"
-                  style={{ 
-                    backgroundImage: `url(${displayCoverImage})`,
-                    width: '280px',
-                    height: '350px'
-                  }}
-                />
               </div>
             </div>
           </main>
