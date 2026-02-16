@@ -254,6 +254,14 @@ export default function InvitationDetail() {
                 Copy Link
               </button>
               <button
+                onClick={fetchQRCode}
+                className="flex items-center gap-2 px-4 py-2 border border-zinc-300 rounded-lg hover:bg-zinc-50 text-sm"
+                data-testid="qr-code-btn"
+              >
+                <QrCode className="w-4 h-4" />
+                QR Code
+              </button>
+              <button
                 onClick={() => window.open(`/i/${invitation.share_link}`, '_blank')}
                 className="flex items-center gap-2 px-4 py-2 border border-zinc-300 rounded-lg hover:bg-zinc-50 text-sm"
               >
