@@ -13,7 +13,7 @@ import io
 from models.invitation import (
     Invitation, InvitationCreate, InvitationUpdate, InvitationSummary,
     PublicInvitation, RSVPResponse, RSVPResponseCreate, RSVPStats,
-    RSVPFieldConfig, InvitationDesign
+    RSVPFieldConfig, InvitationDesign, ManualGuestAdd
 )
 
 invitation_router = APIRouter()
