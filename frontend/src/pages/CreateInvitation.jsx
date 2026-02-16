@@ -40,8 +40,11 @@ const eventTypes = [
 
 export default function CreateInvitation() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(isEditMode);
   const [templates, setTemplates] = useState([]);
   const [defaultFields, setDefaultFields] = useState([]);
   
