@@ -348,6 +348,15 @@ export default function PublicInvitation() {
                 {invitation.title}
               </h1>
 
+              {/* Countdown Timer */}
+              {invitation.event_date && (
+                <CountdownTimer 
+                  eventDate={invitation.event_date} 
+                  accentColor={accentColor}
+                  primaryColor={primaryColor}
+                />
+              )}
+
               {/* Message */}
               {invitation.message && (
                 <p className="text-zinc-600 mb-6 leading-relaxed">
