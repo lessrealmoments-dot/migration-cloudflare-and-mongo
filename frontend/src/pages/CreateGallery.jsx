@@ -110,8 +110,14 @@ const CreateGallery = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Check if gallery was created with download lock
-      if (response.data.download_locked_until_payment) {
+      // Check if this is a demo gallery - show warning
+      if (response.data.is_demo && response.data.demo_warning) {
+        toast.warning(response.data.demo_warning, {
+          duration: 10000,
+          icon: '⚠️'
+        });
+      } else if (response.data.download_locked_until_payment) {
+        // Check if gallery was created with download lock
         toast.success('Gallery created! Note: Downloads are locked until your payment is approved.', {
           duration: 5000
         });
