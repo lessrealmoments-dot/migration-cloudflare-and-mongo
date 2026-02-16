@@ -935,26 +935,13 @@ def setup_invitation_routes(app, db, get_current_user):
         rsvp_id: str,
         current_user: dict = Depends(get_current_user)
     ):
-        """Delete a single RSVP response"""
-        # Verify ownership
-        invitation = await db.invitations.find_one(
-            {"id": invitation_id, "user_id": current_user["id"]}
+        """Delete a single RSVP response - DISABLED for data protection"""
+        # RSVP responses cannot be deleted for data protection
+        # This protects both the host and celebrant by maintaining a complete record
+        raise HTTPException(
+            status_code=403, 
+            detail="RSVP responses cannot be deleted. This protects the integrity of your guest list records."
         )
-        if not invitation:
-            raise HTTPException(status_code=404, detail="Invitation not found")
-        
-        result = await db.rsvp_responses.delete_one({
-            "id": rsvp_id,
-            "invitation_id": invitation_id
-        })
-        
-        if result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="RSVP not found")
-        
-        # Update stats
-        await update_rsvp_stats(db, invitation_id)
-        
-        return {"message": "RSVP deleted successfully"}
     
     @invitation_router.post("/{invitation_id}/guests")
     async def add_manual_guest(
