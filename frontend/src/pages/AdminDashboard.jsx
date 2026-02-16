@@ -864,6 +864,18 @@ const AdminDashboard = () => {
             <Settings className="w-5 h-5" strokeWidth={1.5} />
             Landing Page
           </button>
+          <button
+            onClick={() => setActiveTab('rsvp-tokens')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-sm transition-colors ${
+              activeTab === 'rsvp-tokens'
+                ? 'bg-white text-zinc-900'
+                : 'bg-zinc-800 text-zinc-400 hover:text-white'
+            }`}
+            data-testid="rsvp-tokens-tab"
+          >
+            <Mail className="w-5 h-5" strokeWidth={1.5} />
+            RSVP Tokens
+          </button>
         </div>
 
         {/* Photographers Tab */}
