@@ -716,6 +716,91 @@ def setup_invitation_routes(app, db, get_current_user):
         
         return {"message": "RSVP deleted successfully"}
     
+    @invitation_router.post("/{invitation_id}/guests")
+    async def add_manual_guest(
+        invitation_id: str,
+        guest_data: ManualGuestAdd,
+        current_user: dict = Depends(get_current_user)
+    ):
+        """Manually add a guest (for phone/in-person RSVPs)"""
+        # Verify ownership
+        invitation = await db.invitations.find_one(
+            {"id": invitation_id, "user_id": current_user["id"]}
+        )
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        # Create RSVP record
+        rsvp_id = str(uuid.uuid4())
+        rsvp_record = {
+            "id": rsvp_id,
+            "invitation_id": invitation_id,
+            "guest_name": guest_data.guest_name,
+            "guest_email": guest_data.guest_email,
+            "guest_phone": guest_data.guest_phone,
+            "attendance_status": guest_data.attendance_status,
+            "guest_count": guest_data.guest_count,
+            "responses": {},
+            "message": guest_data.notes,
+            "submitted_at": datetime.now(timezone.utc).isoformat(),
+            "added_via": guest_data.added_via,  # manual, phone, in_person
+            "added_by": current_user["id"]
+        }
+        
+        await db.rsvp_responses.insert_one(rsvp_record)
+        
+        # Update stats
+        await update_rsvp_stats(db, invitation_id)
+        
+        return {
+            "id": rsvp_id,
+            "message": "Guest added successfully",
+            "guest": {
+                "name": guest_data.guest_name,
+                "status": guest_data.attendance_status,
+                "guest_count": guest_data.guest_count
+            }
+        }
+    
+    @invitation_router.put("/{invitation_id}/guests/{rsvp_id}")
+    async def update_guest(
+        invitation_id: str,
+        rsvp_id: str,
+        guest_data: ManualGuestAdd,
+        current_user: dict = Depends(get_current_user)
+    ):
+        """Update a guest's RSVP"""
+        # Verify ownership
+        invitation = await db.invitations.find_one(
+            {"id": invitation_id, "user_id": current_user["id"]}
+        )
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        # Update the RSVP
+        update_data = {
+            "guest_name": guest_data.guest_name,
+            "guest_email": guest_data.guest_email,
+            "guest_phone": guest_data.guest_phone,
+            "attendance_status": guest_data.attendance_status,
+            "guest_count": guest_data.guest_count,
+            "message": guest_data.notes,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        result = await db.rsvp_responses.update_one(
+            {"id": rsvp_id, "invitation_id": invitation_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Guest not found")
+        
+        # Update stats
+        await update_rsvp_stats(db, invitation_id)
+        
+        return {"message": "Guest updated successfully"}
+    
     @invitation_router.get("/{invitation_id}/export")
     async def export_rsvps(
         invitation_id: str,
