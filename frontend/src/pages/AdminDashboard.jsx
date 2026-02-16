@@ -960,6 +960,9 @@ const AdminDashboard = () => {
           >
             <Mail className="w-5 h-5" strokeWidth={1.5} />
             RSVP Tokens
+            {rsvpPendingPurchases.length > 0 && (
+              <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">{rsvpPendingPurchases.length}</span>
+            )}
           </button>
         </div>
 
