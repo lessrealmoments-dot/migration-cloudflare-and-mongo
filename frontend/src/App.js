@@ -21,6 +21,7 @@ import AdminLogin from '@/pages/AdminLogin';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AdminGalleryReview from '@/pages/AdminGalleryReview';
 import CollagePresetBuilder from '@/pages/CollagePresetBuilder';
+import InvitationsPage from '@/pages/InvitationsPage';
 import '@/App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
