@@ -137,23 +137,35 @@ export default function PublicInvitation() {
     const design = invitation.design || {};
     const defaultImage = defaultCoverImages[invitation.event_type] || defaultCoverImages.celebration;
     
-    if (design.cover_image_url) {
+    // Priority: 1) Custom cover image, 2) Gallery cover photo, 3) Default based on event type
+    const imageSources = [
+      design.cover_image_url,
+      invitation.linked_gallery_cover_photo,
+      defaultImage
+    ].filter(Boolean);
+    
+    const tryLoadImage = (index) => {
+      if (index >= imageSources.length) {
+        setCoverImage(defaultImage);
+        return;
+      }
+      
       const img = new Image();
       img.onload = () => {
-        // Only use the uploaded image if it loads successfully and has a reasonable size
+        // Only use the image if it loads successfully and has a reasonable size
         if (img.width > 10 && img.height > 10) {
-          setCoverImage(design.cover_image_url);
+          setCoverImage(imageSources[index]);
         } else {
-          setCoverImage(defaultImage);
+          tryLoadImage(index + 1);
         }
       };
       img.onerror = () => {
-        setCoverImage(defaultImage);
+        tryLoadImage(index + 1);
       };
-      img.src = design.cover_image_url;
-    } else {
-      setCoverImage(defaultImage);
-    }
+      img.src = imageSources[index];
+    };
+    
+    tryLoadImage(0);
   }, [invitation]);
 
   const fetchInvitation = async (pwd = null) => {
