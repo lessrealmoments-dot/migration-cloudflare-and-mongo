@@ -305,7 +305,7 @@ export default function PublicInvitation() {
     return (
       <div 
         className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center"
-        style={{ backgroundImage: `url(${coverImage})` }}
+        style={{ backgroundImage: `url(${displayCoverImage})` }}
       >
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
         <div className="relative z-10 text-center max-w-md bg-white/95 backdrop-blur-xl rounded-2xl p-8 shadow-2xl">
@@ -678,7 +678,7 @@ export default function PublicInvitation() {
               <div className="lg:col-span-2 hidden lg:block">
                 <div 
                   className="sticky top-8 h-[600px] rounded-2xl overflow-hidden shadow-2xl bg-cover bg-center"
-                  style={{ backgroundImage: `url(${coverImage})` }}
+                  style={{ backgroundImage: `url(${displayCoverImage})` }}
                 >
                   {/* Optional: Add a subtle gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
