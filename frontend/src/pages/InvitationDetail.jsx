@@ -40,6 +40,8 @@ export default function InvitationDetail() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [galleries, setGalleries] = useState([]);
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrCodeData, setQrCodeData] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -66,6 +68,39 @@ export default function InvitationDetail() {
       navigate('/invitations');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchQRCode = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/invitations/${id}/qr-code-base64`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setQrCodeData(response.data);
+      setShowQRModal(true);
+    } catch (error) {
+      toast.error('Failed to generate QR code');
+    }
+  };
+
+  const downloadQRCode = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/invitations/${id}/qr-code`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invitation_qr_${invitation.share_link}.png`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success('QR code downloaded!');
+    } catch (error) {
+      toast.error('Failed to download QR code');
     }
   };
 
