@@ -47,6 +47,17 @@ class RSVPResponseCreate(BaseModel):
     message: Optional[str] = None
 
 
+class ManualGuestAdd(BaseModel):
+    """Manual guest addition by host"""
+    guest_name: str
+    guest_email: Optional[str] = None
+    guest_phone: Optional[str] = None
+    attendance_status: str = "attending"  # attending, not_attending, maybe, pending
+    guest_count: int = 1
+    notes: Optional[str] = None
+    added_via: str = "manual"  # manual, phone, in_person
+
+
 # Invitation Templates
 class InvitationTemplate(BaseModel):
     """Pre-designed invitation template"""
