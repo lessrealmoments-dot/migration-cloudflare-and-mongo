@@ -9,6 +9,35 @@ A comprehensive photo-sharing application for photographers with focus on:
 - Monetization via subscription/credit system
 - Multiple photo source integrations (uploads, pCloud, GDrive, Fotoshare)
 - Smart adaptive UX for different connection speeds
+- **RSVP & Invitation System** - Separate billable service for event RSVPs
+
+## RSVP Token System (NEW - Feb 17, 2025)
+### Token Economy
+- **1 RSVP Token = 1 Invitation** (unlimited guest responses)
+- **Price**: ₱500 per token (admin editable)
+- **Expiry**: 12 months from purchase
+- **Founder's Override**: Unlimited tokens automatically
+
+### Token Rules
+- Tokens consumed on invitation creation (not refundable even if invitation deleted)
+- Guest RSVP responses **CANNOT be deleted** (data protection)
+- Invitations can be edited until event date passes
+- After event date: invitation locked from editing
+
+### Admin Features
+- Grant unlimited tokens to any user
+- Grant specific number of tokens
+- Revoke unlimited token access
+- Set/update token price
+- View pending token purchases
+- Approve/reject purchases
+
+### API Endpoints
+- `GET /api/rsvp-tokens/balance` - User's token balance
+- `GET /api/rsvp-tokens/price` - Current token price
+- `POST /api/rsvp-tokens/purchase` - Purchase tokens
+- `POST /api/rsvp-tokens/admin/grant` - Admin grant tokens
+- `PUT /api/rsvp-tokens/admin/settings/price` - Update price
 
 ## Core Features Implemented
 
