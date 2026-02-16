@@ -583,6 +583,67 @@ const Dashboard = ({ user, setUser }) => {
         </div>
       )}
 
+      {/* RSVP Token Balance Card */}
+      {rsvpTokenBalance && (
+        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 pt-4">
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="flex justify-between items-center flex-wrap gap-4">
+              <div className="flex items-center gap-4">
+                <div className="p-2 sm:p-3 rounded-full bg-purple-100">
+                  <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-base sm:text-lg text-purple-900">
+                      RSVP Tokens
+                    </span>
+                    {rsvpTokenBalance.has_unlimited && (
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                        Unlimited
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-sm text-purple-700">
+                    {rsvpTokenBalance.has_unlimited ? (
+                      <span className="text-green-600 font-medium">
+                        Unlimited RSVP Tokens ({rsvpTokenBalance.unlimited_reason === 'founders_override' ? "Founder's Benefit" : "Admin Grant"})
+                      </span>
+                    ) : (
+                      <span>
+                        {rsvpTokenBalance.available_tokens} available ({rsvpTokenBalance.used_tokens} used)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {!rsvpTokenBalance.has_unlimited && (
+                  <button
+                    onClick={() => setShowBuyRsvpTokenModal(true)}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-500 flex items-center gap-2 text-sm font-medium"
+                    data-testid="buy-rsvp-token-btn"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    Buy Token (₱{rsvpTokenPrice})
+                  </button>
+                )}
+                <button
+                  onClick={() => navigate('/invitations')}
+                  className="border border-purple-300 text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-100 flex items-center gap-2 text-sm font-medium"
+                >
+                  <Mail className="w-4 h-4" />
+                  My Invitations
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-purple-600 mt-2">
+              1 token = 1 invitation with unlimited guest responses. Tokens expire 12 months after purchase.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Payment Rejected Banner */}
       {paymentStatus?.payment_rejected_at && (
         <div className="max-w-screen-2xl mx-auto px-6 md:px-12 pt-4">
