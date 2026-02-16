@@ -10967,6 +10967,41 @@ async def submit_upgrade_request(data: UpgradeRequest, background_tasks: Backgro
     if current_plan == data.requested_plan:
         raise HTTPException(status_code=400, detail="You are already on this plan")
     
+    # Validate upgrade/downgrade rules:
+    # - Free can upgrade to Standard or Pro
+    # - Standard can upgrade to Pro only
+    # - Pro cannot downgrade until subscription expires (30 days)
+    plan_hierarchy = {PLAN_FREE: 0, PLAN_STANDARD: 1, PLAN_PRO: 2}
+    current_level = plan_hierarchy.get(current_plan, 0)
+    requested_level = plan_hierarchy.get(data.requested_plan, 0)
+    
+    if requested_level < current_level:
+        # This is a downgrade - check if subscription is expired
+        subscription_expires_str = db_user.get("subscription_expires")
+        if subscription_expires_str:
+            try:
+                subscription_expires = datetime.fromisoformat(subscription_expires_str.replace('Z', '+00:00'))
+                if datetime.now(timezone.utc) < subscription_expires:
+                    days_remaining = (subscription_expires - datetime.now(timezone.utc)).days
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"Cannot downgrade until your current subscription expires. {days_remaining} days remaining."
+                    )
+            except ValueError:
+                pass
+        # Override mode users also cannot downgrade while override is active
+        override_expires_str = db_user.get("override_expires")
+        if override_expires_str:
+            try:
+                override_expires = datetime.fromisoformat(override_expires_str.replace('Z', '+00:00'))
+                if datetime.now(timezone.utc) < override_expires:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail="Cannot change plan while override mode is active."
+                    )
+            except ValueError:
+                pass
+    
     # Get pricing for transaction record
     billing_settings = await get_billing_settings()
     pricing = billing_settings.get("pricing", DEFAULT_PRICING)
@@ -11034,6 +11069,15 @@ async def submit_addon_tokens_request(data: ExtraCreditRequest, background_tasks
     db_user = await db.users.find_one({"id": user["id"]})
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # CRITICAL: Add-on tokens require an active subscription
+    # Check if user has an active subscription (not Free, not expired)
+    is_active = await is_subscription_active(db_user)
+    if not is_active:
+        raise HTTPException(
+            status_code=400, 
+            detail="Add-on tokens can only be purchased with an active subscription. Please subscribe to Standard or Pro first."
+        )
     
     # Set pending status with credit request info
     await db.users.update_one(
@@ -11164,6 +11208,9 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
         current_extra = user.get("addon_tokens", 0)
         update_data["addon_tokens"] = current_extra + requested_addon_tokens
         update_data["requested_addon_tokens"] = None
+        # CRITICAL: Set addon token expiration (12 months from purchase)
+        update_data["addon_tokens_purchased_at"] = datetime.now(timezone.utc).isoformat()
+        update_data["addon_tokens_expires_at"] = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
         message_parts.append(f"+{requested_addon_tokens} extra credits added")
         notification_msg_parts.append(f"You received {requested_addon_tokens} extra credit(s).")
         tx_type = "addon_tokens"
