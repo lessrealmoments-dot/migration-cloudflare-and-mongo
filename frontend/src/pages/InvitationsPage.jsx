@@ -81,7 +81,7 @@ export default function InvitationsPage() {
     
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API}/invitations/${id}`, {
+      await axios.delete(`${API}/api/invitations/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Invitation deleted');
