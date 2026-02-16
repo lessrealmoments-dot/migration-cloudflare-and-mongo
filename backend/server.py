@@ -4905,6 +4905,14 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
     if storage_quota > 0:
         storage_percent = round((storage_used / storage_quota) * 100, 1)
     
+    # Prepare demo warning if this is a demo gallery
+    is_demo = gallery.get("is_demo", False)
+    demo_warning = None
+    demo_expires_at = gallery.get("demo_features_expire")
+    
+    if is_demo:
+        demo_warning = "⚠️ This is a DEMO gallery. It will expire soon and all content will be permanently deleted. Upgrading to a paid plan will NOT extend this demo gallery."
+    
     return Gallery(
         id=gallery["id"],
         photographer_id=gallery["photographer_id"],
@@ -4938,6 +4946,9 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         is_edit_locked=edit_info["is_locked"],
         days_until_edit_lock=edit_info["days_until_lock"],
         download_locked_until_payment=gallery.get("download_locked_until_payment", False),
+        is_demo=is_demo,
+        demo_warning=demo_warning,
+        demo_expires_at=demo_expires_at,
         storage_used=storage_used,
         storage_quota=storage_quota,
         storage_percent=storage_percent
