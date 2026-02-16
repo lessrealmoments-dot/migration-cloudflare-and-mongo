@@ -232,6 +232,7 @@ class PublicInvitation(BaseModel):
     rsvp_fields: List[RSVPFieldConfig] = []
     max_guests_per_rsvp: int = 5
     linked_gallery_share_link: Optional[str] = None
+    linked_gallery_cover_photo: Optional[str] = None
     has_password: bool = False
 
 
