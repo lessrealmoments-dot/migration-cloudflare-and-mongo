@@ -438,7 +438,7 @@ export default function PublicInvitation() {
               </div>
               
               {/* Mobile RSVP Card - connected to hero */}
-              <div className="w-full max-w-md">
+              <div className="w-full">
                 <div className="bg-white/95 backdrop-blur-xl rounded-b-2xl shadow-2xl overflow-hidden">
                   {/* Card Body */}
                   <div className="p-5">
