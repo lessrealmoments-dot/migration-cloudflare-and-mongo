@@ -591,14 +591,24 @@ const Dashboard = ({ user, setUser }) => {
               Manage your photo galleries and share with clients
             </p>
           </div>
-          <button
-            data-testid="create-gallery-button"
-            onClick={() => navigate('/gallery/create')}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300 flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" strokeWidth={1.5} />
-            Create Gallery
-          </button>
+          <div className="flex gap-3">
+            <button
+              data-testid="invitations-button"
+              onClick={() => navigate('/invitations')}
+              className="border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 h-10 px-6 rounded-sm font-medium tracking-wide transition-all duration-300 flex items-center gap-2"
+            >
+              <Mail className="w-5 h-5" strokeWidth={1.5} />
+              Invitations
+            </button>
+            <button
+              data-testid="create-gallery-button"
+              onClick={() => navigate('/gallery/create')}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-8 rounded-sm font-medium tracking-wide transition-all duration-300 flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" strokeWidth={1.5} />
+              Create Gallery
+            </button>
+          </div>
         </div>
 
         {loading ? (
