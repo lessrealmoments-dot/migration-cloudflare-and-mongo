@@ -1996,6 +1996,113 @@ async def resolve_user_features(user: dict) -> dict:
     
     return result
 
+
+async def resolve_gallery_features(user: dict, gallery: dict) -> dict:
+    """
+    Resolve features for a specific gallery using GRANDFATHERING HIERARCHY:
+    
+    PRIORITY (highest to lowest):
+    1. Override Mode (if active and not expired)
+    2. Current Plan features (if user has upgraded since gallery creation)
+    3. Grandfathered Plan features (plan gallery was created under)
+    
+    Key rules:
+    - Admin feature toggles ALWAYS win (they define what each plan can do)
+    - If user upgrades (e.g., Standard→Pro), gallery gets upgraded features
+    - If user downgrades (e.g., Pro→Free), gallery retains original plan features
+    - Expiration only affects NEW galleries, not existing ones
+    
+    Returns dict with:
+    - features: dict of enabled features
+    - effective_plan: str (the plan providing features)
+    - grandfathered: bool (whether using grandfather plan)
+    - authority_source: str ('override_mode', 'current_plan', 'grandfather')
+    """
+    global_toggles = await get_global_feature_toggles()
+    
+    # Get user info
+    override_mode = user.get("override_mode")
+    override_expires = user.get("override_expires")
+    current_plan = user.get("plan", PLAN_FREE)
+    
+    # Get gallery's creation plan info
+    created_under_plan = gallery.get("created_under_plan", PLAN_FREE)
+    created_under_override = gallery.get("created_under_override")
+    
+    result = {
+        "features": {},
+        "effective_plan": current_plan,
+        "grandfathered": False,
+        "authority_source": "current_plan"
+    }
+    
+    # STEP 1: Check Override Mode (HIGHEST PRIORITY)
+    if override_mode and override_expires:
+        try:
+            expires_dt = datetime.fromisoformat(override_expires.replace('Z', '+00:00'))
+            if datetime.now(timezone.utc) < expires_dt:
+                # Override is active - use override mode features
+                mode_features = global_toggles.get(override_mode, {})
+                result["features"] = mode_features.copy()
+                result["authority_source"] = "override_mode"
+                
+                # Determine effective plan from override
+                if override_mode in [MODE_FOUNDERS_CIRCLE, MODE_EARLY_PARTNER_BETA, MODE_COMPED_PRO, MODE_ENTERPRISE_ACCESS]:
+                    result["effective_plan"] = PLAN_PRO
+                elif override_mode == MODE_COMPED_STANDARD:
+                    result["effective_plan"] = PLAN_STANDARD
+                
+                return result
+        except (ValueError, TypeError):
+            pass
+    
+    # STEP 2: Determine which plan provides better features
+    # Priority: Current Plan > Grandfather Plan (but only if current is HIGHER)
+    
+    # Plan hierarchy: pro > standard > free
+    plan_hierarchy = {PLAN_FREE: 0, PLAN_STANDARD: 1, PLAN_PRO: 2}
+    
+    current_plan_level = plan_hierarchy.get(current_plan, 0)
+    created_plan_level = plan_hierarchy.get(created_under_plan, 0)
+    
+    # If user has upgraded since gallery creation, use current (higher) plan
+    # If user has downgraded, use grandfather (original) plan
+    if current_plan_level >= created_plan_level:
+        # Current plan is same or higher - use current plan features
+        effective_plan = current_plan
+        result["authority_source"] = "current_plan"
+        result["grandfathered"] = False
+    else:
+        # Current plan is lower - use grandfathered plan features
+        effective_plan = created_under_plan
+        result["authority_source"] = "grandfather"
+        result["grandfathered"] = True
+        logger.info(f"Grandfathering gallery {gallery.get('id')}: created under {created_under_plan}, current plan {current_plan}")
+    
+    # Get features from admin-configured toggles for the effective plan
+    plan_features = global_toggles.get(effective_plan, {})
+    result["features"] = plan_features.copy()
+    result["effective_plan"] = effective_plan
+    
+    return result
+
+
+async def is_gallery_feature_enabled(user: dict, gallery: dict, feature_name: str) -> bool:
+    """
+    Check if a specific feature is enabled for a gallery, considering grandfathering.
+    
+    Args:
+        user: The gallery owner's user document
+        gallery: The gallery document
+        feature_name: The feature to check (e.g., 'coordinator_hub', 'display_mode')
+    
+    Returns:
+        bool: True if feature is enabled for this gallery
+    """
+    resolved = await resolve_gallery_features(user, gallery)
+    return resolved["features"].get(feature_name, False)
+
+
 async def check_subscription_grace_periods(user: dict, gallery: dict = None) -> dict:
     """
     Check subscription grace periods for grandfathered galleries.
