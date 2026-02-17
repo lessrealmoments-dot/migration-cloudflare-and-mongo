@@ -163,13 +163,21 @@ const ContributorUpload = () => {
         
         setInfo(response.data);
         
-        // If contributor info already exists, pre-fill and skip to upload
-        if (response.data.existing_contributor_name) {
-          setCompanyName(response.data.existing_contributor_name);
-          if (response.data.existing_contributor_role) {
-            setSelectedRole(response.data.existing_contributor_role);
+        // Check if section requires password
+        if (response.data.requires_password) {
+          setRequiresPassword(true);
+          setStep('password');
+        } else {
+          // No password required - proceed to company step or upload if returning contributor
+          if (response.data.existing_contributor_name) {
+            setCompanyName(response.data.existing_contributor_name);
+            if (response.data.existing_contributor_role) {
+              setSelectedRole(response.data.existing_contributor_role);
+            }
+            setStep('upload');
+          } else {
+            setStep('company');
           }
-          setStep('upload');
         }
       } catch (err) {
         setError(err.response?.data?.detail || 'Invalid or expired contributor link');
@@ -180,6 +188,42 @@ const ContributorUpload = () => {
     
     fetchInfo();
   }, [contributorLink, navigate]);
+  
+  // Password verification
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!sectionPassword.trim()) {
+      toast.error('Please enter the section password');
+      return;
+    }
+    
+    setVerifyingPassword(true);
+    try {
+      const response = await axios.post(`${API}/contributor/${contributorLink}/verify-password`, {
+        password: sectionPassword
+      });
+      
+      if (response.data.verified) {
+        setPasswordVerified(true);
+        toast.success('Password verified!');
+        
+        // Proceed to company step or upload if returning contributor
+        if (info?.existing_contributor_name) {
+          setCompanyName(info.existing_contributor_name);
+          if (info.existing_contributor_role) {
+            setSelectedRole(info.existing_contributor_role);
+          }
+          setStep('upload');
+        } else {
+          setStep('company');
+        }
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Invalid password');
+    } finally {
+      setVerifyingPassword(false);
+    }
+  };
 
   // Step 1: Company name submission
   const handleCompanySubmit = (e) => {
