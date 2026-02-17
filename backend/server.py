@@ -7515,7 +7515,10 @@ async def get_coordinator_hub(hub_link: str):
             "contributor_link": section.get("contributor_link"),
             "contributor_enabled": section.get("contributor_enabled", False),
             "link_prefix": link_prefix,
-            "role_label": role_label
+            "role_label": role_label,
+            # Password protection - don't expose actual password, just whether it exists
+            "section_password": bool(section.get("section_password")),  # True/False
+            "created_by_supplier": section.get("created_by_supplier", False)
         })
     
     return {
