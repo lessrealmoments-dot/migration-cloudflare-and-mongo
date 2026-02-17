@@ -1285,6 +1285,57 @@ def setup_invitation_routes(app, db, get_current_user):
             "invitation_url": invitation_url
         }
     
+    @invitation_router.post("/admin/fix-base64-images")
+    async def fix_base64_images(current_user: dict = Depends(get_current_user)):
+        """Admin endpoint to clean up base64 images from invitations (performance fix)"""
+        # Check if admin
+        admin_user = await db.admin_users.find_one({"id": current_user["id"]})
+        if not admin_user:
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        # Find all invitations with base64 cover images
+        invitations = await db.invitations.find({
+            "design.cover_image_url": {"$regex": "^data:"}
+        }).to_list(None)
+        
+        fixed_count = 0
+        for inv in invitations:
+            await db.invitations.update_one(
+                {"id": inv["id"]},
+                {"$set": {"design.cover_image_url": None}}
+            )
+            fixed_count += 1
+            logger.info(f"Cleared base64 image from invitation {inv['id']} - {inv.get('title', 'Untitled')}")
+        
+        return {
+            "message": f"Fixed {fixed_count} invitations with base64 images",
+            "fixed_count": fixed_count
+        }
+    
+    @invitation_router.get("/admin/check-base64-images")
+    async def check_base64_images(current_user: dict = Depends(get_current_user)):
+        """Check how many invitations have base64 images stored"""
+        # Check if admin
+        admin_user = await db.admin_users.find_one({"id": current_user["id"]})
+        if not admin_user:
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        # Count invitations with base64 cover images
+        count = await db.invitations.count_documents({
+            "design.cover_image_url": {"$regex": "^data:"}
+        })
+        
+        # Get a sample of affected invitations
+        sample = await db.invitations.find(
+            {"design.cover_image_url": {"$regex": "^data:"}},
+            {"_id": 0, "id": 1, "title": 1}
+        ).limit(5).to_list(5)
+        
+        return {
+            "total_with_base64": count,
+            "sample_invitations": sample
+        }
+    
     # Include router in app
     app.include_router(invitation_router, prefix="/api/invitations", tags=["Invitations"])
     
