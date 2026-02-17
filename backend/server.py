@@ -7480,8 +7480,310 @@ async def get_coordinator_hub(hub_link: str):
         "event_date": gallery.get("event_date"),
         "photographer_name": photographer_name,
         "coordinator_name": gallery.get("coordinator_name"),
-        "sections": sections_data
+        "sections": sections_data,
+        "share_link": gallery.get("share_link"),  # For "View Live Gallery" button
+        "allow_supplier_sections": gallery.get("allow_supplier_sections", False),
+        "has_coordinator_password": bool(gallery.get("coordinator_password"))
     }
+
+
+@api_router.post("/coordinator-hub/{hub_link}/auth")
+async def authenticate_coordinator_hub(hub_link: str, data: dict = Body(...)):
+    """Authenticate as coordinator or contributor in the hub"""
+    gallery = await db.galleries.find_one(
+        {"coordinator_hub_link": hub_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid coordinator hub link")
+    
+    access_type = data.get("access_type")  # "coordinator" or "contributor"
+    password = data.get("password")
+    
+    if access_type == "coordinator":
+        stored_password = gallery.get("coordinator_password")
+        if not stored_password:
+            raise HTTPException(status_code=400, detail="Coordinator password not set for this gallery")
+        
+        if password != stored_password:
+            raise HTTPException(status_code=401, detail="Invalid coordinator password")
+        
+        return {
+            "authenticated": True,
+            "access_type": "coordinator",
+            "message": "Coordinator access granted"
+        }
+    else:
+        # Contributors don't need gallery-level auth, they auth at section level
+        return {
+            "authenticated": True,
+            "access_type": "contributor",
+            "message": "Contributor access granted"
+        }
+
+
+@api_router.post("/coordinator-hub/{hub_link}/sections")
+async def create_section_from_hub(hub_link: str, data: dict = Body(...)):
+    """Create a new section from the Coordinator Hub (by supplier)"""
+    gallery = await db.galleries.find_one(
+        {"coordinator_hub_link": hub_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid coordinator hub link")
+    
+    # Check if supplier section creation is allowed
+    if not gallery.get("allow_supplier_sections", False):
+        raise HTTPException(
+            status_code=403, 
+            detail="Section creation by suppliers is not enabled for this gallery"
+        )
+    
+    # Get section data
+    section_name = data.get("name", "").strip()
+    section_type = data.get("type", "photo")
+    section_password = data.get("password", "").strip()
+    
+    if not section_name:
+        raise HTTPException(status_code=400, detail="Section name is required")
+    
+    if not section_password or len(section_password) < 4:
+        raise HTTPException(status_code=400, detail="Section password must be at least 4 characters")
+    
+    if section_type not in ["photo", "video", "pcloud", "gdrive", "fotoshare", "fotoshare_photobooth"]:
+        raise HTTPException(status_code=400, detail="Invalid section type")
+    
+    # Generate section ID and contributor link
+    section_id = str(uuid.uuid4())
+    contributor_link = secrets.token_urlsafe(16)
+    
+    sections = gallery.get("sections", [])
+    new_section = {
+        "id": section_id,
+        "name": section_name,
+        "type": section_type,
+        "order": len(sections),
+        "contributor_enabled": True,
+        "contributor_link": contributor_link,
+        "section_password": section_password,  # Password for this specific section
+        "created_by_supplier": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    sections.append(new_section)
+    await db.galleries.update_one(
+        {"coordinator_hub_link": hub_link}, 
+        {"$set": {"sections": sections}}
+    )
+    
+    logger.info(f"Supplier created section '{section_name}' in gallery {gallery['id']} via Coordinator Hub")
+    
+    return {
+        "section_id": section_id,
+        "name": section_name,
+        "type": section_type,
+        "contributor_link": contributor_link,
+        "message": "Section created successfully"
+    }
+
+
+@api_router.post("/coordinator-hub/{hub_link}/sections/{section_id}/verify-password")
+async def verify_section_password(hub_link: str, section_id: str, data: dict = Body(...)):
+    """Verify section password for upload access"""
+    gallery = await db.galleries.find_one(
+        {"coordinator_hub_link": hub_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid coordinator hub link")
+    
+    section = next((s for s in gallery.get("sections", []) if s["id"] == section_id), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    password = data.get("password", "")
+    stored_password = section.get("section_password")
+    
+    # If no section password set, allow access
+    if not stored_password:
+        return {"verified": True, "contributor_link": section.get("contributor_link")}
+    
+    if password != stored_password:
+        raise HTTPException(status_code=401, detail="Invalid section password")
+    
+    return {
+        "verified": True,
+        "contributor_link": section.get("contributor_link")
+    }
+
+
+@api_router.put("/coordinator-hub/{hub_link}/sections/{section_id}")
+async def update_section_from_hub(hub_link: str, section_id: str, data: dict = Body(...)):
+    """Update section (rename, reorder) - requires coordinator or section password"""
+    gallery = await db.galleries.find_one(
+        {"coordinator_hub_link": hub_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid coordinator hub link")
+    
+    access_type = data.get("access_type")
+    password = data.get("password", "")
+    
+    sections = gallery.get("sections", [])
+    section_idx = next((i for i, s in enumerate(sections) if s["id"] == section_id), None)
+    if section_idx is None:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    section = sections[section_idx]
+    
+    # Verify access
+    if access_type == "coordinator":
+        if password != gallery.get("coordinator_password"):
+            raise HTTPException(status_code=401, detail="Invalid coordinator password")
+    else:
+        # Regular contributor - must use section password
+        if password != section.get("section_password"):
+            raise HTTPException(status_code=401, detail="Invalid section password")
+    
+    # Update section
+    if "name" in data and data["name"]:
+        sections[section_idx]["name"] = data["name"].strip()
+    
+    if "order" in data:
+        sections[section_idx]["order"] = data["order"]
+    
+    await db.galleries.update_one(
+        {"coordinator_hub_link": hub_link},
+        {"$set": {"sections": sections}}
+    )
+    
+    return {"message": "Section updated", "section": sections[section_idx]}
+
+
+@api_router.delete("/coordinator-hub/{hub_link}/sections/{section_id}")
+async def delete_section_from_hub(hub_link: str, section_id: str, data: dict = Body(...)):
+    """Delete section - requires coordinator or section password with confirmation"""
+    gallery = await db.galleries.find_one(
+        {"coordinator_hub_link": hub_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid coordinator hub link")
+    
+    access_type = data.get("access_type")
+    password = data.get("password", "")
+    confirm = data.get("confirm", False)
+    
+    if not confirm:
+        raise HTTPException(status_code=400, detail="Please confirm deletion")
+    
+    sections = gallery.get("sections", [])
+    section = next((s for s in sections if s["id"] == section_id), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    # Verify access
+    if access_type == "coordinator":
+        if password != gallery.get("coordinator_password"):
+            raise HTTPException(status_code=401, detail="Invalid coordinator password")
+    else:
+        # Regular contributor - must use section password
+        if password != section.get("section_password"):
+            raise HTTPException(status_code=401, detail="Invalid section password")
+    
+    # Delete the section
+    sections = [s for s in sections if s["id"] != section_id]
+    await db.galleries.update_one(
+        {"coordinator_hub_link": hub_link},
+        {"$set": {"sections": sections}}
+    )
+    
+    # Also delete related content (photos, videos, etc.)
+    gallery_id = gallery["id"]
+    await db.photos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    await db.gallery_videos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    await db.fotoshare_videos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    await db.photobooth_sessions.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    await db.gdrive_photos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    await db.pcloud_photos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+    
+    logger.info(f"Section {section_id} deleted from gallery {gallery_id} via Coordinator Hub")
+    
+    return {"message": "Section deleted successfully"}
+
+
+@api_router.put("/coordinator-hub/{hub_link}/sections/reorder")
+async def reorder_sections_from_hub(hub_link: str, data: dict = Body(...)):
+    """Reorder all sections - requires coordinator password"""
+    gallery = await db.galleries.find_one(
+        {"coordinator_hub_link": hub_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid coordinator hub link")
+    
+    password = data.get("password", "")
+    section_orders = data.get("section_orders", [])  # List of {id, order}
+    
+    # Only coordinators can reorder all sections
+    if password != gallery.get("coordinator_password"):
+        raise HTTPException(status_code=401, detail="Invalid coordinator password")
+    
+    if not section_orders:
+        raise HTTPException(status_code=400, detail="section_orders is required")
+    
+    sections = gallery.get("sections", [])
+    section_map = {s["id"]: s for s in sections}
+    
+    # Update orders
+    for item in section_orders:
+        if item["id"] in section_map:
+            section_map[item["id"]]["order"] = item["order"]
+    
+    # Sort by order
+    sections = sorted(section_map.values(), key=lambda x: x.get("order", 0))
+    
+    await db.galleries.update_one(
+        {"coordinator_hub_link": hub_link},
+        {"$set": {"sections": sections}}
+    )
+    
+    return {"message": "Sections reordered", "sections": sections}
+
+
+@api_router.put("/coordinator-hub/{hub_link}/sections/{section_id}/reset-password")
+async def reset_section_password(hub_link: str, section_id: str, data: dict = Body(...)):
+    """Reset section password - requires coordinator password"""
+    gallery = await db.galleries.find_one(
+        {"coordinator_hub_link": hub_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid coordinator hub link")
+    
+    coordinator_password = data.get("coordinator_password", "")
+    new_password = data.get("new_password", "").strip()
+    
+    if coordinator_password != gallery.get("coordinator_password"):
+        raise HTTPException(status_code=401, detail="Invalid coordinator password")
+    
+    if not new_password or len(new_password) < 4:
+        raise HTTPException(status_code=400, detail="New password must be at least 4 characters")
+    
+    sections = gallery.get("sections", [])
+    section_idx = next((i for i, s in enumerate(sections) if s["id"] == section_id), None)
+    if section_idx is None:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    sections[section_idx]["section_password"] = new_password
+    
+    await db.galleries.update_one(
+        {"coordinator_hub_link": hub_link},
+        {"$set": {"sections": sections}}
+    )
+    
+    return {"message": "Section password reset successfully"}
 
 @api_router.get("/contributor/{contributor_link}")
 async def get_contributor_upload_info(contributor_link: str):
