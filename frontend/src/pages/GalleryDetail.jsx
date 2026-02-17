@@ -847,6 +847,13 @@ const GalleryDetail = () => {
         setCoordinatorHubLink(`${window.location.origin}/coordinator/${galleryRes.data.coordinator_hub_link}`);
       }
       
+      // Fetch gallery-specific features (with grandfathering support)
+      const gFeatures = await fetchGalleryFeatures(id);
+      if (gFeatures) {
+        setGalleryFeatures(gFeatures);
+        console.log('[GalleryDetail] Gallery features loaded:', gFeatures);
+      }
+      
       // Fetch linked invitation if any
       try {
         const invRes = await axios.get(`${API}/invitations/by-gallery/${id}`, {
