@@ -4904,16 +4904,20 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
     global_toggles = await get_global_feature_toggles()
     
     # Determine the base date for expiration calculation
-    # Use event_date if provided, otherwise fall back to created_at
+    # Use event_date if provided AND it's in the future, otherwise fall back to created_at
+    # This ensures galleries don't expire before created_at + expiration_days even for past events
     expiration_base_date = created_at
     if gallery_data.event_date:
         try:
             if 'T' in gallery_data.event_date:
-                expiration_base_date = datetime.fromisoformat(gallery_data.event_date.replace('Z', '+00:00'))
+                parsed_event_date = datetime.fromisoformat(gallery_data.event_date.replace('Z', '+00:00'))
             else:
-                expiration_base_date = datetime.fromisoformat(gallery_data.event_date + 'T00:00:00+00:00')
-            if expiration_base_date.tzinfo is None:
-                expiration_base_date = expiration_base_date.replace(tzinfo=timezone.utc)
+                parsed_event_date = datetime.fromisoformat(gallery_data.event_date + 'T00:00:00+00:00')
+            if parsed_event_date.tzinfo is None:
+                parsed_event_date = parsed_event_date.replace(tzinfo=timezone.utc)
+            # Use the later of event_date or created_at as base
+            # This ensures galleries for past events still get full expiration period from creation
+            expiration_base_date = max(parsed_event_date, created_at)
         except:
             expiration_base_date = created_at  # Fall back to created_at if parsing fails
     
