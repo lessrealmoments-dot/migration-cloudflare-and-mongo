@@ -1874,7 +1874,8 @@ const GalleryDetail = () => {
               <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
               View Public Gallery
             </button>
-            {isFeatureEnabled('display_mode') ? (
+            {/* Display Mode - uses gallery-specific features with grandfathering */}
+            {(galleryFeatures?.display_mode ?? isFeatureEnabled('display_mode')) ? (
             <div className="relative group">
               <button
                 data-testid="display-mode-button"
@@ -1882,6 +1883,9 @@ const GalleryDetail = () => {
               >
                 <Monitor className="w-4 h-4" strokeWidth={1.5} />
                 Display Mode
+                {galleryFeatures?._grandfathered && (
+                  <span className="text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded">Legacy</span>
+                )}
                 <ChevronDown className="w-3 h-3" />
               </button>
               <div className="absolute top-full left-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 min-w-[260px]">
