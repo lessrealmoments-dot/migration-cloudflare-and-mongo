@@ -5267,6 +5267,50 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
         update_data["event_title"] = updates.event_title
     if updates.event_date is not None:
         update_data["event_date"] = updates.event_date
+        # Recalculate auto_delete_date based on new event_date
+        try:
+            if updates.event_date:
+                if 'T' in updates.event_date:
+                    new_event_dt = datetime.fromisoformat(updates.event_date.replace('Z', '+00:00'))
+                else:
+                    new_event_dt = datetime.fromisoformat(updates.event_date + 'T00:00:00+00:00')
+                if new_event_dt.tzinfo is None:
+                    new_event_dt = new_event_dt.replace(tzinfo=timezone.utc)
+                
+                # Get expiration days from user's plan/mode
+                global_toggles = await get_global_feature_toggles()
+                override_mode = user.get("override_mode") if user else None
+                
+                if override_mode and override_mode in global_toggles:
+                    mode_config = global_toggles[override_mode]
+                    gallery_expiration_days = mode_config.get("gallery_expiration_days", 180)
+                else:
+                    plan = user.get("plan", PLAN_FREE) if user else PLAN_FREE
+                    plan_config = global_toggles.get(plan, {})
+                    gallery_expiration_days = plan_config.get("gallery_expiration_days", 180)
+                
+                # Don't update auto_delete for demo galleries (they use created_at)
+                if not gallery.get("is_demo"):
+                    update_data["auto_delete_date"] = (new_event_dt + timedelta(days=gallery_expiration_days)).isoformat()
+            else:
+                # Event date removed - fall back to created_at based expiration
+                if not gallery.get("is_demo"):
+                    created_at = datetime.fromisoformat(gallery["created_at"].replace('Z', '+00:00'))
+                    global_toggles = await get_global_feature_toggles()
+                    override_mode = user.get("override_mode") if user else None
+                    
+                    if override_mode and override_mode in global_toggles:
+                        mode_config = global_toggles[override_mode]
+                        gallery_expiration_days = mode_config.get("gallery_expiration_days", 180)
+                    else:
+                        plan = user.get("plan", PLAN_FREE) if user else PLAN_FREE
+                        plan_config = global_toggles.get(plan, {})
+                        gallery_expiration_days = plan_config.get("gallery_expiration_days", 180)
+                    
+                    update_data["auto_delete_date"] = (created_at + timedelta(days=gallery_expiration_days)).isoformat()
+        except Exception as e:
+            logger.warning(f"Failed to recalculate auto_delete_date: {e}")
+        
         if updates.guest_upload_enabled_days:
             try:
                 event_dt = datetime.fromisoformat(updates.event_date.replace('Z', '+00:00'))
