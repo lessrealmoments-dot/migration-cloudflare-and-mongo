@@ -6122,6 +6122,13 @@ async def create_photobooth_section(
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
+    # Check section creation permission with grandfathering
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    if user:
+        can_create, reason = await can_create_section_in_gallery(user, gallery)
+        if not can_create:
+            raise HTTPException(status_code=403, detail=reason)
+    
     section_id = str(uuid.uuid4())
     sections = gallery.get("sections", [])
     now = datetime.now(timezone.utc).isoformat()
