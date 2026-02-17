@@ -848,6 +848,17 @@ const GalleryDetail = () => {
       // Load existing coordinator hub link if present
       if (galleryRes.data.coordinator_hub_link) {
         setCoordinatorHubLink(`${window.location.origin}/coordinator/${galleryRes.data.coordinator_hub_link}`);
+        
+        // Fetch coordinator settings
+        try {
+          const coordSettings = await axios.get(`${API}/galleries/${id}/coordinator-settings`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setAllowSupplierSections(coordSettings.data.allow_supplier_sections || false);
+          // Don't load the actual password, just whether it's set
+        } catch (e) {
+          // Settings not loaded, use defaults
+        }
       }
       
       // Fetch gallery-specific features (with grandfathering support)
