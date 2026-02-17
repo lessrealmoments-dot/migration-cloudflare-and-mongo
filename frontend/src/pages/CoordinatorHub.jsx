@@ -251,9 +251,47 @@ const CoordinatorHub = () => {
         toast.success('Section unlocked!');
         setSectionToUnlock(null);
         setUnlockPassword('');
+        
+        // If this was triggered from "Go to Upload", redirect now
+        if (pendingUploadSection?.id === sectionToUnlock.id) {
+          const link = response.data.contributor_link;
+          const section = hubData.sections.find(s => s.id === sectionToUnlock.id);
+          const url = `${baseUrl}${section?.link_prefix || '/c/'}${link}?hub=${hubLink}`;
+          window.open(url, '_blank');
+          setPendingUploadSection(null);
+        }
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Invalid password');
+    }
+  };
+  
+  // Handle section reordering (coordinator only)
+  const handleMoveSection = async (sectionId, direction) => {
+    if (accessType !== 'coordinator') return;
+    
+    const sections = [...hubData.sections];
+    const currentIndex = sections.findIndex(s => s.id === sectionId);
+    if (currentIndex === -1) return;
+    
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= sections.length) return;
+    
+    // Swap sections
+    [sections[currentIndex], sections[newIndex]] = [sections[newIndex], sections[currentIndex]];
+    
+    // Update orders
+    const sectionOrders = sections.map((s, i) => ({ id: s.id, order: i }));
+    
+    try {
+      await axios.put(`${API}/coordinator-hub/${hubLink}/sections/reorder`, {
+        password: coordinatorPassword,
+        section_orders: sectionOrders
+      });
+      toast.success('Section order updated');
+      fetchHubData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to reorder sections');
     }
   };
   
