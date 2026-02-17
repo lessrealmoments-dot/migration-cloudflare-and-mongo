@@ -6337,6 +6337,13 @@ async def create_pcloud_section(
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
+    # Check section creation permission with grandfathering
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    if user:
+        can_create, reason = await can_create_section_in_gallery(user, gallery)
+        if not can_create:
+            raise HTTPException(status_code=403, detail=reason)
+    
     sections = gallery.get("sections", [])
     new_order = max([s.get("order", 0) for s in sections], default=-1) + 1
     section_id = str(uuid.uuid4())
