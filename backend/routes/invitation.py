@@ -9,12 +9,15 @@ import uuid
 import secrets
 import qrcode
 import io
+import logging
 
 from models.invitation import (
     Invitation, InvitationCreate, InvitationUpdate, InvitationSummary,
     PublicInvitation, RSVPResponse, RSVPResponseCreate, RSVPStats,
     RSVPFieldConfig, InvitationDesign, ManualGuestAdd
 )
+
+logger = logging.getLogger(__name__)
 
 invitation_router = APIRouter()
 
