@@ -658,8 +658,13 @@ const CoordinatorHub = () => {
               Awaiting Submission ({pendingSections.length})
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
-              {pendingSections.map((section) => (
-                <SectionCard key={section.id} section={section} />
+              {pendingSections.map((section, idx) => (
+                <SectionCard 
+                  key={section.id} 
+                  section={section} 
+                  index={hubData.sections.findIndex(s => s.id === section.id)}
+                  totalSections={hubData.sections.length}
+                />
               ))}
             </div>
           </section>
@@ -673,8 +678,13 @@ const CoordinatorHub = () => {
               Completed ({submittedSections.length})
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
-              {submittedSections.map((section) => (
-                <SectionCard key={section.id} section={section} />
+              {submittedSections.map((section, idx) => (
+                <SectionCard 
+                  key={section.id} 
+                  section={section}
+                  index={hubData.sections.findIndex(s => s.id === section.id)}
+                  totalSections={hubData.sections.length}
+                />
               ))}
             </div>
           </section>
