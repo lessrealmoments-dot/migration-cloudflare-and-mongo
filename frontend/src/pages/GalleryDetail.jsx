@@ -1982,7 +1982,8 @@ const GalleryDetail = () => {
               </button>
             )}
             {/* Coordinator Hub Button */}
-            {isFeatureEnabled('coordinator_hub') ? (
+            {/* Coordinator Hub - uses gallery-specific features with grandfathering */}
+            {(galleryFeatures?.coordinator_hub ?? isFeatureEnabled('coordinator_hub')) ? (
               <button
                 data-testid="coordinator-hub-button"
                 onClick={handleCoordinatorHubClick}
@@ -1995,6 +1996,9 @@ const GalleryDetail = () => {
                   <QrCode className="w-4 h-4" strokeWidth={1.5} />
                 )}
                 Coordinator Hub
+                {galleryFeatures?._grandfathered && (
+                  <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded ml-1">Legacy</span>
+                )}
               </button>
             ) : (
               <div className="relative group">
