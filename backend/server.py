@@ -7246,12 +7246,23 @@ async def get_coordinator_hub(hub_link: str):
     if not gallery:
         raise HTTPException(status_code=404, detail="Invalid coordinator hub link")
     
-    # Get photographer info
+    # Get photographer info (full user for feature check)
     photographer = await db.users.find_one(
         {"id": gallery["photographer_id"]}, 
-        {"_id": 0, "business_name": 1, "name": 1}
+        {"_id": 0}
     )
-    photographer_name = photographer.get("business_name") or photographer.get("name", "Photographer") if photographer else "Photographer"
+    if not photographer:
+        raise HTTPException(status_code=404, detail="Gallery owner not found")
+    
+    # Check if coordinator_hub feature is enabled (with grandfathering)
+    feature_enabled = await is_gallery_feature_enabled(photographer, gallery, "coordinator_hub")
+    if not feature_enabled:
+        raise HTTPException(
+            status_code=403, 
+            detail="Coordinator Hub feature is not available for this gallery. Please contact the photographer."
+        )
+    
+    photographer_name = photographer.get("business_name") or photographer.get("name", "Photographer")
     
     # Build sections data with status
     sections_data = []
