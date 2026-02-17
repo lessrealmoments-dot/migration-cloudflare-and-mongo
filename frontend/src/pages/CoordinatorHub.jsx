@@ -335,12 +335,14 @@ const CoordinatorHub = () => {
   const submittedSections = hubData.sections.filter(s => s.status !== 'pending');
   
   // Section Card Component (inline for access to state)
-  const SectionCard = ({ section }) => {
+  const SectionCard = ({ section, index, totalSections }) => {
     const [showQR, setShowQR] = useState(false);
     const config = sectionConfig[section.type] || sectionConfig.photo;
     const Icon = config.icon;
     
-    const isUnlocked = unlockedSections[section.id] || accessType === 'coordinator' || !section.section_password;
+    // For sections with passwords, we need to verify before showing upload link
+    const hasPassword = section.section_password;
+    const isUnlocked = unlockedSections[section.id] || accessType === 'coordinator' || !hasPassword;
     const contributorLink = isUnlocked 
       ? (unlockedSections[section.id] || section.contributor_link)
       : null;
@@ -356,6 +358,17 @@ const CoordinatorHub = () => {
       }
     };
     
+    // Handle "Go to Upload Page" - ask for password if section has one and user hasn't unlocked
+    const handleGoToUpload = () => {
+      if (hasPassword && !isUnlocked) {
+        // Need to unlock first
+        setPendingUploadSection(section);
+        setSectionToUnlock(section);
+      } else if (contributorUrl) {
+        window.open(contributorUrl, '_blank');
+      }
+    };
+    
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -364,6 +377,27 @@ const CoordinatorHub = () => {
       >
         {/* Header */}
         <div className={`${config.color} px-4 py-3 flex items-center gap-3`}>
+          {/* Reorder buttons for coordinator */}
+          {accessType === 'coordinator' && (
+            <div className="flex flex-col gap-0.5">
+              <button
+                onClick={() => handleMoveSection(section.id, 'up')}
+                disabled={index === 0}
+                className={`p-1 rounded ${index === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/20'}`}
+                title="Move up"
+              >
+                <ChevronUp className="w-4 h-4 text-white" />
+              </button>
+              <button
+                onClick={() => handleMoveSection(section.id, 'down')}
+                disabled={index === totalSections - 1}
+                className={`p-1 rounded ${index === totalSections - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/20'}`}
+                title="Move down"
+              >
+                <ChevronDown className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          )}
           <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
             <Icon className="w-5 h-5 text-white" />
           </div>
@@ -371,70 +405,82 @@ const CoordinatorHub = () => {
             <h3 className="text-white font-semibold">{section.name}</h3>
             <p className="text-white/80 text-sm">{config.label}</p>
           </div>
+          {hasPassword && (
+            <Lock className="w-4 h-4 text-white/70" title="Password protected" />
+          )}
           <StatusBadge status={section.status} count={section.item_count} />
         </div>
         
         {/* Content */}
         <div className="p-4 space-y-4">
-          {/* Lock indicator for contributors */}
-          {!isUnlocked && section.section_password && (
+          {/* Password protected notice - always show if has password */}
+          {hasPassword && !isUnlocked && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
               <div className="flex items-center gap-2 text-amber-700">
                 <Lock className="w-4 h-4" />
-                <span className="text-sm font-medium">This section is password protected</span>
+                <span className="text-sm font-medium">Password required to upload</span>
               </div>
-              <button
-                onClick={() => setSectionToUnlock(section)}
-                className="mt-2 w-full py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700"
-              >
-                Enter Password to Unlock
-              </button>
             </div>
           )}
           
-          {/* Contributor link actions (only if unlocked) */}
-          {isUnlocked && section.contributor_enabled && contributorUrl && (
-            <div className="space-y-3">
-              <button
-                onClick={copyLink}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-sm font-medium transition-colors"
-              >
-                <Copy className="w-4 h-4" />
-                Copy Upload Link
-              </button>
-              
-              <button
-                onClick={() => setShowQR(!showQR)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 border border-zinc-200 hover:bg-zinc-50 rounded-lg text-sm font-medium transition-colors"
-              >
-                {showQR ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                {showQR ? 'Hide' : 'Show'} QR Code
-              </button>
-              
-              <AnimatePresence>
-                {showQR && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="flex justify-center p-4 bg-white border border-zinc-200 rounded-lg"
-                  >
-                    <QRCodeSVG value={contributorUrl} size={150} level="H" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              <a
-                href={contributorUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Go to Upload Page
-              </a>
-            </div>
-          )}
+          {/* Action buttons - always visible */}
+          <div className="space-y-3">
+            {/* Copy link - only if unlocked */}
+            {isUnlocked && contributorUrl && (
+              <>
+                <button
+                  onClick={copyLink}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copy Upload Link
+                </button>
+                
+                <button
+                  onClick={() => setShowQR(!showQR)}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 border border-zinc-200 hover:bg-zinc-50 rounded-lg text-sm font-medium transition-colors"
+                >
+                  {showQR ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {showQR ? 'Hide' : 'Show'} QR Code
+                </button>
+                
+                <AnimatePresence>
+                  {showQR && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="flex justify-center p-4 bg-white border border-zinc-200 rounded-lg"
+                    >
+                      <QRCodeSVG value={contributorUrl} size={150} level="H" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            )}
+            
+            {/* Go to Upload - always visible, asks for password if needed */}
+            <button
+              onClick={handleGoToUpload}
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                hasPassword && !isUnlocked
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                  : 'bg-zinc-900 hover:bg-zinc-800 text-white'
+              }`}
+            >
+              {hasPassword && !isUnlocked ? (
+                <>
+                  <Key className="w-4 h-4" />
+                  Enter Password to Upload
+                </>
+              ) : (
+                <>
+                  <ExternalLink className="w-4 h-4" />
+                  Go to Upload Page
+                </>
+              )}
+            </button>
+          </div>
           
           {/* Management buttons for coordinator or section owner */}
           {(accessType === 'coordinator' || section.created_by_supplier) && (
