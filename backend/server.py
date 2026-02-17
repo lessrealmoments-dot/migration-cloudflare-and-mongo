@@ -4829,7 +4829,11 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         "view_count": 0,
         # Per-gallery storage tracking
         "storage_used": 0,
-        "storage_quota": gallery_storage_quota  # -1 = unlimited
+        "storage_quota": gallery_storage_quota,  # -1 = unlimited
+        # GRANDFATHERING: Store the plan this gallery was created under
+        # This ensures galleries retain their features even if user downgrades
+        "created_under_plan": effective_plan,
+        "created_under_override": override_mode if override_mode else None
     }
     
     await db.galleries.insert_one(gallery_doc)
