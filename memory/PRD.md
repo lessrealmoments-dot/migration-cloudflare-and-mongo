@@ -103,6 +103,15 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Grandfathering for expired Pro galleries
 
 ## Recent Fixes (Feb 2025)
+- [x] **Enhanced Coordinator Hub with Supplier Section Creation** (Feb 17, 2025) ✅ NEW:
+  - **Two Access Levels**: Coordinator (full control with password) vs Contributor (section-specific access)
+  - **Supplier Section Creation**: Suppliers can create their own sections with passwords
+  - **Section Password Protection**: Each section can have its own password
+  - **Coordinator Password**: Gallery owner sets coordinator password for elevated access
+  - **"View Live Gallery" button**: Quick access to public gallery from the hub
+  - **Section Management**: Rename, delete, and manage sections from the hub
+  - Backend: New endpoints for hub authentication, section CRUD, password management
+  - Frontend: Updated CoordinatorHub.jsx with access modal, create section modal, section management
 - [x] **Grandfathering: Section Creation for Legacy Galleries** (Feb 17, 2025) ✅ NEW:
   - Users can now create new sections in galleries created under Pro/Standard plans even after downgrading to Free
   - Applies to all section types: photo, video, fotoshare, photobooth, pCloud
