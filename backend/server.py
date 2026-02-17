@@ -5273,6 +5273,8 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
         update_data["event_date"] = updates.event_date
         # Recalculate auto_delete_date based on new event_date
         try:
+            created_at = datetime.fromisoformat(gallery["created_at"].replace('Z', '+00:00'))
+            
             if updates.event_date:
                 if 'T' in updates.event_date:
                     new_event_dt = datetime.fromisoformat(updates.event_date.replace('Z', '+00:00'))
@@ -5280,6 +5282,10 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
                     new_event_dt = datetime.fromisoformat(updates.event_date + 'T00:00:00+00:00')
                 if new_event_dt.tzinfo is None:
                     new_event_dt = new_event_dt.replace(tzinfo=timezone.utc)
+                
+                # Use the later of event_date or created_at as base
+                # This ensures galleries for past events still get full expiration period
+                expiration_base_date = max(new_event_dt, created_at)
                 
                 # Get expiration days from user's plan/mode
                 global_toggles = await get_global_feature_toggles()
@@ -5295,11 +5301,10 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
                 
                 # Don't update auto_delete for demo galleries (they use created_at)
                 if not gallery.get("is_demo"):
-                    update_data["auto_delete_date"] = (new_event_dt + timedelta(days=gallery_expiration_days)).isoformat()
+                    update_data["auto_delete_date"] = (expiration_base_date + timedelta(days=gallery_expiration_days)).isoformat()
             else:
                 # Event date removed - fall back to created_at based expiration
                 if not gallery.get("is_demo"):
-                    created_at = datetime.fromisoformat(gallery["created_at"].replace('Z', '+00:00'))
                     global_toggles = await get_global_feature_toggles()
                     override_mode = user.get("override_mode") if user else None
                     
