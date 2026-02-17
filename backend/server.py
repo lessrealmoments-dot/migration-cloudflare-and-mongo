@@ -7761,45 +7761,6 @@ async def delete_section_from_hub(hub_link: str, section_id: str, data: dict = B
     return {"message": "Section deleted successfully"}
 
 
-@api_router.put("/coordinator-hub/{hub_link}/sections/reorder")
-async def reorder_sections_from_hub(hub_link: str, data: dict = Body(...)):
-    """Reorder all sections - requires coordinator password"""
-    gallery = await db.galleries.find_one(
-        {"coordinator_hub_link": hub_link},
-        {"_id": 0}
-    )
-    if not gallery:
-        raise HTTPException(status_code=404, detail="Invalid coordinator hub link")
-    
-    password = data.get("password", "")
-    section_orders = data.get("section_orders", [])  # List of {id, order}
-    
-    # Only coordinators can reorder all sections
-    if password != gallery.get("coordinator_password"):
-        raise HTTPException(status_code=401, detail="Invalid coordinator password")
-    
-    if not section_orders:
-        raise HTTPException(status_code=400, detail="section_orders is required")
-    
-    sections = gallery.get("sections", [])
-    section_map = {s["id"]: s for s in sections}
-    
-    # Update orders
-    for item in section_orders:
-        if item["id"] in section_map:
-            section_map[item["id"]]["order"] = item["order"]
-    
-    # Sort by order
-    sections = sorted(section_map.values(), key=lambda x: x.get("order", 0))
-    
-    await db.galleries.update_one(
-        {"coordinator_hub_link": hub_link},
-        {"$set": {"sections": sections}}
-    )
-    
-    return {"message": "Sections reordered", "sections": sections}
-
-
 @api_router.put("/coordinator-hub/{hub_link}/sections/{section_id}/reset-password")
 async def reset_section_password(hub_link: str, section_id: str, data: dict = Body(...)):
     """Reset section password - requires coordinator password"""
