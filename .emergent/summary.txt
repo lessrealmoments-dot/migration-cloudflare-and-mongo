@@ -1,70 +1,70 @@
-<analysis>**original_problem_statement**: The user's goal is a comprehensive photo-sharing application. The primary request is to build a new RSVP and Online Invitation system, inspired by guestpix.com. This system should be separate from the main gallery billing but allow linking to a gallery later. The user also consistently emphasizes the need for full admin control over features for upselling purposes.
+<analysis>**original_problem_statement**: The user's goal is a comprehensive photo-sharing application, . The core of recent development has been building a new RSVP and Online Invitation system. Key requirements include a separate RSVP Token system for creating invitations, distinct Host vs. Celebrant roles, and a template-based, customizable public invitation page.
 
-**PRODUCT REQUIREMENTS for RSVP & Invitation System**:
-*   **Separate Service**: The invitation/RSVP flow should not consume gallery tokens and should be creatable months in advance of an event.
-*   **Linkable**: The ability to link an invitation to a gallery. The host should have easy controls to link and unlink galleries.
-*   **Template-Based & Customizable**: Users can choose from templates and customize the invitation (title, hosts, date, location, details, cover image).
-*   **Public Page**: A shareable link leads to a public page where guests can view details and RSVP. The design should be modern, inspired by GuestPix, featuring a frosted-glass effect and the couple's photo prominently displayed and aligned with the content.
-*   **RSVP Management**: The photographer (Host) can view RSVP stats, a filterable guest list, and manage all aspects of the invitation.
-*   **Role-Based Access**:
-    *   **Host (Photographer)**: Has full control over the invitation, including linking/unlinking galleries, editing all details, and generating a special access link for the celebrant.
-    *   **Celebrant (Client)**: Accesses a limited-control dashboard via a special link. They can view guest lists and edit some details (like names, date/time), but these actions must require a confirmation pop-up.
-*   **External Invitation Link**: Ability to link to an external invitation created on another platform (e.g., Canva), with the link being displayed on the RSVP page.
+More recently, the user requested two major features:
+1.  **Gallery Feature Grandfathering**: Galleries created under a Pro or Standard plan must retain their features (e.g., Coordinator Hub, ability to create new sections) even if the owner's subscription later downgrades to Free. The priority of feature access should be: Admin Override > Current User Plan > Grandfathered Gallery Plan.
+2.  **Enhanced Coordinator Hub**: A significant upgrade to the Coordinator Hub to turn it into a collaborative workspace for suppliers. This includes:
+    *   The gallery owner can enable supplier section creation and set a master Coordinator Password for the hub.
+    *   A new access flow distinguishes between the Coordinator (who enters the password for full management rights) and Contributors/Suppliers (who have limited access).
+    *   Suppliers can create their own password-protected sections (e.g., for Photos, Videos, 360 Booth).
+    *   Coordinators can reorder, rename, and delete any section.
+    *   The direct upload pages for sections must also be password-protected to prevent unauthorized access via a direct link.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The RSVP and Invitation system is now functionally complete and fully integrated into the application. The system was built from the ground up, starting with the backend APIs and progressing to a feature-rich frontend.
+The application has a functional RSVP and Invitation system. A full-stack RSVP Token purchase system, complete with email notifications (via Resend) and an admin management UI, has been implemented. A critical performance bug that caused multi-second load times on invitation pages (due to storing images as Base64 strings in MongoDB) has been identified and fixed, with the data migrated.
 
-The public-facing invitation page has been redesigned to match the user's GuestPix inspiration, featuring a frosted-glass effect over a blurred background, a split layout with the event details on one side, and the couple's actual, non-blurred photo prominently displayed on the other. The photo's height is now aligned with the main content card.
+The Grandfathering logic for gallery features and section creation has been fully implemented on the backend and integrated into the frontend.
 
-A critical Host vs. Celebrant access model has been implemented. The photographer (Host) manages invitations from a full-featured dashboard () where they can link/unlink galleries and generate a unique, revocable access link. This link leads to a separate, limited-control page () for the client (Celebrant).
-
-The photographer's main  page is now integrated with the RSVP system, displaying an RSVP button with the current attendance count if a gallery is linked to an invitation, providing seamless access to the Host Dashboard.
+The Enhanced Coordinator Hub is mostly complete. The backend endpoints and frontend UI for owner settings (coordinator password, toggling supplier creation), the coordinator/contributor access flow, and supplier-led section creation (with password protection) are all implemented. The UI for section reordering has been added. The current focus is on closing a security loophole.
 
 **Last working item**:
-- Last item agent was working: Implementing the Host/Celebrant role-based access control and fixing the photo alignment on the public invitation page. The agent created the backend endpoints and frontend pages for this new access model and adjusted the CSS to align the photo height.
-- Status: USER VERIFICATION PENDING
-- Agent Testing Done: Y
-- Which testing method agent to use? Frontend testing agent to conduct an end-to-end test of the Host and Celebrant flows. This should include:
-    1. Host links a gallery.
-    2. Host generates a Celebrant Access Link.
-    3. Accessing the Celebrant View via the link.
-    4. Verifying the limited controls on the Celebrant View.
-    5. Host revoking the access link.
-    6. Host unlinking the gallery.
+- Last item agent was working: The user correctly identified a security issue where the direct contributor upload page (e.g., ) could be accessed without a password, bypassing the security of the Coordinator Hub. The agent was in the process of adding a password verification step directly to the  page. This involves fetching section details to check if a password is required and showing a password entry form before allowing access to the upload functionality.
+- Status: IN PROGRESS
+- Agent Testing Done: N
+- Which testing method agent to use? Frontend testing agent. The agent should be instructed to test the full contributor upload flow for a password-protected section. This includes: 1) Navigating directly to the upload URL. 2) Verifying that a password prompt appears. 3) Testing both incorrect and correct passwords. 4) Ensuring successful login leads to the upload form.
 - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Photo alignment on the public page needs user verification. (P0)
-  - Issue 2: Slow loading of cover/hero images due to missing thumbnails for older uploads. (P1)
-  - Issue 3: PDF generation failure due to a missing system dependency (). (P2)
-  - Issue 4: Data inconsistency for photos uploaded before a previous R2 storage fix (broken images). (P2)
-  
+  - Issue 1: Password protection is not enforced on direct contributor upload pages (, , etc.), allowing security bypass. (P0)
+  - Issue 2: Slow loading of cover/hero images for older uploads due to a lack of thumbnails. (P1)
+  - Issue 3: PDF generation fails because of a missing system dependency (). (P2)
+  - Issue 4: Data inconsistency for some photos in R2 storage (broken images). (P2)
+
   Issues Detail:
   - Issue 1: 
-     - Attempted fixes: The agent used a combination of flexbox, , and  to measure the height of the main content card and dynamically apply it to the container of the photo on the right, ensuring they are the same height.
-     - Next debug checklist: The user needs to visually confirm if the alignment now meets their expectations. No further code changes are needed unless feedback is provided.
-     - Why fix this issue and what will be achieved with the fix? To satisfy the user's design requirement for a clean, professional-looking public invitation page.
-     - Status:  USER VERIFICATION PENDING
-     - Is recurring issue? Y
-     - Should Test frontend/backend/both after fix? frontend
+     - Attempted fixes: The agent has started modifying  to fetch the section's password requirement status and has added state to handle a password entry step.
+     - Next debug checklist:
+        1. Create a backend endpoint (e.g., ) that checks the submitted password against the hashed password stored for the section.
+        2. In , complete the UI for the password entry step.
+        3. Call the new verification endpoint from the frontend.
+        4. On successful verification, proceed to the contributor info/upload steps. On failure, show an error message.
+     - Why fix this issue and what will be achieved with the fix? This is a critical security fix. It ensures that password-protected sections created by suppliers are genuinely secure and cannot be accessed or uploaded to by unauthorized individuals who may have obtained the direct link.
+     - Status:  IN PROGRESS
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both
      - Blocked on other issue: None
 
 **In progress Task List**:
-  - Task 1:  Complete  Refactoring (P2)
+  - Task 1: Complete Enhanced Coordinator Hub Feature (P0)
+     - Where to resume: Finalize the password protection on the  page as described in Issue 1 above.
+     - What will be achieved with this? A complete, secure, and collaborative workspace for photographers and their suppliers.
+     - Status:  IN PROGRESS
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on something: None
+
+  - Task 2: Complete  Refactoring (P2)
      - Where to resume: Continue extracting routes from the monolithic  into the  directory.
      - What will be achieved with this? A more modular, maintainable, and scalable backend architecture.
      - Status:  IN PROGRESS
      - Should Test frontend/backend/both after fix? backend
-     - Blocked on something: None.
+     - Blocked on something: None
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **Celebrant View Enhancements (P0)**: Implement the edit functionality within , ensuring every change action triggers a confirmation dialog as requested by the user.
-    *   **Pinterest-Style Collage (P1)**: Explore and implement an option for a collage-style photo display on the public invitation page as an alternative to a single photo.
+    *   **RSVP Token Purchase Flow E2E Test (P1)**: Conduct a full end-to-end test of a user purchasing a token and an admin approving it to ensure the flow is seamless.
+    *   **Pinterest-Style Collage (P1)**: Implement a collage-style photo display on the public invitation page as an alternative to a single photo.
     *   **Improved Uploader UI (P1)**: Integrate  and  into contributor workflows.
-    *   **Mobile Performance Optimizations (P1)**: Implement skeleton loaders and hero image preloading.
 *   **Future Tasks:**
     *   Add a Download QR Code button to the gallery admin page.
     *   Enable Live Billing Mode.
@@ -72,17 +72,19 @@ The photographer's main  page is now integrated with the RSVP system, displaying
     *   Generate invoices for payments.
     *   Add user notifications for plan changes.
     *   Integrate with Twilio for automated RSVP reminders.
+    *   Guest list CSV import.
+    *   PayMongo payment integration.
 
 **Completed work in this session**
-- **RSVP Frontend Implementation**: Built the complete frontend UI, including the 5-step creation wizard, the main invitations list, and the public invitation page.
-- **GuestPix-Inspired Redesign**: Iteratively redesigned the public invitation page to feature a split layout, frosted-glass effect, and prominent placement of the couple's photo, with corrected height alignment.
-- **Feature Enhancements**: Implemented a countdown timer, custom cover image uploads, and QR code generation for sharing invitations.
-- **Host Dashboard Creation**: Transformed the initial detail page into a full-featured Host Dashboard () with quick actions, guest list management (search, filter), manual guest addition, and external invitation link support.
-- **Host/Celebrant Role Separation**:
-    - Implemented backend logic and UI for the Host to link/unlink galleries and generate/revoke a unique access link for the celebrant.
-    - Created a new dedicated  page for celebrants with limited access.
-- **Photographer/Gallery Integration**: Added a dynamic RSVP button to the  page, which appears when a gallery is linked to an invitation and shows the number of attending guests.
-- **Image Fallback Logic**: Implemented a robust image fallback chain: Custom Uploaded Image -> Linked Gallery's Cover Photo -> Default Template Image.
+- **RSVP Token Purchase Notifications**: Implemented email notifications (using Resend) for token purchases, approvals, and rejections. Added a dynamic notification badge to the admin dashboard UI.
+- **Critical Performance Optimization**: Fixed a severe performance bottleneck on invitation pages by migrating invitation cover images from Base64 strings in the database to URL pointers. This reduced API payload sizes by ~99.9% and improved page load times by ~4x.
+- **Gallery Feature Grandfathering**: Implemented a system to preserve premium gallery features (like Coordinator Hub access and section creation) even after a user's subscription expires. This involved adding  to the gallery model and creating a new feature resolution function ().
+- **Enhanced Coordinator Hub Implementation**:
+  - Built the UI and backend for the gallery owner to set a Coordinator Password and enable supplier-led section creation.
+  - Implemented the Coordinator vs. Contributor access flow on the hub page.
+  - Built the UI/backend for suppliers to create their own password-protected sections.
+  - Added UI for coordinators to reorder sections and verified rename/delete functionality.
+- **UI/UX Fixes**: Removed an awkward single-initial display from the public invitation page for non-wedding events.
 
 **Earlier issues found/mentioned but not fixed**
    - Issue 1: Data inconsistency where database records for photos exist but the corresponding files are not in R2 storage. This is a recurring issue from a previous fork.
@@ -93,85 +95,95 @@ The photographer's main  page is now integrated with the RSVP system, displaying
 
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: Data inconsistency for photos in R2 storage.
-  - Recurrence count: 9
+  - Recurrence count: 9+
   - Status: NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Host vs. Celebrant Roles**: An access control pattern where the account owner (Host) has full administrative control over a resource (invitation) and can generate a unique, revocable token-based URL to grant limited, fire-walled access to an external party (Celebrant).
-- **Dynamic Component Sizing**: Using  and  to measure the height of one UI element (the main content card) and dynamically apply that height to a sibling element (the photo container) to ensure perfect visual alignment in a flexbox layout.
-- **Image Fallback Chain**: A multi-step logic for displaying an image, which gracefully degrades through a series of sources (Custom Upload > Linked Gallery Photo > Default Template Photo) to prevent missing images.
+- **Feature Grandfathering**: Storing a resource's creation-time plan () to preserve its features even if the parent user's plan changes. Feature resolution cascades from Override -> Current Plan -> Grandfathered Plan.
+- **Data-Driven Performance Optimization**: Identifying bottlenecks by measuring API response times/sizes (), analyzing payloads, and running targeted data migration scripts to fix the root cause (e.g., Base64 images in DB).
+- **Modular Route Dependency Injection**: Passing dependencies like email sending functions from the main  into modular routers () to maintain separation of concerns.
+- **Role-Based UI in Shared Spaces**: Implementing a multi-access-level UI on a single page (Coordinator Hub) that conditionally renders controls based on the user's authenticated role (coordinator vs. contributor), determined via a password prompt.
 
 **key DB schema**
-  - ****: Added , , .
-  - ****: Added  (e.g., 'manual', 'phone') to track how a guest was added.
-  - ****: New model for capturing manually added guests.
+  - ****:
+    - : (String) Stores the plan ('pro', 'standard') the gallery was created under.
+    - : (String) Stores the override mode at creation.
+    - : (String, Hashed) Master password for a gallery's coordinator hub.
+    - : (Boolean) Toggle to enable/disable section creation by suppliers in the hub.
+    -  (Array of Objects):
+      - : (String, Hashed) Password for an individual section, set by a supplier.
+      - : (Boolean) Flag indicating if the section was created via the hub.
+
+**changes in tech stack**
+  - None.
 
 **All files of reference**
-- **/app/frontend/src/pages/PublicInvitation.jsx**: Heavily modified to implement the GuestPix-inspired design with a frosted-glass effect and aligned photo.
-- **/app/frontend/src/pages/CelebrantDashboard.jsx**: New file created to serve as the Host Dashboard with full control over the invitation.
-- **/app/frontend/src/pages/CelebrantView.jsx**: New file for the limited-access Celebrant View.
-- **/app/frontend/src/pages/GalleryDetail.jsx**: Modified to include the conditional RSVP Management button.
-- **/app/frontend/src/App.js**: Modified to add routes for the new dashboard and view pages.
-- **/app/backend/routes/invitation.py**: Heavily modified to add endpoints for cover image upload, QR codes, manual guest addition, and the entire Host/Celebrant access flow.
-- **/app/backend/models/invitation.py**: Modified to support new fields for external links, celebrant access, and fallback cover photos.
+- **/app/backend/server.py**: Heavily modified to add grandfathering logic, many new Coordinator Hub endpoints, and email templates.
+- **/app/frontend/src/pages/CoordinatorHub.jsx**: Major overhaul to implement the new coordinator/supplier workflow, section creation, password prompts, and management UI.
+- **/app/frontend/src/pages/ContributorUpload.jsx**: In the process of being modified to add a password verification step.
+- **/app/frontend/src/pages/GalleryDetail.jsx**: Modified to add the new Coordinator Hub settings UI for the gallery owner.
+- **/app/backend/routes/invitation.py**: Modified to strip Base64 image data during creation/updates and to add a one-off admin endpoint for data migration.
+- **/app/backend/routes/rsvp_token.py**: Modified to integrate email sending functions upon purchase, approval, and rejection.
 
 **Areas that need refactoring**:
-- **/app/backend/server.py**: Still a high-priority candidate for modularization.
-- **/app/frontend/src/pages/CelebrantDashboard.jsx**: This component has grown large with the addition of modals and host controls. It could be broken down into smaller components (e.g., , , ).
+- **/app/backend/server.py**: Remains a high-priority candidate for modularization. Many new endpoints were added that could be moved to a dedicated  route file.
+- **/app/frontend/src/pages/CoordinatorHub.jsx**: This component has become very large and complex. It should be broken down into smaller, more manageable components (e.g., , , , ).
 
 **key api endpoints**
 - **NEW**:
-    - : Upload a custom cover image.
-    - : Generate a QR code for the public link.
-    - : Manually add a guest to the RSVP list.
-    - : Get invitation details linked to a gallery.
-    - : Generate or revoke the celebrant access link.
-    - : Fetch data for the limited Celebrant View.
-    - : Endpoint for celebrant to submit edits (requires confirmation logic).
+    - : Sets coordinator password and toggles supplier section creation.
+    - : Authenticates a user as the coordinator for a session.
+    - : Allows suppliers to create a new password-protected section.
+    - : Renames a section (coordinator only).
+    - : Unlocks a password-protected section for a session.
+    - : Deletes a section.
+    - : Updates the order of sections.
+    - : **(Needed)** Endpoint to verify a password for direct access to an upload page.
 - **MODIFIED**:
-    - : Logic updated to also save the gallery's cover photo URL as a fallback.
+    - : Endpoints now trigger email notifications.
+    - : Creation now checks for grandfathered plan status.
+    - : New endpoint to get gallery-specific feature toggles.
+    - : Response now includes  flags for sections and other data for the enhanced UI.
+    - , : Now strip Base64 data from payloads before saving.
 
 **Critical Info for New Agent**
-- **Your immediate task is to implement the edit functionality on the  page.** The user was very specific that celebrants should be able to edit details, but every edit must trigger a Are you sure? confirmation dialog. The page exists, but this interactive logic is missing.
-- **The distinction between Host and Celebrant is critical.**  is the **Host's** full-control panel.  is the **Celebrant's** limited-access page. Do not confuse them.
-- After implementing the celebrant edit functionality, seek user verification on both that feature and the photo alignment on the public page, which was the user's last point of feedback.
+- **Your immediate priority is to close the security loophole in the Coordinator Hub.** You must implement password verification on the  page itself, so that having a direct link is not enough to access a password-protected section.
+- The user is very detail-oriented and will test flows thoroughly. Ensure that the logic for coordinator vs. contributor access is solid.
+- The concept of grandfathering is now central to feature access. Remember the priority: Admin Override > Current Plan > Grandfathered Plan.
+- A significant performance fix was just implemented. Be mindful of data payloads and avoid introducing new performance regressions, especially related to images.
 
 **documents and test reports created in this job**
-  - /app/test_reports/iteration_31.json
-  - /app/test_reports/iteration_32.json
-  - /app/test_reports/iteration_33.json
-  - /app/test_reports/iteration_34.json
+  - /app/memory/PRD.md (updated with new features)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1.  **Request**: User asked for the couple's photo to be displayed clearly beside the RSVP card, not as a blurred background. (COMPLETED)
-2.  **Feedback**: User noted the photo was not aligned properly with the RSVP card. (FIX IMPLEMENTED, PENDING VERIFICATION)
-3.  **Request**: User asked for an easier way for the host/account owner to link and unlink galleries. (COMPLETED)
-4.  **Clarification**: User defined strict role separation: the **Host** (photographer) should have full control, including linking galleries. The **Celebrant** (client) should have limited control and not be able to link galleries. (COMPLETED)
-5.  **Request**: The Host should be able to do everything the celebrant can. (COMPLETED)
-6.  **Request**: The celebrant should get a special access link generated by the host. (COMPLETED)
-7.  **Request**: The celebrant should be able to see guest lists (attending, not, pending) and edit details like names, date/time, but must get a confirmation pop-up for any change. (PARTIALLY COMPLETED - View exists, edit with confirmation is pending).
-8.  **Request**: Allow linking an external invitation URL (e.g., from Canva). (COMPLETED)
-9.  **Request**: A page specially made for the celebrant to view RSVPs and manage their event. (COMPLETED -  was created).
-10. **Feedback**: No need for email notifications. (ACKNOWLEDGED).
+1.  **User**: Pointed out the security flaw where the direct upload page doesn't ask for a password. 
+2.  **User**: Confirmed requirements for section passwords and reordering UI in the Coordinator Hub. 
+3.  **User**: Asked if the Coordinator is able to sort sections and noted the UI for it was missing. 
+4.  **User**: Asked for clarification on how to activate the advanced Coordinator Hub features. 
+5.  **User**: Asked for step-by-step help on how to back up their repo on GitHub before pushing the new changes. 
+6.  **User**: Requested the enhanced Coordinator Hub feature with supplier section creation and management. 
+7.  **User**: Requested that legacy galleries should be able to create new sections even after the owner's subscription expires. 
+8.  **User**: Reported slow loading on invitation pages. 
+9.  **User**: Confirmed the logic for feature grandfathering. 
+10. **User**: Requested the gallery grandfathering feature to maintain Pro/Standard features on expired accounts. 
 
 **Project Health Check:**
-- **Broken**: None
-- **Mocked**: ,  are present but not integrated into any workflow.
+- **Broken**: The  page is currently insecure for password-protected sections.
+- **Mocked**: ,  exist but are not yet integrated.
 
 **3rd Party Integrations**
-- **Cloudflare R2**: For all photo and file storage.
+- **Cloudflare R2**: Photo and file storage.
 - **MongoDB Atlas**: Primary database.
-- ****: Frontend library for client-side hashing.
-- ****: Backend library for generating QR codes.
+- **Resend**: Used for sending transactional emails for RSVP token purchases.
 
 **Testing status**
-  - Testing agent used after significant changes: YES, used 4 times to validate the invitation system, new enhancements, the celebrant dashboard, and the final redesign.
+  - Testing agent used after significant changes: NO
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
-  - Known regressions: None identified.
+  - Known regressions: None.
 
 **Credentials to test flow:**
 - **Admin**:  / 
@@ -179,4 +191,4 @@ The photographer's main  page is now integrated with the RSVP system, displaying
 - **User (Standard/Pro)**:  / 
 
 **What agent forgot to execute**
-- The user explicitly requested that when a celebrant edits details on their limited-access page, a **confirmation dialog** (e.g., Are you sure you want to change the date?) must appear. While the agent created the  page and the backend endpoints, the implementation of the frontend edit forms and their corresponding confirmation modals within that component was not completed. This is the highest priority upcoming task.</analysis>
+- The agent initially forgot to implement the UI for section reordering in the Coordinator Hub after adding the backend logic. The user pointed this out, and the agent has since added the UI elements, but it requires thorough testing.</analysis>

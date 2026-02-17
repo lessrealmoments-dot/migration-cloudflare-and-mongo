@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from io import BytesIO
 from PIL import Image
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://rsvp-master-9.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://rsvp-plus.preview.emergentagent.com').rstrip('/')
 
 # Admin credentials from .env
 ADMIN_USERNAME = "admin"
