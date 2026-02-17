@@ -3103,12 +3103,17 @@ const GalleryDetail = () => {
             ))}
           </div>
           
-          {/* Contributor Link Management Card */}
-          {selectedSection && isFeatureEnabled('contributor_link') && (
+          {/* Contributor Link Management Card - uses gallery-specific features with grandfathering */}
+          {selectedSection && (galleryFeatures?.contributor_link ?? isFeatureEnabled('contributor_link')) && (
             <div className="mt-6 bg-zinc-50 border border-zinc-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-zinc-900">Contributor Upload Link</h4>
+                  <h4 className="font-medium text-zinc-900">
+                    Contributor Upload Link
+                    {galleryFeatures?._grandfathered && (
+                      <span className="text-xs bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded ml-2">Legacy Feature</span>
+                    )}
+                  </h4>
                   <p className="text-sm text-zinc-600 mt-1">
                     Share this link with external teams to let them upload photos to &ldquo;{sections.find(s => s.id === selectedSection)?.name}&rdquo;
                   </p>
