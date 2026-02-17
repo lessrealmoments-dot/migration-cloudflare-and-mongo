@@ -49,8 +49,9 @@ const GalleryDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const brandConfig = useBrandConfig();
-  const { isFeatureEnabled, getUnavailableMessage } = useFeatureToggles();
+  const { isFeatureEnabled, getUnavailableMessage, fetchGalleryFeatures } = useFeatureToggles();
   const [gallery, setGallery] = useState(null);
+  const [galleryFeatures, setGalleryFeatures] = useState(null); // Gallery-specific features (with grandfathering)
   const [photos, setPhotos] = useState([]);
   const [videos, setVideos] = useState([]);
   const [sections, setSections] = useState([]);
