@@ -103,6 +103,14 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Grandfathering for expired Pro galleries
 
 ## Recent Fixes (Feb 2025)
+- [x] **CRITICAL: Invitation Page Speed Fix** (Feb 17, 2025) ✅ NEW:
+  - **Root Cause**: Cover images were stored as base64 strings (~5-11 MB each) in the database
+  - **Impact**: Invitations List API went from 3.09s → 0.78s (4x faster), 5.4 MB → 920 bytes
+  - **Fix Applied**:
+    - Backend now strips base64 images on create/update (forces use of proper upload endpoint)
+    - Cleaned up 3 existing invitations with base64 images (22 MB total removed from DB)
+    - Added admin endpoints for checking/fixing base64 images
+  - **Files Modified**: `/app/backend/routes/invitation.py`
 - [x] **Gallery Grandfathering System** (Feb 17, 2025) ✅ NEW:
   - Galleries now store `created_under_plan` and `created_under_override` fields
   - Priority hierarchy: Override Mode > Current Plan > Grandfather Plan
