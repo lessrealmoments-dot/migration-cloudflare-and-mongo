@@ -2331,7 +2331,7 @@ const GalleryDetail = () => {
                     className="flex items-center justify-between w-full p-3 bg-zinc-50 rounded-lg hover:bg-zinc-100 transition-colors"
                   >
                     <span className="font-medium text-sm flex items-center gap-2">
-                      <Settings className="w-4 h-4" />
+                      <Settings2 className="w-4 h-4" />
                       Hub Settings
                     </span>
                     <ChevronDown className={`w-4 h-4 transition-transform ${showCoordinatorSettings ? 'rotate-180' : ''}`} />
