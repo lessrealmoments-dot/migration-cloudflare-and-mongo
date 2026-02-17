@@ -377,25 +377,32 @@ const CoordinatorHub = () => {
       >
         {/* Header */}
         <div className={`${config.color} px-4 py-3 flex items-center gap-3`}>
-          {/* Reorder buttons for coordinator */}
+          {/* Reorder controls for coordinator */}
           {accessType === 'coordinator' && (
-            <div className="flex flex-col gap-0.5">
-              <button
-                onClick={() => handleMoveSection(section.id, 'up')}
-                disabled={index === 0}
-                className={`p-1 rounded ${index === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/20'}`}
-                title="Move up"
-              >
-                <ChevronUp className="w-4 h-4 text-white" />
-              </button>
-              <button
-                onClick={() => handleMoveSection(section.id, 'down')}
-                disabled={index === totalSections - 1}
-                className={`p-1 rounded ${index === totalSections - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/20'}`}
-                title="Move down"
-              >
-                <ChevronDown className="w-4 h-4 text-white" />
-              </button>
+            <div className="flex items-center gap-2">
+              {/* Position badge */}
+              <div className="w-7 h-7 bg-white/25 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">{index + 1}</span>
+              </div>
+              {/* Up/Down buttons */}
+              <div className="flex flex-col gap-0.5">
+                <button
+                  onClick={() => handleMoveSection(section.id, 'up')}
+                  disabled={index === 0}
+                  className={`p-1 rounded ${index === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/20 active:bg-white/30'}`}
+                  title={index === 0 ? 'Already at top' : `Move to position ${index}`}
+                >
+                  <ChevronUp className="w-4 h-4 text-white" />
+                </button>
+                <button
+                  onClick={() => handleMoveSection(section.id, 'down')}
+                  disabled={index === totalSections - 1}
+                  className={`p-1 rounded ${index === totalSections - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/20 active:bg-white/30'}`}
+                  title={index === totalSections - 1 ? 'Already at bottom' : `Move to position ${index + 2}`}
+                >
+                  <ChevronDown className="w-4 h-4 text-white" />
+                </button>
+              </div>
             </div>
           )}
           <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
