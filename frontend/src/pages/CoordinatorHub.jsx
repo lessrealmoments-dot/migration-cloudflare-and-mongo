@@ -104,6 +104,7 @@ const CoordinatorHub = () => {
   const [unlockedSections, setUnlockedSections] = useState({});
   const [sectionToUnlock, setSectionToUnlock] = useState(null);
   const [unlockPassword, setUnlockPassword] = useState('');
+  const [pendingUploadSection, setPendingUploadSection] = useState(null); // Track if user wants to go to upload after unlock
   
   const baseUrl = window.location.origin;
   
