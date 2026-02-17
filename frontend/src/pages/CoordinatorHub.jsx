@@ -7,7 +7,9 @@ import {
   Camera, Video, Film, HardDrive, Cloud, 
   CheckCircle, Clock, RefreshCw, Copy, 
   ExternalLink, AlertCircle, Calendar,
-  User, ChevronDown, ChevronUp, Images
+  User, ChevronDown, ChevronUp, Images,
+  Plus, Lock, Trash2, Edit2, Eye, GripVertical,
+  Key, X, Shield
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -22,6 +24,16 @@ const sectionConfig = {
   fotoshare_photobooth: { icon: Images, color: 'bg-violet-500', label: 'Photobooth' },
   gdrive: { icon: HardDrive, color: 'bg-green-500', label: 'Google Drive' },
   pcloud: { icon: Cloud, color: 'bg-cyan-500', label: 'pCloud' }
+};
+
+// Recommended section names by type
+const recommendedNames = {
+  photo: ['Photos by Photographer', 'Same Day Edit', 'Highlights', 'Coverage'],
+  video: ['Video Highlights', 'Same Day Edit Video', 'Full Coverage'],
+  fotoshare: ['360 Booth', '360 Video', 'Spin Booth'],
+  fotoshare_photobooth: ['Photobooth', 'Photo Corner', 'Selfie Station'],
+  gdrive: ['Google Drive Photos', 'Raw Files', 'Full Album'],
+  pcloud: ['pCloud Storage', 'Additional Photos', 'Extras']
 };
 
 // Status badges
