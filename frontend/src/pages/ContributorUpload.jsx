@@ -54,8 +54,14 @@ const ContributorUpload = () => {
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
   
+  // Password protection state
+  const [requiresPassword, setRequiresPassword] = useState(false);
+  const [sectionPassword, setSectionPassword] = useState('');
+  const [passwordVerified, setPasswordVerified] = useState(false);
+  const [verifyingPassword, setVerifyingPassword] = useState(false);
+  
   // Multi-step form flow
-  const [step, setStep] = useState('company'); // 'company', 'role', 'confirm', 'upload'
+  const [step, setStep] = useState('password'); // 'password', 'company', 'role', 'confirm', 'upload'
   const [companyName, setCompanyName] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
   const [customRole, setCustomRole] = useState('');
