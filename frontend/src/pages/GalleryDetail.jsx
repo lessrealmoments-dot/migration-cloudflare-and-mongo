@@ -2300,7 +2300,7 @@ const GalleryDetail = () => {
         {/* Coordinator Hub Modal */}
         {showCoordinatorHubModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" data-testid="coordinator-hub-modal">
-            <div className="bg-white rounded-xl max-w-md w-full overflow-hidden shadow-2xl">
+            <div className="bg-white rounded-xl max-w-md w-full overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-zinc-200 bg-gradient-to-r from-orange-500 to-amber-500">
                 <div className="flex items-center justify-between">
                   <div>
@@ -2322,6 +2322,85 @@ const GalleryDetail = () => {
                     <strong>📋 What is this?</strong><br/>
                     A centralized page where your coordinator can see all sections and share upload links with suppliers (photographer, videographer, 360 booth, etc.)
                   </p>
+                </div>
+                
+                {/* Coordinator Settings */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => setShowCoordinatorSettings(!showCoordinatorSettings)}
+                    className="flex items-center justify-between w-full p-3 bg-zinc-50 rounded-lg hover:bg-zinc-100 transition-colors"
+                  >
+                    <span className="font-medium text-sm flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      Hub Settings
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showCoordinatorSettings ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {showCoordinatorSettings && (
+                    <div className="mt-3 p-4 border border-zinc-200 rounded-lg space-y-4">
+                      {/* Allow Supplier Sections Toggle */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-sm">Allow Supplier Sections</p>
+                          <p className="text-xs text-zinc-500">Suppliers can create their own sections in the hub</p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const token = localStorage.getItem('token');
+                              await axios.put(`${API}/galleries/${id}/coordinator-settings`, {
+                                allow_supplier_sections: !allowSupplierSections
+                              }, { headers: { Authorization: `Bearer ${token}` }});
+                              setAllowSupplierSections(!allowSupplierSections);
+                              toast.success(allowSupplierSections ? 'Supplier sections disabled' : 'Supplier sections enabled');
+                            } catch (e) {
+                              toast.error('Failed to update setting');
+                            }
+                          }}
+                          className={`relative w-11 h-6 rounded-full transition-colors ${allowSupplierSections ? 'bg-orange-500' : 'bg-zinc-300'}`}
+                        >
+                          <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${allowSupplierSections ? 'left-6' : 'left-1'}`} />
+                        </button>
+                      </div>
+                      
+                      {/* Coordinator Password */}
+                      <div>
+                        <label className="block font-medium text-sm mb-1">Coordinator Password</label>
+                        <p className="text-xs text-zinc-500 mb-2">Set a password for coordinators to manage all sections</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="password"
+                            placeholder="Enter coordinator password"
+                            value={coordinatorPassword}
+                            onChange={(e) => setCoordinatorPassword(e.target.value)}
+                            className="flex-1 px-3 py-2 border border-zinc-300 rounded-lg text-sm"
+                          />
+                          <button
+                            onClick={async () => {
+                              if (coordinatorPassword && coordinatorPassword.length < 4) {
+                                toast.error('Password must be at least 4 characters');
+                                return;
+                              }
+                              try {
+                                const token = localStorage.getItem('token');
+                                await axios.put(`${API}/galleries/${id}/coordinator-settings`, {
+                                  coordinator_password: coordinatorPassword || null
+                                }, { headers: { Authorization: `Bearer ${token}` }});
+                                toast.success(coordinatorPassword ? 'Coordinator password set' : 'Coordinator password removed');
+                                setCoordinatorPassword('');
+                              } catch (e) {
+                                toast.error('Failed to update password');
+                              }
+                            }}
+                            className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm hover:bg-orange-700"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div ref={coordinatorQrRef} className="bg-white p-6 rounded-lg flex justify-center border">
