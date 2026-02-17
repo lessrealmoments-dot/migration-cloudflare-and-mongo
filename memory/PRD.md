@@ -103,6 +103,10 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Grandfathering for expired Pro galleries
 
 ## Recent Fixes (Feb 2025)
+- [x] **Grandfathering: Section Creation for Legacy Galleries** (Feb 17, 2025) ✅ NEW:
+  - Users can now create new sections in galleries created under Pro/Standard plans even after downgrading to Free
+  - Applies to all section types: photo, video, fotoshare, photobooth, pCloud
+  - Added helper function `can_create_section_in_gallery()` for consistent grandfathering checks
 - [x] **CRITICAL: Invitation Page Speed Fix** (Feb 17, 2025) ✅ NEW:
   - **Root Cause**: Cover images were stored as base64 strings (~5-11 MB each) in the database
   - **Impact**: Invitations List API went from 3.09s → 0.78s (4x faster), 5.4 MB → 920 bytes
