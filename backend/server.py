@@ -5504,17 +5504,32 @@ async def create_section(
     current_user: dict = Depends(get_current_user)
 ):
     """Create a new section (photo or video type)"""
-    # Check subscription status
-    subscription_active = await is_subscription_active(current_user)
-    if not subscription_active:
-        raise HTTPException(
-            status_code=403, 
-            detail="Your subscription has expired. Please renew to create new sections."
-        )
-    
+    # First get the gallery to check grandfathering
     gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Get full user data for feature resolution
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check subscription status with GRANDFATHERING support
+    # If gallery was created under a paid plan, allow section creation even if subscription expired
+    subscription_active = await is_subscription_active(current_user)
+    
+    if not subscription_active:
+        # Check if gallery qualifies for grandfathering
+        gallery_features = await resolve_gallery_features(user, gallery)
+        
+        # If grandfathered from a paid plan, allow section creation
+        if gallery_features.get("grandfathered") and gallery_features.get("effective_plan") in [PLAN_STANDARD, PLAN_PRO]:
+            logger.info(f"Allowing section creation for grandfathered gallery {gallery_id} (created under {gallery.get('created_under_plan')})")
+        else:
+            raise HTTPException(
+                status_code=403, 
+                detail="Your subscription has expired. Please renew to create new sections."
+            )
     
     if type not in ["photo", "video", "fotoshare", "fotoshare_photobooth"]:
         raise HTTPException(status_code=400, detail="Section type must be 'photo', 'video', 'fotoshare', or 'fotoshare_photobooth'")
