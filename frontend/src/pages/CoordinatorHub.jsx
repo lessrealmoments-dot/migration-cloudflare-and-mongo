@@ -221,6 +221,32 @@ const CoordinatorHub = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // Access control state
+  const [accessType, setAccessType] = useState(null); // 'coordinator' | 'contributor' | null
+  const [showAccessModal, setShowAccessModal] = useState(true);
+  const [coordinatorPassword, setCoordinatorPassword] = useState('');
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  
+  // Section creation state
+  const [showCreateSection, setShowCreateSection] = useState(false);
+  const [newSectionName, setNewSectionName] = useState('');
+  const [newSectionType, setNewSectionType] = useState('photo');
+  const [newSectionPassword, setNewSectionPassword] = useState('');
+  const [newSectionPasswordConfirm, setNewSectionPasswordConfirm] = useState('');
+  const [isCreatingSection, setIsCreatingSection] = useState(false);
+  
+  // Section management state
+  const [sectionToDelete, setSectionToDelete] = useState(null);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [sectionToEdit, setSectionToEdit] = useState(null);
+  const [editPassword, setEditPassword] = useState('');
+  const [editName, setEditName] = useState('');
+  
+  // Section unlock state (for contributors)
+  const [unlockedSections, setUnlockedSections] = useState({});
+  const [sectionToUnlock, setSectionToUnlock] = useState(null);
+  const [unlockPassword, setUnlockPassword] = useState('');
+  
   const baseUrl = window.location.origin;
   
   useEffect(() => {
@@ -232,11 +258,144 @@ const CoordinatorHub = () => {
       setLoading(true);
       const response = await axios.get(`${API}/coordinator-hub/${hubLink}`);
       setHubData(response.data);
+      
+      // If no coordinator password is set, don't show access modal
+      if (!response.data.has_coordinator_password) {
+        setAccessType('contributor');
+        setShowAccessModal(false);
+      }
     } catch (err) {
       console.error('Failed to load coordinator hub:', err);
       setError(err.response?.data?.detail || 'Failed to load coordinator hub');
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const handleAccessSubmit = async (type) => {
+    if (type === 'coordinator') {
+      if (!coordinatorPassword) {
+        toast.error('Please enter the coordinator password');
+        return;
+      }
+      setIsAuthenticating(true);
+      try {
+        await axios.post(`${API}/coordinator-hub/${hubLink}/auth`, {
+          access_type: 'coordinator',
+          password: coordinatorPassword
+        });
+        setAccessType('coordinator');
+        setShowAccessModal(false);
+        toast.success('Coordinator access granted');
+      } catch (err) {
+        toast.error(err.response?.data?.detail || 'Invalid password');
+      } finally {
+        setIsAuthenticating(false);
+      }
+    } else {
+      setAccessType('contributor');
+      setShowAccessModal(false);
+    }
+  };
+  
+  const handleCreateSection = async () => {
+    if (!newSectionName.trim()) {
+      toast.error('Please enter a section name');
+      return;
+    }
+    if (!newSectionPassword || newSectionPassword.length < 4) {
+      toast.error('Password must be at least 4 characters');
+      return;
+    }
+    if (newSectionPassword !== newSectionPasswordConfirm) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    
+    setIsCreatingSection(true);
+    try {
+      const response = await axios.post(`${API}/coordinator-hub/${hubLink}/sections`, {
+        name: newSectionName.trim(),
+        type: newSectionType,
+        password: newSectionPassword
+      });
+      toast.success('Section created! Your contributor link is ready.');
+      setShowCreateSection(false);
+      setNewSectionName('');
+      setNewSectionPassword('');
+      setNewSectionPasswordConfirm('');
+      
+      // Auto-unlock the section we just created
+      setUnlockedSections(prev => ({
+        ...prev,
+        [response.data.section_id]: response.data.contributor_link
+      }));
+      
+      fetchHubData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to create section');
+    } finally {
+      setIsCreatingSection(false);
+    }
+  };
+  
+  const handleDeleteSection = async () => {
+    if (!sectionToDelete) return;
+    
+    try {
+      await axios.delete(`${API}/coordinator-hub/${hubLink}/sections/${sectionToDelete.id}`, {
+        data: {
+          access_type: accessType,
+          password: accessType === 'coordinator' ? coordinatorPassword : deletePassword,
+          confirm: true
+        }
+      });
+      toast.success('Section deleted');
+      setSectionToDelete(null);
+      setDeletePassword('');
+      fetchHubData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to delete section');
+    }
+  };
+  
+  const handleEditSection = async () => {
+    if (!sectionToEdit || !editName.trim()) return;
+    
+    try {
+      await axios.put(`${API}/coordinator-hub/${hubLink}/sections/${sectionToEdit.id}`, {
+        access_type: accessType,
+        password: accessType === 'coordinator' ? coordinatorPassword : editPassword,
+        name: editName.trim()
+      });
+      toast.success('Section updated');
+      setSectionToEdit(null);
+      setEditName('');
+      setEditPassword('');
+      fetchHubData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to update section');
+    }
+  };
+  
+  const handleUnlockSection = async () => {
+    if (!sectionToUnlock) return;
+    
+    try {
+      const response = await axios.post(`${API}/coordinator-hub/${hubLink}/sections/${sectionToUnlock.id}/verify-password`, {
+        password: unlockPassword
+      });
+      if (response.data.verified) {
+        setUnlockedSections(prev => ({
+          ...prev,
+          [sectionToUnlock.id]: response.data.contributor_link
+        }));
+        toast.success('Section unlocked!');
+        setSectionToUnlock(null);
+        setUnlockPassword('');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Invalid password');
     }
   };
   
@@ -277,6 +436,263 @@ const CoordinatorHub = () => {
   // Separate sections by status
   const pendingSections = hubData.sections.filter(s => s.status === 'pending');
   const submittedSections = hubData.sections.filter(s => s.status !== 'pending');
+  
+  // Section Card Component (inline for access to state)
+  const SectionCard = ({ section }) => {
+    const [showQR, setShowQR] = useState(false);
+    const config = sectionConfig[section.type] || sectionConfig.photo;
+    const Icon = config.icon;
+    
+    const isUnlocked = unlockedSections[section.id] || accessType === 'coordinator' || !section.section_password;
+    const contributorLink = isUnlocked 
+      ? (unlockedSections[section.id] || section.contributor_link)
+      : null;
+    
+    const contributorUrl = contributorLink 
+      ? `${baseUrl}${section.link_prefix || '/c/'}${contributorLink}?hub=${hubLink}`
+      : null;
+    
+    const copyLink = () => {
+      if (contributorUrl) {
+        navigator.clipboard.writeText(contributorUrl);
+        toast.success('Link copied to clipboard!');
+      }
+    };
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden"
+      >
+        {/* Header */}
+        <div className={`${config.color} px-4 py-3 flex items-center gap-3`}>
+          <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+            <Icon className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-white font-semibold">{section.name}</h3>
+            <p className="text-white/80 text-sm">{config.label}</p>
+          </div>
+          <StatusBadge status={section.status} count={section.item_count} />
+        </div>
+        
+        {/* Content */}
+        <div className="p-4 space-y-4">
+          {/* Lock indicator for contributors */}
+          {!isUnlocked && section.section_password && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-amber-700">
+                <Lock className="w-4 h-4" />
+                <span className="text-sm font-medium">This section is password protected</span>
+              </div>
+              <button
+                onClick={() => setSectionToUnlock(section)}
+                className="mt-2 w-full py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700"
+              >
+                Enter Password to Unlock
+              </button>
+            </div>
+          )}
+          
+          {/* Contributor link actions (only if unlocked) */}
+          {isUnlocked && section.contributor_enabled && contributorUrl && (
+            <div className="space-y-3">
+              <button
+                onClick={copyLink}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-sm font-medium transition-colors"
+              >
+                <Copy className="w-4 h-4" />
+                Copy Upload Link
+              </button>
+              
+              <button
+                onClick={() => setShowQR(!showQR)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 border border-zinc-200 hover:bg-zinc-50 rounded-lg text-sm font-medium transition-colors"
+              >
+                {showQR ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {showQR ? 'Hide' : 'Show'} QR Code
+              </button>
+              
+              <AnimatePresence>
+                {showQR && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="flex justify-center p-4 bg-white border border-zinc-200 rounded-lg"
+                  >
+                    <QRCodeSVG value={contributorUrl} size={150} level="H" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              <a
+                href={contributorUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Go to Upload Page
+              </a>
+            </div>
+          )}
+          
+          {/* Management buttons for coordinator or section owner */}
+          {(accessType === 'coordinator' || section.created_by_supplier) && (
+            <div className="flex gap-2 pt-2 border-t border-zinc-100">
+              <button
+                onClick={() => {
+                  setSectionToEdit(section);
+                  setEditName(section.name);
+                }}
+                className="flex-1 flex items-center justify-center gap-1 py-2 text-zinc-600 hover:bg-zinc-100 rounded-lg text-sm"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+                Rename
+              </button>
+              <button
+                onClick={() => setSectionToDelete(section)}
+                className="flex-1 flex items-center justify-center gap-1 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  };
+  
+  return (
+    <div className="min-h-screen bg-zinc-50">
+      {/* Access Modal */}
+      {showAccessModal && hubData?.has_coordinator_password && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-zinc-900">How are you accessing this hub?</h2>
+              <p className="text-zinc-500 text-sm mt-1">Select your role to continue</p>
+            </div>
+            
+            <div className="space-y-3">
+              <button
+                onClick={() => setAccessType('coordinator_pending')}
+                className={`w-full p-4 border-2 rounded-xl text-left transition-all ${
+                  accessType === 'coordinator_pending' 
+                    ? 'border-orange-500 bg-orange-50' 
+                    : 'border-zinc-200 hover:border-zinc-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Shield className="w-6 h-6 text-orange-600" />
+                  <div>
+                    <p className="font-semibold">I'm the Coordinator</p>
+                    <p className="text-sm text-zinc-500">Full access to manage sections</p>
+                  </div>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => handleAccessSubmit('contributor')}
+                className="w-full p-4 border-2 border-zinc-200 hover:border-zinc-300 rounded-xl text-left transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <Camera className="w-6 h-6 text-blue-600" />
+                  <div>
+                    <p className="font-semibold">I'm a Contributor/Supplier</p>
+                    <p className="text-sm text-zinc-500">Upload to my assigned section</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+            
+            {accessType === 'coordinator_pending' && (
+              <div className="mt-4 space-y-3">
+                <input
+                  type="password"
+                  placeholder="Enter coordinator password"
+                  value={coordinatorPassword}
+                  onChange={(e) => setCoordinatorPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-zinc-300 rounded-lg"
+                  autoFocus
+                />
+                <button
+                  onClick={() => handleAccessSubmit('coordinator')}
+                  disabled={isAuthenticating}
+                  className="w-full py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 disabled:opacity-50"
+                >
+                  {isAuthenticating ? 'Verifying...' : 'Continue as Coordinator'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Header */}
+      <header className="bg-white border-b border-zinc-200 sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-6 py-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-zinc-800 to-zinc-600 rounded-xl flex items-center justify-center">
+              <Camera className="w-7 h-7 text-white" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-zinc-900">
+                {hubData.event_title || hubData.gallery_title}
+              </h1>
+              {hubData.coordinator_name && (
+                <p className="text-zinc-600 font-medium">
+                  Coordinator: {hubData.coordinator_name}
+                </p>
+              )}
+              <p className="text-zinc-500 text-sm">
+                Supplier Hub by {hubData.photographer_name}
+              </p>
+              {hubData.event_date && (
+                <p className="text-sm text-zinc-400 mt-1">
+                  {formatEventDate(hubData.event_date)}
+                </p>
+              )}
+            </div>
+            {accessType === 'coordinator' && (
+              <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium flex items-center gap-1">
+                <Shield className="w-4 h-4" />
+                Coordinator
+              </span>
+            )}
+          </div>
+          
+          {/* Action buttons */}
+          <div className="flex gap-3 mt-4">
+            {hubData.share_link && (
+              <a
+                href={`${baseUrl}/g/${hubData.share_link}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800"
+              >
+                <Eye className="w-4 h-4" />
+                View Live Gallery
+              </a>
+            )}
+            {hubData.allow_supplier_sections && (
+              <button
+                onClick={() => setShowCreateSection(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700"
+              >
+                <Plus className="w-4 h-4" />
+                Create My Section
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
   
   return (
     <div className="min-h-screen bg-zinc-50">
