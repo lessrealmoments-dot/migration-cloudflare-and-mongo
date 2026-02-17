@@ -816,13 +816,18 @@ const CoordinatorHub = () => {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Lock className="w-5 h-5" />
-                Unlock Section
+                {pendingUploadSection ? 'Enter Password to Upload' : 'Unlock Section'}
               </h2>
-              <button onClick={() => setSectionToUnlock(null)} className="p-2 hover:bg-zinc-100 rounded-full">
+              <button onClick={() => { setSectionToUnlock(null); setPendingUploadSection(null); }} className="p-2 hover:bg-zinc-100 rounded-full">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-zinc-600 mb-4">Enter the password for <strong>{sectionToUnlock.name}</strong></p>
+            <p className="text-zinc-600 mb-4">
+              {pendingUploadSection 
+                ? `Enter the password for "${sectionToUnlock.name}" to access the upload page`
+                : `Enter the password for "${sectionToUnlock.name}"`
+              }
+            </p>
             <input
               type="password"
               value={unlockPassword}
@@ -830,12 +835,13 @@ const CoordinatorHub = () => {
               placeholder="Section password"
               className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg mb-4"
               autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleUnlockSection()}
             />
             <button
               onClick={handleUnlockSection}
               className="w-full py-3 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700"
             >
-              Unlock
+              {pendingUploadSection ? 'Unlock & Go to Upload' : 'Unlock'}
             </button>
           </div>
         </div>
