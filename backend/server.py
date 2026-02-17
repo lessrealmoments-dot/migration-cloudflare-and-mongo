@@ -5156,6 +5156,38 @@ async def get_gallery(gallery_id: str, current_user: dict = Depends(get_current_
         storage_percent=storage_percent
     )
 
+
+@api_router.get("/galleries/{gallery_id}/features")
+async def get_gallery_features(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """
+    Get features available for a specific gallery, considering grandfathering.
+    
+    This is used by the frontend to check which features are available for a gallery
+    when the user's current plan might be different from the plan the gallery was created under.
+    """
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Get full user data
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Resolve gallery-specific features with grandfathering
+    resolved = await resolve_gallery_features(user, gallery)
+    
+    return {
+        "gallery_id": gallery_id,
+        "features": resolved["features"],
+        "effective_plan": resolved["effective_plan"],
+        "grandfathered": resolved["grandfathered"],
+        "authority_source": resolved["authority_source"],
+        "created_under_plan": gallery.get("created_under_plan"),
+        "created_under_override": gallery.get("created_under_override")
+    }
+
+
 @api_router.put("/galleries/{gallery_id}", response_model=Gallery)
 async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: dict = Depends(get_current_user)):
     gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
