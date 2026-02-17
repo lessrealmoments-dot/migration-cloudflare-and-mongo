@@ -103,6 +103,14 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Grandfathering for expired Pro galleries
 
 ## Recent Fixes (Feb 2025)
+- [x] **Gallery Grandfathering System** (Feb 17, 2025) ✅ NEW:
+  - Galleries now store `created_under_plan` and `created_under_override` fields
+  - Priority hierarchy: Override Mode > Current Plan > Grandfather Plan
+  - If user downgrades, galleries retain features from creation plan
+  - If user upgrades, galleries get upgraded features automatically
+  - New endpoint: `GET /api/galleries/{id}/features` returns gallery-specific features
+  - Frontend shows "Legacy" badge on grandfathered features
+  - Coordinator Hub now checks gallery-specific features (with grandfathering)
 - [x] **RSVP Token Email Notifications** (Feb 17, 2025) ✅ NEW:
   - 4 new email templates added to `server.py`:
     - `admin_rsvp_token_purchase` - Notifies admin of new purchase
