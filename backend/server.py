@@ -2103,6 +2103,32 @@ async def is_gallery_feature_enabled(user: dict, gallery: dict, feature_name: st
     return resolved["features"].get(feature_name, False)
 
 
+async def can_create_section_in_gallery(user: dict, gallery: dict) -> tuple[bool, str]:
+    """
+    Check if user can create a new section in a gallery, considering grandfathering.
+    
+    Returns:
+        tuple: (can_create: bool, reason: str)
+        - If can_create is True, reason is empty
+        - If can_create is False, reason explains why
+    """
+    # First check if subscription is active
+    subscription_active = await is_subscription_active(user)
+    
+    if subscription_active:
+        return True, ""
+    
+    # Subscription expired - check grandfathering
+    gallery_features = await resolve_gallery_features(user, gallery)
+    
+    # If gallery was created under a paid plan, allow section creation (grandfathered)
+    if gallery_features.get("grandfathered") and gallery_features.get("effective_plan") in [PLAN_STANDARD, PLAN_PRO]:
+        logger.info(f"Allowing section creation for grandfathered gallery {gallery.get('id')} (created under {gallery.get('created_under_plan')})")
+        return True, ""
+    
+    return False, "Your subscription has expired. Please renew to create new sections."
+
+
 async def check_subscription_grace_periods(user: dict, gallery: dict = None) -> dict:
     """
     Check subscription grace periods for grandfathered galleries.
