@@ -384,19 +384,21 @@ export default function PublicInvitation() {
       <div className="min-h-screen" style={{ backgroundColor: `${primaryColor}dd` }}>
         <div className="min-h-screen backdrop-blur-md">
           
-          {/* Header with Initials */}
-          <header className="pt-8 pb-4 text-center">
-            <div 
-              className="inline-block px-6 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20"
-            >
-              <p 
-                className="text-white text-lg tracking-[0.3em] font-light"
-                style={{ fontFamily }}
+          {/* Header with Initials - Only for couple events like weddings */}
+          {shouldShowInitials() && (
+            <header className="pt-8 pb-4 text-center">
+              <div 
+                className="inline-block px-6 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20"
               >
-                {getInitials(invitation.host_names)}
-              </p>
-            </div>
-          </header>
+                <p 
+                  className="text-white text-lg tracking-[0.3em] font-light"
+                  style={{ fontFamily }}
+                >
+                  {getInitials(invitation.host_names)}
+                </p>
+              </div>
+            </header>
+          )}
 
           {/* Main Content */}
           <main className="max-w-5xl mx-auto lg:px-4 pb-8">
