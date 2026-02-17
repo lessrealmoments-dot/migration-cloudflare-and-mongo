@@ -7927,9 +7927,41 @@ async def get_contributor_upload_info(contributor_link: str):
         "uploads_allowed": uploads_allowed,
         "days_until_expires": days_until_expires,
         "upload_window_expired": not uploads_allowed,
+        # Password protection - indicate if password is required (don't expose the actual password)
+        "requires_password": bool(section.get("section_password")),
         # Existing contributors for autocomplete
         "existing_contributors": await get_gallery_existing_contributors(gallery)
     }
+
+
+@api_router.post("/contributor/{contributor_link}/verify-password")
+async def verify_contributor_section_password(contributor_link: str, data: dict = Body(...)):
+    """Verify section password before allowing upload access"""
+    # Find gallery with this contributor link
+    gallery = await db.galleries.find_one(
+        {"sections.contributor_link": contributor_link},
+        {"_id": 0}
+    )
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Invalid contributor link")
+    
+    # Find the specific section
+    section = next((s for s in gallery.get("sections", []) if s.get("contributor_link") == contributor_link), None)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    password = data.get("password", "")
+    stored_password = section.get("section_password")
+    
+    # If no password set, allow access
+    if not stored_password:
+        return {"verified": True}
+    
+    # Verify password
+    if password != stored_password:
+        raise HTTPException(status_code=401, detail="Invalid section password")
+    
+    return {"verified": True}
 
 
 async def get_gallery_existing_contributors(gallery: dict) -> list:
