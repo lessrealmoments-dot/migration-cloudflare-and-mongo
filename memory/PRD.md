@@ -103,13 +103,19 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Grandfathering for expired Pro galleries
 
 ## Recent Fixes (Feb 2025)
-- [x] **Enhanced Coordinator Hub with Supplier Section Creation** (Feb 17, 2025) ✅ NEW:
+- [x] **Coordinator Hub Section Reordering Fix** (Feb 17, 2025) ✅ NEW:
+  - **Bug Fixed**: "Section not found" error when trying to reorder sections
+  - **Root Cause**: FastAPI route ordering issue - `/sections/reorder` was being matched as `/sections/{section_id}` where "reorder" was interpreted as a section ID
+  - **Fix Applied**: Moved the `/sections/reorder` route definition before the generic `/{section_id}` route
+  - **UX Improvement**: Added visual position indicators (numbered badges 1, 2, 3, etc.) on each section header when in coordinator mode
+  - **Files Modified**: `/app/backend/server.py`, `/app/frontend/src/pages/CoordinatorHub.jsx`
+- [x] **Enhanced Coordinator Hub with Supplier Section Creation** (Feb 17, 2025) ✅:
   - **Two Access Levels**: Coordinator (full control with password) vs Contributor (section-specific access)
   - **Supplier Section Creation**: Suppliers can create their own sections with passwords
   - **Section Password Protection**: Each section can have its own password
   - **Coordinator Password**: Gallery owner sets coordinator password for elevated access
   - **"View Live Gallery" button**: Quick access to public gallery from the hub
-  - **Section Management**: Rename, delete, and manage sections from the hub
+  - **Section Management**: Rename, delete, reorder, and manage sections from the hub
   - Backend: New endpoints for hub authentication, section CRUD, password management
   - Frontend: Updated CoordinatorHub.jsx with access modal, create section modal, section management
 - [x] **Grandfathering: Section Creation for Legacy Galleries** (Feb 17, 2025) ✅ NEW:
