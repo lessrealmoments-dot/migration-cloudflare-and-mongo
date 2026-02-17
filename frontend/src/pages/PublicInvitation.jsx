@@ -256,14 +256,24 @@ export default function PublicInvitation() {
     return `${hour12}:${minutes} ${ampm}`;
   };
 
-  // Get initials for header
+  // Get initials for header - only show for weddings or when hosts contain "&" or "+"
   const getInitials = (hostNames) => {
-    if (!hostNames) return '';
+    if (!hostNames) return null;
     const parts = hostNames.split(/[&+]/);
     if (parts.length >= 2) {
       return `${parts[0].trim().charAt(0)} + ${parts[1].trim().charAt(0)}`;
     }
-    return hostNames.charAt(0);
+    return null; // Don't show single initial - it looks awkward
+  };
+  
+  // Determine if we should show initials badge
+  const shouldShowInitials = () => {
+    // Only show for weddings or engagement events with two hosts
+    const couplesEvents = ['wedding', 'engagement'];
+    if (!couplesEvents.includes(invitation?.event_type)) return false;
+    
+    const initials = getInitials(invitation?.host_names);
+    return initials !== null;
   };
 
   if (loading) {
