@@ -351,31 +351,97 @@ const ContributorUpload = () => {
           <p className="text-lg text-zinc-600">{info?.section_name}</p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center gap-2 mb-10">
-          {['company', 'role', 'confirm', 'upload'].map((s, i) => (
-            <React.Fragment key={s}>
-              <div 
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                  step === s 
-                    ? 'bg-zinc-800 text-white' 
-                    : ['company', 'role', 'confirm', 'upload'].indexOf(step) > i 
-                      ? 'bg-green-500 text-white' 
-                      : 'bg-zinc-200 text-zinc-500'
-                }`}
-              >
-                {['company', 'role', 'confirm', 'upload'].indexOf(step) > i ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  i + 1
+        {/* Progress Steps - only show if not on password step */}
+        {step !== 'password' && (
+          <div className="flex items-center justify-center gap-2 mb-10">
+            {['company', 'role', 'confirm', 'upload'].map((s, i) => (
+              <React.Fragment key={s}>
+                <div 
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                    step === s 
+                      ? 'bg-zinc-800 text-white' 
+                      : ['company', 'role', 'confirm', 'upload'].indexOf(step) > i 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-zinc-200 text-zinc-500'
+                  }`}
+                >
+                  {['company', 'role', 'confirm', 'upload'].indexOf(step) > i ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    i + 1
+                  )}
+                </div>
+                {i < 3 && (
+                  <div className={`w-12 h-0.5 ${['company', 'role', 'confirm', 'upload'].indexOf(step) > i ? 'bg-green-500' : 'bg-zinc-200'}`} />
                 )}
+              </React.Fragment>
+            ))}
+          </div>
+        )}
+
+        {/* Step 0: Password Verification (if required) */}
+        {step === 'password' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-8 h-8 text-amber-600" />
               </div>
-              {i < 3 && (
-                <div className={`w-12 h-0.5 ${['company', 'role', 'confirm', 'upload'].indexOf(step) > i ? 'bg-green-500' : 'bg-zinc-200'}`} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+              <h2 className="text-xl font-semibold text-zinc-800 mb-2">Password Required</h2>
+              <p className="text-zinc-600">This section is protected. Enter the password to continue.</p>
+            </div>
+            
+            <form onSubmit={handlePasswordSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-2">
+                  Section Password
+                </label>
+                <div className="relative">
+                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                  <input
+                    type="password"
+                    value={sectionPassword}
+                    onChange={(e) => setSectionPassword(e.target.value)}
+                    placeholder="Enter the password"
+                    className="w-full pl-12 pr-4 py-3 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-lg"
+                    autoFocus
+                  />
+                </div>
+                <p className="text-sm text-zinc-500 mt-2">
+                  Don't have the password? Contact the section creator or gallery owner.
+                </p>
+              </div>
+              
+              <button
+                type="submit"
+                disabled={verifyingPassword}
+                className="w-full py-4 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {verifyingPassword ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-5 h-5" />
+                    Unlock Section
+                  </>
+                )}
+              </button>
+            </form>
+            
+            {hubLink && (
+              <div className="text-center mt-6">
+                <button
+                  onClick={goBackToHub}
+                  className="text-sm text-zinc-500 hover:text-zinc-700"
+                >
+                  ← Back to Coordinator Hub
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Step 1: Company Name */}
         {step === 'company' && (
