@@ -344,6 +344,13 @@ def setup_invitation_routes(app, db, get_current_user):
         
         # Set default design if not provided
         design = data.design or InvitationDesign()
+        design_dict = design.model_dump()
+        
+        # PERFORMANCE FIX: Strip base64 images - they should be uploaded separately
+        # Base64 images bloat the database and cause slow API responses
+        if design_dict.get("cover_image_url", "").startswith("data:"):
+            design_dict["cover_image_url"] = None
+            logger.warning(f"Stripped base64 cover image from invitation {invitation_id} - use upload endpoint instead")
         
         # Set default RSVP fields if not provided
         rsvp_fields = data.rsvp_fields
@@ -365,7 +372,7 @@ def setup_invitation_routes(app, db, get_current_user):
             "message": data.message,
             "additional_info": data.additional_info,
             "external_invitation_url": data.external_invitation_url,
-            "design": design.model_dump(),
+            "design": design_dict,
             "rsvp_enabled": data.rsvp_enabled,
             "rsvp_deadline": data.rsvp_deadline,
             "rsvp_fields": [f.model_dump() for f in rsvp_fields],
