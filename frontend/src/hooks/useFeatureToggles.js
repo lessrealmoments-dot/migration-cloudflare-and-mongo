@@ -135,12 +135,45 @@ const useFeatureToggles = () => {
     cachedToken = null;
   };
 
+  // Function to fetch gallery-specific features (with grandfathering support)
+  // This is useful when user may have downgraded but gallery was created under higher plan
+  const fetchGalleryFeatures = async (galleryId) => {
+    const token = localStorage.getItem('token');
+    if (!token || !galleryId) return null;
+    
+    try {
+      const response = await fetch(`${API}/galleries/${galleryId}/features`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[FeatureToggles] Gallery features:', data);
+        return {
+          qr_share: data.features?.qr_code === true,
+          online_gallery: data.features?.view_public_gallery === true,
+          display_mode: data.features?.display_mode === true,
+          contributor_link: data.features?.collaboration_link === true,
+          coordinator_hub: data.features?.coordinator_hub === true,
+          // Metadata
+          _effective_plan: data.effective_plan,
+          _grandfathered: data.grandfathered,
+          _authority_source: data.authority_source,
+          _created_under_plan: data.created_under_plan
+        };
+      }
+    } catch (error) {
+      console.error('Failed to fetch gallery features:', error);
+    }
+    return null;
+  };
+
   return {
     toggles,
     loading,
     isFeatureEnabled,
     getUnavailableMessage,
     clearCache,
+    fetchGalleryFeatures,
     ADMIN_CONTACT
   };
 };
