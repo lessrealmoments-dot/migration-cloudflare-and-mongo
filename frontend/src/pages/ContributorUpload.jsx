@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { Upload, CheckCircle, AlertCircle, Loader2, Camera, Building2, ChevronRight, Wifi, Zap, Sparkles, Users, Music, Scissors, Cake, PartyPopper, Plane, Monitor, Video, Check } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, Loader2, Camera, Building2, ChevronRight, Wifi, Zap, Sparkles, Users, Music, Scissors, Cake, PartyPopper, Plane, Monitor, Video, Check, Lock, Key } from 'lucide-react';
 import useBrandConfig from '../hooks/useBrandConfig';
 import { useSmartUploader } from '../hooks/useSmartUploader';
 
