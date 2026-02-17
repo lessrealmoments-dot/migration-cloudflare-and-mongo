@@ -694,37 +694,6 @@ const CoordinatorHub = () => {
         </div>
       </header>
   
-  return (
-    <div className="min-h-screen bg-zinc-50">
-      {/* Header */}
-      <header className="bg-white border-b border-zinc-200 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-6">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-zinc-800 to-zinc-600 rounded-xl flex items-center justify-center">
-              <Camera className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-zinc-900">
-                {hubData.event_title || hubData.gallery_title}
-              </h1>
-              {hubData.coordinator_name && (
-                <p className="text-zinc-600 font-medium">
-                  Coordinator: {hubData.coordinator_name}
-                </p>
-              )}
-              <p className="text-zinc-500 text-sm">
-                Supplier Hub by {hubData.photographer_name}
-              </p>
-              {hubData.event_date && (
-                <p className="text-sm text-zinc-400 mt-1">
-                  {formatEventDate(hubData.event_date)}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-      
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-6 py-8">
         {/* Instructions */}
@@ -732,8 +701,8 @@ const CoordinatorHub = () => {
           <h3 className="font-semibold text-blue-800 mb-2">📋 How to use this page</h3>
           <ul className="text-sm text-blue-700 space-y-1">
             <li>• Find your section below and click the link or scan the QR code</li>
+            <li>• {hubData.allow_supplier_sections ? 'You can create your own section if needed' : 'Sections are created by the photographer'}</li>
             <li>• You will be asked to confirm your role before uploading</li>
-            <li>• Make sure you're uploading to the correct section</li>
             <li>• Status will update automatically once you submit</li>
           </ul>
         </div>
@@ -747,12 +716,7 @@ const CoordinatorHub = () => {
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
               {pendingSections.map((section) => (
-                <SectionCard 
-                  key={section.id} 
-                  section={section} 
-                  baseUrl={baseUrl}
-                  hubLink={hubLink}
-                />
+                <SectionCard key={section.id} section={section} />
               ))}
             </div>
           </section>
@@ -767,12 +731,7 @@ const CoordinatorHub = () => {
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
               {submittedSections.map((section) => (
-                <SectionCard 
-                  key={section.id} 
-                  section={section} 
-                  baseUrl={baseUrl}
-                  hubLink={hubLink}
-                />
+                <SectionCard key={section.id} section={section} />
               ))}
             </div>
           </section>
@@ -783,12 +742,235 @@ const CoordinatorHub = () => {
           <div className="text-center py-16">
             <AlertCircle className="w-12 h-12 text-zinc-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-zinc-600 mb-2">No sections yet</h3>
-            <p className="text-zinc-400">
-              The photographer hasn't created any sections for this gallery yet.
+            <p className="text-zinc-400 mb-4">
+              {hubData.allow_supplier_sections 
+                ? 'Be the first to create a section for your uploads!'
+                : 'The photographer hasn\'t created any sections for this gallery yet.'}
             </p>
+            {hubData.allow_supplier_sections && (
+              <button
+                onClick={() => setShowCreateSection(true)}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
+              >
+                <Plus className="w-4 h-4 inline mr-2" />
+                Create My Section
+              </button>
+            )}
           </div>
         )}
       </main>
+      
+      {/* Create Section Modal */}
+      {showCreateSection && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">Create Your Section</h2>
+              <button onClick={() => setShowCreateSection(false)} className="p-2 hover:bg-zinc-100 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Section Type */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Section Type</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.entries(sectionConfig).map(([type, cfg]) => {
+                    const TypeIcon = cfg.icon;
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => {
+                          setNewSectionType(type);
+                          setNewSectionName(recommendedNames[type]?.[0] || '');
+                        }}
+                        className={`p-3 rounded-lg border-2 transition-all ${
+                          newSectionType === type 
+                            ? 'border-zinc-900 bg-zinc-50' 
+                            : 'border-zinc-200 hover:border-zinc-300'
+                        }`}
+                      >
+                        <TypeIcon className={`w-5 h-5 mx-auto mb-1 ${newSectionType === type ? 'text-zinc-900' : 'text-zinc-400'}`} />
+                        <p className="text-xs">{cfg.label}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {/* Section Name */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Section Name</label>
+                <input
+                  type="text"
+                  value={newSectionName}
+                  onChange={(e) => setNewSectionName(e.target.value)}
+                  placeholder="e.g., Photos by John Doe"
+                  className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg"
+                />
+                {recommendedNames[newSectionType]?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {recommendedNames[newSectionType].map((name) => (
+                      <button
+                        key={name}
+                        onClick={() => setNewSectionName(name)}
+                        className="px-2 py-1 text-xs bg-zinc-100 hover:bg-zinc-200 rounded"
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Section Password */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Section Password</label>
+                <p className="text-xs text-zinc-500 mb-2">This protects your section from other suppliers</p>
+                <input
+                  type="password"
+                  value={newSectionPassword}
+                  onChange={(e) => setNewSectionPassword(e.target.value)}
+                  placeholder="Create a password (min 4 characters)"
+                  className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg mb-2"
+                />
+                <input
+                  type="password"
+                  value={newSectionPasswordConfirm}
+                  onChange={(e) => setNewSectionPasswordConfirm(e.target.value)}
+                  placeholder="Confirm password"
+                  className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg"
+                />
+              </div>
+              
+              <button
+                onClick={handleCreateSection}
+                disabled={isCreatingSection}
+                className="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
+              >
+                {isCreatingSection ? 'Creating...' : 'Create Section'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Unlock Section Modal */}
+      {sectionToUnlock && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Lock className="w-5 h-5" />
+                Unlock Section
+              </h2>
+              <button onClick={() => setSectionToUnlock(null)} className="p-2 hover:bg-zinc-100 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-zinc-600 mb-4">Enter the password for <strong>{sectionToUnlock.name}</strong></p>
+            <input
+              type="password"
+              value={unlockPassword}
+              onChange={(e) => setUnlockPassword(e.target.value)}
+              placeholder="Section password"
+              className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg mb-4"
+              autoFocus
+            />
+            <button
+              onClick={handleUnlockSection}
+              className="w-full py-3 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700"
+            >
+              Unlock
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Section Modal */}
+      {sectionToDelete && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-red-600 flex items-center gap-2">
+                <Trash2 className="w-5 h-5" />
+                Delete Section
+              </h2>
+              <button onClick={() => setSectionToDelete(null)} className="p-2 hover:bg-zinc-100 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-zinc-600 mb-4">
+              Are you sure you want to delete <strong>{sectionToDelete.name}</strong>? 
+              This will also delete all photos and videos in this section.
+            </p>
+            {accessType !== 'coordinator' && (
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                placeholder="Enter section password to confirm"
+                className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg mb-4"
+              />
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSectionToDelete(null)}
+                className="flex-1 py-2.5 border border-zinc-300 rounded-lg font-medium hover:bg-zinc-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteSection}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Edit Section Modal */}
+      {sectionToEdit && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Edit2 className="w-5 h-5" />
+                Rename Section
+              </h2>
+              <button onClick={() => setSectionToEdit(null)} className="p-2 hover:bg-zinc-100 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <input
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="New section name"
+              className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg mb-4"
+              autoFocus
+            />
+            {accessType !== 'coordinator' && (
+              <input
+                type="password"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                placeholder="Enter section password"
+                className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg mb-4"
+              />
+            )}
+            <button
+              onClick={handleEditSection}
+              className="w-full py-3 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-800"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Footer */}
       <footer className="border-t border-zinc-200 bg-white py-6 mt-8">
