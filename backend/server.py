@@ -7318,6 +7318,51 @@ async def revoke_coordinator_link(gallery_id: str, current_user: dict = Depends(
     
     return {"message": "Coordinator link revoked"}
 
+
+@api_router.put("/galleries/{gallery_id}/coordinator-settings")
+async def update_coordinator_settings(gallery_id: str, data: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    """Update coordinator hub settings (password, allow supplier sections)"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    update_data = {}
+    
+    # Update coordinator password
+    if "coordinator_password" in data:
+        password = data["coordinator_password"]
+        if password and len(password) < 4:
+            raise HTTPException(status_code=400, detail="Coordinator password must be at least 4 characters")
+        update_data["coordinator_password"] = password if password else None
+    
+    # Update allow supplier sections toggle
+    if "allow_supplier_sections" in data:
+        update_data["allow_supplier_sections"] = bool(data["allow_supplier_sections"])
+    
+    if update_data:
+        await db.galleries.update_one({"id": gallery_id}, {"$set": update_data})
+    
+    return {
+        "message": "Coordinator settings updated",
+        "coordinator_password_set": bool(update_data.get("coordinator_password", gallery.get("coordinator_password"))),
+        "allow_supplier_sections": update_data.get("allow_supplier_sections", gallery.get("allow_supplier_sections", False))
+    }
+
+
+@api_router.get("/galleries/{gallery_id}/coordinator-settings")
+async def get_coordinator_settings(gallery_id: str, current_user: dict = Depends(get_current_user)):
+    """Get coordinator hub settings"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    return {
+        "coordinator_hub_link": gallery.get("coordinator_hub_link"),
+        "coordinator_password_set": bool(gallery.get("coordinator_password")),
+        "allow_supplier_sections": gallery.get("allow_supplier_sections", False)
+    }
+
+
 @api_router.get("/coordinator-hub/{hub_link}")
 async def get_coordinator_hub(hub_link: str):
     """Get coordinator hub data - all sections needing contributors with their status"""
