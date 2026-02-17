@@ -127,6 +127,9 @@ const GalleryDetail = () => {
   const [showCoordinatorHubModal, setShowCoordinatorHubModal] = useState(false);
   const [coordinatorHubLink, setCoordinatorHubLink] = useState('');
   const [coordinatorHubLoading, setCoordinatorHubLoading] = useState(false);
+  const [coordinatorPassword, setCoordinatorPassword] = useState('');
+  const [allowSupplierSections, setAllowSupplierSections] = useState(false);
+  const [showCoordinatorSettings, setShowCoordinatorSettings] = useState(false);
   const coordinatorQrRef = useRef(null);
   // Linked Invitation/RSVP state
   const [linkedInvitation, setLinkedInvitation] = useState(null);
