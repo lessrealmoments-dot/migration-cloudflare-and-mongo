@@ -486,6 +486,10 @@ def setup_invitation_routes(app, db, get_current_user):
         for field, value in data.model_dump(exclude_unset=True).items():
             if value is not None:
                 if field == "design" and value:
+                    # PERFORMANCE FIX: Strip base64 images from design
+                    if isinstance(value, dict) and value.get("cover_image_url", "").startswith("data:"):
+                        value["cover_image_url"] = invitation.get("design", {}).get("cover_image_url")  # Keep existing URL
+                        logger.warning(f"Stripped base64 cover image from invitation update {invitation_id}")
                     update_data["design"] = value
                 elif field == "rsvp_fields" and value:
                     update_data["rsvp_fields"] = [f if isinstance(f, dict) else f.model_dump() for f in value]
