@@ -4986,7 +4986,11 @@ async def create_gallery(gallery_data: GalleryCreate, current_user: dict = Depen
         # GRANDFATHERING: Store the plan this gallery was created under
         # This ensures galleries retain their features even if user downgrades
         "created_under_plan": effective_plan,
-        "created_under_override": override_mode if override_mode else None
+        "created_under_override": override_mode if override_mode else None,
+        # GRANDFATHERING: Track highest plan reached for this gallery
+        # Updated when user upgrades BEFORE event date
+        # Used to determine legacy features: Standard->Pro upgrade gives Pro features
+        "highest_plan_reached": effective_plan
     }
     
     await db.galleries.insert_one(gallery_doc)
