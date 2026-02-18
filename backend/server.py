@@ -2004,13 +2004,15 @@ async def resolve_gallery_features(user: dict, gallery: dict) -> dict:
     PRIORITY (highest to lowest):
     1. Override Mode (if active and not expired)
     2. Current Plan features (if user has upgraded since gallery creation)
-    3. Grandfathered Plan features (plan gallery was created under)
+    3. Grandfathered Plan features (highest plan reached for this gallery)
     
     Key rules:
     - Admin feature toggles ALWAYS win (they define what each plan can do)
-    - If user upgrades (e.g., Standard→Pro), gallery gets upgraded features
-    - If user downgrades (e.g., Pro→Free), gallery retains original plan features
-    - Expiration only affects NEW galleries, not existing ones
+    - If user upgrades (e.g., Standard→Pro) BEFORE event date, gallery gets Pro features
+    - If user downgrades (e.g., Pro→Free), gallery retains highest_plan_reached features
+    - Standard→Free: Only Standard features as legacy
+    - Pro→Free: Pro features as legacy (including coordinator_hub)
+    - Standard→Pro→Free: If upgraded BEFORE event date, Pro features as legacy
     
     Returns dict with:
     - features: dict of enabled features
@@ -2025,8 +2027,11 @@ async def resolve_gallery_features(user: dict, gallery: dict) -> dict:
     override_expires = user.get("override_expires")
     current_plan = user.get("plan", PLAN_FREE)
     
-    # Get gallery's creation plan info
+    # Get gallery's plan info
+    # highest_plan_reached tracks upgrades that happened BEFORE event date
+    # This is the key field for grandfathering - NOT just created_under_plan
     created_under_plan = gallery.get("created_under_plan", PLAN_FREE)
+    highest_plan_reached = gallery.get("highest_plan_reached", created_under_plan)
     created_under_override = gallery.get("created_under_override")
     
     result = {
@@ -2057,27 +2062,27 @@ async def resolve_gallery_features(user: dict, gallery: dict) -> dict:
             pass
     
     # STEP 2: Determine which plan provides better features
-    # Priority: Current Plan > Grandfather Plan (but only if current is HIGHER)
+    # Use highest_plan_reached for grandfathering (tracks upgrades before event date)
     
     # Plan hierarchy: pro > standard > free
     plan_hierarchy = {PLAN_FREE: 0, PLAN_STANDARD: 1, PLAN_PRO: 2}
     
     current_plan_level = plan_hierarchy.get(current_plan, 0)
-    created_plan_level = plan_hierarchy.get(created_under_plan, 0)
+    highest_plan_level = plan_hierarchy.get(highest_plan_reached, 0)
     
-    # If user has upgraded since gallery creation, use current (higher) plan
-    # If user has downgraded, use grandfather (original) plan
-    if current_plan_level >= created_plan_level:
+    # If current plan is same or higher than highest reached, use current plan
+    # If current plan is lower (downgraded), use highest_plan_reached (grandfathered)
+    if current_plan_level >= highest_plan_level:
         # Current plan is same or higher - use current plan features
         effective_plan = current_plan
         result["authority_source"] = "current_plan"
         result["grandfathered"] = False
     else:
-        # Current plan is lower - use grandfathered plan features
-        effective_plan = created_under_plan
+        # Current plan is lower - use grandfathered (highest) plan features
+        effective_plan = highest_plan_reached
         result["authority_source"] = "grandfather"
         result["grandfathered"] = True
-        logger.info(f"Grandfathering gallery {gallery.get('id')}: created under {created_under_plan}, current plan {current_plan}")
+        logger.info(f"Grandfathering gallery {gallery.get('id')}: highest_plan_reached={highest_plan_reached}, current_plan={current_plan}")
     
     # Get features from admin-configured toggles for the effective plan
     plan_features = global_toggles.get(effective_plan, {})
