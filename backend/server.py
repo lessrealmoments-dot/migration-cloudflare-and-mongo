@@ -11959,6 +11959,42 @@ async def approve_payment(data: ApprovePayment, background_tasks: BackgroundTask
         {"$set": update_data}
     )
     
+    # GRANDFATHERING: Update highest_plan_reached for galleries where event hasn't passed yet
+    # This allows Standard->Pro upgrades to grant Pro features as legacy
+    if requested_plan:
+        new_plan = requested_plan
+        plan_hierarchy = {PLAN_FREE: 0, PLAN_STANDARD: 1, PLAN_PRO: 2}
+        new_plan_level = plan_hierarchy.get(new_plan, 0)
+        now = datetime.now(timezone.utc)
+        
+        # Find galleries where:
+        # 1. Event date hasn't passed yet, OR event_date is not set
+        # 2. Current highest_plan_reached is lower than new plan
+        galleries_to_update = await db.galleries.find({
+            "photographer_id": data.user_id,
+            "$or": [
+                {"event_date": None},  # No event date set
+                {"event_date": ""},    # Empty event date
+                {"event_date": {"$gte": now.isoformat()}}  # Event date in future
+            ]
+        }).to_list(None)
+        
+        upgraded_count = 0
+        for gallery in galleries_to_update:
+            current_highest = gallery.get("highest_plan_reached", gallery.get("created_under_plan", PLAN_FREE))
+            current_highest_level = plan_hierarchy.get(current_highest, 0)
+            
+            if new_plan_level > current_highest_level:
+                await db.galleries.update_one(
+                    {"id": gallery["id"]},
+                    {"$set": {"highest_plan_reached": new_plan}}
+                )
+                upgraded_count += 1
+        
+        if upgraded_count > 0:
+            logger.info(f"Updated highest_plan_reached to {new_plan} for {upgraded_count} galleries (user: {data.user_id})")
+            message_parts.append(f"{upgraded_count} galleries upgraded to {new_plan} features")
+    
     # Unlock downloads on galleries that were created with pending payment
     result = await db.galleries.update_many(
         {"photographer_id": data.user_id, "download_locked_until_payment": True},
