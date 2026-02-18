@@ -5239,6 +5239,7 @@ async def get_gallery_features(gallery_id: str, current_user: dict = Depends(get
         "grandfathered": resolved["grandfathered"],
         "authority_source": resolved["authority_source"],
         "created_under_plan": gallery.get("created_under_plan"),
+        "highest_plan_reached": gallery.get("highest_plan_reached", gallery.get("created_under_plan")),
         "created_under_override": gallery.get("created_under_override")
     }
 
