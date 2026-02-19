@@ -1111,7 +1111,7 @@ DEFAULT_PLAN_FEATURES = {
         "collaboration_link": False,
         "coordinator_hub": False,
         "storage_limit_gb": 10,  # 10GB per gallery
-        "gallery_expiration_days": 90  # 3 months
+        "gallery_expiration_days": 180  # 6 months
     },
     PLAN_PRO: {
         "unlimited_token": False,
