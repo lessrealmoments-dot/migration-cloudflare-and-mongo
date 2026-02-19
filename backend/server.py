@@ -5297,7 +5297,8 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
                 # This ensures galleries for past events still get full expiration period
                 expiration_base_date = max(new_event_dt, created_at)
                 
-                # Get expiration days from user's plan/mode
+                # Get expiration days - IMPORTANT: Use grandfathered plan for legacy galleries
+                # This ensures galleries retain their original expiration period even after downgrade
                 global_toggles = await get_global_feature_toggles()
                 override_mode = user.get("override_mode") if user else None
                 
@@ -5305,8 +5306,16 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
                     mode_config = global_toggles[override_mode]
                     gallery_expiration_days = mode_config.get("gallery_expiration_days", 180)
                 else:
-                    plan = user.get("plan", PLAN_FREE) if user else PLAN_FREE
-                    plan_config = global_toggles.get(plan, {})
+                    # Use highest_plan_reached for grandfathered expiration
+                    # This ensures legacy galleries keep their original expiration period
+                    highest_plan = gallery.get("highest_plan_reached", gallery.get("created_under_plan", PLAN_FREE))
+                    current_plan = user.get("plan", PLAN_FREE) if user else PLAN_FREE
+                    
+                    # Use whichever plan is higher (current or grandfathered)
+                    plan_hierarchy = {PLAN_FREE: 0, PLAN_STANDARD: 1, PLAN_PRO: 2}
+                    effective_plan = highest_plan if plan_hierarchy.get(highest_plan, 0) > plan_hierarchy.get(current_plan, 0) else current_plan
+                    
+                    plan_config = global_toggles.get(effective_plan, {})
                     gallery_expiration_days = plan_config.get("gallery_expiration_days", 180)
                 
                 # Don't update auto_delete for demo galleries (they use created_at)
@@ -5322,8 +5331,14 @@ async def update_gallery(gallery_id: str, updates: GalleryUpdate, current_user: 
                         mode_config = global_toggles[override_mode]
                         gallery_expiration_days = mode_config.get("gallery_expiration_days", 180)
                     else:
-                        plan = user.get("plan", PLAN_FREE) if user else PLAN_FREE
-                        plan_config = global_toggles.get(plan, {})
+                        # Use highest_plan_reached for grandfathered expiration
+                        highest_plan = gallery.get("highest_plan_reached", gallery.get("created_under_plan", PLAN_FREE))
+                        current_plan = user.get("plan", PLAN_FREE) if user else PLAN_FREE
+                        
+                        plan_hierarchy = {PLAN_FREE: 0, PLAN_STANDARD: 1, PLAN_PRO: 2}
+                        effective_plan = highest_plan if plan_hierarchy.get(highest_plan, 0) > plan_hierarchy.get(current_plan, 0) else current_plan
+                        
+                        plan_config = global_toggles.get(effective_plan, {})
                         gallery_expiration_days = plan_config.get("gallery_expiration_days", 180)
                     
                     update_data["auto_delete_date"] = (created_at + timedelta(days=gallery_expiration_days)).isoformat()
