@@ -7221,10 +7221,11 @@ async def delete_gdrive_section(
     # Remove section from gallery
     sections = [s for s in gallery.get("sections", []) if s["id"] != section_id]
     await db.galleries.update_one({"id": gallery_id}, {"$set": {"sections": sections}})
-    
-    # Delete photos from database
+
+    # Delete photos and videos from database
     await db.gdrive_photos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
-    
+    await db.gdrive_videos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+
     return {"message": "Google Drive section deleted"}
 
 @api_router.post("/galleries/{gallery_id}/gdrive-sections/{section_id}/photos/{photo_id}/highlight")
