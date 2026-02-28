@@ -686,6 +686,8 @@ const PcloudContributorUpload = () => {
             )}
           </div>
         )}
+          </>
+        )}
       </div>
 
       {/* Footer */}
