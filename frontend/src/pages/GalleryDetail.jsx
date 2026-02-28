@@ -3181,8 +3181,11 @@ const GalleryDetail = () => {
                       {section.type === 'video' && <Film className="w-4 h-4" />}
                       {section.type === 'fotoshare' && <Camera className="w-4 h-4" />}
                       {section.type === 'pcloud' && <Cloud className="w-4 h-4" />}
-                      {section.type === 'gdrive' && <HardDrive className="w-4 h-4" />}
+                      {section.type === 'gdrive' && (section.gdrive_content_mode === 'videos' ? <Film className="w-4 h-4" /> : <HardDrive className="w-4 h-4" />)}
                       {section.name}
+                      {section.type === 'gdrive' && section.gdrive_content_mode === 'videos' && (
+                        <span className="text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full font-medium">Video</span>
+                      )}
                       {section.type === 'fotoshare' && section.fotoshare_expired && (
                         <AlertTriangle className="w-4 h-4 text-amber-500" />
                       )}
