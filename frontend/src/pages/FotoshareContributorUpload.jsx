@@ -52,7 +52,11 @@ const FotoshareContributorUpload = () => {
   const [galleryInfo, setGalleryInfo] = useState(null);
   const [existingVideos, setExistingVideos] = useState([]);
   const [submitResult, setSubmitResult] = useState(null);
-  
+
+  // Password protection
+  const [requiresPassword, setRequiresPassword] = useState(false);
+  const [passwordVerified, setPasswordVerified] = useState(false);
+
   // Multi-step form
   const [step, setStep] = useState('company'); // 'company', 'role', 'confirm', 'sync'
   const [companyName, setCompanyName] = useState('');
