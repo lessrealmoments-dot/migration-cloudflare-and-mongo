@@ -576,6 +576,8 @@ const PhotoboothContributorUpload = () => {
             Powered by {brandConfig?.brandName || 'EventsGallery'}
           </p>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
