@@ -7086,7 +7086,63 @@ async def refresh_gdrive_section(
     folder_id = section.get("gdrive_folder_id")
     if not folder_id:
         raise HTTPException(status_code=400, detail="Section has no Google Drive folder ID")
-    
+
+    content_mode = section.get("gdrive_content_mode", "photos")
+    sync_time = datetime.now(timezone.utc).isoformat()
+
+    if content_mode == "videos":
+        # Fetch updated video contents
+        gdrive_data = await fetch_gdrive_folder_videos(folder_id)
+        if not gdrive_data['success']:
+            await db.galleries.update_one(
+                {"id": gallery_id, "sections.id": section_id},
+                {"$set": {
+                    "sections.$.gdrive_error": gdrive_data['error'],
+                    "sections.$.gdrive_last_sync": sync_time
+                }}
+            )
+            raise HTTPException(status_code=400, detail=f"Failed to refresh: {gdrive_data['error']}")
+
+        # Preserve featured/order status
+        existing_videos = await db.gdrive_videos.find(
+            {"gallery_id": gallery_id, "section_id": section_id}, {"_id": 0}
+        ).to_list(10000)
+        existing_featured = {v['file_id']: v.get('is_featured', False) for v in existing_videos}
+        existing_order = {v['file_id']: v.get('order', 999) for v in existing_videos}
+
+        await db.gdrive_videos.delete_many({"gallery_id": gallery_id, "section_id": section_id})
+
+        gdrive_videos = []
+        for idx, video in enumerate(gdrive_data['videos']):
+            file_id = video['file_id']
+            gdrive_videos.append({
+                "id": str(uuid.uuid4()),
+                "gallery_id": gallery_id,
+                "section_id": section_id,
+                "gdrive_folder_id": folder_id,
+                "file_id": file_id,
+                "name": video['name'],
+                "mime_type": video.get('mime_type', 'video/mp4'),
+                "size": video.get('size', 0),
+                "thumbnail_url": video.get('thumbnail_url'),
+                "stream_url": video['stream_url'],
+                "duration": video.get('duration'),
+                "created_time": video.get('created_time'),
+                "order": existing_order.get(file_id, idx),
+                "is_featured": existing_featured.get(file_id, idx == 0),
+                "synced_at": sync_time
+            })
+
+        if gdrive_videos:
+            await db.gdrive_videos.insert_many(gdrive_videos)
+
+        await db.galleries.update_one(
+            {"id": gallery_id, "sections.id": section_id},
+            {"$set": {"sections.$.gdrive_last_sync": sync_time, "sections.$.gdrive_error": None}}
+        )
+        return {"message": "Google Drive video section refreshed", "video_count": len(gdrive_videos)}
+
+    # --- Photo mode (original behavior) ---
     # Fetch updated folder contents
     gdrive_data = await get_gdrive_photos(folder_id)
     if not gdrive_data['success']:
