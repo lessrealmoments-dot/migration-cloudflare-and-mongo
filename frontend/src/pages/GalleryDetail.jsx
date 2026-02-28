@@ -1419,22 +1419,22 @@ const GalleryDetail = () => {
       const response = await axios.post(`${API}/galleries/${id}/gdrive-sections/${sectionId}/refresh`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
-      if (response.data.success) {
+
+      const section = sections.find(s => s.id === sectionId);
+      const isVideoMode = section?.gdrive_content_mode === 'videos';
+
+      if (isVideoMode) {
+        toast.success(`Refreshed! ${response.data.video_count} videos synced.`);
+        fetchGdriveVideos();
+      } else {
         toast.success(`Refreshed! ${response.data.photo_count} photos synced.`);
         fetchGdrivePhotos();
-        // Update section sync timestamp
-        setSections(sections.map(s => 
-          s.id === sectionId 
-            ? { ...s, gdrive_last_sync: new Date().toISOString(), gdrive_error: null }
-            : s
-        ));
-      } else {
-        toast.error(response.data.error || 'Failed to refresh');
-        setSections(sections.map(s => 
-          s.id === sectionId ? { ...s, gdrive_error: response.data.error } : s
-        ));
       }
+      setSections(sections.map(s =>
+        s.id === sectionId
+          ? { ...s, gdrive_last_sync: new Date().toISOString(), gdrive_error: null }
+          : s
+      ));
     } catch (error) {
       const errorMsg = error.response?.data?.detail || 'Failed to refresh section';
       toast.error(errorMsg);
