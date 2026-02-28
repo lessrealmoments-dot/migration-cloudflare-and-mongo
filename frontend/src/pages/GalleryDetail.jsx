@@ -83,7 +83,9 @@ const GalleryDetail = () => {
   const [newGdriveUrl, setNewGdriveUrl] = useState('');
   const [newGdriveContributorName, setNewGdriveContributorName] = useState('');
   const [newGdriveContributorRole, setNewGdriveContributorRole] = useState('');
+  const [newGdriveContentMode, setNewGdriveContentMode] = useState('photos'); // 'photos' | 'videos'
   const [gdrivePhotos, setGdrivePhotos] = useState([]);
+  const [gdriveVideos, setGdriveVideos] = useState([]);
   const [refreshingGdrive, setRefreshingGdrive] = useState(null);
   // pCloud upload link state
   const [newPcloudUploadLink, setNewPcloudUploadLink] = useState('');
