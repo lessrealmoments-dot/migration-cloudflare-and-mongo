@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { 
-  Video, Trash2, Play, Star, Plus, 
+import {
+  Video, Trash2, Play, Star, Plus,
   Loader2, Film, Building2, Users, ChevronRight,
   CheckCircle, Camera, Sparkles, Check
 } from 'lucide-react';
 import useBrandConfig from '../hooks/useBrandConfig';
+import ContributorPasswordGate from '../components/ContributorPasswordGate';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
