@@ -132,7 +132,13 @@ const VideographerUpload = () => {
       
       setGalleryInfo(response.data);
       setVideos(response.data.existing_videos || []);
-      
+
+      // Check password protection
+      if (response.data.requires_password) {
+        setRequiresPassword(true);
+        return; // Stay on password gate
+      }
+
       // If contributor info already exists, pre-fill and skip to upload
       if (response.data.existing_contributor_name) {
         setCompanyName(response.data.existing_contributor_name);
