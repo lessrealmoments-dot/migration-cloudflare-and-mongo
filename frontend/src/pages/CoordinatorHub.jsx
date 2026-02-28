@@ -338,7 +338,11 @@ const CoordinatorHub = () => {
   const SectionCard = ({ section, index, totalSections }) => {
     const [showQR, setShowQR] = useState(false);
     const config = sectionConfig[section.type] || sectionConfig.photo;
-    const Icon = config.icon;
+    // Override for GDrive video mode
+    const effectiveConfig = (section.type === 'gdrive' && section.gdrive_content_mode === 'videos')
+      ? { icon: Film, color: 'bg-purple-500', label: 'GDrive Video' }
+      : config;
+    const Icon = effectiveConfig.icon;
     
     // For sections with passwords, we need to verify before showing upload link
     const hasPassword = section.section_password;
