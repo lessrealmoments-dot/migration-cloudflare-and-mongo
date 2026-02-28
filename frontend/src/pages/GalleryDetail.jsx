@@ -3824,7 +3824,11 @@ const GalleryDetail = () => {
                   <div>
                     <p className="text-xs text-zinc-500 mb-3">Click the star to set a video as featured (appears prominently at top)</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {[...gdVideos].sort((a, b) => (not_a_is_featured => not_a_is_featured)(a.is_featured, b.is_featured) || (a.order || 0) - (b.order || 0)).map((video) => (
+                      {[...gdVideos].sort((a, b) => {
+                        if (a.is_featured && !b.is_featured) return -1;
+                        if (!a.is_featured && b.is_featured) return 1;
+                        return (a.order || 0) - (b.order || 0);
+                      }).map((video) => (
                         <div
                           key={video.id}
                           className={`relative group bg-white rounded-lg overflow-hidden border-2 transition-colors ${
