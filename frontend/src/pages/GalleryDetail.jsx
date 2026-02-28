@@ -3011,8 +3011,39 @@ const GalleryDetail = () => {
               {/* Google Drive URL input - only shown when gdrive type selected */}
               {newSectionType === 'gdrive' && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                  {/* Content Mode Toggle */}
+                  <div className="mb-3">
+                    <label className="flex items-center gap-2 text-sm text-green-700 font-medium mb-2">
+                      <HardDrive className="w-4 h-4" />
+                      Content Mode
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewGdriveContentMode('photos')}
+                        className={`flex-1 py-2 px-3 rounded-md text-sm font-medium border transition-colors flex items-center justify-center gap-1.5 ${
+                          newGdriveContentMode === 'photos'
+                            ? 'bg-green-600 text-white border-green-600'
+                            : 'bg-white text-green-700 border-green-300 hover:bg-green-50'
+                        }`}
+                      >
+                        <Image className="w-4 h-4" /> Photos
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewGdriveContentMode('videos')}
+                        className={`flex-1 py-2 px-3 rounded-md text-sm font-medium border transition-colors flex items-center justify-center gap-1.5 ${
+                          newGdriveContentMode === 'videos'
+                            ? 'bg-green-600 text-white border-green-600'
+                            : 'bg-white text-green-700 border-green-300 hover:bg-green-50'
+                        }`}
+                      >
+                        <Video className="w-4 h-4" /> Videos
+                      </button>
+                    </div>
+                  </div>
+
                   <label className="flex items-center gap-2 text-sm text-green-700 font-medium mb-2">
-                    <HardDrive className="w-4 h-4" />
                     Google Drive Folder Link (Optional)
                   </label>
                   <input
@@ -3038,13 +3069,15 @@ const GalleryDetail = () => {
                         data-testid="gdrive-contributor-role"
                         value={newGdriveContributorRole}
                         onChange={(e) => setNewGdriveContributorRole(e.target.value)}
-                        placeholder="Role, e.g., Photography (optional)"
+                        placeholder="Role, e.g., Videographer (optional)"
                         className="flex h-9 w-full rounded-sm border border-green-300 bg-white px-3 py-2 text-sm"
                       />
                     </div>
                   )}
                   <p className="text-xs text-green-600 mt-1">
-                    Enter URL now to import photos, or leave blank and generate a contributor link for your supplier to submit their folder.
+                    {newGdriveContentMode === 'videos'
+                      ? 'Enter URL to import videos, or leave blank and generate a contributor link for your videographer.'
+                      : 'Enter URL to import photos, or leave blank and generate a contributor link for your supplier.'}
                   </p>
                 </div>
               )}
