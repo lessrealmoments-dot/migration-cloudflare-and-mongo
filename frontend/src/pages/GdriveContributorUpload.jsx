@@ -681,6 +681,8 @@ const GdriveContributorUpload = () => {
             )}
           </div>
         )}
+          </>
+        )}
       </div>
 
       {/* Footer */}
