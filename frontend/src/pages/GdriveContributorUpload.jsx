@@ -131,6 +131,12 @@ const GdriveContributorUpload = () => {
         : (response.data.existing_gdrive_photos || []);
       setExistingPhotos(existingItems);
 
+      // Check password protection
+      if (response.data.requires_password) {
+        setRequiresPassword(true);
+        return;
+      }
+
       if (response.data.existing_contributor_name) {
         setCompanyName(response.data.existing_contributor_name);
         if (response.data.existing_contributor_role) {
