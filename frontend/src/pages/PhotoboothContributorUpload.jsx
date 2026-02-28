@@ -274,6 +274,22 @@ const PhotoboothContributorUpload = () => {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Password Gate */}
+        {requiresPassword && !passwordVerified ? (
+          <ContributorPasswordGate
+            contributorLink={contributorLink}
+            onVerified={() => {
+              setPasswordVerified(true);
+              if (galleryInfo?.fotoshare_url) {
+                setFotoshareUrl(galleryInfo.fotoshare_url);
+                setStep('sync');
+              }
+            }}
+            hubLink={hubLink}
+            onBack={() => hubLink ? navigate(`/coordinator/${hubLink}`) : window.history.back()}
+          />
+        ) : (
+          <>
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
           {['company', 'role', 'confirm', 'sync'].map((s, i) => (
