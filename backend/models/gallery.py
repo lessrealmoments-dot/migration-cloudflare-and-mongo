@@ -101,7 +101,7 @@ class Section(BaseModel):
     """Model for gallery section"""
     id: str
     name: str
-    order: int
+    order: int = 0  # Default to 0 for sections without order
     type: str = "photo"  # "photo", "video", "fotoshare", "gdrive", or "pcloud"
     contributor_link: Optional[str] = None  # Unique link for contributor uploads
     contributor_name: Optional[str] = None  # Company/contributor name
