@@ -520,7 +520,9 @@ const GdriveContributorUpload = () => {
               <>
                 <div className="text-center mb-6">
                   <HardDrive className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold text-zinc-800 mb-2">Sync Your Google Drive Folder</h2>
+                  <h2 className="text-xl font-semibold text-zinc-800 mb-2">
+                    {galleryInfo?.gdrive_content_mode === 'videos' ? 'Sync Your Google Drive Video Folder' : 'Sync Your Google Drive Folder'}
+                  </h2>
                 </div>
 
                 {/* Edit Profile Banner */}
