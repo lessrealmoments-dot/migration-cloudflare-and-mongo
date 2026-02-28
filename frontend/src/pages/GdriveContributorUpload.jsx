@@ -9,7 +9,7 @@ import {
   Scissors, Cake, Monitor, Plane, PartyPopper, Sparkles,
   Link as LinkIcon, RefreshCw
 } from 'lucide-react';
-import useBrandConfig from '../hooks/useBrandConfig';
+import ContributorPasswordGate from '../components/ContributorPasswordGate';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
