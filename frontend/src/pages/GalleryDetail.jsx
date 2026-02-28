@@ -1381,6 +1381,36 @@ const GalleryDetail = () => {
     }
   };
 
+  const fetchGdriveVideos = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/public/gallery/${gallery?.share_link}/gdrive-videos`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGdriveVideos(response.data);
+    } catch (error) {
+      console.error('Failed to fetch Google Drive videos');
+    }
+  };
+
+  const handleSetGdriveVideoFeatured = async (sectionId, videoId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/galleries/${id}/gdrive-sections/${sectionId}/videos/${videoId}/set-featured`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Featured video updated');
+      fetchGdriveVideos();
+    } catch (error) {
+      toast.error('Failed to update featured video');
+    }
+  };
+
+  // Get Google Drive videos by section
+  const getGdriveVideosBySection = (sectionId) => {
+    return gdriveVideos.filter(v => v.section_id === sectionId);
+  };
+
   // Refresh Google Drive section
   const handleRefreshGdrive = async (sectionId) => {
     setRefreshingGdrive(sectionId);
