@@ -414,7 +414,7 @@ const CoordinatorHub = () => {
           </div>
           <div className="flex-1">
             <h3 className="text-white font-semibold">{section.name}</h3>
-            <p className="text-white/80 text-sm">{config.label}</p>
+            <p className="text-white/80 text-sm">{effectiveConfig.label}</p>
           </div>
           {hasPassword && (
             <Lock className="w-4 h-4 text-white/70" title="Password protected" />
