@@ -687,6 +687,8 @@ const FotoshareContributorUpload = () => {
             )}
           </div>
         )}
+          </>
+        )}
       </div>
 
       {/* Footer */}
