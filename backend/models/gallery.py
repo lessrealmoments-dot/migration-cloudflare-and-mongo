@@ -116,6 +116,7 @@ class Section(BaseModel):
     gdrive_folder_url: Optional[str] = None  # Original folder URL
     gdrive_last_sync: Optional[str] = None  # Last sync timestamp
     gdrive_error: Optional[str] = None  # Last error message if any
+    gdrive_content_mode: Optional[str] = "photos"  # "photos" or "videos"
     # pCloud-specific fields
     pcloud_code: Optional[str] = None  # The pCloud share link code
     pcloud_folder_name: Optional[str] = None  # Name of the linked folder
