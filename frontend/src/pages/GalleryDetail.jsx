@@ -1184,26 +1184,33 @@ const GalleryDetail = () => {
           gdrive_url: newGdriveUrl,
           section_name: newSectionName,
           contributor_name: newGdriveContributorName || null,
-          contributor_role: newGdriveContributorRole || null
+          contributor_role: newGdriveContributorRole || null,
+          gdrive_content_mode: newGdriveContentMode
         }, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
-        
+
         setSections([...sections, response.data.section]);
-        toast.success(`Google Drive section created with ${response.data.photo_count} photos!`);
-        // Fetch Google Drive photos
-        fetchGdrivePhotos();
+        if (newGdriveContentMode === 'videos') {
+          toast.success(`Google Drive video section created with ${response.data.video_count} videos!`);
+          fetchGdriveVideos();
+        } else {
+          toast.success(`Google Drive section created with ${response.data.photo_count} photos!`);
+          fetchGdrivePhotos();
+        }
       } else if (newSectionType === 'gdrive' && !newGdriveUrl.trim()) {
         // Create empty Google Drive section - supplier will provide URL via contributor link
         const response = await axios.post(`${API}/galleries/${id}/gdrive-sections`, {
           gdrive_url: null,
-          section_name: newSectionName
+          section_name: newSectionName,
+          gdrive_content_mode: newGdriveContentMode
         }, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
-        
+
         setSections([...sections, response.data.section]);
-        toast.success('Google Drive section created! Generate a contributor link to let your supplier submit their folder.');
+        const modeLabel = newGdriveContentMode === 'videos' ? 'video' : 'photo';
+        toast.success(`Google Drive ${modeLabel} section created! Generate a contributor link to let your supplier submit their folder.`);
       } else {
         // Create regular section (photo, video, or fotoshare without URL)
         const formData = new FormData();
