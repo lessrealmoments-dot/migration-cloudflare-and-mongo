@@ -103,6 +103,26 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Grandfathering for expired Pro galleries
 
 ## Recent Fixes (Feb 2025)
+- [x] **Google Drive Video Mode** (Feb 28, 2025) ✅ NEW:
+  - **Feature**: GDrive sections now support Photo Mode or Video Mode toggle on creation
+  - **Backend**: `fetch_gdrive_folder_videos()` function queries `mimeType contains 'video/'` from Google Drive API
+  - **New Collection**: `gdrive_videos` — stores video metadata (file_id, thumbnail, stream_url, duration, is_featured)
+  - **New Endpoints**:
+    - `GET /api/public/gallery/{share_link}/gdrive-videos` — public video listing
+    - `POST /api/galleries/{id}/gdrive-sections/{section_id}/videos/{video_id}/set-featured` — mark featured
+    - `PUT /api/galleries/{id}/gdrive-sections/{section_id}/videos/{video_id}/order` — reorder
+    - `GET /api/galleries/{id}/gdrive-sections/{section_id}/videos` — admin list
+  - **Frontend**: New `GoogleDriveVideoSection.jsx` component — YouTube-style layout:
+    - Featured video: full-width hero with play button
+    - Other videos: horizontal scroll row with duration badges
+    - Modal player: HTML5 `<video>` with iframe fallback for large files
+    - Prev/Next navigation in modal
+  - **GalleryDetail**: Photo/Video toggle when creating GDrive section; video grid panel with Set Featured button; "Video Mode" purple badge
+  - **CoordinatorHub**: GDrive video sections show purple "GDrive Video" badge
+  - **Contributor Upload**: GdriveContributorUpload.jsx is context-aware (shows video instructions for video-mode sections)
+  - **PublicGallery**: Routes to correct component based on `gdrive_content_mode`
+  - **100% frontend / 88% backend test pass rate**
+
 - [x] **Coordinator Hub Section Reordering Fix** (Feb 17, 2025) ✅ NEW:
   - **Bug Fixed**: "Section not found" error when trying to reorder sections
   - **Root Cause**: FastAPI route ordering issue - `/sections/reorder` was being matched as `/sections/{section_id}` where "reorder" was interpreted as a section ID
