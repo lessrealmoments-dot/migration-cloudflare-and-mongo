@@ -757,6 +757,123 @@ async def fetch_gdrive_folder_photos(folder_id: str) -> dict:
     
     return result
 
+async def fetch_gdrive_folder_videos(folder_id: str) -> dict:
+    """
+    Fetch videos from a public Google Drive folder using the Google Drive API.
+    Requires GOOGLE_DRIVE_API_KEY environment variable.
+    """
+    result = {
+        'success': False,
+        'folder_name': 'Google Drive Videos',
+        'videos': [],
+        'error': None
+    }
+
+    api_key = os.environ.get('GOOGLE_DRIVE_API_KEY', '')
+    if not api_key:
+        result['error'] = "Google Drive API key not configured"
+        return result
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            # Get folder metadata
+            folder_url = f"https://www.googleapis.com/drive/v3/files/{folder_id}"
+            folder_params = {"fields": "name,mimeType", "key": api_key}
+
+            async with session.get(folder_url, params=folder_params) as folder_response:
+                if folder_response.status == 200:
+                    folder_data = await folder_response.json()
+                    result['folder_name'] = folder_data.get('name', 'Google Drive Videos')
+                elif folder_response.status == 404:
+                    result['error'] = "Folder not found. Check if the link is correct."
+                    return result
+                elif folder_response.status == 403:
+                    error_data = await folder_response.json()
+                    error_msg = error_data.get('error', {}).get('message', 'Access denied')
+                    result['error'] = f"Access denied: {error_msg}. Make sure the folder is set to 'Anyone with the link can view'."
+                    return result
+
+            # Fetch all video files in the folder
+            all_videos = []
+            next_page_token = None
+
+            while True:
+                api_url = "https://www.googleapis.com/drive/v3/files"
+                params = {
+                    "q": f"'{folder_id}' in parents and (mimeType contains 'video/') and trashed=false",
+                    "fields": "nextPageToken,files(id,name,mimeType,size,thumbnailLink,videoMediaMetadata,createdTime)",
+                    "pageSize": 1000,
+                    "orderBy": "createdTime desc",
+                    "key": api_key
+                }
+
+                if next_page_token:
+                    params["pageToken"] = next_page_token
+
+                async with session.get(api_url, params=params) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        files = data.get('files', [])
+
+                        for file in files:
+                            file_id = file.get('id')
+                            thumbnail_url = file.get('thumbnailLink', '')
+                            if thumbnail_url:
+                                thumbnail_url = thumbnail_url.replace('=s220', '=s800')
+                            else:
+                                # GDrive video thumbnail fallback
+                                thumbnail_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w800"
+
+                            # Duration from videoMediaMetadata
+                            duration_ms = file.get('videoMediaMetadata', {}).get('durationMillis')
+                            duration_str = None
+                            if duration_ms:
+                                total_secs = int(duration_ms) // 1000
+                                minutes = total_secs // 60
+                                seconds = total_secs % 60
+                                duration_str = f"{minutes}:{seconds:02d}"
+
+                            # Direct streaming URL
+                            stream_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+
+                            video_data = {
+                                'file_id': file_id,
+                                'name': file.get('name', 'Untitled'),
+                                'mime_type': file.get('mimeType', 'video/mp4'),
+                                'size': int(file.get('size', 0)) if file.get('size') else 0,
+                                'thumbnail_url': thumbnail_url,
+                                'stream_url': stream_url,
+                                'duration': duration_str,
+                                'created_time': file.get('createdTime')
+                            }
+                            all_videos.append(video_data)
+
+                        next_page_token = data.get('nextPageToken')
+                        if not next_page_token:
+                            break
+
+                    elif response.status == 403:
+                        error_data = await response.json()
+                        error_msg = error_data.get('error', {}).get('message', 'Access denied')
+                        result['error'] = f"Cannot list files: {error_msg}."
+                        return result
+                    else:
+                        error_text = await response.text()
+                        result['error'] = f"API error ({response.status}): {error_text[:200]}"
+                        return result
+
+            result['success'] = True
+            result['videos'] = all_videos
+            result['video_count'] = len(all_videos)
+            logger.info(f"Successfully fetched {len(all_videos)} videos from Google Drive folder '{result['folder_name']}'")
+
+    except Exception as e:
+        result['error'] = f"Error fetching Google Drive folder videos: {str(e)}"
+        logger.error(f"Google Drive video fetch error: {e}")
+
+    return result
+
+
 async def scrape_gdrive_folder_html(folder_id: str) -> dict:
     """
     Scrape Google Drive folder HTML page for public folders.
