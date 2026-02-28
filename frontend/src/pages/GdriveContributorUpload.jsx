@@ -10,6 +10,7 @@ import {
   Link as LinkIcon, RefreshCw
 } from 'lucide-react';
 import ContributorPasswordGate from '../components/ContributorPasswordGate';
+import useBrandConfig from '../hooks/useBrandConfig';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
