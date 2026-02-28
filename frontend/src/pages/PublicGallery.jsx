@@ -18,6 +18,7 @@ import SmartVideoSection from '@/components/SmartVideoSection';
 import FotoshareSection from '@/components/FotoshareSection';
 import PhotoboothSection from '@/components/PhotoboothSection';
 import GoogleDriveSection from '@/components/GoogleDriveSection';
+import GoogleDriveVideoSection from '@/components/GoogleDriveVideoSection';
 import LiteModeModal from '@/components/LiteModeModal';
 import LiteUploadPage from '@/components/LiteUploadPage';
 import useConnectionSpeed from '@/hooks/useConnectionSpeed';
