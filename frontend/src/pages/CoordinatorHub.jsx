@@ -380,7 +380,7 @@ const CoordinatorHub = () => {
         className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden"
       >
         {/* Header */}
-        <div className={`${config.color} px-4 py-3 flex items-center gap-3`}>
+        <div className={`${effectiveConfig.color} px-4 py-3 flex items-center gap-3`}>
           {/* Reorder controls for coordinator */}
           {accessType === 'coordinator' && (
             <div className="flex items-center gap-2">
