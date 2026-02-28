@@ -128,7 +128,13 @@ const FotoshareContributorUpload = () => {
       
       setGalleryInfo(response.data);
       setExistingVideos(response.data.existing_fotoshare_videos || []);
-      
+
+      // Check password protection
+      if (response.data.requires_password) {
+        setRequiresPassword(true);
+        return;
+      }
+
       // If contributor info already exists, pre-fill and skip to sync
       if (response.data.existing_contributor_name) {
         setCompanyName(response.data.existing_contributor_name);
