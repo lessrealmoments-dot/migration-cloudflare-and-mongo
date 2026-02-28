@@ -780,6 +780,11 @@ const PublicGallery = () => {
     return gdrivePhotos.filter(p => p.section_id === sectionId);
   };
 
+  // Get Google Drive videos by section
+  const getGdriveVideosBySection = (sectionId) => {
+    return gdriveVideos.filter(v => v.section_id === sectionId);
+  };
+
   // Get highlighted photos (shown in grid)
   const getHighlightPhotos = () => {
     return photos.filter(p => p.is_highlight && (p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor'));
