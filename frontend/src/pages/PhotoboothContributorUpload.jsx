@@ -104,7 +104,14 @@ const PhotoboothContributorUpload = () => {
       try {
         const response = await axios.get(`${API}/contributor/${contributorLink}`);
         setGalleryInfo(response.data);
-        
+
+        // Check password protection
+        if (response.data.requires_password) {
+          setRequiresPassword(true);
+          setLoading(false);
+          return;
+        }
+
         // Pre-fill name if exists
         if (response.data.existing_contributor_name) {
           setCompanyName(response.data.existing_contributor_name);
