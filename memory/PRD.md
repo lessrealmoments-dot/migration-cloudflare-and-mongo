@@ -103,6 +103,13 @@ A comprehensive photo-sharing application for photographers with focus on:
 - [x] Grandfathering for expired Pro galleries
 
 ## Recent Fixes (Feb 2025)
+- [x] **P0 Security Fix: Contributor Upload Password Gates** (Feb 28, 2025) ✅ NEW:
+  - All 5 contributor upload pages now enforce section password protection
+  - Pages fixed: Videographer (`/v/`), GDrive (`/d/`), pCloud (`/p/`), Fotoshare (`/f/`), Photobooth (`/pb/`)
+  - New shared `ContributorPasswordGate.jsx` component — Lock icon UI, verify via `POST /api/contributor/{link}/verify-password`
+  - Direct link access to a password-protected section now shows password form instead of upload form
+  - 100% backend + 100% frontend test pass rate
+
 - [x] **Google Drive Video Mode** (Feb 28, 2025) ✅ NEW:
   - **Feature**: GDrive sections now support Photo Mode or Video Mode toggle on creation
   - **Backend**: `fetch_gdrive_folder_videos()` function queries `mimeType contains 'video/'` from Google Drive API
