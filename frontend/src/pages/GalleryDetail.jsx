@@ -675,10 +675,11 @@ const GalleryDetail = () => {
   const isFounder = userProfile?.override_mode === 'founders_circle';
   const canUseNeverExpire = featureToggles.allow_guest_upload_never_expires && isFounder;
 
-  // Fetch Google Drive photos once we have gallery data
+  // Fetch Google Drive photos/videos once we have gallery data
   useEffect(() => {
     if (gallery?.share_link) {
       fetchGdrivePhotos();
+      fetchGdriveVideos();
     }
   }, [gallery?.share_link]);
 
