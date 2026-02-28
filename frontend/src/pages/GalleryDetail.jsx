@@ -3027,7 +3027,7 @@ const GalleryDetail = () => {
                             : 'bg-white text-green-700 border-green-300 hover:bg-green-50'
                         }`}
                       >
-                        <Image className="w-4 h-4" /> Photos
+                        <ImageIcon className="w-4 h-4" /> Photos
                       </button>
                       <button
                         type="button"
