@@ -127,7 +127,13 @@ const PcloudContributorUpload = () => {
       
       setGalleryInfo(response.data);
       setExistingPhotos(response.data.existing_pcloud_photos || []);
-      
+
+      // Check password protection
+      if (response.data.requires_password) {
+        setRequiresPassword(true);
+        return;
+      }
+
       // If contributor info already exists, pre-fill and skip to sync
       if (response.data.existing_contributor_name) {
         setCompanyName(response.data.existing_contributor_name);
