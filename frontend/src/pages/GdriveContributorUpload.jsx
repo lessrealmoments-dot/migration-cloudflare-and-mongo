@@ -181,29 +181,30 @@ const GdriveContributorUpload = () => {
   
   const handleSubmitSync = async (e) => {
     e.preventDefault();
-    
+
     if (!gdriveUrl.trim()) {
       toast.error('Please enter a Google Drive folder URL');
       return;
     }
-    
-    // Basic URL validation
+
     if (!gdriveUrl.includes('drive.google.com')) {
       toast.error('Please enter a valid Google Drive folder URL');
       return;
     }
-    
+
     setSubmitting(true);
-    
+
     try {
       const response = await axios.post(`${API}/contributor/${contributorLink}/gdrive`, {
         company_name: companyName.trim(),
         contributor_role: getFinalRole(),
         gdrive_url: gdriveUrl.trim()
       });
-      
+
       setSubmitResult(response.data);
-      toast.success(`Successfully synced ${response.data.photos_synced} photos!`);
+      const isVideoMode = galleryInfo?.gdrive_content_mode === 'videos';
+      const count = isVideoMode ? response.data.video_count : response.data.photo_count;
+      toast.success(`Successfully synced ${count} ${isVideoMode ? 'videos' : 'photos'}!`);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to sync Google Drive folder');
     } finally {
