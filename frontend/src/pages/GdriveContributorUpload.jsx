@@ -549,11 +549,13 @@ const GdriveContributorUpload = () => {
 
                 {/* Instructions */}
                 <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
-                  <h3 className="font-semibold text-green-900 mb-4">How to share your Google Drive folder:</h3>
+                  <h3 className="font-semibold text-green-900 mb-4">
+                    How to share your Google Drive folder:
+                  </h3>
                   <ol className="space-y-3 text-sm text-green-800">
                     <li className="flex gap-3">
                       <span className="flex-shrink-0 w-6 h-6 bg-green-200 rounded-full flex items-center justify-center text-green-900 font-medium">1</span>
-                      <span>Upload your photos to a folder in Google Drive</span>
+                      <span>Upload your {galleryInfo?.gdrive_content_mode === 'videos' ? 'videos' : 'photos'} to a folder in Google Drive</span>
                     </li>
                     <li className="flex gap-3">
                       <span className="flex-shrink-0 w-6 h-6 bg-green-200 rounded-full flex items-center justify-center text-green-900 font-medium">2</span>
@@ -564,6 +566,11 @@ const GdriveContributorUpload = () => {
                       <span>Copy the link and paste it below</span>
                     </li>
                   </ol>
+                  {galleryInfo?.gdrive_content_mode === 'videos' && (
+                    <p className="text-xs text-green-700 mt-3 bg-green-100 p-2 rounded">
+                      Supported video formats: MP4, MOV, AVI, WebM, MKV
+                    </p>
+                  )}
                 </div>
 
                 {/* Sync Form */}
