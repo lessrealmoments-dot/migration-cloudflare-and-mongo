@@ -50,7 +50,11 @@ const VideographerUpload = () => {
   const [uploading, setUploading] = useState(false);
   const [galleryInfo, setGalleryInfo] = useState(null);
   const [videos, setVideos] = useState([]);
-  
+
+  // Password protection
+  const [requiresPassword, setRequiresPassword] = useState(false);
+  const [passwordVerified, setPasswordVerified] = useState(false);
+
   // Multi-step flow
   const [step, setStep] = useState('company'); // 'company', 'role', 'confirm', 'upload'
   const [companyName, setCompanyName] = useState('');
