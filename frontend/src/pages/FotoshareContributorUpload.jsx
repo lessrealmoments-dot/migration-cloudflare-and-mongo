@@ -268,6 +268,26 @@ const FotoshareContributorUpload = () => {
           <p className="text-lg text-zinc-400">{galleryInfo?.section_name}</p>
         </div>
 
+        {/* Password Gate */}
+        {requiresPassword && !passwordVerified ? (
+          <ContributorPasswordGate
+            contributorLink={contributorLink}
+            onVerified={() => {
+              setPasswordVerified(true);
+              if (galleryInfo?.existing_contributor_name) {
+                setCompanyName(galleryInfo.existing_contributor_name);
+                if (galleryInfo.existing_contributor_role) setSelectedRole(galleryInfo.existing_contributor_role);
+                if (galleryInfo.fotoshare_url) setFotoshareUrl(galleryInfo.fotoshare_url);
+                setStep('sync');
+              } else {
+                setStep('company');
+              }
+            }}
+            hubLink={hubLink}
+            onBack={goBackToHub}
+          />
+        ) : (
+          <>
         {/* Progress Steps */}
         <div className="flex items-center justify-center gap-2 mb-10">
           {['company', 'role', 'confirm', 'sync'].map((s, i) => (
