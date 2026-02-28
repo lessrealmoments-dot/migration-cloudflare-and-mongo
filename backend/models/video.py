@@ -78,6 +78,27 @@ class GoogleDriveSectionCreate(BaseModel):
     section_name: Optional[str] = None
     contributor_name: Optional[str] = None
     contributor_role: Optional[str] = None
+    gdrive_content_mode: Optional[str] = "photos"  # "photos" or "videos"
+
+
+class GDriveVideo(BaseModel):
+    """Video entry from Google Drive folder"""
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    gallery_id: str
+    section_id: str
+    gdrive_folder_id: str
+    file_id: str
+    name: str
+    mime_type: str = "video/mp4"
+    size: int = 0
+    thumbnail_url: Optional[str] = None
+    stream_url: str  # Direct streaming URL
+    created_time: Optional[str] = None
+    duration: Optional[str] = None
+    is_featured: bool = False
+    order: int = 0
+    synced_at: str
 
 
 class PCloudPhoto(BaseModel):
