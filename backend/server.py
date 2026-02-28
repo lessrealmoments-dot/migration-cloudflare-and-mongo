@@ -7270,7 +7270,79 @@ async def get_public_gdrive_photos(share_link: str, section_id: Optional[str] = 
     
     return photos
 
-@api_router.get("/gdrive/proxy/{file_id}")
+@api_router.get("/public/gallery/{share_link}/gdrive-videos")
+async def get_public_gdrive_videos(share_link: str, section_id: Optional[str] = None):
+    """Get Google Drive videos for a public gallery"""
+    gallery = await db.galleries.find_one({"share_link": share_link, "is_published": True}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+
+    query = {"gallery_id": gallery["id"]}
+    if section_id:
+        query["section_id"] = section_id
+
+    videos = await db.gdrive_videos.find(query, {"_id": 0}).to_list(10000)
+    # Sort: featured first, then by order
+    videos.sort(key=lambda v: (not v.get("is_featured", False), v.get("order", 0)))
+    return videos
+
+@api_router.post("/galleries/{gallery_id}/gdrive-sections/{section_id}/videos/{video_id}/set-featured")
+async def set_gdrive_video_featured(
+    gallery_id: str,
+    section_id: str,
+    video_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Set a GDrive video as featured (clears featured from others in same section)"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+
+    video = await db.gdrive_videos.find_one({"id": video_id, "section_id": section_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    # Clear featured from all videos in section, then set on target
+    await db.gdrive_videos.update_many(
+        {"gallery_id": gallery_id, "section_id": section_id},
+        {"$set": {"is_featured": False}}
+    )
+    await db.gdrive_videos.update_one({"id": video_id}, {"$set": {"is_featured": True}})
+    return {"success": True, "video_id": video_id}
+
+@api_router.put("/galleries/{gallery_id}/gdrive-sections/{section_id}/videos/{video_id}/order")
+async def update_gdrive_video_order(
+    gallery_id: str,
+    section_id: str,
+    video_id: str,
+    data: dict = Body(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Update the order of a GDrive video"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+
+    new_order = data.get("order", 0)
+    await db.gdrive_videos.update_one({"id": video_id}, {"$set": {"order": new_order}})
+    return {"success": True}
+
+@api_router.get("/galleries/{gallery_id}/gdrive-sections/{section_id}/videos")
+async def get_gdrive_section_videos(
+    gallery_id: str,
+    section_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get videos for a specific GDrive section (admin)"""
+    gallery = await db.galleries.find_one({"id": gallery_id, "photographer_id": current_user["id"]}, {"_id": 0})
+    if not gallery:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+
+    videos = await db.gdrive_videos.find(
+        {"gallery_id": gallery_id, "section_id": section_id}, {"_id": 0}
+    ).to_list(10000)
+    videos.sort(key=lambda v: (not v.get("is_featured", False), v.get("order", 0)))
+    return videos
 async def proxy_gdrive_image(file_id: str, thumb: bool = False):
     """Proxy Google Drive images to avoid CORS issues"""
     try:
