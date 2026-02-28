@@ -295,7 +295,7 @@ const PublicGallery = () => {
   const fetchPhotos = async (pwd = null) => {
     try {
       // Fetch all data in parallel - backend now returns optimized payload
-      const [photosRes, videosRes, fotoshareRes, pcloudRes, gdriveRes] = await Promise.all([
+      const [photosRes, videosRes, fotoshareRes, pcloudRes, gdriveRes, gdriveVideosRes] = await Promise.all([
         axios.get(
           `${API}/public/gallery/${shareLink}/photos`,
           { params: { password: pwd || password } }
@@ -306,15 +306,16 @@ const PublicGallery = () => {
         ).catch(() => ({ data: [] })),
         axios.get(`${API}/galleries/${shareLink}/fotoshare-videos`).catch(() => ({ data: [] })),
         axios.get(`${API}/public/gallery/${shareLink}/pcloud-photos`).catch(() => ({ data: [] })),
-        axios.get(`${API}/public/gallery/${shareLink}/gdrive-photos`).catch(() => ({ data: [] }))
+        axios.get(`${API}/public/gallery/${shareLink}/gdrive-photos`).catch(() => ({ data: [] })),
+        axios.get(`${API}/public/gallery/${shareLink}/gdrive-videos`).catch(() => ({ data: [] }))
       ]);
-      
-      // Set all photos at once - per-section lazy loading handled by LazyMasonryGrid
+
       setPhotos(photosRes.data);
       setVideos(videosRes.data);
       setFotoshareVideos(fotoshareRes.data);
       setPcloudPhotos(pcloudRes.data);
       setGdrivePhotos(gdriveRes.data);
+      setGdriveVideos(gdriveVideosRes.data);
     } catch (error) {
       if (error.response?.status === 401) {
         toast.error('Invalid password');
