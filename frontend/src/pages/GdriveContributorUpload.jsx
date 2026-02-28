@@ -113,17 +113,20 @@ const GdriveContributorUpload = () => {
   const fetchGalleryInfo = async () => {
     try {
       const response = await axios.get(`${API}/contributor/${contributorLink}`);
-      
+
       if (response.data.section_type !== 'gdrive') {
         toast.error('This link is not for Google Drive uploads');
         navigate('/');
         return;
       }
-      
+
       setGalleryInfo(response.data);
-      setExistingPhotos(response.data.existing_gdrive_photos || []);
-      
-      // If contributor info already exists, pre-fill and skip to sync
+      // For video mode sections, existing_gdrive_videos; for photo mode, existing_gdrive_photos
+      const existingItems = response.data.gdrive_content_mode === 'videos'
+        ? (response.data.existing_gdrive_videos || [])
+        : (response.data.existing_gdrive_photos || []);
+      setExistingPhotos(existingItems);
+
       if (response.data.existing_contributor_name) {
         setCompanyName(response.data.existing_contributor_name);
         if (response.data.existing_contributor_role) {
