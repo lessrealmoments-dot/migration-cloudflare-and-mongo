@@ -622,17 +622,22 @@ const GdriveContributorUpload = () => {
               /* Success State */
               <div className="text-center py-8">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-zinc-800 mb-2">Photos Synced Successfully!</h3>
+                <h3 className="text-xl font-semibold text-zinc-800 mb-2">
+                  {galleryInfo?.gdrive_content_mode === 'videos' ? 'Videos Synced Successfully!' : 'Photos Synced Successfully!'}
+                </h3>
                 <p className="text-zinc-600 mb-6">
-                  {submitResult.photos_synced} photos have been added to the gallery
+                  {galleryInfo?.gdrive_content_mode === 'videos'
+                    ? `${submitResult.video_count} videos have been added to the gallery`
+                    : `${submitResult.photo_count} photos have been added to the gallery`
+                  }
                 </p>
-                
+
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
                   <p className="text-green-800">
-                    Your photos will appear in the <strong>{galleryInfo?.section_name}</strong> section
+                    Your {galleryInfo?.gdrive_content_mode === 'videos' ? 'videos' : 'photos'} will appear in the <strong>{galleryInfo?.section_name}</strong> section
                   </p>
                 </div>
-                
+
                 <button
                   onClick={() => {
                     setSubmitResult(null);
@@ -641,7 +646,7 @@ const GdriveContributorUpload = () => {
                   }}
                   className="px-6 py-3 bg-zinc-100 text-zinc-700 rounded-xl font-medium hover:bg-zinc-200 transition-colors"
                 >
-                  Sync More Photos
+                  Sync More {galleryInfo?.gdrive_content_mode === 'videos' ? 'Videos' : 'Photos'}
                 </button>
               </div>
             )}
