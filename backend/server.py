@@ -8276,12 +8276,20 @@ async def get_contributor_upload_info(contributor_link: str):
     
     # Get existing gdrive photos if this is a gdrive section
     existing_gdrive_photos = []
+    existing_gdrive_videos = []
     if section.get("type") == "gdrive":
-        gphotos = await db.gdrive_photos.find(
-            {"gallery_id": gallery["id"], "section_id": section["id"]},
-            {"_id": 0}
-        ).to_list(500)
-        existing_gdrive_photos = gphotos
+        if section.get("gdrive_content_mode") == "videos":
+            gvideos = await db.gdrive_videos.find(
+                {"gallery_id": gallery["id"], "section_id": section["id"]},
+                {"_id": 0}
+            ).to_list(500)
+            existing_gdrive_videos = gvideos
+        else:
+            gphotos = await db.gdrive_photos.find(
+                {"gallery_id": gallery["id"], "section_id": section["id"]},
+                {"_id": 0}
+            ).to_list(500)
+            existing_gdrive_photos = gphotos
     
     # Get existing pcloud photos if this is a pcloud section
     existing_pcloud_photos = []
