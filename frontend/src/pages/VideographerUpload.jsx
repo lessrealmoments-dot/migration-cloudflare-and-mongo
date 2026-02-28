@@ -845,6 +845,8 @@ const VideographerUpload = () => {
             </div>
           </div>
         )}
+          </>
+        )}
       </div>
 
       {/* Footer */}
