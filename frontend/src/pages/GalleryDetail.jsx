@@ -1239,7 +1239,11 @@ const GalleryDetail = () => {
       setNewGdriveContributorRole('');
       setShowSectionForm(false);
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Failed to create section';
+      const rawError = error.response?.data?.detail || 'Failed to create section';
+      // Give a friendlier message for the missing API key case
+      const errorMsg = rawError.includes('VIDEO_REQUIRES_API_KEY')
+        ? 'Google Drive video sync requires an API key. Add GOOGLE_DRIVE_API_KEY to your server .env file. (Photos work without it.)'
+        : rawError;
       toast.error(errorMsg);
     }
   };

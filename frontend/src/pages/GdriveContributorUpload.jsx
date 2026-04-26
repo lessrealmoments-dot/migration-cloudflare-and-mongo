@@ -217,7 +217,11 @@ const GdriveContributorUpload = () => {
       const count = isVideoMode ? response.data.video_count : response.data.photo_count;
       toast.success(`Successfully synced ${count} ${isVideoMode ? 'videos' : 'photos'}!`);
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to sync Google Drive folder');
+      const rawError = error.response?.data?.detail || 'Failed to sync Google Drive folder';
+      const errorMsg = rawError.includes('VIDEO_REQUIRES_API_KEY')
+        ? 'This gallery requires a Google Drive API key for video sync. Please contact the gallery owner.'
+        : rawError;
+      toast.error(errorMsg);
     } finally {
       setSubmitting(false);
     }

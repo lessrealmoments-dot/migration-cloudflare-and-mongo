@@ -771,7 +771,7 @@ async def fetch_gdrive_folder_videos(folder_id: str) -> dict:
 
     api_key = os.environ.get('GOOGLE_DRIVE_API_KEY', '')
     if not api_key:
-        result['error'] = "Google Drive API key not configured"
+        result['error'] = "VIDEO_REQUIRES_API_KEY: Google Drive video sync requires a Google Drive API key. Please add GOOGLE_DRIVE_API_KEY to your server environment variables. (Photos work without it because they use HTML scraping, but videos require the official API to detect video file types.)"
         return result
 
     try:
@@ -7255,7 +7255,7 @@ async def toggle_gdrive_photo_highlight(
 @api_router.get("/public/gallery/{share_link}/gdrive-photos")
 async def get_public_gdrive_photos(share_link: str, section_id: Optional[str] = None):
     """Get Google Drive photos for a public gallery"""
-    gallery = await db.galleries.find_one({"share_link": share_link, "is_published": True}, {"_id": 0})
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
     
@@ -7273,7 +7273,7 @@ async def get_public_gdrive_photos(share_link: str, section_id: Optional[str] = 
 @api_router.get("/public/gallery/{share_link}/gdrive-videos")
 async def get_public_gdrive_videos(share_link: str, section_id: Optional[str] = None):
     """Get Google Drive videos for a public gallery"""
-    gallery = await db.galleries.find_one({"share_link": share_link, "is_published": True}, {"_id": 0})
+    gallery = await db.galleries.find_one({"share_link": share_link}, {"_id": 0})
     if not gallery:
         raise HTTPException(status_code=404, detail="Gallery not found")
 
