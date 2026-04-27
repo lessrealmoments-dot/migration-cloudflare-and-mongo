@@ -87,6 +87,10 @@ const GalleryDetail = () => {
   const [gdrivePhotos, setGdrivePhotos] = useState([]);
   const [gdriveVideos, setGdriveVideos] = useState([]);
   const [refreshingGdrive, setRefreshingGdrive] = useState(null);
+  // Pagination for photo grid (perf P0)
+  const [photosOffset, setPhotosOffset] = useState(0);
+  const [hasMorePhotos, setHasMorePhotos] = useState(false);
+  const [loadingMorePhotos, setLoadingMorePhotos] = useState(false);
   // Photobooth Bridge (DSLRBooth) credentials modal
   const [bridgeCredentials, setBridgeCredentials] = useState(null); // { section_name, contributor_link, section_password }
   // pCloud upload link state
@@ -822,76 +826,95 @@ const GalleryDetail = () => {
   const fetchGalleryData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const [galleryRes, photosRes, sectionsRes, videosRes, positionRes, presetsRes] = await Promise.all([
-        axios.get(`${API}/galleries/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API}/galleries/${id}/photos`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API}/galleries/${id}/sections`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API}/galleries/${id}/videos`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }).catch(() => ({ data: [] })),
-        axios.get(`${API}/galleries/${id}/cover-photo-position`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }).catch(() => ({ data: { scale: 1, positionX: 50, positionY: 50 } })),
-        axios.get(`${API}/collage-presets`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }).catch(() => ({ data: [] }))
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // PARALLEL BATCH: fire ALL gallery fetches concurrently. Previously this batch
+      // ran first, then `fetchGalleryFeatures`, `/invitations/by-gallery`, and
+      // `/coordinator-settings` ran sequentially after — the cause of 30-60s loads on
+      // large galleries. Photos now request thumbnail-only fields (smaller payload) and
+      // the first 200 items; the rest stream in via fetchMorePhotos() on scroll.
+      const [
+        galleryRes,
+        photosRes,
+        sectionsRes,
+        videosRes,
+        positionRes,
+        presetsRes,
+        invitationRes,
+        galleryFeatures,
+      ] = await Promise.all([
+        axios.get(`${API}/galleries/${id}`, { headers }),
+        axios.get(`${API}/galleries/${id}/photos?fields=thumb&limit=200&offset=0`, { headers }),
+        axios.get(`${API}/galleries/${id}/sections`, { headers }),
+        axios.get(`${API}/galleries/${id}/videos`, { headers }).catch(() => ({ data: [] })),
+        axios
+          .get(`${API}/galleries/${id}/cover-photo-position`, { headers })
+          .catch(() => ({ data: { scale: 1, positionX: 50, positionY: 50 } })),
+        axios.get(`${API}/collage-presets`, { headers }).catch(() => ({ data: [] })),
+        axios.get(`${API}/invitations/by-gallery/${id}`, { headers }).catch(() => ({ data: { invitation: null } })),
+        fetchGalleryFeatures(id).catch(() => null),
       ]);
+
       setGallery(galleryRes.data);
       setPhotos(photosRes.data);
+      setPhotosOffset(photosRes.data.length || 0);
+      setHasMorePhotos((photosRes.data.length || 0) >= 200);
       setSections(sectionsRes.data);
       setVideos(videosRes.data);
       setCoverPhotoPosition(positionRes.data);
       setCollagePresets(presetsRes.data);
       setSelectedCollagePreset(galleryRes.data.collage_preset_id || null);
-      
-      // Load existing coordinator hub link if present
+
+      if (invitationRes.data?.invitation) {
+        setLinkedInvitation(invitationRes.data.invitation);
+      }
+      if (galleryFeatures) {
+        setGalleryFeatures(galleryFeatures);
+      }
+
+      // Render shell now; slow secondary fetches happen below without blocking UI.
+      setLoading(false);
+
+      // Coordinator settings: only fetch if a coordinator hub link exists.
       if (galleryRes.data.coordinator_hub_link) {
         setCoordinatorHubLink(`${window.location.origin}/coordinator/${galleryRes.data.coordinator_hub_link}`);
-        
-        // Fetch coordinator settings
-        try {
-          const coordSettings = await axios.get(`${API}/galleries/${id}/coordinator-settings`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setAllowSupplierSections(coordSettings.data.allow_supplier_sections || false);
-          // Don't load the actual password, just whether it's set
-        } catch (e) {
-          // Settings not loaded, use defaults
-        }
+        axios
+          .get(`${API}/galleries/${id}/coordinator-settings`, { headers })
+          .then((coordSettings) => {
+            setAllowSupplierSections(coordSettings.data.allow_supplier_sections || false);
+          })
+          .catch(() => {});
       }
-      
-      // Fetch gallery-specific features (with grandfathering support)
-      const gFeatures = await fetchGalleryFeatures(id);
-      if (gFeatures) {
-        setGalleryFeatures(gFeatures);
-        console.log('[GalleryDetail] Gallery features loaded:', gFeatures);
-      }
-      
-      // Fetch linked invitation if any
-      try {
-        const invRes = await axios.get(`${API}/invitations/by-gallery/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (invRes.data.invitation) {
-          setLinkedInvitation(invRes.data.invitation);
-        }
-      } catch (e) {
-        // No linked invitation, that's fine
-      }
-      
-      // Check gallery-specific download lock
+
+      // Check gallery-specific download lock (cheap)
       checkGalleryDownloadLock(galleryRes.data);
     } catch (error) {
       toast.error('Failed to load gallery');
       navigate('/dashboard');
-    } finally {
       setLoading(false);
+    }
+  };
+
+  // Pagination state for photos
+  const fetchMorePhotos = async () => {
+    if (!hasMorePhotos || loadingMorePhotos) return;
+    setLoadingMorePhotos(true);
+    try {
+      const token = localStorage.getItem('token');
+      const r = await axios.get(
+        `${API}/galleries/${id}/photos?fields=thumb&limit=200&offset=${photosOffset}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const next = r.data || [];
+      if (next.length > 0) {
+        setPhotos((prev) => [...prev, ...next]);
+        setPhotosOffset(photosOffset + next.length);
+      }
+      setHasMorePhotos(next.length >= 200);
+    } catch (e) {
+      // ignore; user can retry by scrolling
+    } finally {
+      setLoadingMorePhotos(false);
     }
   };
 
@@ -4338,6 +4361,20 @@ const GalleryDetail = () => {
           {photos.filter(p => p.uploaded_by === 'photographer' || p.uploaded_by === 'contributor').length === 0 && (
             <div className="text-center py-20 border border-zinc-200 rounded-sm">
               <p className="text-zinc-500">No photos yet. Upload some to get started!</p>
+            </div>
+          )}
+
+          {/* Load more (pagination for performance on large galleries) */}
+          {hasMorePhotos && (
+            <div className="text-center mt-6" data-testid="load-more-photos-wrap">
+              <button
+                onClick={fetchMorePhotos}
+                disabled={loadingMorePhotos}
+                className="px-5 py-2 bg-zinc-900 text-white text-sm rounded hover:bg-zinc-800 disabled:opacity-60"
+                data-testid="load-more-photos-btn"
+              >
+                {loadingMorePhotos ? 'Loading…' : `Load more photos (${photos.length} loaded)`}
+              </button>
             </div>
           )}
         </div>
