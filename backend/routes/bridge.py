@@ -221,6 +221,9 @@ async def bridge_ingest_session(
     contributor_name = (section.get("contributor_name") or "Photobooth Bridge").strip()
     source_app = request.headers.get("X-Bridge-App-Version", "")
     source_machine = request.headers.get("X-Bridge-Machine", "")
+    source_lane = (request.headers.get("X-Bridge-Lane") or "").strip().lower() or None
+    if source_lane and source_lane not in {"print", "deferred"}:
+        source_lane = None
     client_ip = request.client.host if request.client else None
 
     # Look up existing session photo count to keep ordering stable within session
@@ -341,6 +344,7 @@ async def bridge_ingest_session(
                 "media_type": media_type,
                 "content_hash": md5,
                 "captured_at": captured_at or now_iso,
+                "upload_lane": source_lane,  # "print" | "deferred" | None
             }
             try:
                 await db.photos.insert_one(photo_doc)
@@ -427,6 +431,7 @@ async def bridge_ingest_session(
             "failed": failed,
             "source_app_version": source_app,
             "source_machine": source_machine,
+            "source_lane": source_lane,
             "ip": client_ip,
             "created_at": datetime.now(timezone.utc).isoformat(),
         })
