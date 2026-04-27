@@ -87,6 +87,8 @@ const GalleryDetail = () => {
   const [gdrivePhotos, setGdrivePhotos] = useState([]);
   const [gdriveVideos, setGdriveVideos] = useState([]);
   const [refreshingGdrive, setRefreshingGdrive] = useState(null);
+  // Photobooth Bridge (DSLRBooth) credentials modal
+  const [bridgeCredentials, setBridgeCredentials] = useState(null); // { section_name, contributor_link, section_password }
   // pCloud upload link state
   const [newPcloudUploadLink, setNewPcloudUploadLink] = useState('');
   // Section rename state
@@ -1212,6 +1214,20 @@ const GalleryDetail = () => {
         setSections([...sections, response.data.section]);
         const modeLabel = newGdriveContentMode === 'videos' ? 'video' : 'photo';
         toast.success(`Google Drive ${modeLabel} section created! Generate a contributor link to let your supplier submit their folder.`);
+      } else if (newSectionType === 'photobooth_bridge') {
+        // Create Photobooth Bridge section (DSLRBooth desktop bridge)
+        const response = await axios.post(
+          `${API}/galleries/${id}/sections/photobooth-bridge`,
+          { name: newSectionName || 'Photobooth' },
+          { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+        );
+        setSections([...sections, response.data.section]);
+        setBridgeCredentials({
+          section_name: response.data.section?.name || newSectionName || 'Photobooth',
+          contributor_link: response.data.contributor_link,
+          section_password: response.data.section_password,
+        });
+        toast.success('Photobooth Bridge section created — credentials below.');
       } else {
         // Create regular section (photo, video, or fotoshare without URL)
         const formData = new FormData();
@@ -2916,6 +2932,18 @@ const GalleryDetail = () => {
                   />
                   <HardDrive className="w-4 h-4 text-green-600" />
                   <span className="text-sm">Google Drive</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer" data-testid="section-type-photobooth-bridge">
+                  <input
+                    type="radio"
+                    name="sectionType"
+                    value="photobooth_bridge"
+                    checked={newSectionType === 'photobooth_bridge'}
+                    onChange={() => setNewSectionType('photobooth_bridge')}
+                    className="accent-fuchsia-600"
+                  />
+                  <Camera className="w-4 h-4 text-fuchsia-600" />
+                  <span className="text-sm">Photobooth Bridge (DSLRBooth)</span>
                 </label>
               </div>
               
@@ -5152,6 +5180,130 @@ const GalleryDetail = () => {
                 Download All Parts
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Photobooth Bridge Credentials Modal */}
+      {bridgeCredentials && (
+        <div
+          data-testid="bridge-credentials-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setBridgeCredentials(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between">
+              <div className="flex items-center gap-2">
+                <Camera className="h-6 w-6 text-fuchsia-600" />
+                <h2 className="text-lg font-semibold text-gray-900">Photobooth Bridge — Credentials</h2>
+              </div>
+              <button
+                onClick={() => setBridgeCredentials(null)}
+                className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                data-testid="bridge-credentials-close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="mb-4 text-sm text-gray-600">
+              Paste these into your DSLRBooth Bridge desktop app. Keep them safe — anyone with both
+              can upload photos to <span className="font-medium">{bridgeCredentials.section_name}</span>.
+            </p>
+
+            <div className="mb-3">
+              <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                Contributor Link
+              </label>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={bridgeCredentials.contributor_link}
+                  className="flex-1 rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-mono"
+                  data-testid="bridge-contributor-link"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(bridgeCredentials.contributor_link);
+                    toast.success('Contributor link copied');
+                  }}
+                  className="rounded bg-gray-900 px-3 text-sm text-white hover:bg-gray-800"
+                  data-testid="copy-bridge-link"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                Section Password
+              </label>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={bridgeCredentials.section_password}
+                  className="flex-1 rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-mono"
+                  data-testid="bridge-section-password"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(bridgeCredentials.section_password);
+                    toast.success('Password copied');
+                  }}
+                  className="rounded bg-gray-900 px-3 text-sm text-white hover:bg-gray-800"
+                  data-testid="copy-bridge-password"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                Bridge API Endpoint
+              </label>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={`${BACKEND_URL}/api/bridge`}
+                  className="flex-1 rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-mono"
+                  data-testid="bridge-api-endpoint"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${BACKEND_URL}/api/bridge`);
+                    toast.success('API endpoint copied');
+                  }}
+                  className="rounded bg-gray-900 px-3 text-sm text-white hover:bg-gray-800"
+                  data-testid="copy-bridge-endpoint"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded bg-fuchsia-50 p-3 text-xs text-fuchsia-900">
+              <p className="mb-1 font-medium">In the bridge desktop app:</p>
+              <ol className="list-inside list-decimal space-y-0.5">
+                <li>Open the bridge app and go to Setup.</li>
+                <li>Paste the API endpoint, contributor link, and password.</li>
+                <li>Pick your DSLRBooth output folder and click Start.</li>
+              </ol>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setBridgeCredentials(null)}
+                className="rounded bg-fuchsia-600 px-4 py-2 text-sm font-medium text-white hover:bg-fuchsia-700"
+                data-testid="bridge-credentials-done"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

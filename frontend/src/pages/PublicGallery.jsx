@@ -17,6 +17,7 @@ import VideoSection from '@/components/VideoSection';
 import SmartVideoSection from '@/components/SmartVideoSection';
 import FotoshareSection from '@/components/FotoshareSection';
 import PhotoboothSection from '@/components/PhotoboothSection';
+import PhotoboothBridgeSection from '@/components/PhotoboothBridgeSection';
 import GoogleDriveSection from '@/components/GoogleDriveSection';
 import GoogleDriveVideoSection from '@/components/GoogleDriveVideoSection';
 import LiteModeModal from '@/components/LiteModeModal';
@@ -1693,6 +1694,18 @@ const PublicGallery = () => {
                       />
                     </div>
                   </div>
+                );
+              }
+
+              // Photobooth Bridge (DSLRBooth) - per-session grouping with Download Set + QR
+              if (section.type === 'photobooth_bridge') {
+                return (
+                  <PhotoboothBridgeSection
+                    key={section.id}
+                    section={section}
+                    shareLink={gallery.share_link || shareLink}
+                    themeColors={currentTheme.colors}
+                  />
                 );
               }
               

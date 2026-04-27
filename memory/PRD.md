@@ -2,12 +2,22 @@
 
 ## Last Updated: Feb 26, 2026
 
-## Photobooth Bridge (DSLRBooth) — Feb 26, 2026 ✅ BACKEND IMPLEMENTED
+## Photobooth Bridge (DSLRBooth) — Feb 26, 2026 ✅ BACKEND + FRONTEND IMPLEMENTED
 
 ### Concept
 A new contributor section type `photobooth_bridge` that lets a local DSLRBooth
 desktop bridge app authenticate per-section and stream sessions of files into
 a gallery. Reuses the existing contributor_link pattern — no new auth stack.
+
+### Frontend (NEW)
+- **GalleryDetail.jsx** — "Photobooth Bridge (DSLRBooth)" radio in section type
+  picker. On creation, opens credentials modal with copy-to-clipboard for:
+  contributor_link, section_password, bridge API endpoint.
+- **PublicGallery.jsx + components/PhotoboothBridgeSection.jsx** — public guests
+  see capture sets grouped by `session_id`, oldest first. Each card shows a
+  thumbnail, file count, "Download" (ZIP) button, and "QR" button. QR modal
+  shows a scannable PNG that points to the same ZIP URL — guest scans with
+  their phone and the download starts.
 
 ### Key API endpoints
 - `GET  /api/bridge/health` — service heartbeat
