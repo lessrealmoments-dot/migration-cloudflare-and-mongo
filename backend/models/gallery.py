@@ -102,11 +102,12 @@ class Section(BaseModel):
     id: str
     name: str
     order: int = 0  # Default to 0 for sections without order
-    type: str = "photo"  # "photo", "video", "fotoshare", "gdrive", or "pcloud"
+    type: str = "photo"  # "photo", "video", "fotoshare", "gdrive", "pcloud", or "photobooth_bridge"
     contributor_link: Optional[str] = None  # Unique link for contributor uploads
     contributor_name: Optional[str] = None  # Company/contributor name
     contributor_role: Optional[str] = None  # Role description
     contributor_enabled: bool = False  # Whether contributor uploads are enabled
+    section_password: Optional[str] = None  # Password gate for contributor access (used by bridge too)
     # Fotoshare-specific fields
     fotoshare_url: Optional[str] = None  # The fotoshare.co event URL
     fotoshare_last_sync: Optional[str] = None  # Last sync timestamp
@@ -134,7 +135,7 @@ class Photo(BaseModel):
     url: str
     thumbnail_url: Optional[str] = None  # Small thumbnail for grids
     thumbnail_medium_url: Optional[str] = None  # Medium thumbnail for gallery view
-    uploaded_by: str  # "photographer", "guest", or "contributor"
+    uploaded_by: str  # "photographer", "guest", "contributor", or "bridge"
     contributor_name: Optional[str] = None  # Company name if uploaded by contributor
     section_id: Optional[str] = None
     uploaded_at: str
@@ -145,6 +146,12 @@ class Photo(BaseModel):
     auto_flagged: bool = False  # True if system auto-flagged (e.g., thumbnail failure)
     flagged_at: Optional[str] = None
     flagged_reason: Optional[str] = None
+    # Photobooth bridge fields (DSLRBooth integration)
+    session_id: Optional[str] = None  # DSLRBooth session id; groups files of one capture
+    source: Optional[str] = None  # e.g. "dslrbooth_bridge"
+    media_type: Optional[str] = None  # "original|print|single|animated|video|greenscreen"
+    content_hash: Optional[str] = None  # MD5 hex; used for dedupe within (gallery_id, session_id)
+    captured_at: Optional[str] = None  # ISO timestamp from DSLRBooth (oldest-first sorting)
 
 
 class PasswordVerify(BaseModel):

@@ -1,6 +1,58 @@
 # EventsGallery.vip - Photo Sharing Platform PRD
 
-## Last Updated: Feb 17, 2025
+## Last Updated: Feb 26, 2026
+
+## Photobooth Bridge (DSLRBooth) — Feb 26, 2026 ✅ BACKEND IMPLEMENTED
+
+### Concept
+A new contributor section type `photobooth_bridge` that lets a local DSLRBooth
+desktop bridge app authenticate per-section and stream sessions of files into
+a gallery. Reuses the existing contributor_link pattern — no new auth stack.
+
+### Key API endpoints
+- `GET  /api/bridge/health` — service heartbeat
+- `POST /api/bridge/{contributor_link}/verify-password` → 60-min scoped JWT
+- `POST /api/bridge/{contributor_link}/ingest-session` — multipart upload of one
+  DSLRBooth session. Parallel arrays: files[i], media_types[i], captured_ats[i],
+  content_hashes[i] (MD5 hex). Returns 200 (all ok) or 207 (mixed):
+  `{ session_id, total, succeeded, duplicates, failed, files[] }`
+- `POST /api/galleries/{gid}/sections/photobooth-bridge` — owner creates a
+  bridge section; returns `contributor_link` + `section_password` to paste
+  into the bridge desktop app.
+- `POST /api/galleries/{gid}/sections/{sid}/bridge-password` — rotate password.
+- `GET  /api/public/gallery/{share_link}/sessions` — list bridge sessions oldest-first.
+- `GET  /api/public/gallery/{share_link}/session/{session_id}/download` — ZIP of session.
+- `GET  /api/public/gallery/{share_link}/session/{session_id}/qr` — PNG QR code
+  pointing to the per-session ZIP download URL.
+
+### Data model additions
+- `Section.type` accepts `"photobooth_bridge"`; `Section.section_password`.
+- `Photo` extended with: `session_id`, `source` ("dslrbooth_bridge"),
+  `media_type` (original|print|single|animated|video|greenscreen),
+  `content_hash` (md5), `captured_at`.
+
+### New collections
+- `bridge_sessions` — per-(gallery, session) metadata: file_count, bytes_total,
+  earliest_captured_at, last_file_at. Powers oldest-first ordering and ZIP/QR.
+- `bridge_audit` — per-ingest audit log (user, gallery, session, IP, app/version).
+
+### Indexes
+- `photos(gallery_id, session_id, content_hash)` UNIQUE (partial: when session_id is string)
+  → server-side dedupe. Same MD5 in same session returns existing photo.
+- `photos(gallery_id, session_id, captured_at)` → grouped chronological queries.
+- `bridge_sessions(gallery_id, session_id)` UNIQUE.
+- `bridge_sessions(gallery_id, earliest_captured_at)` → oldest-first list.
+
+### Tests — 14/14 passing
+`/app/backend/tests/test_bridge.py` covers: health, invalid link, wrong/correct
+password, missing token, invalid session_id, success ingest, duplicate dedupe,
+hash mismatch, mixed-media partial failure (207), oldest-first session list,
+ZIP download, QR PNG, unknown session 404.
+
+### Pending (frontend + bridge desktop app)
+- GalleryDetail.jsx: "Add Photobooth Bridge" button + credentials modal.
+- Public gallery view: per-session card with Download Set + QR button.
+- Cursor builds the desktop bridge app per the prompt provided.
 
 ## Original Problem Statement
 A comprehensive photo-sharing application for photographers with focus on:

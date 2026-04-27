@@ -1742,6 +1742,13 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown"""
     # Create database indexes for optimized performance
     await create_database_indexes()
+
+    # Photobooth Bridge indexes
+    try:
+        from routes.bridge import ensure_bridge_indexes as _ensure_bridge_indexes
+        await _ensure_bridge_indexes()
+    except Exception as _e:
+        logger.warning(f"ensure_bridge_indexes failed: {_e}")
     
     # Initialize background tasks module with dependencies
     init_tasks(
@@ -13270,6 +13277,17 @@ app.include_router(rsvp_token_router)
 # Setup invitation routes
 from routes.invitation import setup_invitation_routes
 setup_invitation_routes(app, db, get_current_user)
+
+# Setup Photobooth Bridge routes (DSLRBooth uploader)
+from routes.bridge import (
+    router as bridge_router,
+    public_router as bridge_public_router,
+    admin_router as bridge_admin_router,
+    ensure_bridge_indexes,
+)
+app.include_router(bridge_router)
+app.include_router(bridge_public_router)
+app.include_router(bridge_admin_router)
 
 # Mount static files for uploads (payment proofs, QR codes, etc.)
 from fastapi.staticfiles import StaticFiles
