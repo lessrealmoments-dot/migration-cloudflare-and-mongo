@@ -11,7 +11,7 @@ import os
 import uuid
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hub-collab.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://gallery-speed-up.preview.emergentagent.com')
 
 # Test credentials from requirements
 TEST_USER_EMAIL = "lessrealmoments@gmail.com"
