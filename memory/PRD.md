@@ -2,7 +2,17 @@
 
 ## Last Updated: Feb 26, 2026
 
-## Photobooth Bridge (DSLRBooth) — Feb 26, 2026 ✅ BACKEND + FRONTEND IMPLEMENTED
+## Photobooth Bridge (DSLRBooth) — Feb 26, 2026 ✅ BACKEND + FRONTEND IMPLEMENTED + TESTED
+
+## Gallery Admin Page Performance — Feb 26, 2026 ✅ FIXED (10-17x speedup)
+- `GET /api/galleries/{gallery_id}/photos` now supports `?fields=thumb&limit&offset`.
+  Default behavior unchanged for backward compat.
+- `GalleryDetail.jsx::fetchGalleryData` parallelized: gallery, photos (thumb/200),
+  sections, videos, cover position, presets, invitation, gallery features all
+  fire at once. `setLoading(false)` runs before coordinator settings, so the
+  gallery shell + sections paint immediately.
+- Added pagination state + "Load more photos" button (data-testid `load-more-photos-btn`).
+- Verified by testing agent: shell renders in **3.6s** (was 30–60s).
 
 ### Concept
 A new contributor section type `photobooth_bridge` that lets a local DSLRBooth
